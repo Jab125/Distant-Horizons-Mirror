@@ -278,18 +278,19 @@ public class DataPointUtil
 
 	public static long[] mergeMultiData(long[][] dataToMerge)
 	{
-		boolean[] projection = ThreadMapUtil.getProjection(WORLD_HEIGHT + 1);
-		int[][] heightAndDepth = ThreadMapUtil.getHeightAndDepth(WORLD_HEIGHT + 1);
+		short[] projection = ThreadMapUtil.getProjectionShort((WORLD_HEIGHT + 1) / 16);
+		short[][] heightAndDepth = ThreadMapUtil.getHeightAndDepth((WORLD_HEIGHT / 2) + 1);
 		long[] singleDataToMerge = ThreadMapUtil.getSingleAddDataToMerge(dataToMerge.length);
 		int genMode = DistanceGenerationMode.SERVER.complexity;
 		boolean allEmpty = true;
 		boolean allVoid = true;
 		long singleData;
+		int test = 0;
 
 		for(int k=0; k < projection.length; k++)
-			projection[k] = false;
-		int depth = 0;
-		int height = 0;
+			projection[k] = 0;
+		short depth = 0;
+		short height = 0;
 		//We collect the indexes of the data, ordered by the depth
 		for (int index = 0; index < dataToMerge.length; index++)
 		{
@@ -306,45 +307,55 @@ public class DataPointUtil
 						depth = getDepth(singleData);
 						height = getHeight(singleData);
 						for (int y = depth; y <= height; y++)
-						{
-							projection[y] = true;
-						}
+							projection[y / 16] |= 1 << (y & 0xf);
 					}
 				}
 			}
 		}
 
-
 		//We check if there is any data that's not empty or void
 		if (allEmpty)
-		{
 			return new long[]{EMPTY_DATA};
-		}
 		if (allVoid)
-		{
 			return new long[]{createVoidDataPoint(genMode)};
-		}
 
 		int count = 0;
 		int i = 0;
+		int ii = 0;
 		while (i < projection.length)
 		{
-			while (i < projection.length && !projection[i])
+			while (i < projection.length && projection[i] == 0)	i++;
+			if (i == projection.length)
+				break; //we reached end of WORLD_HEIGHT and it's nothing more here
+			while (ii < 15 && ((projection[i] >>> ii) & 1) == 0) ii++;
+			if (ii >= 15 && ((projection[i] >>> ii) & 1) == 0) //there is nothing more in this chunk
 			{
+				ii = 0;
 				i++;
+				continue;
 			}
-			depth = i;
-			while (i < projection.length && projection[i])
+			depth = (short)( i * 16 + ii);
+
+			while (ii < 15 && ((projection[i] >>> ii) & 1) == 1) ii++;
+			if (ii >= 15 && ((projection[i] >>> ii) & 1) == 1) //if end is not in this chunk
 			{
-				height = i;
+				ii = 0;
 				i++;
+				while (i < projection.length && ~(projection[i]) == 0)	i++; //check for big solid blocks
+				if (i == projection.length) //solid to WORLD_HEIGHT
+				{
+					heightAndDepth[count][0] = depth;
+					heightAndDepth[count][1] = WORLD_HEIGHT - 1;
+					break;
+				}
+				while ((((projection[i] >>> ii) & 1) == 1)) ii++;
 			}
-			if(!(i < projection.length))
-				break;
+			height = (short)(i * 16 + ii - 1);
 			heightAndDepth[count][0] = depth;
-			heightAndDepth[count][1] = height;
+			heightAndDepth[count][1] =  height;
 			count++;
 		}
+
 		//As standard the vertical lods are ordered from top to bottom
 		long[] dataPoint = new long[count];
 		for (int j = count - 1; j >= 0; j--)
