@@ -11,6 +11,7 @@ If you want to see a quick demo, check out a video covering the mod here:
 
 MC version: 1.17.1\
 Fabric version: 0.39.2+1.17\
+Cloth config and ModMenu intergration isnt compleate and will be done when the mod actually works\
 Cloth config version: 5.0.38\
 ModMenu version: 2.0.14
 
