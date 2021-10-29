@@ -217,7 +217,7 @@ public class ClientProxy
 	@SubscribeEvent
 	public void chunkLoadEvent(ChunkEvent.Load event)
 	{
-		lodBuilder.generateLodNodeAsync(event.getChunk(), lodWorld, event.getWorld(), DistanceGenerationMode.SERVER);
+		lodBuilder.generateLodNodeAsync(new ChunkWrapper(event.getChunk()), lodWorld, event.getWorld(), DistanceGenerationMode.SERVER);
 	}
 	
 	@SubscribeEvent
@@ -287,7 +287,7 @@ public class ClientProxy
 				event.getClass() == BlockEventData.PortalSpawnEvent.class)
 		{
 			// recreate the LOD where the blocks were changed
-			lodBuilder.generateLodNodeAsync(event.getWorld().getChunk(event.getPos()), lodWorld, event.getWorld());
+			lodBuilder.generateLodNodeAsync(new ChunkWrapper(event.getWorld().getChunk(event.getPos())), lodWorld, event.getWorld());
 		}
 	}
 	

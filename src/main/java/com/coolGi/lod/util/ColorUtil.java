@@ -19,6 +19,7 @@
 
 package com.coolGi.lod.util;
 
+import com.coolGi.lod.wrappers.MinecraftWrapper;
 import com.mojang.blaze3d.platform.NativeImage;
 
 import java.awt.Color;
@@ -78,9 +79,9 @@ public class ColorUtil
 	}
 	
 	/** This method apply the lightmap to the color to use */
-	public static int applyLightValue(int color, int skyLight, int blockLight, NativeImage lightMap)
+	public static int applyLightValue(int color, int skyLight, int blockLight)
 	{
-		int lightColor = lightMap.getPixelRGBA(blockLight, skyLight);
+		int lightColor = MinecraftWrapper.INSTANCE.getColorIntFromLightMap(blockLight, skyLight);
 		int red = ColorUtil.getBlue(lightColor);
 		int green = ColorUtil.getGreen(lightColor);
 		int blue = ColorUtil.getRed(lightColor);

@@ -24,8 +24,10 @@ import com.coolGi.lod.objects.LodRegion;
 import com.coolGi.lod.util.LodUtil;
 import com.coolGi.lod.wrappers.MinecraftWrapper;
 import com.mojang.math.Vector3d;
+import com.mojang.math.Vector3f;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
 
 /**
  * This holds miscellaneous helper code
@@ -87,22 +89,22 @@ public class RenderUtil
 	 * Returns true if one of the region's 4 corners is in front
 	 * of the camera.
 	 */
-	public static boolean isRegionInViewFrustum(BlockPos playerBlockPos, Vector3d cameraDir, BlockPos vboCenterPos)
+	public static boolean isRegionInViewFrustum(BlockPos playerBlockPos, Vec3 cameraDir, BlockPos vboCenterPos)
 	{
 		// convert the vbo position into a direction vector
 		// starting from the player's position
-		Vector3d vboVec = new Vector3d(vboCenterPos.getX(), 0, vboCenterPos.getZ());
-		Vector3d playerVec = new Vector3d(playerBlockPos.getX(), playerBlockPos.getY(), playerBlockPos.getZ());
-		Vector3d vboCenterVec = vboVec.subtract(playerVec);
+		Vec3 vboVec = new Vec3(vboCenterPos.getX(), 0, vboCenterPos.getZ());
+		Vec3 playerVec = new Vec3(playerBlockPos.getX(), playerBlockPos.getY(), playerBlockPos.getZ());
+		Vec3 vboCenterVec = Vec3.ZERO.subtract(playerVec);
 		
 		
 		int halfRegionWidth = LodUtil.REGION_WIDTH / 2;
 		
 		// calculate the 4 corners
-		Vector3d vboSeVec = new Vector3d(vboCenterVec.x + halfRegionWidth, vboCenterVec.y, vboCenterVec.z + halfRegionWidth);
-		Vector3d vboSwVec = new Vector3d(vboCenterVec.x - halfRegionWidth, vboCenterVec.y, vboCenterVec.z + halfRegionWidth);
-		Vector3d vboNwVec = new Vector3d(vboCenterVec.x - halfRegionWidth, vboCenterVec.y, vboCenterVec.z - halfRegionWidth);
-		Vector3d vboNeVec = new Vector3d(vboCenterVec.x + halfRegionWidth, vboCenterVec.y, vboCenterVec.z - halfRegionWidth);
+		Vec3 vboSeVec = new Vec3(vboCenterVec.x + halfRegionWidth, vboCenterVec.y, vboCenterVec.z + halfRegionWidth);
+		Vec3 vboSwVec = new Vec3(vboCenterVec.x - halfRegionWidth, vboCenterVec.y, vboCenterVec.z + halfRegionWidth);
+		Vec3 vboNwVec = new Vec3(vboCenterVec.x - halfRegionWidth, vboCenterVec.y, vboCenterVec.z - halfRegionWidth);
+		Vec3 vboNeVec = new Vec3(vboCenterVec.x + halfRegionWidth, vboCenterVec.y, vboCenterVec.z - halfRegionWidth);
 		
 		// if any corner is visible, this region should be rendered
 		return isNormalizedVectorInViewFrustum(vboSeVec, cameraDir) ||
@@ -115,7 +117,7 @@ public class RenderUtil
 	 * Currently takes the dot product of the two vectors,
 	 * but in the future could do more complicated frustum culling tests.
 	 */
-	private static boolean isNormalizedVectorInViewFrustum(Vector3d objectVector, Vector3d cameraDir)
+	private static boolean isNormalizedVectorInViewFrustum(Vec3 objectVector, Vec3 cameraDir)
 	{
 		// the -0.1 is to offer a slight buffer, so we are
 		// more likely to render LODs and thus, hopefully prevent

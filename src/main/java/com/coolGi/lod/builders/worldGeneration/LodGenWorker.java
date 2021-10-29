@@ -20,22 +20,29 @@
 package com.coolGi.lod.builders.worldGeneration;
 
 import com.coolGi.lod.builders.lodBuilding.LodBuilder;
+import com.coolGi.lod.builders.lodBuilding.LodBuilderConfig;
 import com.coolGi.lod.config.LodConfig;
 import com.coolGi.lod.enums.DistanceGenerationMode;
 import com.coolGi.lod.objects.LodDimension;
 import com.coolGi.lod.proxy.ClientProxy;
 import com.coolGi.lod.util.LodThreadFactory;
 import com.coolGi.lod.util.LodUtil;
+import com.coolGi.lod.wrappers.Chunk.ChunkWrapper;
 import com.google.common.util.concurrent.ThreadFactoryBuilder;
+import net.minecraft.core.Registry;
 import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
+import net.minecraft.server.level.ThreadedLevelLightEngine;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.levelgen.feature.ConfiguredFeature;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 
 import java.util.ConcurrentModificationException;
 import java.util.HashSet;
@@ -365,7 +372,7 @@ public class LodGenWorker implements IWorker
 			
 			if (!inTheEnd)
 			{
-				lodBuilder.generateLodNodeFromChunk(lodDim, chunk, new LodBuilderConfig(true, true, false));
+				lodBuilder.generateLodNodeFromChunk(lodDim, new ChunkWrapper(chunk), new LodBuilderConfig(true, true, false));
 			}
 			else
 			{
@@ -373,7 +380,7 @@ public class LodGenWorker implements IWorker
 				// Since we don't know where the islands are, everything
 				// generates the same, and it looks awful.
 				//TODO it appears that 'if' can be collapsed, but comment says that it should not be a case
-				lodBuilder.generateLodNodeFromChunk(lodDim, chunk, new LodBuilderConfig(true, true, false));
+				lodBuilder.generateLodNodeFromChunk(lodDim, new ChunkWrapper(chunk), new LodBuilderConfig(true, true, false));
 			}
 
 
@@ -389,13 +396,13 @@ public class LodGenWorker implements IWorker
 		private void generateUsingSurface()
 		{
 			List<ChunkAccess> chunkList = new LinkedList<>();
-			ChunkPrimer chunk = new ChunkPrimer(pos, UpgradeData.EMPTY);
+			ChunkAccess chunk = new ChunkPrimer(pos, UpgradeData.EMPTY);
 			chunkList.add(chunk);
 			LodServerWorld lodServerWorld = new LodServerWorld(serverWorld, chunk);
 			
 			ServerChunkProvider chunkSource = serverWorld.getChunkSource();
 			ServerWorldLightManager lightEngine = (ServerWorldLightManager) serverWorld.getLightEngine();
-			TemplateManager templateManager = serverWorld.getStructureManager();
+			StructureManager templateManager = serverWorld.getStructureManager();
 			ChunkGenerator chunkGen = chunkSource.generator;
 			
 			
@@ -411,9 +418,9 @@ public class LodGenWorker implements IWorker
 			// so we will add it
 			IceAndSnowFeature snowFeature = new IceAndSnowFeature(NoFeatureConfig.CODEC);
 			snowFeature.place(lodServerWorld, chunkGen, serverWorld.random, chunk.getPos().getWorldPosition(), null);
-			
-			
-			lodBuilder.generateLodNodeFromChunk(lodDim, chunk, new LodBuilderConfig(DistanceGenerationMode.SURFACE));
+
+
+			lodBuilder.generateLodNodeFromChunk(lodDim,  new ChunkWrapper(chunk), new LodBuilderConfig(DistanceGenerationMode.SURFACE));
 			
 			/*TODO if we want to use Biome utils and terrain utils for overworld
 			 * lodBuilder.generateLodNodeFromChunk(lodDim, pos ,detailLevel, serverWorld.getSeed());*/
@@ -433,10 +440,10 @@ public class LodGenWorker implements IWorker
 			chunkList.add(chunk);
 			LodServerWorld lodServerWorld = new LodServerWorld(serverWorld, chunk);
 			
-			ServerChunkProvider chunkSource = serverWorld.getChunkSource();
-			ServerWorldLightManager lightEngine = (ServerWorldLightManager) serverWorld.getLightEngine();
-			TemplateManager templateManager = serverWorld.getStructureManager();
-			ChunkGenerator chunkGen = chunkSource.generator;
+			ServerChunkCache chunkSource = serverWorld.getChunkSource();
+			ThreadedLevelLightEngine lightEngine = (ThreadedLevelLightEngine) serverWorld.getLightEngine();
+			StructureManager templateManager = serverWorld.getStructureManager();
+			ChunkGenerator chunkGen = chunkSource.getGenerator();
 			
 			
 			// generate the terrain (this is thread safe)
@@ -462,7 +469,7 @@ public class LodGenWorker implements IWorker
 					// in unpredictable ways (specifically tree feature generation).
 					// When generating Features my CPU usage generally hovers around 30 - 40%
 					// when generating Jungles it spikes to 100%.
-					if (biome.getBiomeCategory() != Biome.Category.JUNGLE)
+					if (biome.getBiomeCategory() != Biome.BiomeCategory.JUNGLE)
 					{
 						// should probably use the heightmap here instead of seaLevel,
 						// but this seems to get the job done well enough
@@ -539,7 +546,7 @@ public class LodGenWorker implements IWorker
 			}
 			
 			// generate a Lod like normal
-			lodBuilder.generateLodNodeFromChunk(lodDim, chunk, new LodBuilderConfig(DistanceGenerationMode.FEATURES));
+			lodBuilder.generateLodNodeFromChunk(lodDim,  new ChunkWrapper(chunk), new LodBuilderConfig(DistanceGenerationMode.FEATURES));
 		}
 		
 		
@@ -554,7 +561,7 @@ public class LodGenWorker implements IWorker
 		 */
 		private void generateWithServer()
 		{
-			lodBuilder.generateLodNodeFromChunk(lodDim, serverWorld.getChunk(pos.x, pos.z, ChunkStatus.FEATURES), new LodBuilderConfig(DistanceGenerationMode.SERVER));
+			lodBuilder.generateLodNodeFromChunk(lodDim,  new ChunkWrapper(serverWorld.getChunk(pos.x, pos.z, ChunkStatus.FEATURES)), new LodBuilderConfig(DistanceGenerationMode.SERVER));
 		}
 		
 		

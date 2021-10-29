@@ -23,6 +23,7 @@ package com.coolGi.lod;
 import com.coolGi.lod.config.LodConfig;
 import com.coolGi.lod.proxy.ClientProxy;
 import net.fabricmc.api.ModInitializer;
+import io.github.glasspane.mesh.api.util.config.ConfigHandler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
@@ -79,6 +80,5 @@ public class LodMain implements ModInitializer
 	@Override
 	public void onInitialize() {
 		LodMain.LOGGER.info(ModInfo.READABLE_NAME + ", Version: " + ModInfo.RELEASETYPE + " " + ModInfo.VERSION);
-
 	}
 }

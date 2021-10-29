@@ -26,10 +26,12 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexBuffer;
 import com.mojang.math.Matrix4f;
 import com.mojang.math.Vector3d;
+import com.mojang.math.Vector3f;
 import net.minecraft.client.Camera;
 import net.minecraft.core.BlockPos;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.phys.Vec3;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL15C;
@@ -106,8 +108,6 @@ public class LodRenderer
 	/** This is used to determine if the LODs should be regenerated */
 	private int[] previousPos = new int[] { 0, 0, 0 };
 	
-	public NativeImage lightMap = null;
-	
 	// these variables are used to determine if the buffers should be rebuilt
 	private float prevSkyBrightness = 0;
 	private double prevBrightness = 0;
@@ -133,11 +133,13 @@ public class LodRenderer
 	 */
 	public boolean[][] vanillaRenderedChunks;
 	public boolean vanillaRenderedChunksChanged;
+	public boolean vanillaRenderedChunksEmptySkip = false;
 	public int vanillaBlockRenderedDistance;
-	
-	
-	
-	
+
+	boolean vivecraftDetected = ReflectionHandler.INSTANCE.detectVivecraft();
+
+
+
 	public LodRenderer(LodBufferBuilder newLodNodeBufferBuilder)
 	{
 		mc = MinecraftWrapper.INSTANCE;
@@ -266,8 +268,9 @@ public class LodRenderer
 			farPlaneBlockDistance = Math.min(LodConfig.CLIENT.graphics.qualityOption.lodChunkRenderDistance.get(), LodUtil.CEILED_DIMENSION_MAX_RENDER_DISTANCE) * LodUtil.CHUNK_WIDTH;
 		else
 			farPlaneBlockDistance = LodConfig.CLIENT.graphics.qualityOption.lodChunkRenderDistance.get() * LodUtil.CHUNK_WIDTH;
-		
-		setupProjectionMatrix(mcProjectionMatrix, partialTicks);
+
+		setupProjectionMatrix(mcProjectionMatrix, vanillaBlockRenderedDistance, partialTicks);
+
 		// commented out until we can add shaders to handle lighting
 		//setupLighting(lodDim, partialTicks);
 		
@@ -290,7 +293,7 @@ public class LodRenderer
 		if (vbos != null)
 		{
 			Camera renderInfo = mc.getGameRenderer().getMainCamera();
-			Vector3d cameraDir = new Vector3d(renderInfo.getLookVector());
+			Vec3 cameraDir = new Vec3(renderInfo.getLookVector());
 			
 			boolean cullingDisabled = LodConfig.CLIENT.graphics.advancedGraphicsOption.disableDirectionalCulling.get();
 			boolean renderBufferStorage = LodConfig.CLIENT.graphics.advancedGraphicsOption.gpuUploadMethod.get() == GpuUploadMethod.BUFFER_STORAGE && GlProxy.getInstance().bufferStorageSupported;
@@ -534,16 +537,15 @@ public class LodRenderer
 		
 		
 		// get all relevant camera info
-		ActiveRenderInfo renderInfo = mc.getGameRenderer().getMainCamera();
-		Vector3d projectedView = renderInfo.getPosition();
+		Camera renderInfo = mc.getGameRenderer().getMainCamera();
+		Vec3 projectedView = renderInfo.getPosition();
 		
 		// translate the camera relative to the regions' center
 		// (AxisAlignedBoundingBoxes (LODs) use doubles and thus have a higher
 		// accuracy vs the model view matrix, which only uses floats)
 		BlockPos bufferPos = vbosCenter.getWorldPosition();
-		Vector3d eyePos = mc.getPlayer().getEyePosition(partialTicks);
-		double xDiff = eyePos.x - bufferPos.getX();
-		double zDiff = eyePos.z - bufferPos.getZ();
+		double xDiff = projectedView.x - bufferPos.getX();
+		double zDiff = projectedView.z - bufferPos.getZ();
 		mcMatrixStack.translate(-xDiff, -projectedView.y, -zDiff);
 		
 		
@@ -558,41 +560,51 @@ public class LodRenderer
 	/**
 	 * create a new projection matrix and send it over to the GPU
 	 * @param currentProjectionMatrix this is Minecraft's current projection matrix
+	 * @param vanillaBlockRenderedDistance Minecraft's vanilla far plane distance
 	 * @param partialTicks how many ticks into the frame we are
 	 */
-	private void setupProjectionMatrix(Matrix4f currentProjectionMatrix, float partialTicks)
+	private void setupProjectionMatrix(Matrix4f currentProjectionMatrix, float vanillaBlockRenderedDistance, float partialTicks)
 	{
-		//Minimum radius of view in 2 render distance
-		int minDistance = 1;
-		// create the new projection matrix
-		Matrix4f lodPoj =
-				Matrix4f.perspective(
-						getFov(partialTicks, true),
+		Matrix4f lodPoj;
+		float nearClipPlane = LodConfig.CLIENT.graphics.advancedGraphicsOption.useExtendedNearClipPlane.get() ? vanillaBlockRenderedDistance / 5 : 1;
+		float farClipPlane = farPlaneBlockDistance * LodUtil.CHUNK_WIDTH / 2;
+
+		if (vivecraftDetected){
+			//use modify clip plane method to modify the current projection matrix's clip planes.
+			lodPoj = ReflectionHandler.INSTANCE.Matrix4fModifyClipPlanes(
+					currentProjectionMatrix,
+					nearClipPlane,
+					farClipPlane);
+		} else {
+			// create the new projection matrix
+			lodPoj = Matrix4f.perspective(
+					getFov(partialTicks, true),
 						(float) this.mc.getWindow().getScreenWidth() / (float) this.mc.getWindow().getScreenHeight(),
-						minDistance,
-						farPlaneBlockDistance * LodUtil.CHUNK_WIDTH / 2);
-		
-		// get Minecraft's un-edited projection matrix
-		// (this is before it is zoomed, distorted, etc.)
-		Matrix4f defaultMcProj = mc.getGameRenderer().getProjectionMatrix(mc.getGameRenderer().getMainCamera(), partialTicks, true);
-		// true here means use "use fov setting" (probably)
-		
-		
-		// this logic strips away the defaultMcProj matrix, so we
-		// can get the distortionMatrix, which represents all
-		// transformations, zooming, distortions, etc. done
-		// to Minecraft's Projection matrix
-		Matrix4f defaultMcProjInv = defaultMcProj.copy();
-		defaultMcProjInv.invert();
-		
-		Matrix4f distortionMatrix = defaultMcProjInv.copy();
-		distortionMatrix.multiply(currentProjectionMatrix);
-		
-		
-		// edit the lod projection to match Minecraft's
-		// (so the LODs line up with the real world)
-		lodPoj.multiply(distortionMatrix);
-		
+					nearClipPlane,
+					farClipPlane);
+
+			// get Minecraft's un-edited projection matrix
+			// (this is before it is zoomed, distorted, etc.)
+			Matrix4f defaultMcProj = mc.getGameRenderer().getProjectionMatrix(mc.getGameRenderer().getMainCamera(), partialTicks, true);
+			// true here means use "use fov setting" (probably)
+
+
+			// this logic strips away the defaultMcProj matrix, so we
+			// can get the distortionMatrix, which represents all
+			// transformations, zooming, distortions, etc. done
+			// to Minecraft's Projection matrix
+			Matrix4f defaultMcProjInv = defaultMcProj.copy();
+			defaultMcProjInv.invert();
+
+			Matrix4f distortionMatrix = defaultMcProjInv.copy();
+			distortionMatrix.multiply(currentProjectionMatrix);
+
+
+			// edit the lod projection to match Minecraft's
+			// (so the LODs line up with the real world)
+			lodPoj.multiply(distortionMatrix);
+		}
+
 		// send the projection over to the GPU
 		gameRender.resetProjectionMatrix(lodPoj);
 	}
@@ -867,15 +879,19 @@ public class LodRenderer
 					// (just in case the minLightingDifference is too large to notice the change)
 					|| (skyBrightness == 1.0f && prevSkyBrightness != 1.0f) // noon
 					|| (skyBrightness == 0.2f && prevSkyBrightness != 0.2f) // midnight
-					|| mc.getOptions().gamma != prevBrightness || lightMap == null)
+					|| mc.getOptions().gamma != prevBrightness)
 		{
 			fullRegen = true;
-			lightMap = mc.getCurrentLightMap();
 			prevBrightness = mc.getOptions().gamma;
 			prevSkyBrightness = skyBrightness;
 		}
-		
-		
+
+		/*if (lightMap != lastLightMap)
+		{
+			fullRegen = true;
+			lastLightMap = lightMap;
+		}*/
+
 		//================//
 		// partial regens //
 		//================//
@@ -888,7 +904,6 @@ public class LodRenderer
 			{
 				partialRegen = true;
 				vanillaRenderedChunksChanged = false;
-				
 			}
 			prevVanillaChunkTime = newTime;
 		}
@@ -917,6 +932,8 @@ public class LodRenderer
 		int zIndex;
 		for (ChunkPos pos : chunkPosToSkip)
 		{
+			vanillaRenderedChunksEmptySkip = false;
+
 			xIndex = (pos.x - mc.getPlayer().xChunk) + (chunkRenderDistance + 1);
 			zIndex = (pos.z - mc.getPlayer().zChunk) + (chunkRenderDistance + 1);
 			

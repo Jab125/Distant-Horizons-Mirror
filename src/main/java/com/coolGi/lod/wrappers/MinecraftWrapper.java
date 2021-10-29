@@ -26,6 +26,7 @@ import com.coolGi.lod.ModInfo;
 import com.coolGi.lod.proxy.ClientProxy;
 import com.coolGi.lod.util.LodUtil;
 
+import com.coolGi.lod.wrappers.World.WorldWrapper;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.platform.Window;
 import net.minecraft.CrashReport;
@@ -41,8 +42,10 @@ import net.minecraft.client.renderer.LightTexture;
 import net.minecraft.client.resources.model.ModelManager;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.dimension.DimensionType;
 
 /**
@@ -183,7 +186,37 @@ public class MinecraftWrapper
 	{
 		return mc.level;
 	}
-	
+
+	public WorldWrapper getWrappedClientWorld()
+	{
+		return WorldWrapper.getWorldWrapper(mc.level);
+	}
+
+	public WorldWrapper getWrappedServerWorld()
+	{
+
+		if (mc.level == null)
+			return null;
+		DimensionType dimension = mc.level.dimensionType();
+		IntegratedServer server = mc.getSingleplayerServer();
+		if (server == null)
+			return null;
+
+		Iterable<ServerLevel> worlds = server.getAllLevels();
+		ServerLevel returnWorld = null;
+
+		for (ServerLevel world : worlds)
+		{
+			if (world.dimensionType() == dimension)
+			{
+				returnWorld = world;
+				break;
+			}
+		}
+
+		return WorldWrapper.getWorldWrapper(returnWorld);
+	}
+
 	/** Measured in chunks */
 	public int getRenderDistance()
 	{

@@ -25,6 +25,7 @@ import java.lang.reflect.Method;
 import com.coolGi.lod.enums.FogQuality;
 import com.coolGi.lod.proxy.ClientProxy;
 import com.coolGi.lod.wrappers.MinecraftWrapper;
+import com.mojang.math.Matrix4f;
 
 /**
  * This object is used to get variables from methods
@@ -77,15 +78,17 @@ public class ReflectionHandler
 	
 	
 	
-	
+	// TODO: Check if this is only for optifine or dose it account for all render mods
 	/**
-	 * Get what type of fog optifine is currently set to render.
+	 * Get what type of fog optifine or simmilar mods are currently set to render.
+	 *
+	 * @return the fog quality
 	 */
 	public FogQuality getFogQuality()
 	{
 		if (ofFogField == null)
 		{
-			// either optifine isn't installed,
+			// either optifine or simmilar mods arn't installed,
 			// the variable name was changed, or
 			// the setup method wasn't called yet.
 			return FogQuality.FANCY;
@@ -101,21 +104,67 @@ public class ReflectionHandler
 		{
 			e.printStackTrace();
 		}
-		
-		switch (returnNum)
-		{
-		default:
-		case 0:
-			// optifine's "default" option,
-			// it should never be called in this case
-			
-			// normal options
-		case 1:
-			return FogQuality.FAST;
-		case 2:
-			return FogQuality.FANCY;
-		case 3:
-			return FogQuality.OFF;
+
+		switch (returnNum) {
+			default:
+			case 0:
+				// optifine's "default" option,
+				// it should never be called in this case
+
+				// normal options
+			case 1:
+				return FogQuality.FAST;
+			case 2:
+				return FogQuality.FANCY;
+			case 3:
+				return FogQuality.OFF;
+
 		}
 	}
+
+	// TODO: Check if it works with fabric
+	/** Detect if Vivecraft is present using reflection. Attempts to find the "VRRenderer" class. */
+	public boolean detectVivecraft()
+	{
+		try
+		{
+			Class.forName("org.vivecraft.provider.VRRenderer");
+			return true;
+		}
+		catch (ClassNotFoundException ignored){
+			System.out.println("Vivecraft not detected.");
+		}
+		return false;
+	}
+
+	/**
+	 * Modifies a projection matrix's clip planes.
+	 * The projection matrix must be in a column-major format.
+	 * @param projectionMatrix The projection matrix to be modified.
+	 * @param n the new near clip plane value.
+	 * @param f the new far clip plane value.
+	 * @return The modified matrix.
+	 */
+	public Matrix4f Matrix4fModifyClipPlanes(Matrix4f projectionMatrix, float n, float f)
+	{
+		//find the matrix values.
+		float nMatrixValue = -((f + n) / (f - n));
+		float fMatrixValue = -((2 * f * n) / (f - n));
+		try
+		{
+			//get the fields of the projectionMatrix
+			Field[] fields = projectionMatrix.getClass().getDeclaredFields();
+			//bypass the security protections on the fields that encode near and far plane values.
+			fields[10].setAccessible(true);
+			fields[11].setAccessible(true);
+			//Change the values of the near and far plane.
+			fields[10].set(projectionMatrix, nMatrixValue);
+			fields[11].set(projectionMatrix, fMatrixValue);
+		}
+		catch (Exception e){
+			e.printStackTrace();
+		}
+		return projectionMatrix;
+	}
+
 }
