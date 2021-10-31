@@ -19,14 +19,15 @@
 
 package com.coolGi.lod.proxy;
 
+import com.coolGi.lod.wrappers.Chunk.ChunkWrapper;
 import com.mojang.blaze3d.vertex.PoseStack;
+import net.minecraft.network.chat.Component;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.BlockEventData;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.glfw.GLFW;
 
-import com.mojang.blaze3d.matrix.MatrixStack;
 import com.coolGi.lod.builders.bufferBuilding.LodBufferBuilder;
 import com.coolGi.lod.builders.lodBuilding.LodBuilder;
 import com.coolGi.lod.builders.worldGeneration.LodGenWorker;
@@ -42,15 +43,6 @@ import com.coolGi.lod.util.DetailDistanceUtil;
 import com.coolGi.lod.util.LodUtil;
 import com.coolGi.lod.util.ThreadMapUtil;
 import com.coolGi.lod.wrappers.MinecraftWrapper;
-
-import net.minecraft.profiler.IProfiler;
-import net.minecraft.util.text.StringTextComponent;
-import net.minecraftforge.client.event.InputEvent;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.event.world.BlockEvent;
-import net.minecraftforge.event.world.ChunkEvent;
-import net.minecraftforge.event.world.WorldEvent;
-import net.minecraftforge.eventbus.api.SubscribeEvent;
 
 /**
  * This handles all events sent to the client,
@@ -149,7 +141,7 @@ public class ClientProxy
 			// these can't be set until after the buffers are built (in renderer.drawLODs)
 			// otherwise the buffers may be set to the wrong size, or not changed at all
 			previousChunkRenderDistance = mc.getRenderDistance();
-			previousLodRenderDistance = LodConfig.CLIENT.graphics.qualityOption.lodChunkRenderDistance.get();
+			previousLodRenderDistance = LodConfig.Client.Graphics.QualityOption.lodChunkRenderDistance;
 		}
 		catch (Exception e)
 		{
@@ -167,7 +159,7 @@ public class ClientProxy
 //			mc.getPlayer().sendMessage(new StringTextComponent("LOD experimental build 1.5.1"), mc.getPlayer().getUUID());
 //			mc.getPlayer().sendMessage(new StringTextComponent("Here be dragons!"), mc.getPlayer().getUUID());
 
-			mc.getPlayer().sendMessage(new StringTextComponent("Debug settings enabled!"), mc.getPlayer().getUUID());
+			mc.getPlayer().sendMessage(Component.nullToEmpty("Debug settings enabled!"), mc.getPlayer().getUUID());
 			configOverrideReminderPrinted = true;
 		}
 
@@ -191,8 +183,9 @@ public class ClientProxy
 //		LodConfig.CLIENT.worldGenerator.allowUnstableFeatureGeneration.set(false);
 		
 //		LodConfig.CLIENT.buffers.rebuildTimes.set(BufferRebuildTimes.FREQUENT);
-		
-		LodConfig.CLIENT.advancedModOptions.debugging.enableDebugKeybindings.set(true);
+
+		// TODO: Create a way to set stuff
+		//LodConfig.Client.Debug.enableDebugKeybindings.set(true);
 //		LodConfig.CLIENT.debugging.debugMode.set(DebugMode.SHOW_DETAIL);
 	}
 	

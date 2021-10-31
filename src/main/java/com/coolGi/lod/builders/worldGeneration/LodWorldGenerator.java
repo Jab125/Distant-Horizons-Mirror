@@ -91,7 +91,7 @@ public class LodWorldGenerator
 	 */
 	public void queueGenerationRequests(LodDimension lodDim, LodRenderer renderer, LodBuilder lodBuilder)
 	{
-		if (LodConfig.CLIENT.worldGenerator.distanceGenerationMode.get() != DistanceGenerationMode.NONE
+		if (LodConfig.Client.WorldGenerator.distanceGenerationMode != DistanceGenerationMode.NONE
 				&& !generatorThreadRunning
 				&& mc.hasSinglePlayerServer())
 		{
@@ -99,7 +99,7 @@ public class LodWorldGenerator
 			generatorThreadRunning = true;
 			
 			// just in case the config changed
-			maxChunkGenRequests = LodConfig.CLIENT.advancedModOptions.threading.numberOfWorldGenerationThreads.get() * 8;
+			maxChunkGenRequests = LodConfig.Client.AdvancedModOptions.Threading.numberOfWorldGenerationThreads * 8;
 			
 			Thread generatorThread = new Thread(() ->
 			{

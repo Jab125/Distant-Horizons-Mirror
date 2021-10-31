@@ -64,3 +64,4 @@ accessible	field	net/minecraft/world/level/storage/DimensionDataStorage	dataFold
 accessible	field	net/minecraft/world/level/chunk/LevelChunk	heightmaps	Ljava/util/Map;
 accessible	field	net/minecraft/world/level/levelgen/feature/stateproviders/WeightedStateProvider	weightedList	Lnet/minecraft/util/random/SimpleWeightedRandomList;
 accessible	field	com/mojang/blaze3d/vertex/VertexBuffer	indexCount	I
+extendable	class	com/mojang/math/Matrix4f

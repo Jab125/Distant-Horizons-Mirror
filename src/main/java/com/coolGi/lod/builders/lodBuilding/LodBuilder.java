@@ -384,7 +384,7 @@ public class LodBuilder
 			// snow, flowers, etc. Get the above block so we can still get the color
 			// of the snow, flower, etc. that may be above this block
 			int aboveColorInt = 0;
-			if (LodConfig.CLIENT.worldGenerator.blockToAvoid.get().nonFull || LodConfig.CLIENT.worldGenerator.blockToAvoid.get().noCollision)
+			if (LodConfig.Client.WorldGenerator.blockToAvoid.nonFull || LodConfig.Client.WorldGenerator.blockToAvoid.noCollision)
 			{
 				blockPos.set(chunk.getPos().getMinBlockX() + xRel, yAbs + 1, chunk.getPos().getMinBlockZ() + zRel);
 				aboveColorInt = getColorForBlock(chunk, blockPos);
@@ -567,8 +567,8 @@ public class LodBuilder
 		if (chunk.isWaterLogged(blockPos))
 			return true;
 
-		boolean nonFullAvoidance = LodConfig.CLIENT.worldGenerator.blockToAvoid.get().nonFull;
-		boolean noCollisionAvoidance = LodConfig.CLIENT.worldGenerator.blockToAvoid.get().noCollision;
+		boolean nonFullAvoidance = LodConfig.Client.WorldGenerator.blockToAvoid.nonFull;
+		boolean noCollisionAvoidance = LodConfig.Client.WorldGenerator.blockToAvoid.noCollision;
 
 		BlockShapeWrapper block = chunk.getBlockShapeWrapper(blockPos);
 		return !block.isToAvoid()

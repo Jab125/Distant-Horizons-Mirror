@@ -364,9 +364,9 @@ public class LodDimension
 	/** Either expands or loads all regions in the rendered LOD area */
 	public void expandOrLoadRegionsAsync(int playerPosX, int playerPosZ)
 	{
-		DistanceGenerationMode generationMode = LodConfig.CLIENT.worldGenerator.distanceGenerationMode.get();
+		DistanceGenerationMode generationMode = LodConfig.Client.WorldGenerator.distanceGenerationMode;
 		ChunkPos newPlayerChunk = new ChunkPos(LevelPosUtil.getChunkPos((byte) 0, playerPosX), LevelPosUtil.getChunkPos((byte) 0, playerPosZ));
-		VerticalQuality verticalQuality = LodConfig.CLIENT.graphics.qualityOption.verticalQuality.get();
+		VerticalQuality verticalQuality = LodConfig.Client.Graphics.QualityOption.verticalQuality;
 		
 		
 		if (lastExpandedChunk == null)
@@ -542,7 +542,7 @@ public class LodDimension
 		dz = -1;
 		
 		// We can use two type of generation scheduling
-		switch (LodConfig.CLIENT.worldGenerator.generationPriority.get())
+		switch (LodConfig.Client.WorldGenerator.generationPriority)
 		{
 		default:
 		case NEAR_FIRST:
@@ -599,7 +599,7 @@ public class LodDimension
 				//if(lodRegion.isChunkPreGenerated(xChunkToCheck,zChunkToCheck))
 				//	complexity = DistanceGenerationMode.SERVER.complexity;
 				//else
-					complexity = LodConfig.CLIENT.worldGenerator.distanceGenerationMode.get().complexity;
+					complexity = LodConfig.Client.WorldGenerator.distanceGenerationMode.complexity;
 					
 				
 				//we create the level position info of the chunk
@@ -674,7 +674,7 @@ public class LodDimension
 	{
 		LodRegion region = getRegion(regionPos.x, regionPos.z);
 		if (region != null)
-			region.getPosToRender(posToRender, playerPosX, playerPosZ, LodConfig.CLIENT.worldGenerator.generationPriority.get() == GenerationPriority.NEAR_FIRST);
+			region.getPosToRender(posToRender, playerPosX, playerPosZ, LodConfig.Client.WorldGenerator.generationPriority == GenerationPriority.NEAR_FIRST);
 	}
 	
 	/**

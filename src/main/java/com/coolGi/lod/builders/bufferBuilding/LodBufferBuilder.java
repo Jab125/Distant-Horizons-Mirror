@@ -64,6 +64,7 @@ import net.minecraft.world.level.ChunkPos;
  * This object is used to create NearFarBuffer objects.
  *
  * @author coolGi2007
+ * @author Ran
  * @author James Seibel
  * @version 10-24-2021
  */
@@ -74,7 +75,7 @@ public class LodBufferBuilder
 	/** The thread used to generate new LODs off the main thread. */
 	public static final ExecutorService mainGenThread = Executors.newSingleThreadExecutor(new LodThreadFactory(LodBufferBuilder.class.getSimpleName() + " - main"));
 	/** The threads used to generate buffers. */
-	public static final ExecutorService bufferBuilderThreads = Executors.newFixedThreadPool(LodConfig.CLIENT.advancedModOptions.threading.numberOfBufferBuilderThreads.get(), new ThreadFactoryBuilder().setNameFormat("Buffer-Builder-%d").build());
+	public static final ExecutorService bufferBuilderThreads = Executors.newFixedThreadPool(LodConfig.Client.AdvancedModOptions.Threading.numberOfBufferBuilderThreads, new ThreadFactoryBuilder().setNameFormat("Buffer-Builder-%d").build());
 	
 	/**
 	 * When uploading to a buffer that is too small,
@@ -198,7 +199,7 @@ public class LodBufferBuilder
 			BlockPos playerBlockPosRounded = playerChunkPos.getWorldPosition();
 			
 			
-			long startTime = System.currentTimeMillis();
+			//long startTime = System.currentTimeMillis();
 			
 			ArrayList<Callable<Boolean>> nodeToRenderThreads = new ArrayList<>(lodDim.getWidth() * lodDim.getWidth());
 			
@@ -411,7 +412,7 @@ public class LodBufferBuilder
 										break;
 									
 									//We send the call to create the vertices
-									LodConfig.CLIENT.graphics.advancedGraphicsOption.lodTemplate.get().template.addLodToBuffer(currentBuffers[bufferIndex], playerBlockPosRounded, data, adjData,
+									LodConfig.Client.Graphics.AdvancedGraphicsOption.lodTemplate.template.addLodToBuffer(currentBuffers[bufferIndex], playerBlockPosRounded, data, adjData,
 											detailLevel, posX, posZ, box, renderer.previousDebugMode, adjShadeDisabled);
 								}
 								
@@ -430,7 +431,7 @@ public class LodBufferBuilder
 			} // region z
 			
 			
-			long executeStart = System.currentTimeMillis();
+			//long executeStart = System.currentTimeMillis();
 			// wait for all threads to finish
 			List<Future<Boolean>> futuresBuffer = bufferBuilderThreads.invokeAll(nodeToRenderThreads);
 			for (Future<Boolean> future : futuresBuffer)
@@ -442,14 +443,12 @@ public class LodBufferBuilder
 					break;
 				}
 			}
-			long executeEnd = System.currentTimeMillis();
-			
-			
-			long endTime = System.currentTimeMillis();
-			@SuppressWarnings("unused")
-			long buildTime = endTime - startTime;
-			@SuppressWarnings("unused")
-			long executeTime = executeEnd - executeStart;
+			//long executeEnd = System.currentTimeMillis();
+
+
+			//long endTime = System.currentTimeMillis();
+			//long buildTime = endTime - startTime;
+			//long executeTime = executeEnd - executeStart;
 
 //			ClientProxy.LOGGER.info("Thread Build time: " + buildTime + " ms" + '\n' +
 //					                        "thread execute time: " + executeTime + " ms");
@@ -495,7 +494,7 @@ public class LodBufferBuilder
 		
 		// check if the chunk is on the border
 		boolean isItBorderPos;
-		if (LodConfig.CLIENT.graphics.advancedGraphicsOption.vanillaOverdraw.get() == VanillaOverdraw.BORDER)
+		if (LodConfig.Client.Graphics.AdvancedGraphicsOption.vanillaOverdraw == VanillaOverdraw.BORDER)
 			isItBorderPos = LodUtil.isBorderChunk(vanillaRenderedChunks, chunkXdist + gameChunkRenderDistance + 1, chunkZdist + gameChunkRenderDistance + 1);
 		else
 			isItBorderPos = false;
@@ -561,7 +560,7 @@ public class LodBufferBuilder
 				// capacity, divide the memory across multiple buffers
 				if (regionMemoryRequired > LodUtil.MAX_ALLOCATABLE_DIRECT_MEMORY)
 				{
-					numberOfBuffers = (int) Math.ceil(regionMemoryRequired / LodUtil.MAX_ALLOCATABLE_DIRECT_MEMORY) + 1;
+					numberOfBuffers = (int) regionMemoryRequired / LodUtil.MAX_ALLOCATABLE_DIRECT_MEMORY + 1;
 					
 					// TODO shouldn't this be determined with regionMemoryRequired?
 					// always allocating the max memory is a bit expensive isn't it?
@@ -597,16 +596,16 @@ public class LodBufferBuilder
 				{
 					buildableBuffers[x][z][i] = new BufferBuilder((int) regionMemoryRequired);
 					
-					buildableVbos[x][z][i] = new VertexBuffer(LodUtil.LOD_VERTEX_FORMAT);
-					drawableVbos[x][z][i] = new VertexBuffer(LodUtil.LOD_VERTEX_FORMAT);
+					buildableVbos[x][z][i] = new VertexBuffer();
+					drawableVbos[x][z][i] = new VertexBuffer();
 					
 					
 					// create the initial mapped buffers (system memory)
-					GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, buildableVbos[x][z][i].id);
+					GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, buildableVbos[x][z][i].vertextBufferId);
 					GL15.glBufferData(GL15.GL_ARRAY_BUFFER, regionMemoryRequired, GL15.GL_DYNAMIC_DRAW);
 					GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 					
-					GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, drawableVbos[x][z][i].id);
+					GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, drawableVbos[x][z][i].vertextBufferId);
 					GL15.glBufferData(GL15.GL_ARRAY_BUFFER, regionMemoryRequired, GL15.GL_DYNAMIC_DRAW);
 					GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, 0);
 					
@@ -692,12 +691,12 @@ public class LodBufferBuilder
 						// need to be effectively final, so we have
 						// to use an else statement here
 						if (buildableVbos[i][j][k] != null)
-							buildableId = buildableVbos[i][j][k].id;
+							buildableId = buildableVbos[i][j][k].vertextBufferId;
 						else
 							buildableId = 0;
 						
 						if (drawableVbos[i][j][k] != null)
-							drawableId = drawableVbos[i][j][k].id;
+							drawableId = drawableVbos[i][j][k].vertextBufferId;
 						else
 							drawableId = 0;
 						
@@ -740,8 +739,8 @@ public class LodBufferBuilder
 						// isn't reset unless this is called, which can cause
 						// a false indexOutOfBoundsException
 						buildableBuffers[x][z][i].discard();
-						
-						buildableBuffers[x][z][i].begin(GL11.GL_QUADS, LodUtil.LOD_VERTEX_FORMAT);
+
+						buildableBuffers[x][z][i].begin(VertexFormat.Mode.QUADS, LodUtil.LOD_VERTEX_FORMAT);
 					}
 				}
 			}
@@ -771,12 +770,14 @@ public class LodBufferBuilder
 			glProxy.setGlContext(GlProxyContext.LOD_BUILDER);
 			
 			// determine the upload method
-			GpuUploadMethod uploadMethod = LodConfig.CLIENT.graphics.advancedGraphicsOption.gpuUploadMethod.get();
+			GpuUploadMethod uploadMethod = LodConfig.Client.Graphics.AdvancedGraphicsOption.gpuUploadMethod;
 			if (!glProxy.bufferStorageSupported && uploadMethod == GpuUploadMethod.BUFFER_STORAGE)
 			{
 				// if buffer storage isn't supported
 				// default to SUB_DATA
-				LodConfig.CLIENT.graphics.advancedGraphicsOption.gpuUploadMethod.set(GpuUploadMethod.SUB_DATA);
+				// TODO: Add a set mode
+//				LodConfig.Client.Graphics.AdvancedGraphicsOption.gpuUploadMethod.set(GpuUploadMethod.SUB_DATA);
+				System.out.println("Invalid gpuUploadMethod. Please goto config and set gpuUploadMethod to GpuUploadMethod.SUB_DATA");
 				uploadMethod = GpuUploadMethod.SUB_DATA;
 			}
 			
@@ -820,13 +821,13 @@ public class LodBufferBuilder
 			boolean allowBufferExpansion, GpuUploadMethod uploadMethod)
 	{
 		// this shouldn't happen, but just to be safe
-		if (vbo.id != -1 && GlProxy.getInstance().getGlContext() == GlProxyContext.LOD_BUILDER)
+		if (vbo.vertextBufferId != -1 && GlProxy.getInstance().getGlContext() == GlProxyContext.LOD_BUILDER)
 		{
 			// this is how many points will be rendered
-			vbo.vertexCount = (uploadBuffer.capacity() / vbo.format.getVertexSize());
+			vbo.indexCount = (uploadBuffer.capacity() / vbo.format.getVertexSize());
 			
 			
-			GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo.id);
+			GL15.glBindBuffer(GL15.GL_ARRAY_BUFFER, vbo.vertextBufferId);
 			try
 			{
 				// if possible use the faster buffer storage route
@@ -875,7 +876,7 @@ public class LodBufferBuilder
 						// ...then upload into GPU memory
 						// (uploading into GPU memory directly can only be done 
 						// through the glCopyBufferSubData/glCopyNamed... methods)
-						GL45.glCopyNamedBufferSubData(vbo.id, storageBufferId, 0, 0, uploadBuffer.capacity());
+						GL45.glCopyNamedBufferSubData(vbo.vertextBufferId, storageBufferId, 0, 0, uploadBuffer.capacity());
 					}
 				}
 				else if (uploadMethod == GpuUploadMethod.BUFFER_MAPPING)

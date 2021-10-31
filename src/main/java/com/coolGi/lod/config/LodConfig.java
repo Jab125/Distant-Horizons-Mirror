@@ -108,7 +108,18 @@ public class LodConfig
         }
 
         public class AdvancedModOptions {
+            public class Threading {
+                @ConfigEntry.Category("lod.AdvancedModOptions.Threading")
+                public static int numberOfWorldGenerationThreads = 2;
 
+                @ConfigEntry.Category("lod.AdvancedModOptions.Threading")
+                public static int numberOfBufferBuilderThreads = 2;
+            }
+        }
+
+        public class Buffers {
+            @ConfigEntry.Category("lod.Buffers")
+            public static BufferRebuildTimes rebuildTimes = BufferRebuildTimes.NORMAL;
         }
 
         public class Debug {
