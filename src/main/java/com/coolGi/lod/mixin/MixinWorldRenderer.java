@@ -20,6 +20,7 @@
 package com.coolGi.lod.mixin;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Matrix4f;
 import net.minecraft.client.renderer.LevelRenderer;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -46,15 +47,15 @@ public class MixinWorldRenderer
 {
 	private static float previousPartialTicks = 0;
 
-	@Inject(at = @At("RETURN"), method = "renderSky", cancellable = false)
-	private void renderSky(PoseStack poseStack, float f, CallbackInfo ci) {
-		// get the partial ticks since renderBlockLayer doesn't
+	@Inject(at = @At("RETURN"), method = "renderClouds", cancellable = false)
+	private void renderClouds(PoseStack poseStack, Matrix4f matrix4f, float f, double d, double e, double g, CallbackInfo ci) {
+		// get the partial ticks since renderChunkLayer doesn't
 		// have access to them
 		previousPartialTicks = f;
 	}
 
 	@Inject(at = @At("HEAD"), method = "renderChunkLayer", cancellable = false)
-	private void renderLayer(RenderType renderType, PoseStack poseStack, double d, double e, double f, CallbackInfo ci)
+	private void renderChunkLayer(RenderType renderType, PoseStack poseStack, double d, double e, double f, Matrix4f matrix4f, CallbackInfo ci)
 	{
 		// only render if LODs are enabled and
 		// only render before solid blocks
