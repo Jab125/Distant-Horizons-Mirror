@@ -3,7 +3,6 @@ package com.coolGi.lod.wrappers.World;
 import com.coolGi.lod.util.ColorUtil;
 import com.coolGi.lod.util.LodUtil;
 import com.coolGi.lod.wrappers.Block.BlockColorWrapper;
-import com.coolGi.lod.wrappers.Block.BlockWrapper;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.material.MaterialColor;

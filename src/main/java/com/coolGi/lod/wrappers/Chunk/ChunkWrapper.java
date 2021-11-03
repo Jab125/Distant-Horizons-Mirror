@@ -4,7 +4,6 @@ import com.coolGi.lod.util.LodUtil;
 import com.coolGi.lod.wrappers.Block.BlockColorWrapper;
 import com.coolGi.lod.wrappers.Block.BlockPosWrapper;
 import com.coolGi.lod.wrappers.Block.BlockShapeWrapper;
-import com.coolGi.lod.wrappers.Block.BlockWrapper;
 import com.coolGi.lod.wrappers.World.BiomeWrapper;
 import net.minecraft.world.level.block.LiquidBlockContainer;
 import net.minecraft.world.level.block.SimpleWaterloggedBlock;

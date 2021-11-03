@@ -42,7 +42,7 @@ public class LodConfig
         public class Graphics {
             public class QualityOption {
                 @ConfigEntry.Category("lod.Graphics.QualityOption")
-                public static HorizontalQuality drawResolution;
+                public static HorizontalResolution drawResolution;
 
                 @ConfigEntry.Category("lod.Graphics.QualityOption")
                 @ConfigEntry.BoundedDiscrete(min = 32, max = 1024)

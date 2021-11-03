@@ -2,11 +2,7 @@ package com.coolGi.lod.wrappers.World;
 
 import com.coolGi.lod.util.LodUtil;
 import com.coolGi.lod.wrappers.Block.BlockPosWrapper;
-import net.minecraft.block.Blocks;
-import net.minecraft.block.material.MaterialColor;
 import net.minecraft.client.renderer.BiomeColors;
-import net.minecraft.world.biome.Biome;
-import net.minecraft.world.biome.BiomeColors;
 
 import java.awt.*;
 import java.util.Objects;

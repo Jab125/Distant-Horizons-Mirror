@@ -35,12 +35,12 @@ public class DetailDistanceUtil
 	private static final double genMultiplier = 1.0;
 	private static final double treeGenMultiplier = 1.0;
 	private static final double treeCutMultiplier = 1.0;
-	private static int minGenDetail = LodConfig.CLIENT.graphics.qualityOption.drawResolution.get().detailLevel;
-	private static int minDrawDetail = Math.max(LodConfig.CLIENT.graphics.qualityOption.drawResolution.get().detailLevel, LodConfig.CLIENT.graphics.qualityOption.drawResolution.get().detailLevel);
+	private static int minGenDetail = LodConfig.Client.Graphics.QualityOption.drawResolution.detailLevel;
+	private static int minDrawDetail = Math.max(LodConfig.Client.Graphics.QualityOption.drawResolution.detailLevel, LodConfig.Client.Graphics.QualityOption.drawResolution.detailLevel);
 	private static final int maxDetail = LodUtil.REGION_DETAIL_LEVEL + 1;
 	private static final int minDistance = 0;
 	private static int minDetailDistance = (int) (MinecraftWrapper.INSTANCE.getRenderDistance()*16 * 1.42f);
-	private static int maxDistance = LodConfig.CLIENT.graphics.qualityOption.lodChunkRenderDistance.get() * 16 * 2;
+	private static int maxDistance = LodConfig.Client.Graphics.QualityOption.lodChunkRenderDistance * 16 * 2;
 	
 	
 	private static final HorizontalResolution[] lodGenDetails = {
@@ -61,9 +61,9 @@ public class DetailDistanceUtil
 	public static void updateSettings()
 	{
 		minDetailDistance = (int) (MinecraftWrapper.INSTANCE.getRenderDistance()*16 * 1.42f);
-		minGenDetail = LodConfig.CLIENT.graphics.qualityOption.drawResolution.get().detailLevel;
-		minDrawDetail = Math.max(LodConfig.CLIENT.graphics.qualityOption.drawResolution.get().detailLevel, LodConfig.CLIENT.graphics.qualityOption.drawResolution.get().detailLevel);
-		maxDistance = LodConfig.CLIENT.graphics.qualityOption.lodChunkRenderDistance.get() * 16 * 8;
+		minGenDetail = LodConfig.Client.Graphics.QualityOption.drawResolution.detailLevel;
+		minDrawDetail = Math.max(LodConfig.Client.Graphics.QualityOption.drawResolution.detailLevel, LodConfig.Client.Graphics.QualityOption.drawResolution.detailLevel);
+		maxDistance = LodConfig.Client.Graphics.QualityOption.lodChunkRenderDistance * 16 * 8;
 	}
 	
 	public static int baseDistanceFunction(int detail)
@@ -73,12 +73,12 @@ public class DetailDistanceUtil
 		if (detail >= maxDetail)
 			return maxDistance;
 		
-		int distanceUnit = LodConfig.CLIENT.graphics.qualityOption.horizontalScale.get().distanceUnit;
-		if (LodConfig.CLIENT.graphics.qualityOption.horizontalQuality.get() == HorizontalQuality.LOWEST)
+		int distanceUnit = LodConfig.Client.Graphics.QualityOption.horizontalScale.distanceUnit;
+		if (LodConfig.Client.Graphics.QualityOption.horizontalQuality == HorizontalQuality.LOWEST)
 			return (detail * distanceUnit);
 		else
 		{
-			double base = LodConfig.CLIENT.graphics.qualityOption.horizontalQuality.get().quadraticBase;
+			double base = LodConfig.Client.Graphics.QualityOption.horizontalQuality.quadraticBase;
 			return (int) (Math.pow(base, detail) * distanceUnit);
 		}
 	}
@@ -95,12 +95,12 @@ public class DetailDistanceUtil
 			return (byte) minDetail;
 		if (distance < minDetailDistance && useRenderMinDistance)
 			return (byte) minDetail;
-		int distanceUnit = LodConfig.CLIENT.graphics.qualityOption.horizontalScale.get().distanceUnit;
-		if (LodConfig.CLIENT.graphics.qualityOption.horizontalQuality.get() == HorizontalQuality.LOWEST)
+		int distanceUnit = LodConfig.Client.Graphics.QualityOption.horizontalScale.distanceUnit;
+		if (LodConfig.Client.Graphics.QualityOption.horizontalQuality == HorizontalQuality.LOWEST)
 			detail = (byte) distance/distanceUnit;
 		else
 		{
-			double base = LodConfig.CLIENT.graphics.qualityOption.horizontalQuality.get().quadraticBase;
+			double base = LodConfig.Client.Graphics.QualityOption.horizontalQuality.quadraticBase;
 			double logBase = Math.log(base);
 			//noinspection IntegerDivisionInFloatingPointContext
 			detail = (byte) (Math.log(distance / distanceUnit) / logBase);
@@ -132,21 +132,21 @@ public class DetailDistanceUtil
 	
 	public static DistanceGenerationMode getDistanceGenerationMode(int detail)
 	{
-		return LodConfig.CLIENT.worldGenerator.distanceGenerationMode.get();
+		return LodConfig.Client.WorldGenerator.distanceGenerationMode;
 	}
 	
 	public static byte getLodDrawDetail(int detail)
 	{
 		if (detail < minDrawDetail)
 		{
-			if (LodConfig.CLIENT.graphics.advancedGraphicsOption.alwaysDrawAtMaxQuality.get())
+			if (LodConfig.Client.Graphics.AdvancedGraphicsOption.alwaysDrawAtMaxQuality)
 				return getLodGenDetail(minDrawDetail).detailLevel;
 			else
 				return (byte) minDrawDetail;
 		}
 		else
 		{
-			if (LodConfig.CLIENT.graphics.advancedGraphicsOption.alwaysDrawAtMaxQuality.get())
+			if (LodConfig.Client.Graphics.AdvancedGraphicsOption.alwaysDrawAtMaxQuality)
 				return getLodGenDetail(detail).detailLevel;
 			else
 				return (byte) detail;
@@ -174,7 +174,7 @@ public class DetailDistanceUtil
 	
 	public static int getMaxVerticalData(int detail)
 	{
-		return LodConfig.CLIENT.graphics.qualityOption.verticalQuality.get().maxVerticalData[LodUtil.clamp(minGenDetail, detail, LodUtil.REGION_DETAIL_LEVEL)];
+		return LodConfig.Client.Graphics.QualityOption.verticalQuality.maxVerticalData[LodUtil.clamp(minGenDetail, detail, LodUtil.REGION_DETAIL_LEVEL)];
 	}
 	
 }

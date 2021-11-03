@@ -25,7 +25,7 @@ import java.util.concurrent.ConcurrentMap;
 public class BlockColorWrapper {
     //set of block which require tint
     public static final ConcurrentMap<Block, BlockColorWrapper> blockWrapperMap = new ConcurrentHashMap<>();
-    public static final ModelDataMap dataMap = new ModelDataMap.Builder().build();
+//    public static final ModelDataMap dataMap = new ModelDataMap.Builder().build();
     public static final BlockPos blockPos = new BlockPos(0,0,0);
     public static Random random = new Random(0);
     //public static BlockColourWrapper WATER_COLOR = getBlockColorWrapper(Blocks.WATER);
@@ -93,7 +93,9 @@ public class BlockColorWrapper {
         // first step is to check if this block has a tinted face
         for (Direction direction : directions)
         {
-            quads = mc.getModelManager().getBlockModelShaper().getBlockModel(block.defaultBlockState()).getQuads(block.defaultBlockState(), direction, random, dataMap);
+            // Datamap no longer needed
+//            quads = mc.getModelManager().getBlockModelShaper().getBlockModel(block.defaultBlockState()).getQuads(block.defaultBlockState(), direction, random, dataMap);
+            quads = mc.getModelManager().getBlockModelShaper().getBlockModel(block.defaultBlockState()).getQuads(block.defaultBlockState(), direction, random);
             listSize = Math.max(listSize, quads.size());
             for (BakedQuad bakedQuad : quads)
             {
@@ -108,7 +110,9 @@ public class BlockColorWrapper {
         //now we get the first non empty face
         for (Direction direction : directions)
         {
-            quads = mc.getModelManager().getBlockModelShaper().getBlockModel(block.defaultBlockState()).getQuads(blockState, direction, random, dataMap);
+            // Datamap no longer needed
+//            quads = mc.getModelManager().getBlockModelShaper().getBlockModel(block.defaultBlockState()).getQuads(blockState, direction, random, dataMap);
+            quads = mc.getModelManager().getBlockModelShaper().getBlockModel(block.defaultBlockState()).getQuads(blockState, direction, random);
             if (!quads.isEmpty())
                 break;
         }

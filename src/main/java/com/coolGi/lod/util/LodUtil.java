@@ -20,6 +20,7 @@
 package com.coolGi.lod.util;
 
 import com.coolGi.lod.builders.bufferBuilding.lodTemplates.Box;
+import com.coolGi.lod.config.LodConfig;
 import com.coolGi.lod.enums.HorizontalResolution;
 import com.coolGi.lod.enums.VanillaOverdraw;
 import com.coolGi.lod.objects.LodDimension;
@@ -30,10 +31,12 @@ import java.io.File;
 import java.util.HashSet;
 
 import com.mojang.blaze3d.vertex.VertexFormat;
+import net.minecraft.client.multiplayer.ServerData;
 import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.server.IntegratedServer;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.server.level.ServerChunkCache;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.Level;
@@ -270,7 +273,7 @@ public class LodUtil
 			if (serverWorld == null)
 				throw new NullPointerException("getDimensionIDFromWorld wasn't able to get the ServerWorld for the dimension " + world.dimensionType().effectsLocation().getPath());
 			
-			ServerChunkProvider provider = serverWorld.getChunkSource();
+			ServerChunkCache provider = serverWorld.getChunkSource();
 			if (provider == null)
 				throw new NullPointerException("getDimensionIDFromWorld wasn't able to get the ServerChunkProvider for the dimension " + world.dimensionType().effectsLocation().getPath());
 			
@@ -350,8 +353,8 @@ public class LodUtil
 		ChunkPos centerChunk = new ChunkPos(playerPos);
 		
 		int skipRadius;
-		VanillaOverdraw overdraw = LodConfig.CLIENT.graphics.advancedGraphicsOption.vanillaOverdraw.get();
-		HorizontalResolution drawRes = LodConfig.CLIENT.graphics.qualityOption.drawResolution.get();
+		VanillaOverdraw overdraw = LodConfig.Client.Graphics.AdvancedGraphicsOption.vanillaOverdraw;
+		HorizontalResolution drawRes = LodConfig.Client.Graphics.QualityOption.drawResolution;
 		
 		// apply distance based rules for dynamic overdraw
 		if (overdraw == VanillaOverdraw.DYNAMIC
