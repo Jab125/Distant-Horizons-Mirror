@@ -16,28 +16,27 @@ ModMenu version: 2.0.14
 
 Notes:\
 This version has been confirmed to work in Intellij and Fabric Minecraft.\
-(Retail running forge version 0.39.2+1.17)
+(Retail running fabric version 0.39.2+1.17)
 
 
 ## source code installation
 
-See the Forge Documentation online for more detailed instructions:\
-http://mcforge.readthedocs.io/en/latest/gettingstarted/
+See the Fabric Documentation online for more detailed instructions:\
+https://fabricmc.net/wiki/tutorial:setup
 
-1. Create a system variable called "JAVA_MC_HOME" with the location of the JDK 16 (This is needed for gradle to work correctly)
-2. replace JAVA_HOME with JAVA_MC_HOME in gradle.bat
-3. open a command line in the project folder
+### Prerequisites
 
-**If using Ecplise:**
-1. run the command: `./gradlew geneclipseruns`
-2. run the command: `./gradlew eclipse`
-3. Make sure eclipse has the JDK 16.0.2 installed. (This is needed so that eclipse can run minecraft)
-4. Import the project into eclipse
+* A Java Development Kit (JDK) for Java 16 (recommended) or newer. Visit https://adoptium.net/releases.html for installers.
+* Any Java IDE, for example Intellij IDEA and Eclipse. You may also use any other code editors, such as Visual Studio Code.
 
 **If using IntelliJ:**
-1. open IDEA and import the build.gradle
-2. run the command: `./gradlew genIntellijRuns`
-3. refresh the Gradle project in IDEA if required
+1. In the IDEA main menu, select 'Import Project' (or File → Open… if you already have a project open).
+2. Select the project's build.gradle file to import the project.
+3. After Gradle is done setting up, close (File → Close Project) and re-open the project to fix run configurations not displaying correctly.
+4. (If the run configurations still don't show up, try reimporting the Gradle project from the Gradle tab in IDEA.)
+
+**If using Ecplise:**
+If you are using Eclipse and you would like to have the IDE run configs you can run gradlew eclipse. The project can then be imported as a normal (non-gradle) Eclipse project into your workspace using the 'File' - 'Import…' menu, then 'General' → 'Existing Projects into Workspace'.
 
 
 ## Compiling
