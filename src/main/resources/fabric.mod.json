@@ -7,11 +7,12 @@
   "description": "Adds level of detail to Fabric",
   "authors": [
     "coolGi2007",
+    "Ran",
     "Original LOD Creators"
   ],
   "contact": {
     "homepage": "https://www.curseforge.com/minecraft/mc-mods/lod-level-of-detail",
-    "sources": "https://gitlab.com/jeseibel/minecraft-lod-mod"
+    "sources": "https://gitlab.com/jeseibel/minecraft-lod-mod/-/tree/1.17.1_fabric"
   },
 
   "license": "CC0-1.0",
@@ -20,7 +21,7 @@
   "environment": "*",
   "entrypoints": {
     "main": [
-      "com.coolGi.lod.LodMain"
+      "com.seibel.lod.LodMain"
     ]
   },
   "mixins": [
