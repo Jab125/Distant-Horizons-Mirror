@@ -61,8 +61,7 @@ public class DimensionTypeWrapper implements IDimensionTypeWrapper
 	}
 	
 	
-	@Override
-	public String getDimensionName()
+	private String getDimensionName()
 	{
 		return dimensionType.effectsLocation().getPath();
 	}
@@ -86,6 +85,10 @@ public class DimensionTypeWrapper implements IDimensionTypeWrapper
 	}
 	
 	
+	
+	// there's definitely a better way of doing this, but it should work well enough for now
+	@Override
+	public boolean isTheEnd() { return this.getDimensionName().equalsIgnoreCase("the_end"); }
 	
 	@Override
 	public boolean equals(Object obj)

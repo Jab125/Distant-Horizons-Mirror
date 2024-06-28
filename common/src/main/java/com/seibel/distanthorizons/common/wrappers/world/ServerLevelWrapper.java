@@ -107,6 +107,12 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	}
 	
 	@Override
+	public String getDimensionName()
+	{
+		return this.level.dimension().location().toString();
+	}
+	
+	@Override
 	public EDhApiLevelType getLevelType() { return EDhApiLevelType.SERVER_LEVEL; }
 	
 	public ServerLevel getLevel()
@@ -182,7 +188,7 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	@Override
 	public String toString()
 	{
-		return "Wrapped{" + level.toString() + "@" + getDimensionType().getDimensionName() + "}";
+		return "Wrapped{" + level.toString() + "@" + getDimensionName() + "}";
 	}
 	
 }
