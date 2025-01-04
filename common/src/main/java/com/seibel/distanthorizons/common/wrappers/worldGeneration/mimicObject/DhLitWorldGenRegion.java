@@ -68,6 +68,13 @@ import com.google.common.collect.ImmutableList;
 import net.minecraft.server.level.GenerationChunkHolder;
 #endif
 
+#if MC_VER >= MC_1_18_2
+import net.minecraft.world.level.block.Block;
+import net.minecraft.world.level.material.Fluid;
+import net.minecraft.world.ticks.BlackholeTickAccess;
+import net.minecraft.world.ticks.LevelTickAccess;
+#endif
+
 
 public class DhLitWorldGenRegion extends WorldGenRegion
 {
@@ -190,6 +197,19 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 		}
 		#endif
 		return true;
+	}
+	#endif
+	
+	#if MC_VER >= MC_1_18_2
+	@Override
+	public LevelTickAccess<Block> getBlockTicks()
+	{
+		return BlackholeTickAccess.emptyLevelList();
+	}
+	@Override
+	public LevelTickAccess<Fluid> getFluidTicks()
+	{
+		return BlackholeTickAccess.emptyLevelList();
 	}
 	#endif
 	
