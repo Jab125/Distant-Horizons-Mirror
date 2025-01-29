@@ -90,18 +90,32 @@ public class FabricMain extends AbstractModInitializer implements ClientModIniti
 		{
 			ModAccessorInjector.INSTANCE.bind(ISodiumAccessor.class, new SodiumAccessor());
 			
-			// If sodium is installed Indium is also necessary in order to use the Fabric rendering API
-			if (!modChecker.isModLoaded("indium"))
+			// Check for Indium unless using Sodium v6, which includes the Fabric rendering API.
+			boolean sodiumV6;
+			try
 			{
-				String indiumMissingMessage = ModInfo.READABLE_NAME + " needs Indium to work with Sodium.\nPlease download Indium from https://modrinth.com/mod/indium";
-				LOGGER.fatal(indiumMissingMessage);
-				
-				TinyFileDialogs.tinyfd_messageBox(ModInfo.READABLE_NAME, indiumMissingMessage, "ok", "error", false);
-				
-				IMinecraftClientWrapper mc = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-				String errorMessage = "loading Distant Horizons. Distant Horizons requires Indium in order to run with Sodium.";
-				String exceptionError = "Distant Horizons conditional mod Exception";
-				mc.crashMinecraft(errorMessage, new Exception(exceptionError));
+				Class.forName("net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer");
+				sodiumV6 = true;
+			}
+			catch (ClassNotFoundException e)
+			{
+				sodiumV6 = false;
+			}
+			
+			if (!sodiumV6)
+			{
+				if (!modChecker.isModLoaded("indium"))
+				{
+					String indiumMissingMessage = ModInfo.READABLE_NAME + " needs Indium to work with Sodium.\nPlease download Indium from https://modrinth.com/mod/indium";
+					LOGGER.fatal(indiumMissingMessage);
+					
+					TinyFileDialogs.tinyfd_messageBox(ModInfo.READABLE_NAME, indiumMissingMessage, "ok", "error", false);
+					
+					IMinecraftClientWrapper mc = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+					String errorMessage = "loading Distant Horizons. Distant Horizons requires Indium in order to run with Sodium.";
+					String exceptionError = "Distant Horizons conditional mod Exception";
+					mc.crashMinecraft(errorMessage, new Exception(exceptionError));
+				}
 			}
 		}
 		
