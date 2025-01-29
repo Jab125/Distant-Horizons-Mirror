@@ -72,7 +72,17 @@ public class SodiumAccessor implements ISodiumAccessor
 		{
 			if (sodiumPerformanceOptions == null)
 			{
-				boolean sodiumV6 = classPresent("net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer");
+				boolean sodiumV6;
+				try
+				{
+					Class.forName("net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer");
+					sodiumV6 = true;
+				}
+				catch (ClassNotFoundException e)
+				{
+					sodiumV6 = false;
+				}
+				
 				if (!sodiumV6)
 				{
 					// sodium 0.5
@@ -113,25 +123,6 @@ public class SodiumAccessor implements ISodiumAccessor
 			throw new RuntimeException(e);
 		}
 		#endif
-	}
-
-	
-	
-	//================//
-	// helper methods //
-	//================//
-	
-	private static boolean classPresent(String className)
-	{
-		try
-		{
-			Class.forName(className);
-			return true;
-		}
-		catch (ClassNotFoundException e)
-		{
-			return false;
-		}
 	}
 	
 }
