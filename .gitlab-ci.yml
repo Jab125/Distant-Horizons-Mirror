@@ -64,7 +64,7 @@ multiversion:
     - mkdir -p jars
     - for VER in "1.16.5" "1.17.1" "1.18.2" "1.19.2" "1.19.4" "1.20.1" "1.20.2" "1.20.4" "1.20.6" "1.21.1" "1.21.3" "1.21.4" "1.21.5"; do
     -   echo "Downloading artifacts for MC version $VER"
-    -   curl --location --output "artifacts_${VER}.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_REF_NAME}/download?job=build&job_token=${CI_JOB_TOKEN}&job_variables[MC_VER]=${VER}"
+    -   curl --location --output "artifacts_${VER}.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_REF_NAME}/download?job=build&job_variables%5BMC_VER%5D=${VER}&job_token=${CI_JOB_TOKEN}"
     -   unzip -j "artifacts_${VER}.zip" "*.jar" -d "jars/${VER}"
     - done
     # Create a semicolon-separated list of jar paths
