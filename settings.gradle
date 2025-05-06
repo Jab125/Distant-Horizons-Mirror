@@ -58,7 +58,7 @@ If you still need help with compiling, please read the Readme.md
 
 
 
-/** Loads the VersionProperties fiel for the currently selected Minecraft version. */
+/** Loads the VersionProperties field for the currently selected Minecraft version. */
 def loadProperties() {
     def defaultMcVersion = "1.20.1" // 1.20.1 is our current most stable version so we use that if no version was defined
 

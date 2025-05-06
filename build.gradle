@@ -13,7 +13,7 @@ plugins {
     id "com.github.johnrengelman.shadow" version '8.1.1' apply false
 
     // Plugin to create merged jars
-    id "io.github.pacifistmc.forgix" version "1.3.4"
+    id "io.github.pacifistmc.forgix" version "2.0.0-SNAPSHOT.1"
 
     // Manifold preprocessor
     id "systems.manifold.manifold-gradle-plugin" version "0.0.2-alpha"
@@ -22,6 +22,14 @@ plugins {
     id "dev.architectury.loom" version "1.10-SNAPSHOT" apply false
 }
 
+// Sets up Forgix for multiversion merging
+forgix {
+    if (project.hasProperty('mergeVersions')) { // This is set using -PmergeVersions by the GitLab CI
+        multiversion {
+            inputJars = project.files(project.property('mergeVersions').toString().split(';'))
+        }
+    }
+}
 
 /**
  * Creates the list of preprocessors to use.
