@@ -39,14 +39,17 @@ build:
       - MC_VER: ["1.16.5", "1.17.1", "1.18.2", "1.19.2", "1.19.4", "1.20.1", "1.20.2", "1.20.4", "1.20.6", "1.21.1", "1.21.3", "1.21.4", "1.21.5"]
   script:
     # this both runs the unit tests and assembles the code
-    - ./gradlew clean -PmcVer="${MC_VER}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
     - ./gradlew build -PmcVer="${MC_VER}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
     - ./gradlew mergeJars -PmcVer="${MC_VER}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
-    - cp ./build/forgix/* . || true
+    - cp ./fabric/build/libs/* ./forge/build/libs/* ./neoforge/build/libs/* . || true
+    # copy the merged jar to the jars folder so we can use it later in the multiversion stage
+    - mkdir -p ./jars
+    - cp ./build/forgix/* ./jars || true
   artifacts:
     name: "NightlyBuild_${MC_VER}-${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_TIMESTAMP}"
     paths:
       - ./*.jar
+      - ./jars/*.jar
     exclude:
       - ./*-all.jar
       - ./*-dev.jar
@@ -60,22 +63,14 @@ multiversion:
   stage: multiversion
   needs: [build]
   script:
-    # Download artifacts from all build jobs
-    - mkdir -p jars
-    - for VER in "1.16.5" "1.17.1" "1.18.2" "1.19.2" "1.19.4" "1.20.1" "1.20.2" "1.20.4" "1.20.6" "1.21.1" "1.21.3" "1.21.4" "1.21.5"; do
-    -   echo "Downloading artifacts for MC version $VER"
-    -   curl --location --output "artifacts_${VER}.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_REF_NAME}/download?job=build&job_variables%5BMC_VER%5D=${VER}&job_token=${CI_JOB_TOKEN}"
-    -   unzip -j "artifacts_${VER}.zip" "*.jar" -d "jars/${VER}"
-    - done
     # Create a semicolon-separated list of jar paths
     - MC_VER_PATHS=$(find jars -name "*.jar" -type f | tr '\n' ';')
     # Run the mergeVersions task
     - ./gradlew mergeVersions -PmergeVersions="${MC_VER_PATHS}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
-    - cp ./build/forgix/multiversion/* . || true
   artifacts:
     name: "NightlyBuild_Multiversion-${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_TIMESTAMP}"
     paths:
-      - ./*.jar
+      - ./build/forgix/multiversion/*.jar
     expire_in: 30 days
     when: always
   extends: .build_java
