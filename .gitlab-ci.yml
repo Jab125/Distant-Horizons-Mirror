@@ -41,19 +41,19 @@ build:
     # this both runs the unit tests and assembles the code
     - ./gradlew build -PmcVer="${MC_VER}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
     - ./gradlew mergeJars -PmcVer="${MC_VER}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
-    - cp ./fabric/build/libs/* ./forge/build/libs/* ./neoforge/build/libs/* . || true
-    # copy the merged jar to the jars folder so we can use it later in the multiversion stage
-    - mkdir -p ./jars
-    - cp ./build/forgix/* ./jars || true
+    - cp ./build/forgix/* . || true
+    - mkdir -p ./builds
+    - cp ./fabric/build/libs/* ./forge/build/libs/* ./neoforge/build/libs/* ./builds || true
+    # When the archive is created, the merged jar will be the main jar and a subfolder named "builds" will contain the other jars
   artifacts:
     name: "NightlyBuild_${MC_VER}-${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_TIMESTAMP}"
     paths:
       - ./*.jar
-      - ./jars/*.jar
+      - ./builds/*.jar
     exclude:
-      - ./*-all.jar
-      - ./*-dev.jar
-      - ./*-sources.jar
+      - ./builds/*-all.jar
+      - ./builds/*-dev.jar
+      - ./builds/*-sources.jar
     expire_in: 14 days
     when: always
   extends: .build_java
@@ -64,13 +64,16 @@ multiversion:
   needs: [build]
   script:
     # Create a semicolon-separated list of jar paths
-    - MC_VER_PATHS=$(find jars -name "*.jar" -type f | tr '\n' ';')
+    - MC_VER_PATHS=$(find . -maxdepth 1 -name "*.jar" -type f | tr '\n' ';')
     # Run the mergeVersions task
     - ./gradlew mergeVersions -PmergeVersions="${MC_VER_PATHS}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
+    # Clean up existing jars and make sure only the multiversion jar remains which will be uploaded
+    - rm -f ./*.jar
+    - cp ./build/forgix/multiversion/* .
   artifacts:
     name: "NightlyBuild_Multiversion-${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_TIMESTAMP}"
     paths:
-      - ./build/forgix/multiversion/*.jar
+      - ./*.jar
     expire_in: 30 days
     when: always
   extends: .build_java
