@@ -13,7 +13,6 @@ stages:
 variables:
   # Pull core when building
   GIT_SUBMODULE_STRATEGY: recursive
-  MC_VERSIONS: ["1.16.5", "1.17.1", "1.18.2", "1.19.2", "1.19.4", "1.20.1", "1.20.2", "1.20.4", "1.20.6", "1.21.1", "1.21.3", "1.21.4", "1.21.5"]
 
 
 # These can be extended so code is a bit less duplicated
@@ -37,7 +36,7 @@ build:
   stage: build
   parallel:
     matrix:
-      - MC_VER: $MC_VERSIONS
+      - MC_VER: ["1.16.5", "1.17.1", "1.18.2", "1.19.2", "1.19.4", "1.20.1", "1.20.2", "1.20.4", "1.20.6", "1.21.1", "1.21.3", "1.21.4", "1.21.5"]
   script:
     # this both runs the unit tests and assembles the code
     - ./gradlew clean -PmcVer="${MC_VER}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
@@ -63,7 +62,7 @@ multiversion:
   script:
     # Download artifacts from all build jobs
     - mkdir -p jars
-    - for VER in $MC_VERSIONS; do
+    - for VER in "1.16.5" "1.17.1" "1.18.2" "1.19.2" "1.19.4" "1.20.1" "1.20.2" "1.20.4" "1.20.6" "1.21.1" "1.21.3" "1.21.4" "1.21.5"; do
     -   echo "Downloading artifacts for MC version $VER"
     -   curl --location --output "artifacts_${VER}.zip" "${CI_API_V4_URL}/projects/${CI_PROJECT_ID}/jobs/artifacts/${CI_COMMIT_REF_NAME}/download?job=build&job_token=${CI_JOB_TOKEN}&job_variables[MC_VER]=${VER}"
     -   unzip -j "artifacts_${VER}.zip" "*.jar" -d "jars/${VER}"
