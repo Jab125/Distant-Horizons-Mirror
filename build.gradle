@@ -13,7 +13,7 @@ plugins {
     id "com.github.johnrengelman.shadow" version '8.1.1' apply false
 
     // Plugin to create merged jars
-    id "io.github.pacifistmc.forgix" version "2.0.0-SNAPSHOT.1"
+    id "io.github.pacifistmc.forgix" version "2.0.0-SNAPSHOT.2"
 
     // Manifold preprocessor
     id "systems.manifold.manifold-gradle-plugin" version "0.0.2-alpha"
