@@ -1,13 +1,11 @@
-# use Eclipse's JDK
-# The ci should always use a unix(-like) OS to work
-image: eclipse-temurin:21
+default:
+  # use Eclipse's JDK
+  image: eclipse-temurin:21
+  # The ci should always use a unix(-like) OS to work
+  # https://docs.gitlab.com/ci/runners/hosted_runners/linux/
+  tags: 
+    - saas-linux-small-amd64
 
-# all stages need to be defined here
-# TODO: Make stages depend on what is in versionProperties
-stages:
-  - build
-  - api
-  - pages
 
 variables:
   # Pull core when building
@@ -56,8 +54,7 @@ build:
 
 
 api:
-  stage: api
-  needs: []
+  stage: build
   script:
     # this should only run for the API
     - ./gradlew api:clean --gradle-user-home cache/;
@@ -80,16 +77,16 @@ api:
 
 # generate and publish API javadocs
 pages:
-  stage: pages
-  needs: []
+  stage: build
   script:
     # this should only run for the API
+    # TODO: Then why is it being run for the pages?
     - ./gradlew api:clean --gradle-user-home cache/;
     # this also runs unit tests
     - ./gradlew api:build --gradle-user-home cache/;
     - ./gradlew api:javadoc --gradle-user-home cache/;
-    - mkdir public
-    - cp -r $CI_PROJECT_DIR/coreSubProjects/api/build/docs/javadoc/. public
+    - mkdir -p public
+    - cp -r "$CI_PROJECT_DIR/coreSubProjects/api/build/docs/javadoc/." public
   artifacts:
     paths:
       - public
