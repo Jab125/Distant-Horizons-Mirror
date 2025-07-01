@@ -8,7 +8,9 @@
         "server.MixinTFChunkGenerator",
       "server.MixinChunkMap",
         "server.MixinServerPlayer",
-        "server.MixinEntity"
+        "server.MixinEntity",
+        "server.MixinChunkSerialize",
+        "server.MixinLevelChunk"
     ],
     "client": [
         "client.MixinClientPacketListener",
