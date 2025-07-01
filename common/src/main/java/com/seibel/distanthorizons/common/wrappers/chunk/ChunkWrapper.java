@@ -390,21 +390,26 @@ public class ChunkWrapper implements IChunkWrapper
 		BlockState blockState = this.chunk.getBlockState(pos);
 		
 		#if MC_VER == MC_1_20_1
-		//Convert LittleTiles Tile to Common Block
-		int worldX = this.chunk.getPos().getMinBlockX() + relX;
-		int worldY = relY;
-		int worldZ = this.chunk.getPos().getMinBlockZ() + relZ;
-		BlockPos worldPos = new BlockPos(worldX, worldY, worldZ);
 		
-		if(blockState.toString().contains("littletiles:tiles")){
-			BlockState convertedBlockState = LTColorCache.getTrueColor(worldPos);
-			if(convertedBlockState != null)
-			{
-				return BlockStateWrapper.fromBlockState(convertedBlockState, this.wrappedLevel, guess);
-			}else{
-				LOGGER.error("could not get LT at"+pos);
+		boolean ShouldConvertLTBlock = Config.Common.LodBuilding.convertLTBlock.get();
+		if(ShouldConvertLTBlock == true){
+			//Convert LittleTiles Tile to Common Block
+			int worldX = this.chunk.getPos().getMinBlockX() + relX;
+			int worldY = relY;
+			int worldZ = this.chunk.getPos().getMinBlockZ() + relZ;
+			BlockPos worldPos = new BlockPos(worldX, worldY, worldZ);
+			
+			if(blockState.toString().contains("littletiles:tiles")){
+				BlockState convertedBlockState = LTColorCache.getTrueColor(worldPos);
+				if(convertedBlockState != null)
+				{
+					return BlockStateWrapper.fromBlockState(convertedBlockState, this.wrappedLevel, guess);
+				}else{
+					LOGGER.error("could not get LT at"+pos);
+				}
 			}
 		}
+		
 		#else
 		#endif
 				

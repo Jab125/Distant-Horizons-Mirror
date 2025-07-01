@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.forge.mixins.server;
 
 #if MC_VER == MC_1_20_1
 import com.seibel.distanthorizons.common.wrappers.block.LTColorCache;
+import com.seibel.distanthorizons.core.config.Config;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -35,24 +36,27 @@ public class MixinChunkSerialize
 	@Inject(method = "write", at = @At("HEAD"))
 	private static void onChunkWrite(ServerLevel level, ChunkAccess chunk, CallbackInfoReturnable<CompoundTag> cir) {
 		if (chunk instanceof LevelChunk levelChunk) {
-			levelChunk.getBlockEntities().forEach((pos, be) -> {
-				CompoundTag beTag = be.saveWithFullMetadata();
-				String id = beTag.getString("id");
-				if (id.equals("littletiles:tiles")) {
-					try{
-						CompoundTag contentTag = beTag.getCompound("content");
-						CompoundTag tilesTag = contentTag.getCompound("tiles");
-						Set<String> tileKeys = tilesTag.getAllKeys();
-						if (!tileKeys.isEmpty())
-						{
-							String firstTileId = tileKeys.iterator().next();
-							LTColorCache.put(pos, firstTileId);
+			Boolean shouldConvertLTBlock = Config.Common.LodBuilding.convertLTBlock.get();
+			if(shouldConvertLTBlock == true){
+				levelChunk.getBlockEntities().forEach((pos, be) -> {
+					CompoundTag beTag = be.saveWithFullMetadata();
+					String id = beTag.getString("id");
+					if (id.equals("littletiles:tiles")) {
+						try{
+							CompoundTag contentTag = beTag.getCompound("content");
+							CompoundTag tilesTag = contentTag.getCompound("tiles");
+							Set<String> tileKeys = tilesTag.getAllKeys();
+							if (!tileKeys.isEmpty())
+							{
+								String firstTileId = tileKeys.iterator().next();
+								LTColorCache.put(pos, firstTileId);
+							}
+						}catch (Exception e){
+							e.printStackTrace();
 						}
-					}catch (Exception e){
-						e.printStackTrace();
 					}
-				}
-			});
+				});
+			}
 		}
 	}
 	
@@ -61,33 +65,45 @@ public class MixinChunkSerialize
 		
 		ChunkAccess chunk = cir.getReturnValue();
 		
-		if (chunk instanceof ProtoChunk) {
-			// In main ProtoChunk, BlockEntities have not yet been deserialized into objects;
-			// need to read from raw NBT data.
-			ListTag beList = tag.getList("block_entities", 10);// 10: Each entry is a CompoundTag
-			
-			for (int i = 0; i < beList.size(); i++) {
-				CompoundTag beTag = beList.getCompound(i);
-				String id = beTag.getString("id");
-				BlockPos pos = BlockEntity.getPosFromTag(beTag);
-				if (id.equals("littletiles:tiles")) {
-					try{
-						CompoundTag contentTag = beTag.getCompound("content");
-						CompoundTag tilesTag = contentTag.getCompound("tiles");
-						Set<String> tileKeys = tilesTag.getAllKeys();
-						if (!tileKeys.isEmpty())
+		if (chunk instanceof ProtoChunk)
+		{
+			Boolean shouldConvertLTBlock = Config.Common.LodBuilding.convertLTBlock.get();
+			if (shouldConvertLTBlock == true)
+			{
+				// In main ProtoChunk, BlockEntities have not yet been deserialized into objects;
+				// need to read from raw NBT data.
+				ListTag beList = tag.getList("block_entities", 10);// 10: Each entry is a CompoundTag
+				
+				for (int i = 0; i < beList.size(); i++)
+				{
+					CompoundTag beTag = beList.getCompound(i);
+					String id = beTag.getString("id");
+					BlockPos pos = BlockEntity.getPosFromTag(beTag);
+					if (id.equals("littletiles:tiles"))
+					{
+						try
 						{
-							String firstTileId = tileKeys.iterator().next();
-							LTColorCache.put(pos, firstTileId);
-							LOGGER.warn("LTColorCache.getCacheSize()="+LTColorCache.getCacheSize());
+							CompoundTag contentTag = beTag.getCompound("content");
+							CompoundTag tilesTag = contentTag.getCompound("tiles");
+							Set<String> tileKeys = tilesTag.getAllKeys();
+							if (!tileKeys.isEmpty())
+							{
+								String firstTileId = tileKeys.iterator().next();
+								LTColorCache.put(pos, firstTileId);
+								//LOGGER.warn("LTColorCache.getCacheSize()="+LTColorCache.getCacheSize());
+							}
 						}
-					}catch (Exception e){
-						e.printStackTrace();
+						catch (Exception e)
+						{
+							e.printStackTrace();
+						}
 					}
 				}
 			}
-		}else if (chunk instanceof LevelChunk levelChunk) {
-			// Under normal circumstances, this branch shouldn't be reached
+			else if (chunk instanceof LevelChunk levelChunk)
+			{
+				// Under normal circumstances, this branch shouldn't be reached
+			}
 		}
 	}
 	#else
