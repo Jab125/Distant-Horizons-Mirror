@@ -28,6 +28,12 @@ public class LTColorCache {
 	//Used for converting string to BlockState
 	public static BlockState parseBlockStateString(String blockStateStr) {
 		try {
+			//sometimes the blockStateStr could be "missing" (mostly caused by missing other mod), temporarily convert to stone
+			if(blockStateStr.equals("missing")){
+				LOGGER.warn("find LT \"missing\" value, converted to stone");
+				return Blocks.STONE.defaultBlockState();
+			}
+			
 			String blockName;
 			String stateStr = null;
 			

@@ -42,7 +42,8 @@ public class MixinChunkSerialize
 					CompoundTag beTag = be.saveWithFullMetadata();
 					String id = beTag.getString("id");
 					if (id.equals("littletiles:tiles")) {
-						try{
+						try
+						{
 							CompoundTag contentTag = beTag.getCompound("content");
 							CompoundTag tilesTag = contentTag.getCompound("tiles");
 							Set<String> tileKeys = tilesTag.getAllKeys();
@@ -50,6 +51,19 @@ public class MixinChunkSerialize
 							{
 								String firstTileId = tileKeys.iterator().next();
 								LTColorCache.put(pos, firstTileId);
+								//LOGGER.warn("LTColorCache.getCacheSize()="+LTColorCache.getCacheSize());
+							}else{
+								//tilesTag could be empty, but if so its children will not be empty usually.
+								CompoundTag childrenTag = contentTag.getCompound("Children");
+								tilesTag = childrenTag.getCompound("tiles");
+								tileKeys = tilesTag.getAllKeys();
+								if(!tileKeys.isEmpty()){
+									String firstTileId = tileKeys.iterator().next();
+									LTColorCache.put(pos, firstTileId);
+									//LOGGER.warn("LTColorCache.getCacheSize()="+LTColorCache.getCacheSize());
+								}else{
+									LOGGER.warn("could not get any usable LT info at"+pos);
+								}
 							}
 						}catch (Exception e){
 							e.printStackTrace();
@@ -70,7 +84,7 @@ public class MixinChunkSerialize
 			Boolean shouldConvertLTBlock = Config.Common.LodBuilding.convertLTBlock.get();;
 			if (shouldConvertLTBlock == true)
 			{
-				// In main ProtoChunk, BlockEntities have not yet been deserialized into objects;
+				// In main ProtoChunk, BlockEntities have not been deserialized into objects  yet.
 				// need to read from raw NBT data.
 				ListTag beList = tag.getList("block_entities", 10);// 10: Each entry is a CompoundTag
 				
@@ -91,6 +105,18 @@ public class MixinChunkSerialize
 								String firstTileId = tileKeys.iterator().next();
 								LTColorCache.put(pos, firstTileId);
 								//LOGGER.warn("LTColorCache.getCacheSize()="+LTColorCache.getCacheSize());
+							}else{
+								//tilesTag could be empty, but if so its children will not be empty usually.
+								CompoundTag childrenTag = contentTag.getCompound("Children");
+								tilesTag = childrenTag.getCompound("tiles");
+								tileKeys = tilesTag.getAllKeys();
+								if(!tileKeys.isEmpty()){
+									String firstTileId = tileKeys.iterator().next();
+									LTColorCache.put(pos, firstTileId);
+									//LOGGER.warn("LTColorCache.getCacheSize()="+LTColorCache.getCacheSize());
+								}else{
+									LOGGER.warn("could not get any usable LT info at"+pos);
+								}
 							}
 						}
 						catch (Exception e)
