@@ -68,7 +68,7 @@ public class MixinChunkSerialize
 #endif
 
 
-#if MV_VER == MC_1_20_1
+#if MC_VER == MC_1_20_1
 	@Inject(method = "write", at = @At("HEAD"))
 	private static void onChunkWrite(ServerLevel level, ChunkAccess chunk, CallbackInfoReturnable<CompoundTag> cir) {
 		if (chunk instanceof LevelChunk levelChunk && Config.Common.LodBuilding.convertLTBlock.get()) {
@@ -85,7 +85,7 @@ public class MixinChunkSerialize
 #endif
 
 
-#if MV_VER == MC_1_21_1
+#if MC_VER == MC_1_21_1
 	@Inject(method = "write", at = @At("HEAD"))
 	private static void onChunkWrite(ServerLevel level, ChunkAccess chunk, CallbackInfoReturnable<CompoundTag> cir) {
 		if (chunk instanceof LevelChunk levelChunk && Config.Common.LodBuilding.convertLTBlock.get()) {
