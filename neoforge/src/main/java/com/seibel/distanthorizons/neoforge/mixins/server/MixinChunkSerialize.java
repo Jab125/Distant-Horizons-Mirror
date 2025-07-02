@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.fabric.mixins.server;
+package com.seibel.distanthorizons.neoforge.mixins.server;
 
 #if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
 import com.seibel.distanthorizons.common.wrappers.block.LTColorCache;
@@ -98,8 +98,8 @@ public class MixinChunkSerialize
 	}
 #else
 #endif
-
-#if MC_VER == MC_1_21_1
+	
+	#if MC_VER == MC_1_21_1
 	@Inject(method = "read", at = @At("RETURN"))
 	private static void onChunkRead(ServerLevel level, PoiManager poiManager, RegionStorageInfo regionStorageInfo, ChunkPos chunkPos, CompoundTag tag, CallbackInfoReturnable<ProtoChunk> cir) {
 		ChunkAccess chunk = cir.getReturnValue();

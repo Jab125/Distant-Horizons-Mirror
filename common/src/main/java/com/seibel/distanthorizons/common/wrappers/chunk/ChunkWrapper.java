@@ -67,7 +67,8 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 import net.minecraft.world.level.chunk.LevelChunkSection;
 #endif
 
-#if MC_VER == MC_1_20_1
+#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
+//used by code of LT converting
 import net.minecraft.world.level.block.state.BlockState;
 #endif
 
@@ -389,7 +390,7 @@ public class ChunkWrapper implements IChunkWrapper
 		
 		BlockState blockState = this.chunk.getBlockState(pos);
 		
-		#if MC_VER == MC_1_20_1
+		#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
 		
 		boolean ShouldConvertLTBlock = Config.Common.LodBuilding.convertLTBlock.get();
 		if(ShouldConvertLTBlock == true){
@@ -405,7 +406,7 @@ public class ChunkWrapper implements IChunkWrapper
 				{
 					return BlockStateWrapper.fromBlockState(convertedBlockState, this.wrappedLevel, guess);
 				}else{
-					LOGGER.error("could not get LT at"+pos);
+					LOGGER.error("could not get LT at"+worldPos);
 				}
 			}
 		}

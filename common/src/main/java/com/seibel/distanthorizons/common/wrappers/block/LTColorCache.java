@@ -1,6 +1,6 @@
 package com.seibel.distanthorizons.common.wrappers.block;
 
-#if MC_VER == MC_1_20_1
+#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -19,7 +19,7 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class LTColorCache {
-	#if MC_VER == MC_1_20_1
+#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
 	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
 	
 	// Main cache: each chunk maps to a BlockPos -> color (BlockState) mapping
@@ -28,9 +28,10 @@ public class LTColorCache {
 	//Used for converting string to BlockState
 	public static BlockState parseBlockStateString(String blockStateStr) {
 		try {
-			//sometimes the blockStateStr could be "missing" (mostly caused by missing other mod), temporarily convert to stone
-			if(blockStateStr.equals("missing")){
-				LOGGER.warn("find LT \"missing\" value, converted to stone");
+			//LOGGER.warn(blockStateStr);
+			//sometimes the blockStateStr could be "littletiles:missing" (mostly caused by missing other mod), temporarily convert to stone
+			if(blockStateStr.equals("littletiles:missing")){
+				LOGGER.warn("find LT \"littletiles:missing\" value, converted to stone");
 				return Blocks.STONE.defaultBlockState();
 			}
 			
@@ -45,9 +46,28 @@ public class LTColorCache {
 			} else {
 				blockName = blockStateStr;
 			}
+#endif			
 			
+#if MC_VER == MC_1_20_1
 			// Retrieve the Block
 			ResourceLocation blockId = new ResourceLocation(blockName);
+#else
+#endif
+
+#if MC_VER == MC_1_21_1
+			ResourceLocation blockId;
+			int colonIndex = blockName.indexOf(':');
+			if (colonIndex != -1) {
+				String namespace = blockName.substring(0, colonIndex);
+				String path = blockName.substring(colonIndex + 1);
+				blockId = ResourceLocation.fromNamespaceAndPath(namespace, path);
+			} else {
+				blockId = ResourceLocation.fromNamespaceAndPath("minecraft", blockName);
+			}
+#else
+#endif
+			
+#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1			
 			Block block = BuiltInRegistries.BLOCK.get(blockId);
 			if (block == null) {
 				throw new IllegalArgumentException("Unknown block id: " + blockName);
@@ -159,6 +179,6 @@ public class LTColorCache {
 		chunkColorMap.clear();
 	}
 	
-	#else
-	#endif
+#else
+#endif
 }

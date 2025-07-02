@@ -9,7 +9,9 @@
     "server.MixinTFChunkGenerator",
     "server.MixinTracingExecutor",
     "server.MixinUtilBackgroundThread",
-    "server.MixinLevelTicks"
+    "server.MixinLevelTicks",
+    "server.MixinChunkSerialize",
+    "server.MixinLevelChunk"
   ],
   "client": [
     "client.MixinClientPacketListener",
