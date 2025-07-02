@@ -64,6 +64,28 @@ public class MixinChunkSerialize
 		}
 	}
 	
+#else
+#endif
+
+
+#if MV_VER == MC_1_20_1
+	@Inject(method = "write", at = @At("HEAD"))
+	private static void onChunkWrite(ServerLevel level, ChunkAccess chunk, CallbackInfoReturnable<CompoundTag> cir) {
+		if (chunk instanceof LevelChunk levelChunk && Config.Common.LodBuilding.convertLTBlock.get()) {
+			levelChunk.getBlockEntities().forEach((pos, be) -> {
+				CompoundTag beTag = be.saveWithFullMetadata();
+				if ("littletiles:tiles".equals(beTag.getString("id"))) {
+					CompoundTag contentTag = beTag.getCompound("content");
+					extractLTColor(pos, contentTag);
+				}
+			});
+		}
+	}
+#else
+#endif
+
+
+#if MV_VER == MC_1_21_1
 	@Inject(method = "write", at = @At("HEAD"))
 	private static void onChunkWrite(ServerLevel level, ChunkAccess chunk, CallbackInfoReturnable<CompoundTag> cir) {
 		if (chunk instanceof LevelChunk levelChunk && Config.Common.LodBuilding.convertLTBlock.get()) {
@@ -80,7 +102,7 @@ public class MixinChunkSerialize
 #endif
 	
 #if MC_VER == MC_1_20_1
-
+	
 	@Inject(method = "read", at = @At("RETURN"))
 	private static void onChunkRead(ServerLevel level, PoiManager poiManager, ChunkPos chunkPos, CompoundTag tag, CallbackInfoReturnable<ProtoChunk> cir) {
 		ChunkAccess chunk = cir.getReturnValue();
