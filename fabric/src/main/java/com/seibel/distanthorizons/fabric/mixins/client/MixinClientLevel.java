@@ -26,6 +26,15 @@ import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import net.minecraft.client.multiplayer.ClientLevel;
 #if MC_VER >= MC_1_18_2
 #endif
+
+#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
+import com.seibel.distanthorizons.common.wrappers.block.LTColorCache;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.chunk.LevelChunk;
+#else
+#endif
+
 import net.minecraft.world.level.chunk.LevelChunk;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
@@ -58,4 +67,12 @@ public class MixinClientLevel
 	}
 	#endif
 	
+	#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
+	@Inject(method = "unload", at = @At("HEAD"))
+	private void onChunkUnload(LevelChunk chunk, CallbackInfo ci) {
+		ChunkPos pos = chunk.getPos();
+		LTColorCache.removeChunk(pos);
+	}
+	#else
+	#endif
 }

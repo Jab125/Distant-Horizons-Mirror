@@ -21,7 +21,8 @@
     "client.MixinLightTexture",
     "client.MixinMinecraft",
     "client.MixinOptionsScreen",
-    "client.MixinTextureUtil"
+    "client.MixinTextureUtil", 
+    "client.MixinClientLevel"
   ],
   "server": [],
   "plugin": "com.seibel.distanthorizons.neoforge.mixins.NeoforgeMixinPlugin"

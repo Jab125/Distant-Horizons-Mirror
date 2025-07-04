@@ -4,6 +4,8 @@ package com.seibel.distanthorizons.common.wrappers.block;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.nbt.ListTag;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.block.Block;
@@ -24,6 +26,32 @@ public class LTColorCache {
 	
 	// Main cache: each chunk maps to a BlockPos -> color (BlockState) mapping
 	private static final ConcurrentHashMap<ChunkPos, ConcurrentHashMap<BlockPos, BlockState>> chunkColorMap = new ConcurrentHashMap<>();
+	
+	public static void extractLTColor(BlockPos pos, CompoundTag contentTag) {
+		try {
+			CompoundTag tilesTag = contentTag.getCompound("tiles");
+			if (!tilesTag.isEmpty()) {
+				String firstTileId = tilesTag.getAllKeys().iterator().next();
+				LTColorCache.put(pos, firstTileId);
+			} else {
+				ListTag childrenList = contentTag.getList("children", 10);
+				for (int j = 0; j < childrenList.size(); j++) {
+					CompoundTag wrapper = childrenList.getCompound(j);
+					if (wrapper.contains("tiles", 10)) {
+						CompoundTag tiles = wrapper.getCompound("tiles");
+						for (String tileId : tiles.getAllKeys()) {
+							if (tiles.get(tileId) instanceof ListTag) {
+								LTColorCache.put(pos, tileId);
+								return;
+							}
+						}
+					}
+				}
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
 	
 	//Used for converting string to BlockState
 	public static BlockState parseBlockStateString(String blockStateStr) {
