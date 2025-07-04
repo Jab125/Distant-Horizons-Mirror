@@ -78,7 +78,7 @@ public class MixinChunkSerialize
 				CompoundTag beTag = be.saveWithFullMetadata(level.registryAccess());
 				if (beTag != null && "littletiles:tiles".equals(beTag.getString("id"))) {
 					CompoundTag contentTag = beTag.getCompound("content");
-					extractLTColor(pos, contentTag);
+					LTColorCache.extractLTColor(pos, contentTag);
 				}
 			});
 		}
@@ -94,7 +94,7 @@ public class MixinChunkSerialize
 				if (beTag != null && "littletiles:tiles".equals(beTag.getString("id"))) {
 					BlockPos pos = BlockEntity.getPosFromTag(beTag);
 					CompoundTag contentTag = beTag.getCompound("content");
-					extractLTColor(pos, contentTag);
+					LTColorCache.extractLTColor(pos, contentTag);
 				}
 			}
 		}
