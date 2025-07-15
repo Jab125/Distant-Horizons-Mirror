@@ -125,7 +125,8 @@ public class ForgeMain extends AbstractModInitializer
 	@Override
 	protected void subscribeClientStartedEvent(Runnable eventHandler)
 	{
-		// FIXME What event is this?
+		//Simply run the event handler, as there is no proper ClientLifecycleEvent for the client to signify readiness other than FmlClientSetupEvent
+		eventHandler.run();
 	}
 	
 	@Override
