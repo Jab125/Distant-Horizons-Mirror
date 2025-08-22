@@ -431,7 +431,12 @@ public class ClassicConfigGUI
 			if (this.configBase.modID.equals("distanthorizons"))
 			{
 				// Display version
-				DhDrawString(matrices, font, TextOrLiteral(ModInfo.VERSION), 2, height - 10, 0xAAAAAA);
+				this.DhDrawString(matrices, this.font, TextOrLiteral(ModInfo.VERSION), 2, this.height - 10, 
+						#if MC_VER < MC_1_21_6
+						0xAAAAAA // RGB white
+						#else
+						0xFFAAAAAA // ARGB white
+						#endif);
 				
 				// If the update is pending, display this message to inform the user that it will apply when the game restarts
 				if (SelfUpdater.deleteOldJarOnJvmShutdown)

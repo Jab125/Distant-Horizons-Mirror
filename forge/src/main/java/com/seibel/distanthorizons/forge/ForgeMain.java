@@ -118,14 +118,14 @@ public class ForgeMain extends AbstractModInitializer
 	
 	@Override
 	protected void subscribeRegisterCommandsEvent(Consumer<CommandDispatcher<CommandSourceStack>> eventHandler)
-	{
-		MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> { eventHandler.accept(e.getDispatcher()); });
-	}
+	{ MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent e) -> { eventHandler.accept(e.getDispatcher()); }); }
 	
 	@Override
 	protected void subscribeClientStartedEvent(Runnable eventHandler)
 	{
-		// FIXME What event is this?
+		// Just run the event handler, since there are no proper ClientLifecycleEvent for the client 
+		// to signify readiness other than FmlClientSetupEvent
+		eventHandler.run();
 	}
 	
 	@Override

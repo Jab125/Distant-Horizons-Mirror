@@ -26,10 +26,6 @@ import net.minecraft.client.Minecraft;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.minecraft.client.Camera;
 import net.minecraft.world.effect.MobEffects;
@@ -40,10 +36,18 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.material.FluidState;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.FogRenderer.FogMode;
+import com.mojang.blaze3d.systems.RenderSystem;
+
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 #elif MC_VER < MC_1_21_3
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.FogRenderer.FogMode;
+import com.mojang.blaze3d.systems.RenderSystem;
+
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 #elif MC_VER < MC_1_21_6
 import net.minecraft.world.level.material.FogType;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -52,13 +56,17 @@ import net.minecraft.client.renderer.FogRenderer;
 import net.minecraft.client.renderer.FogRenderer.FogMode;
 import net.minecraft.client.renderer.FogParameters;
 import org.joml.Vector4f;
+import com.mojang.blaze3d.systems.RenderSystem;
+
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 #else
-import com.mojang.blaze3d.buffers.Std140Builder;
 import net.minecraft.world.level.material.FogType;
 import net.minecraft.client.renderer.fog.FogRenderer;
-import org.joml.Vector4f;
+import net.minecraft.client.renderer.fog.FogData;
 
-import java.nio.ByteBuffer;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 #endif
 
 @Mixin(FogRenderer.class)
@@ -82,8 +90,8 @@ public class MixinFogRenderer
 	@Inject(at = @At("RETURN"), method = "setupFog", cancellable = true)
 	private static void disableSetupFog(Camera camera, FogMode fogMode, Vector4f vector4f, float f, boolean bl, float g, CallbackInfoReturnable<FogParameters> callback)
 	#else
-	@Inject(at = @At("RETURN"), method = "updateBuffer")
-	private static void disableSetupFog(ByteBuffer fogDataBuffer, int bufferStartPos, Vector4f fogColor, float environmentalStart, float environmentalEnd, float renderDistanceStart, float renderDistanceEnd, float skyEnd, float cloudEnd, CallbackInfo callback)
+	@Unique
+	private static void unused()
 	#endif
 	{
 		#if MC_VER < MC_1_21_6
@@ -91,17 +99,6 @@ public class MixinFogRenderer
 		#elif MC_VER < MC_1_21_6
 		boolean cancelFog = cancelFog(camera);
 		#else
-		// don't try disabling the "Empty fog" buffer, that one is already empty and
-		// will be called before the renderer is set up which can cause some weird null-pointer issues
-		if (fogColor.x == 0.0f // Red
-			&& fogColor.y == 0.0f // Green
-			&& fogColor.z == 0.0f // Blue
-			&& fogColor.w == 0.0f // Alpha
-			)
-		{
-			return;
-		}
-			
 		boolean cancelFog = cancelFog();
 		#endif
 		
@@ -116,24 +113,42 @@ public class MixinFogRenderer
 			#elif MC_VER < MC_1_21_6
 			callback.setReturnValue(FogParameters.NO_FOG);
 			#else
-			// replace the fog data with our own info
-			fogDataBuffer.position(bufferStartPos);
-			Std140Builder.intoBuffer(fogDataBuffer)
-					.putVec4(fogColor)
-					//environmentalStart/End
-					.putFloat(A_REALLY_REALLY_BIG_VALUE).putFloat(A_EVEN_LARGER_VALUE)
-					//renderDistanceStart/End
-					.putFloat(A_REALLY_REALLY_BIG_VALUE).putFloat(A_EVEN_LARGER_VALUE)
-					
-					// sky and cloud should be unaffected otherwise the distant sky will render incorrectly
-					// (IE have a large fog-colored block in the sky)
-					.putFloat(skyEnd)
-					.putFloat(cloudEnd);
 			#endif
 		}
 		
 	}
 	
+	
+	#if MC_VER < MC_1_21_6
+	#else
+	
+	// In MC's FogRenderer they clamp the "renderDistanceEnd" fog field to the render distance,
+	// which prevents us from disabling the vanilla fog.
+	// This mixin fires after they set the "renderDistanceEnd" so we can change it.
+	@WrapOperation(
+		method = "setupFog",
+		at = @At(
+			value = "FIELD",
+			target = "Lnet/minecraft/client/renderer/fog/FogData;renderDistanceEnd:F",
+			opcode = org.objectweb.asm.Opcodes.PUTFIELD
+		)
+	)
+	private void onSetRenderDistanceEnd(FogData instance, float value, Operation<Void> original) 
+	{
+		if (cancelFog())
+		{
+			instance.environmentalStart = A_REALLY_REALLY_BIG_VALUE;
+			instance.environmentalEnd = A_EVEN_LARGER_VALUE;
+			
+			instance.renderDistanceStart = A_REALLY_REALLY_BIG_VALUE;
+			instance.renderDistanceEnd = A_EVEN_LARGER_VALUE;
+		}
+		
+		// Always call the original with the modified or original value
+		original.call(instance, value);
+	}
+	
+	#endif
 	
 	
 	@Unique

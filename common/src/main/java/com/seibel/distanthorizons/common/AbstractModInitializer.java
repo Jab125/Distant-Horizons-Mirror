@@ -66,7 +66,7 @@ public abstract class AbstractModInitializer
 	{
 		DependencySetup.createClientBindings();
 		
-		LOGGER.info("Initializing " + ModInfo.READABLE_NAME + " client.");
+		LOGGER.info("Initializing " + ModInfo.READABLE_NAME + " client, firing DhApiBeforeDhInitEvent...");
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeDhInitEvent.class, null);
 		
 		this.startup();
@@ -77,12 +77,11 @@ public abstract class AbstractModInitializer
 		
 		this.initializeModCompat();
 		
-		LOGGER.info(ModInfo.READABLE_NAME + " client Initialized.");
-		ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterDhInitEvent.class, null);
-		
 		// Client uses config for auto-updater, so it's initialized here instead of post-init stage
 		this.initConfig();
 		logModIncompatibilityWarnings(); // needs to be called after config loading
+		
+		LOGGER.info(ModInfo.READABLE_NAME + " client Initialized.");
 		
 		this.subscribeClientStartedEvent(this::postInit);
 	}
@@ -91,7 +90,7 @@ public abstract class AbstractModInitializer
 	{
 		DependencySetup.createServerBindings();
 		
-		LOGGER.info("Initializing " + ModInfo.READABLE_NAME + " server.");
+		LOGGER.info("Initializing " + ModInfo.READABLE_NAME + " server, firing DhApiBeforeDhInitEvent event...");
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeDhInitEvent.class, null);
 		
 		this.startup();
@@ -106,8 +105,7 @@ public abstract class AbstractModInitializer
 		
 		this.initializeModCompat();
 		
-		LOGGER.info(ModInfo.READABLE_NAME + " server Initialized.");
-		ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterDhInitEvent.class, null);
+		LOGGER.info(ModInfo.READABLE_NAME + " server Initialized, adding event subscribers...");
 		
 		this.subscribeRegisterCommandsEvent(dispatcher -> { this.commandInitializer = new CommandInitializer(dispatcher); });
 		
@@ -121,7 +119,7 @@ public abstract class AbstractModInitializer
 			
 			this.checkForUpdates();
 			
-			LOGGER.info("Dedicated server initialized at " + server.getServerDirectory());
+			LOGGER.info(ModInfo.READABLE_NAME + " server Initialized at " + server.getServerDirectory());
 		});
 	}
 	
@@ -183,9 +181,12 @@ public abstract class AbstractModInitializer
 	
 	private void postInit()
 	{
-		LOGGER.info("Post-Initializing Mod");
+		LOGGER.info("Running Delayed setup...");
 		this.runDelayedSetup();
-		LOGGER.info("Mod Post-Initialized");
+		LOGGER.info("Delayed setup complete, firing DhApiAfterDhInitEvent event...");
+		
+		// should be fired after all delayed setup so singletons and config can be accessed
+		ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterDhInitEvent.class, null);
 	}
 	
 	

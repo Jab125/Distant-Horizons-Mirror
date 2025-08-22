@@ -14,9 +14,18 @@ import java.util.Optional;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
+#if MC_VER < MC_1_21_8
+#else
+import net.neoforged.neoforge.client.network.ClientPacketDistributor;
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
+#endif
+
+
 public class NeoforgePluginPacketSender extends AbstractPluginPacketSender
 {
 	private static BiConsumer<IServerPlayerWrapper, AbstractNetworkMessage> packetConsumer;
+	
+	
 	
 	public static void setPacketHandler(RegisterPayloadHandlersEvent event, Consumer<AbstractNetworkMessage> consumer)
 	{ setPacketHandler(event, (player, buffer) -> consumer.accept(buffer)); }
@@ -39,9 +48,31 @@ public class NeoforgePluginPacketSender extends AbstractPluginPacketSender
 		});
 	}
 	
+	#if MC_VER < MC_1_21_8
+	#else
+	public static void registerClientPacketHandler(RegisterClientPayloadHandlersEvent event)
+	{
+		// as of MC 1.21.7 Neo added a separate client network register 
+		// https://github.com/neoforged/NeoForge/pull/2272
+		event.register(CommonPacketPayload.TYPE, (payload, context) -> 
+		{
+			if (payload.message() != null)
+			{
+				packetConsumer.accept(null, payload.message());
+			}
+		});
+	}
+	#endif
+	
 	@Override
 	public void sendToServer(AbstractNetworkMessage message)
-	{ PacketDistributor.sendToServer(new CommonPacketPayload(message)); }
+	{
+		#if MC_VER < MC_1_21_8
+		PacketDistributor.sendToServer(new CommonPacketPayload(message));
+		#else
+		ClientPacketDistributor.sendToServer(new CommonPacketPayload(message));
+		#endif
+	}
 	
 	@Override
 	public void sendToClient(ServerPlayer serverPlayer, AbstractNetworkMessage message)

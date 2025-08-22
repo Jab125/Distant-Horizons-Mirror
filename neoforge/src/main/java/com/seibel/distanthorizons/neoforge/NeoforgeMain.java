@@ -23,7 +23,6 @@ import com.mojang.brigadier.CommandDispatcher;
 import com.seibel.distanthorizons.common.AbstractModInitializer;
 import com.seibel.distanthorizons.common.wrappers.gui.GetConfigScreen;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
-import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.network.messages.AbstractNetworkMessage;
@@ -51,9 +50,13 @@ import java.util.function.Consumer;
 
 #if MC_VER < MC_1_20_6
 import net.neoforged.neoforge.client.ConfigScreenHandler;
+#elif MC_VER < MC_1_21_8
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
+import org.jetbrains.annotations.NotNull;
 #else
 import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import org.jetbrains.annotations.NotNull;
+import net.neoforged.neoforge.client.network.event.RegisterClientPayloadHandlersEvent;
 #endif
 
 /**
@@ -72,6 +75,11 @@ public class NeoforgeMain extends AbstractModInitializer
 		{
 			this.onInitializeClient();
 			eventBus.addListener(this::registerNetworkingClientServer);
+			
+			#if MC_VER < MC_1_21_8
+			#else
+			eventBus.addListener(this::registerClientPayloadEvent);
+			#endif
 		});
 		
 		// handles dedicated servers
@@ -98,6 +106,12 @@ public class NeoforgeMain extends AbstractModInitializer
 	}
 	public void registerNetworkingServer(RegisterPayloadHandlersEvent event)
 	{ NeoforgePluginPacketSender.setPacketHandler(event, ServerApi.INSTANCE::pluginMessageReceived); }
+	
+	#if MC_VER < MC_1_21_8
+	#else
+	public void registerClientPayloadEvent(RegisterClientPayloadHandlersEvent event)
+	{ NeoforgePluginPacketSender.registerClientPacketHandler(event); }
+	#endif
 	
 	
 	
@@ -141,7 +155,9 @@ public class NeoforgeMain extends AbstractModInitializer
 	@Override
 	protected void subscribeClientStartedEvent(Runnable eventHandler)
 	{
-		// FIXME What event is this?
+		// Just run the event handler, since there are no proper ClientLifecycleEvent for the client 
+		// to signify readiness other than FmlClientSetupEvent
+		eventHandler.run(); 
 	}
 	
 	@Override

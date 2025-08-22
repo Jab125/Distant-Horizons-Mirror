@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.fabric;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
 import com.seibel.distanthorizons.common.AbstractModInitializer;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.ConfigBase;
@@ -126,7 +127,8 @@ public class FabricMain extends AbstractModInitializer implements ClientModIniti
 	}
 	
 	@Override
-	protected void subscribeClientStartedEvent(Runnable eventHandler) { ClientLifecycleEvents.CLIENT_STARTED.register((mc) -> eventHandler.run()); }
+	protected void subscribeClientStartedEvent(Runnable eventHandler) 
+	{ ClientLifecycleEvents.CLIENT_STARTED.register((mc) -> eventHandler.run()); }
 	
 	@Override
 	protected void subscribeServerStartingEvent(Consumer<MinecraftServer> eventHandler)
