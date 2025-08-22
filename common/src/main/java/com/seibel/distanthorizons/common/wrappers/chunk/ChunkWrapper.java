@@ -406,7 +406,7 @@ public class ChunkWrapper implements IChunkWrapper
 				{
 					return BlockStateWrapper.fromBlockState(convertedBlockState, this.wrappedLevel, guess);
 				}else{
-					LOGGER.error("could not get LT at"+worldPos);
+					LOGGER.warn("could not get LT at"+worldPos);
 				}
 			}
 		}
