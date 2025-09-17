@@ -8,8 +8,9 @@
     "server.MixinEntity",
     "server.MixinServerPlayer",
     "server.MixinTracingExecutor",
-    "server.MixinUtilBackgroundThread", 
-    "server.MixinLevelTicks"
+    "server.MixinUtilBackgroundThread",
+    "server.MixinChunkSerialize",
+    "server.MixinLevelChunk" 
   ],
   "client": [
     "client.MixinClientLevel",

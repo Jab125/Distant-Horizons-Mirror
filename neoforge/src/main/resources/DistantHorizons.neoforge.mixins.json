@@ -9,7 +9,9 @@
     "server.MixinTFChunkGenerator",
     "server.MixinTracingExecutor",
     "server.MixinUtilBackgroundThread",
-    "server.MixinLevelTicks"
+    "server.MixinLevelTicks",
+    "server.MixinChunkSerialize",
+    "server.MixinLevelChunk"
   ],
   "client": [
     "client.MixinClientPacketListener",
@@ -19,7 +21,8 @@
     "client.MixinLightTexture",
     "client.MixinMinecraft",
     "client.MixinOptionsScreen",
-    "client.MixinTextureUtil"
+    "client.MixinTextureUtil", 
+    "client.MixinClientLevel"
   ],
   "server": [],
   "plugin": "com.seibel.distanthorizons.neoforge.mixins.NeoforgeMixinPlugin"

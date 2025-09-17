@@ -20,6 +20,7 @@ package com.seibel.distanthorizons.common.wrappers.chunk;
 
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
+import com.seibel.distanthorizons.common.wrappers.block.LTColorCache;
 import com.seibel.distanthorizons.common.wrappers.misc.MutableBlockPosWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -64,6 +65,11 @@ import net.minecraft.world.level.chunk.LevelChunkSection;
 
 #if MC_VER >= MC_1_20_1
 import net.minecraft.world.level.chunk.LevelChunkSection;
+#endif
+
+#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
+//used by code of LT converting
+import net.minecraft.world.level.block.state.BlockState;
 #endif
 
 #if MC_VER <= MC_1_20_4
@@ -382,7 +388,34 @@ public class ChunkWrapper implements IChunkWrapper
 		pos.setY(relY);
 		pos.setZ(relZ);
 		
-		return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(pos), this.wrappedLevel, guess);
+		BlockState blockState = this.chunk.getBlockState(pos);
+		
+		#if MC_VER == MC_1_20_1 || MC_VER == MC_1_21_1
+		
+		boolean ShouldConvertLTBlock = Config.Common.LodBuilding.convertLTBlock.get();
+		if(ShouldConvertLTBlock == true){
+			//Convert LittleTiles Tile to Common Block
+			int worldX = this.chunk.getPos().getMinBlockX() + relX;
+			int worldY = relY;
+			int worldZ = this.chunk.getPos().getMinBlockZ() + relZ;
+			BlockPos worldPos = new BlockPos(worldX, worldY, worldZ);
+			
+			if(blockState.toString().contains("littletiles:tiles")){
+				BlockState convertedBlockState = LTColorCache.getTrueColor(worldPos);
+				if(convertedBlockState != null)
+				{
+					return BlockStateWrapper.fromBlockState(convertedBlockState, this.wrappedLevel, guess);
+				}else{
+					LOGGER.warn("could not get LT at"+worldPos);
+				}
+			}
+		}
+		
+		#else
+		#endif
+				
+		
+		return BlockStateWrapper.fromBlockState(blockState, this.wrappedLevel, guess);
 	}
 	
 	/**
