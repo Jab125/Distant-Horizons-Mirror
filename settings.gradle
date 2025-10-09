@@ -71,7 +71,7 @@ def loadProperties() {
     mcVers.sort() // Sort so it always goes from oldest to newest
 
     int mcIndex = -1
-    println "Avalible MC versions: ${mcVers}"
+    println "Available MC versions: ${mcVers}"
     if (hasProperty("mcVer")) {
         mcVersion = mcVer
         mcIndex = mcVers.indexOf(mcVer)
