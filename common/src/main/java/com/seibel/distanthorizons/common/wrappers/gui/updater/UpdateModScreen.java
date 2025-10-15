@@ -16,7 +16,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 #endif
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.resources.ResourceLocation;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.*;
 
@@ -31,7 +31,7 @@ import java.util.*;
 // and also maybe add this suggestion https://discord.com/channels/881614130614767666/1035863487110467625/1035949054485594192
 public class UpdateModScreen extends DhScreen
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
 	private Screen parent;

@@ -1,8 +1,8 @@
 package com.seibel.distanthorizons.common;
 
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.logging.ConfigBasedLogger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.network.event.internal.IncompatibleMessageInternalEvent;
 import com.seibel.distanthorizons.core.network.event.internal.ProtocolErrorInternalEvent;
 import com.seibel.distanthorizons.core.network.messages.MessageRegistry;
@@ -15,15 +15,15 @@ import io.netty.buffer.ByteBufUtil;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
-import org.apache.logging.log4j.LogManager;
 
 import java.io.IOException;
 import java.util.Objects;
 
 public abstract class AbstractPluginPacketSender implements IPluginPacketSender
 {
-	private static final ConfigBasedLogger LOGGER = new ConfigBasedLogger(LogManager.getLogger(),
-			() -> Config.Common.Logging.logNetworkEvent.get());
+	private static final DhLogger LOGGER = new DhLoggerBuilder()
+			.fileLevelConfig(Config.Common.Logging.logNetworkEventToFile)
+			.build();
 	
 	#if MC_VER >= MC_1_21_1
 	public static final ResourceLocation WRAPPER_PACKET_RESOURCE = ResourceLocation.fromNamespaceAndPath(ModInfo.RESOURCE_NAMESPACE, ModInfo.WRAPPER_PACKET_PATH);

@@ -24,7 +24,7 @@ import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import java.lang.invoke.MethodHandles;
 import java.util.function.Consumer;
@@ -36,7 +36,7 @@ import java.util.function.Supplier;
  */
 public abstract class AbstractModInitializer
 {
-	protected static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private CommandInitializer commandInitializer;
 	
@@ -172,6 +172,7 @@ public abstract class AbstractModInitializer
 	{
 		ConfigHandler.tryRunFirstTimeSetup();
 		Config.completeDelayedSetup();
+		DhLogger.runDelayedConfigSetup();
 	}
 	
 	private void checkForUpdates()

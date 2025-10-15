@@ -47,7 +47,7 @@ import net.minecraftforge.event.server.ServerStoppingEvent;
 #endif
 
 
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import java.util.function.Supplier;
 

@@ -13,7 +13,7 @@ import com.seibel.distanthorizons.api.objects.data.IDhApiFullDataSource;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.server.level.ServerLevel;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -23,7 +23,7 @@ import java.util.function.Consumer;
 
 public class TestGenericWorldGenerator implements IDhApiWorldGenerator
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private final IDhApiLevelWrapper levelWrapper;
 	

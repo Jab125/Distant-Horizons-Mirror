@@ -3,7 +3,7 @@ package com.seibel.distanthorizons.neoforge.wrappers;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.client.Minecraft;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 #if MC_VER < MC_1_21_9
 #else
@@ -18,7 +18,7 @@ public class NeoforgeMinecraftRenderWrapper extends MinecraftRenderWrapper
 {
 	public static final NeoforgeMinecraftRenderWrapper INSTANCE = new NeoforgeMinecraftRenderWrapper();
 	
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private static final Minecraft MC = Minecraft.getInstance();
 	
 	

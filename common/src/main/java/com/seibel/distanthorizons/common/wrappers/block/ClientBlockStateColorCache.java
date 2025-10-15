@@ -40,7 +40,7 @@ import net.minecraft.util.RandomSource;
 import java.util.Random;
 #endif
 import net.minecraft.world.level.block.state.BlockState;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -62,7 +62,7 @@ import net.minecraft.client.renderer.block.model.BlockModelPart;
  */
 public class ClientBlockStateColorCache
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	// TODO it isn't that we need the level, but that we need the adjacent data
 	//  maybe we can pass in the full data source?

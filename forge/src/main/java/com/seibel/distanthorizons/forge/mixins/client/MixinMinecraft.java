@@ -12,7 +12,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.TitleScreen;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -29,7 +29,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public class MixinMinecraft
 {
 	@Unique
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MixinMinecraft.class.getSimpleName());
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
 	

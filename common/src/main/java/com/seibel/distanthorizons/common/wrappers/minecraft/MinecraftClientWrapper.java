@@ -57,7 +57,7 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.Nullable;
 
 #if MC_VER < MC_1_21_3
@@ -72,7 +72,7 @@ import net.minecraft.util.profiling.Profiler;
  */
 public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecraftSharedWrapper
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private static final Minecraft MINECRAFT = Minecraft.getInstance();
 	
 	public static final MinecraftClientWrapper INSTANCE = new MinecraftClientWrapper();

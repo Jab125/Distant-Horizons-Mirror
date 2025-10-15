@@ -24,7 +24,7 @@ import net.neoforged.bus.api.SubscribeEvent;
 import net.neoforged.neoforge.event.server.ServerAboutToStartEvent;
 import net.neoforged.neoforge.event.server.ServerStoppingEvent;
 
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import java.util.function.Supplier;
 
@@ -40,7 +40,7 @@ public class NeoforgeServerProxy implements AbstractModInitializer.IEventProxy
 	private static LevelAccessor GetEventLevel(LevelEvent e) { return e.getLevel(); }
 	
 	private final ServerApi serverApi = ServerApi.INSTANCE;
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private final boolean isDedicated;
 	public static Supplier<Boolean> isGenerationThreadChecker = null;
 	

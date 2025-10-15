@@ -22,7 +22,7 @@ import com.seibel.distanthorizons.core.config.types.enums.EConfigCommentTextPosi
 import com.seibel.distanthorizons.core.config.types.enums.EConfigValidity;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
-import com.seibel.distanthorizons.core.logging.SpamReducedLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.AnnotationUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.IConfigGui;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
@@ -38,8 +38,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -73,8 +72,10 @@ import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.Translata
 @SuppressWarnings("unchecked")
 public class ClassicConfigGUI
 {
-	private static final Logger LOGGER = LogManager.getLogger();
-	public static final SpamReducedLogger SPAM_LOGGER = new SpamReducedLogger(4);
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	public static final DhLogger RATE_LIMITED_LOGGER = new DhLoggerBuilder()
+			.maxCountPerSecond(1)
+			.build();
 	
 	public static final ConfigCoreInterface CONFIG_CORE_INTERFACE = new ConfigCoreInterface();
 	
@@ -1002,7 +1003,7 @@ public class ClassicConfigGUI
 			catch (Exception e)
 			{
 				// should prevent crashing the game if there's an issue
-				SPAM_LOGGER.error("Unexpected gui rendering issue: ["+e.getMessage()+"]", e);
+				RATE_LIMITED_LOGGER.error("Unexpected gui rendering issue: ["+e.getMessage()+"]", e);
 			}
 		}
 		

@@ -14,7 +14,7 @@ import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 #if MC_VER >= MC_1_17_1
 import net.minecraft.client.gui.narration.NarratableEntry;
@@ -41,7 +41,7 @@ import java.util.*;
 // TODO: Make this
 public class ChangelogScreen extends DhScreen
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
 	private Screen parent;

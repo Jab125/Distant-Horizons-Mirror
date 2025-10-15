@@ -24,7 +24,7 @@ import com.mojang.serialization.Dynamic;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 
-import com.seibel.distanthorizons.core.logging.ConfigBasedLogger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 
@@ -93,6 +93,8 @@ public class ChunkFileReader
 {
 	private static final AtomicBoolean ZERO_CHUNK_POS_ERROR_LOGGED_REF = new AtomicBoolean(false);
 	
+	private static final DhLogger LOGGER = BatchGenerationEnvironment.CHUNK_LOAD_LOGGER;
+	
 	
 	#if MC_VER >= MC_1_21_9
 	// BLOCK_STATE_CODEC can no longer be statically created since
@@ -108,7 +110,6 @@ public class ChunkFileReader
 	private static final String FLUID_TICKS_TAG_18 = "fluid_ticks";
 	private static final String BLOCK_TICKS_TAG_PRE18 = "TileTicks";
 	private static final String FLUID_TICKS_TAG_PRE18 = "LiquidTicks";
-	private static final ConfigBasedLogger LOGGER = BatchGenerationEnvironment.LOAD_LOGGER;
 	
 	private static boolean lightingSectionErrorLogged = false;
 	

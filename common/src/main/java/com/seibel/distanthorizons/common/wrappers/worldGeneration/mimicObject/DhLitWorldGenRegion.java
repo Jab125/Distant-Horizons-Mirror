@@ -28,7 +28,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import net.minecraft.world.level.block.EntityBlock;
 import net.minecraft.world.level.block.SpawnerBlock;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -78,7 +78,7 @@ import net.minecraft.world.ticks.LevelTickAccess;
 
 public class DhLitWorldGenRegion extends WorldGenRegion
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(MethodHandles.lookup().lookupClass().getSimpleName());
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static ChunkStatus debugTriggeredForStatus = null;
 	
@@ -392,10 +392,11 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 			}
 		}
 		
-		if (chunkStatus != ChunkStatus.EMPTY && chunkStatus != debugTriggeredForStatus)
+		if (chunkStatus != ChunkStatus.EMPTY 
+			&& chunkStatus != debugTriggeredForStatus)
 		{
-			LOGGER.info("WorldGen requiring " + chunkStatus
-					+ " outside expected range detected. Force passing EMPTY chunk and seeing if it works.");
+			LOGGER.info("WorldGen requiring [" + chunkStatus + "]"
+					+ " is outside the expected range. Returning EMPTY chunk.");
 			debugTriggeredForStatus = chunkStatus;
 		}
 		

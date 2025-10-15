@@ -29,7 +29,7 @@ import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 #if MC_VER <= MC_1_20_4
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -42,7 +42,7 @@ import java.util.ConcurrentModificationException;
 
 public final class StepFeatures extends AbstractWorldGenStep
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	public static final ChunkStatus STATUS = ChunkStatus.FEATURES;
 	

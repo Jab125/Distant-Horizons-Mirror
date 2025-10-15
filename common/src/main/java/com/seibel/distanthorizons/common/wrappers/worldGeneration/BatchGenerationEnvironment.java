@@ -29,8 +29,8 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.logging.ConfigBasedLogger;
-import com.seibel.distanthorizons.core.logging.ConfigBasedSpamLogger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.objects.EventTimer;
 import com.seibel.distanthorizons.core.util.LodUtil;
@@ -71,13 +71,11 @@ import net.minecraft.world.level.levelgen.FlatLevelSource;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 import net.minecraft.nbt.CompoundTag;
-import org.apache.logging.log4j.LogManager;
 
 #if MC_VER <= MC_1_17_1
 #elif MC_VER <= MC_1_19_2
 import net.minecraft.core.Registry;
 #else
-import net.minecraft.core.registries.Registries;
 #endif
 
 #if MC_VER <= MC_1_20_4
@@ -101,15 +99,19 @@ Lod Generation:          0.269023348s
 */
 public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnvironmentWrapper
 {
-	public static final ConfigBasedSpamLogger PREF_LOGGER =
-			new ConfigBasedSpamLogger(LogManager.getLogger("LodWorldGen"),
-					() -> Config.Common.Logging.logWorldGenPerformance.get(), 1);
-	public static final ConfigBasedLogger EVENT_LOGGER =
-			new ConfigBasedLogger(LogManager.getLogger("LodWorldGen"),
-					() -> Config.Common.Logging.logWorldGenEvent.get());
-	public static final ConfigBasedLogger LOAD_LOGGER =
-			new ConfigBasedLogger(LogManager.getLogger("LodWorldGen"),
-					() -> Config.Common.Logging.logWorldGenLoadEvent.get());
+	public static final DhLogger PREF_LOGGER = new DhLoggerBuilder()
+			.name("LOD World Gen")
+			.fileLevelConfig(Config.Common.Logging.logWorldGenPerformanceToFile)
+			.maxCountPerSecond(1)
+			.build();
+	public static final DhLogger EVENT_LOGGER = new DhLoggerBuilder()
+			.name("LOD World Gen")
+			.fileLevelConfig(Config.Common.Logging.logWorldGenEventToFile)
+			.build();
+	public static final DhLogger CHUNK_LOAD_LOGGER = new DhLoggerBuilder()
+			.name("LOD World Gen")
+			.fileLevelConfig(Config.Common.Logging.logWorldGenChunkLoadEventToFile)
+			.build();
 	
 	#if MC_VER < MC_1_21_5
 	private static final TicketType<ChunkPos> DH_SERVER_GEN_TICKET = TicketType.create("dh_server_gen_ticket", Comparator.comparingLong(ChunkPos::toLong));
@@ -311,7 +313,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 					try
 					{
 						event.future.get(); // Should throw exception
-						LodUtil.assertNotReach();
+						LodUtil.assertNotReach("Exceptionally completed world gen Future should have thrown an exception.");
 					}
 					catch (Exception e)
 					{
@@ -523,10 +525,10 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 				
 				genEvent.timer.complete();
 				genEvent.refreshTimeout();
-				if (PREF_LOGGER.canMaybeLog())
+				if (PREF_LOGGER.canLog())
 				{
 					genEvent.threadedParam.perf.recordEvent(genEvent.timer);
-					PREF_LOGGER.debugInc(genEvent.timer.toString());
+					PREF_LOGGER.debug(genEvent.timer.toString());
 				}
 			}
 			catch (Exception e)
@@ -675,7 +677,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 								actualThrowable = completionException.getCause();
 							}
 							
-							LOAD_LOGGER.warn("DistantHorizons: Couldn't load or make chunk ["+chunkPos+"], error: ["+actualThrowable.getMessage()+"].", actualThrowable);
+							CHUNK_LOAD_LOGGER.warn("DistantHorizons: Couldn't load or make chunk ["+chunkPos+"], error: ["+actualThrowable.getMessage()+"].", actualThrowable);
 							return null;
 						});
 			}
@@ -683,7 +685,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 		}
 		catch (Exception e)
 		{
-			LOAD_LOGGER.warn("DistantHorizons: Couldn't load or make chunk [" + chunkPos + "]. Error: [" + e.getMessage() + "].", e);
+			CHUNK_LOAD_LOGGER.warn("DistantHorizons: Couldn't load or make chunk [" + chunkPos + "]. Error: [" + e.getMessage() + "].", e);
 			return CompletableFuture.completedFuture(null);
 		}
 	}
@@ -699,7 +701,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 		{
 			try
 			{
-				LOAD_LOGGER.debug("DistantHorizons: Loading chunk [" + chunkPos + "] from disk.");
+				CHUNK_LOAD_LOGGER.debug("DistantHorizons: Loading chunk [" + chunkPos + "] from disk.");
 				
 				@Nullable
 				ChunkAccess chunk = ChunkFileReader.read(level, chunkPos, chunkData);
@@ -721,7 +723,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 			}
 			catch (Exception e)
 			{
-				LOAD_LOGGER.error(
+				CHUNK_LOAD_LOGGER.error(
 						"DistantHorizons: couldn't load or make chunk at [" + chunkPos + "]." +
 								"Please try optimizing your world to fix this issue. \n" +
 								"World optimization can be done from the singleplayer world selection screen.\n" +
@@ -783,7 +785,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 							
 							if (throwable != null)
 							{
-								LOAD_LOGGER.warn("DistantHorizons: Couldn't load chunk [" + chunkPos + "] from server, error: [" + actualThrowable.getMessage() + "].", actualThrowable);
+								CHUNK_LOAD_LOGGER.warn("DistantHorizons: Couldn't load chunk [" + chunkPos + "] from server, error: [" + actualThrowable.getMessage() + "].", actualThrowable);
 							}
 							
 							if (chunk != null)
@@ -838,10 +840,10 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 					
 					genEvent.timer.complete();
 					genEvent.refreshTimeout();
-					if (PREF_LOGGER.canMaybeLog())
+					if (PREF_LOGGER.canLog())
 					{
 						genEvent.threadedParam.perf.recordEvent(genEvent.timer);
-						PREF_LOGGER.debugInc(genEvent.timer.toString());
+						PREF_LOGGER.debug(genEvent.timer.toString());
 					}
 				});
 		

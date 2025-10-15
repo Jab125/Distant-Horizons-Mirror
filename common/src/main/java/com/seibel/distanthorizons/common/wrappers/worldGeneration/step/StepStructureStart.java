@@ -35,7 +35,7 @@ import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ProtoChunk;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 #if MC_VER <= MC_1_20_4
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -46,7 +46,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 
 public final class StepStructureStart extends AbstractWorldGenStep
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private static final ChunkStatus STATUS = ChunkStatus.STRUCTURE_STARTS;
 	private static final ReentrantLock STRUCTURE_PLACEMENT_LOCK = new ReentrantLock();
 	

@@ -19,7 +19,7 @@ import net.minecraft.world.level.biome.Biome;
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 #if MC_VER >= MC_1_18_2
 import net.minecraft.core.Holder;
@@ -28,7 +28,7 @@ import net.minecraft.core.Holder;
 
 public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
 	protected final BiomeWrapper biomeWrapper;

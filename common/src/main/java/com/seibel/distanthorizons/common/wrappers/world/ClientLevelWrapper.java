@@ -26,7 +26,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -54,7 +54,7 @@ import com.seibel.distanthorizons.core.util.ColorUtil;
 
 public class ClientLevelWrapper implements IClientLevelWrapper
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger(ClientLevelWrapper.class.getSimpleName());
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	/**
 	 * weak references are to prevent rare issues
 	 * where, upon world closure, some levels aren't shutdown/removed properly

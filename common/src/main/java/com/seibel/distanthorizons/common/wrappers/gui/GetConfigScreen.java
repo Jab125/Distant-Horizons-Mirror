@@ -5,11 +5,11 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.core.config.gui.JavaScreenHandlerScreen;
 import net.minecraft.client.gui.screens.Screen;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 public class GetConfigScreen
 {
-	protected static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	public static EType useScreen = EType.Classic;
 	

@@ -30,7 +30,7 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 #if MC_VER >= MC_1_20_6
 import com.seibel.distanthorizons.common.CommonPacketPayload;
@@ -52,7 +52,7 @@ public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 	private static final ServerApi SERVER_API = ServerApi.INSTANCE;
 	@SuppressWarnings("unused")
 	private static final AbstractPluginPacketSender PACKET_SENDER = (AbstractPluginPacketSender) SingletonInjector.INSTANCE.get(IPluginPacketSender.class);
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private final boolean isDedicatedServer;
 	

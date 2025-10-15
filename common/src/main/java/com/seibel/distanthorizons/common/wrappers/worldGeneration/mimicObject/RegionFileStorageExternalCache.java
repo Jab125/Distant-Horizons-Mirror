@@ -7,7 +7,7 @@ import net.minecraft.nbt.NbtIo;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.storage.RegionFile;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import org.jetbrains.annotations.Nullable;
 import java.io.DataInputStream;
@@ -29,7 +29,7 @@ import net.minecraft.world.level.chunk.storage.RegionStorageInfo;
  */
 public class RegionFileStorageExternalCache implements AutoCloseable
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	/** Can be null due to the C2ME mod */
 	@Nullable
@@ -139,7 +139,7 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 		
 		if (retryCount >= maxRetryCount)
 		{
-			BatchGenerationEnvironment.LOAD_LOGGER.warn("Concurrency issue detected when getting region file for chunk at [" + pos + "].");
+			BatchGenerationEnvironment.CHUNK_LOAD_LOGGER.warn("Concurrency issue detected when getting region file for chunk at [" + pos + "].");
 		}
 		
 		

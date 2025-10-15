@@ -48,7 +48,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 
 
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import com.seibel.distanthorizons.neoforge.NeoforgeClientProxy;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
@@ -76,7 +76,7 @@ public class MixinLevelRenderer
 	private ClientLevel level;
 	
 	@Unique
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
 	

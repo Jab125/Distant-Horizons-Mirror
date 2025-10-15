@@ -6,12 +6,12 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiLevelLo
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.server.level.ServerLevel;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 // TODO add to API example once Builderb0y has given the all-clear
 public class TestWorldGenBindingEvent extends DhApiLevelLoadEvent
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	@Override
 	public void onLevelLoad(DhApiEventParam<DhApiLevelLoadEvent.EventParam> event)

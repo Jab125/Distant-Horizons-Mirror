@@ -57,11 +57,11 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import java.nio.file.Path;
 #endif
 
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 public class ServerLevelWrapper implements IServerLevelWrapper
 {
-	private static final Logger LOGGER = DhLoggerBuilder.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	/** 
 	 * weak references are to prevent rare issues
 	 * where, upon world closure, some levels aren't shutdown/removed properly

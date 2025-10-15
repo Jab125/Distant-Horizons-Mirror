@@ -26,10 +26,11 @@ import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import net.minecraft.world.level.Level;
 import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 
@@ -57,7 +58,7 @@ import net.minecraft.world.level.biome.Biomes;
 public class BiomeWrapper implements IBiomeWrapper
 {
 	// must be defined before AIR, otherwise a null pointer will be thrown
-	private static final Logger LOGGER = LogManager.getLogger();
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
 	#if MC_VER < MC_1_18_2
