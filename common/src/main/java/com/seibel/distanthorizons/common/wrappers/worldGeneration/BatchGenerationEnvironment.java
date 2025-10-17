@@ -118,13 +118,13 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 	#elif MC_VER < MC_1_21_9
 	private static final TicketType DH_SERVER_GEN_TICKET = new TicketType(/* timeout, 0 = disabled*/0L, /* persist */ false, TicketType.TicketUse.LOADING);
 	#else
-	private static final TicketType DH_SERVER_GEN_TICKET = new TicketType(/* timeout, 0 = disabled*/0L, /* flags */0);
+	private static final TicketType DH_SERVER_GEN_TICKET = new TicketType(/* timeout, 0 = disabled*/0L, /* flags */TicketType.FLAG_LOADING);
 	#endif
 	
 	private static final IModChecker MOD_CHECKER = SingletonInjector.INSTANCE.get(IModChecker.class);
 	
 	
-	private final IDhServerLevel serverlevel;
+	private final IDhServerLevel serverLevel;
 	
 	/** 
 	 * will be true if C2ME is installed (since they require us to
@@ -216,16 +216,16 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 		MAX_WORLD_GEN_CHUNK_BORDER_NEEDED = 0;
 	}
 	
-	public BatchGenerationEnvironment(IDhServerLevel serverlevel)
+	public BatchGenerationEnvironment(IDhServerLevel serverLevel)
 	{
-		super(serverlevel);
-		this.serverlevel = serverlevel;
+		super(serverLevel);
+		this.serverLevel = serverLevel;
 		
 		EVENT_LOGGER.info("================WORLD_GEN_STEP_INITING=============");
 		
-		serverlevel.getServerLevelWrapper().getDimensionType();
+		serverLevel.getServerLevelWrapper().getDimensionType();
 		
-		ChunkGenerator generator = ((ServerLevelWrapper) (serverlevel.getServerLevelWrapper())).getLevel().getChunkSource().getGenerator();
+		ChunkGenerator generator = ((ServerLevelWrapper) (serverLevel.getServerLevelWrapper())).getLevel().getChunkSource().getGenerator();
 		if (!(generator instanceof NoiseBasedChunkGenerator ||
 				generator instanceof DebugLevelSource ||
 				generator instanceof FlatLevelSource))
@@ -253,7 +253,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 			this.pullExistingChunkUsingMcAsyncMethod = true;
 		}
 		
-		this.params = new GlobalParameters(serverlevel);
+		this.params = new GlobalParameters(serverLevel);
 	}
 	
 	
@@ -467,7 +467,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 							else if (chunk != null)
 							{
 								// wrap the chunk
-								ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.serverlevel.getLevelWrapper());
+								ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.serverLevel.getLevelWrapper());
 								chunkWrapperList.set(relX, relZ, chunkWrapper);
 								
 								// try setting the wrapper's lighting
@@ -790,7 +790,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 							
 							if (chunk != null)
 							{
-								ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.serverlevel.getLevelWrapper());
+								ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.serverLevel.getLevelWrapper());
 								chunkWrappersByDhPos.put(new DhChunkPos(chunkPos.x, chunkPos.z), chunkWrapper);
 							}
 						}, runnableQueue::add);
@@ -804,7 +804,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 				{
 					// generate chunk lighting using DH's lighting engine
 					genEvent.timer.nextEvent("light");
-					int maxSkyLight = this.serverlevel.getServerLevelWrapper().hasSkyLight() ? LodUtil.MAX_MC_LIGHT : LodUtil.MIN_MC_LIGHT;
+					int maxSkyLight = this.serverLevel.getServerLevelWrapper().hasSkyLight() ? LodUtil.MAX_MC_LIGHT : LodUtil.MIN_MC_LIGHT;
 					
 					ArrayList<IChunkWrapper> generatedChunks = new ArrayList<>(chunkWrappersByDhPos.values());
 					for (IChunkWrapper iChunkWrapper : generatedChunks)
@@ -817,7 +817,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 							DhLightingEngine.INSTANCE.bakeChunkBlockLighting(iChunkWrapper, generatedChunks, maxSkyLight);
 						}
 						
-						this.serverlevel.updateBeaconBeamsForChunk(iChunkWrapper, generatedChunks);
+						this.serverLevel.updateBeaconBeamsForChunk(iChunkWrapper, generatedChunks);
 					}
 					
 					genEvent.timer.nextEvent("cleanup");
@@ -1048,7 +1048,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 			
 			// generate lighting using DH's lighting engine
 				
-			int maxSkyLight = this.serverlevel.getServerLevelWrapper().hasSkyLight() ? 15 : 0;
+			int maxSkyLight = this.serverLevel.getServerLevelWrapper().hasSkyLight() ? 15 : 0;
 			
 			// only light generated chunks,
 			// attempting to light un-generated chunks will cause lighting issues on bordering generated chunks
@@ -1084,7 +1084,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 					DhLightingEngine.INSTANCE.bakeChunkBlockLighting(centerChunk, iChunkWrapperList, maxSkyLight);
 				}
 				
-				this.serverlevel.updateBeaconBeamsForChunk(centerChunk, iChunkWrapperList);
+				this.serverLevel.updateBeaconBeamsForChunk(centerChunk, iChunkWrapperList);
 			}
 			
 			genEvent.refreshTimeout();
