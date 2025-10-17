@@ -73,9 +73,6 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	
 	
 	private BlockStateWrapper dirtBlockWrapper;
-	private BlockStateWrapper waterBlockWrapper;
-	private BiomeWrapper plainsBiomeWrapper;
-	@Deprecated // TODO circular references are bad
 	private IDhLevel parentDhLevel;
 	
 	
@@ -168,13 +165,17 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	{
 		try
 		{
+			// this method only makes sense if we are running a single-player server
+			if (MINECRAFT.getSingleplayerServer() == null)
+			{
+				return null;
+			}
+			
 			Iterable<ServerLevel> serverLevels = MINECRAFT.getSingleplayerServer().getAllLevels();
 			
 			// attempt to find the server level with the same dimension type
-			// TODO this assumes only one level per dimension type, the SubDimensionLevelMatcher will need to be added for supporting multiple levels per dimension
+			// Note: this assumes only one level per dimension type, multiverse servers may not behave correctly
 			ServerLevelWrapper foundLevelWrapper = null;
-			
-			// TODO: Surely there is a more efficient way to write this code
 			for (ServerLevel serverLevel : serverLevels)
 			{
 				if (serverLevel.dimension() == this.level.dimension())
@@ -232,48 +233,8 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		return this.getBlockColor(DhBlockPos.ZERO, BiomeWrapper.EMPTY_WRAPPER, null, this.dirtBlockWrapper);
 	}
 	
-	@Override
-	public int getWaterBlockColor()
-	{
-		if (this.waterBlockWrapper == null)
-		{
-			try
-			{
-				this.waterBlockWrapper = (BlockStateWrapper) BlockStateWrapper.deserialize(BlockStateWrapper.WATER_RESOURCE_LOCATION_STRING, this);
-			}
-			catch (IOException e)
-			{
-				// shouldn't happen, but just in case
-				LOGGER.warn("Unable to get water color with resource location ["+BlockStateWrapper.WATER_RESOURCE_LOCATION_STRING+"] with level ["+this+"].", e);
-				return -1;
-			}
-		}
-		
-		return this.getBlockColor(DhBlockPos.ZERO, BiomeWrapper.EMPTY_WRAPPER, null, this.waterBlockWrapper);
-	}
-	
 	@Override 
 	public void clearBlockColorCache() { this.blockCache.clear(); }
-	
-	@Override
-	public IBiomeWrapper getPlainsBiomeWrapper()
-	{
-		if (this.plainsBiomeWrapper == null)
-		{
-			try
-			{
-				this.plainsBiomeWrapper = (BiomeWrapper) BiomeWrapper.deserialize(BiomeWrapper.PLAINS_RESOURCE_LOCATION_STRING, this);
-			}
-			catch (IOException e)
-			{
-				// shouldn't happen, but just in case
-				LOGGER.warn("Unable to get planes biome with resource location ["+BiomeWrapper.PLAINS_RESOURCE_LOCATION_STRING+"] with level ["+this+"].", e);
-				return null;
-			}
-		}
-		
-		return this.plainsBiomeWrapper;
-	}
 	
 	@Override
 	public IDimensionTypeWrapper getDimensionType() { return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType()); }
@@ -330,20 +291,6 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		
 		return new ChunkWrapper(chunk, this);
 	}
-	
-	@Override
-	public boolean hasChunkLoaded(int chunkX, int chunkZ)
-	{
-		ChunkSource source = this.level.getChunkSource();
-		return source.hasChunk(chunkX, chunkZ);
-	}
-	
-	@Override
-	public IBlockStateWrapper getBlockState(DhBlockPos pos)
-	{ return BlockStateWrapper.fromBlockState(this.level.getBlockState(McObjectConverter.Convert(pos)), this); }
-	
-	@Override
-	public IBiomeWrapper getBiome(DhBlockPos pos) { return BiomeWrapper.getBiomeWrapper(this.level.getBiome(McObjectConverter.Convert(pos)), this); }
 	
 	@Override
 	public ClientLevel getWrappedMcObject() { return this.level; }

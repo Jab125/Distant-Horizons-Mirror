@@ -181,26 +181,6 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	}
 	
 	@Override
-	public boolean hasChunkLoaded(int chunkX, int chunkZ)
-	{
-		// world.hasChunk(chunkX, chunkZ); THIS DOES NOT WORK FOR CLIENT LEVEL CAUSE MOJANG ALWAYS RETURN TRUE FOR THAT!
-		ChunkSource source = this.level.getChunkSource();
-		return source.hasChunk(chunkX, chunkZ);
-	}
-	
-	@Override
-	public IBlockStateWrapper getBlockState(DhBlockPos pos)
-	{
-		return BlockStateWrapper.fromBlockState(this.level.getBlockState(McObjectConverter.Convert(pos)), this);
-	}
-	
-	@Override
-	public IBiomeWrapper getBiome(DhBlockPos pos)
-	{
-		return BiomeWrapper.getBiomeWrapper(this.level.getBiome(McObjectConverter.Convert(pos)), this);
-	}
-	
-	@Override
 	public ServerLevel getWrappedMcObject() { return this.level; }
 	
 	@Override
