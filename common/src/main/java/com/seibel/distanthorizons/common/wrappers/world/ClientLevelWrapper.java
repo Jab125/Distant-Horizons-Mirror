@@ -2,7 +2,6 @@ package com.seibel.distanthorizons.common.wrappers.world;
 
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiLevelType;
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderRegister;
-import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateColorCache;
@@ -25,7 +24,6 @@ import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ChunkSource;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -73,7 +71,7 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	
 	
 	private BlockStateWrapper dirtBlockWrapper;
-	private IDhLevel parentDhLevel;
+	private IDhLevel dhLevel;
 	
 	
 	
@@ -299,18 +297,18 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	public void onUnload() 
 	{ 
 		LEVEL_WRAPPER_REF_BY_CLIENT_LEVEL.remove(this.level);
-		this.parentDhLevel = null;
+		this.dhLevel = null;
 	}
 	
 	@Override
 	public File getDhSaveFolder()
 	{
-		if (this.parentDhLevel == null)
+		if (this.dhLevel == null)
 		{
 			return null;
 		}
 		
-		return this.parentDhLevel.getSaveStructure().getSaveFolder(this);
+		return this.dhLevel.getSaveStructure().getSaveFolder(this);
 	}
 	
 	
@@ -321,17 +319,19 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	//===================//
 	
 	@Override
-	public void setParentLevel(IDhLevel parentLevel) { this.parentDhLevel = parentLevel; }
+	public void setDhLevel(IDhLevel dhLevel) { this.dhLevel = dhLevel; }
+	@Override 
+	public IDhLevel getDhLevel() { return this.dhLevel; }
 	
 	@Override 
 	public IDhApiCustomRenderRegister getRenderRegister()
 	{
-		if (this.parentDhLevel == null)
+		if (this.dhLevel == null)
 		{
 			return null;
 		}
 		
-		return this.parentDhLevel.getGenericRenderer();
+		return this.dhLevel.getGenericRenderer();
 	}
 	
 	@Override

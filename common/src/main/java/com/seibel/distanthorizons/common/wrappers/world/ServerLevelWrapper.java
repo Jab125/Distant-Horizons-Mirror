@@ -24,21 +24,14 @@ import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Map;
 import java.util.WeakHashMap;
-import java.util.concurrent.ConcurrentHashMap;
 
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiLevelType;
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderRegister;
-import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
-import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
-import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
-import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import net.minecraft.server.level.ServerLevel;
@@ -52,12 +45,8 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 #endif
 
-#if MC_VER < MC_1_21_3
-#else
-import java.nio.file.Path;
-#endif
-
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import org.jetbrains.annotations.Nullable;
 
 public class ServerLevelWrapper implements IServerLevelWrapper
 {
@@ -69,8 +58,7 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	private static final Map<ServerLevel, WeakReference<ServerLevelWrapper>> LEVEL_WRAPPER_REF_BY_SERVER_LEVEL = Collections.synchronizedMap(new WeakHashMap<>());
 	
 	private final ServerLevel level;
-	@Deprecated // TODO circular references are bad
-	private IDhLevel parentDhLevel;
+	private IDhLevel dhLevel;
 	
 	
 	
@@ -188,28 +176,31 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	
 	
 	@Override
-	public void setParentLevel(IDhLevel parentLevel) { this.parentDhLevel = parentLevel; }
+	public void setDhLevel(IDhLevel dhLevel) { this.dhLevel = dhLevel; }
+	@Override
+	@Nullable
+	public IDhLevel getDhLevel() { return this.dhLevel; }
 	
 	@Override
 	public IDhApiCustomRenderRegister getRenderRegister()
 	{
-		if (this.parentDhLevel == null)
+		if (this.dhLevel == null)
 		{
 			return null;
 		}
 		
-		return this.parentDhLevel.getGenericRenderer();
+		return this.dhLevel.getGenericRenderer();
 	}
 	
 	@Override
 	public File getDhSaveFolder()
 	{
-		if (this.parentDhLevel == null)
+		if (this.dhLevel == null)
 		{
 			return null;
 		}
 		
-		return this.parentDhLevel.getSaveStructure().getSaveFolder(this);
+		return this.dhLevel.getSaveStructure().getSaveFolder(this);
 	}
 	
 	
