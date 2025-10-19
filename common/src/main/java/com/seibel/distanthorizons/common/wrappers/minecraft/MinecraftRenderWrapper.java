@@ -59,6 +59,12 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAc
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.effect.MobEffects;
+
+import net.minecraft.world.phys.Vec3;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import org.jetbrains.annotations.NotNull;
+import org.joml.Vector4f;
+
 #if MC_VER < MC_1_17_1
 import net.minecraft.tags.FluidTags;
 import net.minecraft.world.entity.Entity;
@@ -67,9 +73,6 @@ import org.lwjgl.opengl.GL15;
 #else
 import net.minecraft.world.level.material.FogType;
 #endif
-import net.minecraft.world.phys.Vec3;
-import com.seibel.distanthorizons.core.logging.DhLogger;
-import org.joml.Vector4f;
 
 #if MC_VER >= MC_1_21_5
 import com.mojang.blaze3d.opengl.GlTexture;
@@ -419,7 +422,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
-	public ILightMapWrapper getLightmapWrapper(ILevelWrapper level) { return this.lightmapByDimensionType.get(level.getDimensionType()); }
+	public ILightMapWrapper getLightmapWrapper(@NotNull ILevelWrapper level) { return this.lightmapByDimensionType.get(level.getDimensionType()); }
 	
 	@Override
 	public boolean isFogStateSpecial()

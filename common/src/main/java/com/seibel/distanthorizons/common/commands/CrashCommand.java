@@ -17,9 +17,9 @@ public class CrashCommand extends AbstractCommand
 				.requires(this::isPlayerSource)
 				.then(literal("encode")
 						.executes(c -> {
-							assert SharedApi.getIDhServerWorld() != null;
+							assert SharedApi.tryGetDhServerWorld() != null;
 							
-							ServerPlayerState serverPlayerState = SharedApi.getIDhServerWorld().getServerPlayerStateManager()
+							ServerPlayerState serverPlayerState = SharedApi.tryGetDhServerWorld().getServerPlayerStateManager()
 									.getConnectedPlayer(this.getSourcePlayer(c));
 							if (serverPlayerState != null)
 							{
@@ -29,9 +29,9 @@ public class CrashCommand extends AbstractCommand
 						}))
 				.then(literal("decode")
 						.executes(c -> {
-							assert SharedApi.getIDhServerWorld() != null;
+							assert SharedApi.tryGetDhServerWorld() != null;
 							
-							ServerPlayerState serverPlayerState = SharedApi.getIDhServerWorld().getServerPlayerStateManager()
+							ServerPlayerState serverPlayerState = SharedApi.tryGetDhServerWorld().getServerPlayerStateManager()
 									.getConnectedPlayer(this.getSourcePlayer(c));
 							if (serverPlayerState != null)
 							{
