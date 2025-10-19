@@ -36,9 +36,9 @@ public class KeyedClientLevelManager implements IKeyedClientLevelManager
 	public IServerKeyedClientLevel getServerKeyedLevel() { return this.serverKeyedLevel; }
 	
 	@Override
-	public IServerKeyedClientLevel setServerKeyedLevel(IClientLevelWrapper clientLevel, String levelKey)
+	public IServerKeyedClientLevel setServerKeyedLevel(IClientLevelWrapper clientLevel, String serverKey, String levelKey)
 	{
-		IServerKeyedClientLevel keyedLevel = new ServerKeyedClientLevelWrapper((ClientLevel) clientLevel.getWrappedMcObject(), levelKey);
+		IServerKeyedClientLevel keyedLevel = new ServerKeyedClientLevelWrapper((ClientLevel) clientLevel.getWrappedMcObject(), serverKey, levelKey);
 		this.serverKeyedLevel = keyedLevel;
 		this.enabled = true;
 		return keyedLevel;
