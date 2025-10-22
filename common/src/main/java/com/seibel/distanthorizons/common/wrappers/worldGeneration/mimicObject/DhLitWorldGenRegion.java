@@ -352,7 +352,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 		ChunkAccess chunk = this.getChunkAccess(chunkX, chunkZ, chunkStatus, returnNonNull);
 		if (chunk instanceof LevelChunk)
 		{
-			chunk = new ImposterProtoChunk((LevelChunk) chunk #if MC_VER >= MC_1_18_2 , true #endif );
+			chunk = new ImposterProtoChunk((LevelChunk) chunk #if MC_VER >= MC_1_18_2 ,/* allow writes */ false #endif );
 		}
 		return chunk;
 	}
