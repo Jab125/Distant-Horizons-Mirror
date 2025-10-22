@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.wrappers.world;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.lang.ref.WeakReference;
 import java.util.Collections;
 import java.util.Map;
@@ -38,6 +39,7 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
+import net.minecraft.server.MinecraftServer;
 
 #if MC_VER <= MC_1_20_4
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -101,16 +103,20 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 		#endif
 	}
 	
+	
 	@Override
 	public String getWorldFolderName()
 	{
-		// Need specifically overworld since it's the only dimension that is stored in a server root folder
+		MinecraftServer server = this.level.getServer();
+		ServerLevel overworld = null;
 		
-		#if MC_VER >= MC_1_21_3
-		return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParent().getFileName().toString();
-		#else // <= 1.21.3
-		return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParentFile().getName();
-		#endif
+		overworld = server.getLevel(Level.OVERWORLD);
+		
+		if (overworld == null)
+			return "unknown_world"; // fallback
+		
+		Path folder = overworld.getChunkSource().getDataStorage().dataFolder;
+		return folder.getParent().getFileName().toString();
 	}
 	
 	@Override
