@@ -116,7 +116,13 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 			return "unknown_world"; // fallback
 		
 		Path folder = overworld.getChunkSource().getDataStorage().dataFolder;
-		return folder.getParent().getFileName().toString();
+		#if MC_VER >= MC_1_21_3
+			return overworld.getChunkSource().getDataStorage().dataFolder
+					.getParent().getFileName().toString();
+        #else // <= 1.21.3
+			return overworld.getChunkSource().getDataStorage().dataFolder
+					.getParentFile().getName();
+        #endif
 	}
 	
 	@Override
