@@ -28,9 +28,13 @@ import java.util.WeakHashMap;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiLevelType;
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderRegister;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
+import com.seibel.distanthorizons.core.api.internal.SharedApi;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.network.messages.base.LevelInitMessage;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
+import com.seibel.distanthorizons.core.world.EWorldEnvironment;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
@@ -60,6 +64,12 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	private final ServerLevel level;
 	private IDhLevel dhLevel;
 	
+	/** 
+	 * this name is cached to prevent issues during shutdown where
+	 * the server variables needed may no longer be available.
+	 */
+	private final String KeyedLevelDimensionName;
+	
 	
 	
 	//==============//
@@ -83,7 +93,11 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 		}).get();
 	}
 	
-	public ServerLevelWrapper(ServerLevel level) { this.level = level; }
+	public ServerLevelWrapper(ServerLevel level) 
+	{ 
+		this.level = level;
+		this.KeyedLevelDimensionName = this.createKeyedLevelDimensionName();
+	}
 	
 	
 	
@@ -102,16 +116,60 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	}
 	
 	@Override
-	public String getWorldFolderName()
+	public String getKeyedLevelDimensionName() { return this.KeyedLevelDimensionName; }
+	
+	private String createKeyedLevelDimensionName()
 	{
-		// Need specifically overworld since it's the only dimension that is stored in a server root folder
+		String dimensionName = this.getDhIdentifier();
 		
-		#if MC_VER >= MC_1_21_3
-		return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParent().getFileName().toString();
-		#else // <= 1.21.3
-		return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParentFile().getName();
-		#endif
+		if (Config.Server.sendLevelKeys.get())
+		{
+			String levelKeyPrefix = Config.Server.levelKeyPrefix.get();
+			
+			if (SharedApi.getEnvironment() == EWorldEnvironment.CLIENT_SERVER)
+			{
+				String cleanWorldFolderName = this.getWorldFolderName()
+						.replaceAll("[^" + LevelInitMessage.ALLOWED_CHARS_REGEX + " ]", "")
+						.replaceAll(" ", "_");
+				
+				levelKeyPrefix += (!levelKeyPrefix.isEmpty() ? "_" : "") + cleanWorldFolderName
+						+ "_" + this.getHashedSeedEncoded();
+			}
+			
+			if (levelKeyPrefix.isEmpty())
+			{
+				levelKeyPrefix = this.getHashedSeedEncoded();
+			}
+			
+			String mainPart = "@" + dimensionName;
+			
+			return levelKeyPrefix.substring(0, Math.min(
+					LevelInitMessage.MAX_LENGTH - mainPart.length(),
+					levelKeyPrefix.length()
+			)) + mainPart;
+		}
+		
+		return dimensionName;
 	}
+	private String getWorldFolderName()
+	{
+		try
+		{
+			// We use the overworld since it's the only dimension that is stored in the server root folder
+			
+			#if MC_VER >= MC_1_21_3
+			return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParent().getFileName().toString();
+			#else // <= 1.21.3
+			return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParentFile().getName();
+			#endif
+		}
+		catch (Exception e)
+		{
+			LOGGER.warn("Unable to get world folder name. LODs may not load or save correctly. Error: ["+e.getMessage()+"].", e);
+			return "unknown_world";
+		}
+	}
+	
 	
 	@Override
 	public DimensionTypeWrapper getDimensionType() { return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType()); }
