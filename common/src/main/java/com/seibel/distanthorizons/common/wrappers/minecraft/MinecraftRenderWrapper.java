@@ -321,7 +321,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
-	public int getTargetFrameBuffer()
+	public int getTargetFramebuffer()
 	{
 		// used so we can access the framebuffer shaders end up rendering to
 		if (AbstractOptifineAccessor.optifinePresent())
@@ -402,7 +402,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
-	public int getTargetFrameBufferViewportWidth()
+	public int getTargetFramebufferViewportWidth()
 	{
 		#if MC_VER < MC_1_21_9
 		return this.getRenderTarget().viewWidth;
@@ -412,7 +412,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
-	public int getTargetFrameBufferViewportHeight()
+	public int getTargetFramebufferViewportHeight()
 	{
 		#if MC_VER < MC_1_21_9
 		return this.getRenderTarget().viewHeight;
