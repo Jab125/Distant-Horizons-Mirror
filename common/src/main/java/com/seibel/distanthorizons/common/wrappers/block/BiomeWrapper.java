@@ -104,8 +104,7 @@ public class BiomeWrapper implements IBiomeWrapper
 	// constructors //
 	//==============//
 	
-	// TODO why not just return BiomeWrapper?
-	static public IBiomeWrapper getBiomeWrapper(#if MC_VER < MC_1_18_2 Biome #else Holder<Biome> #endif biome, ILevelWrapper levelWrapper)
+	public static BiomeWrapper getBiomeWrapper(#if MC_VER < MC_1_18_2 Biome #else Holder<Biome> #endif biome, ILevelWrapper levelWrapper)
 	{
 		if (biome == null)
 		{
@@ -113,9 +112,10 @@ public class BiomeWrapper implements IBiomeWrapper
 		}
 		
 		
-		if (WRAPPER_BY_BIOME.containsKey(biome))
+		BiomeWrapper biomeWrapper = WRAPPER_BY_BIOME.get(biome);
+		if (biomeWrapper != null)
 		{
-			return WRAPPER_BY_BIOME.get(biome);
+			return biomeWrapper;
 		}
 		else
 		{
@@ -301,7 +301,7 @@ public class BiomeWrapper implements IBiomeWrapper
 				}
 				
 				
-				foundWrapper = (BiomeWrapper) getBiomeWrapper(deserializeResult.biome, levelWrapper);
+				foundWrapper = getBiomeWrapper(deserializeResult.biome, levelWrapper);
 				return foundWrapper;
 			}
 			catch (Exception e)
