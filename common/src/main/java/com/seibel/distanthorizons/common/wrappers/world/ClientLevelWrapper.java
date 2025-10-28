@@ -64,10 +64,10 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	private static final Minecraft MINECRAFT = Minecraft.getInstance();
 	
 	private final ClientLevel level;
-	private final ConcurrentHashMap<BlockState, ClientBlockStateColorCache> blockCache = new ConcurrentHashMap<>();
+	private final ConcurrentHashMap<BlockState, ClientBlockStateColorCache> blockColorCacheByBlockState = new ConcurrentHashMap<>();
 	
 	/** cached method reference to reduce GC overhead */
-	private final Function<BlockState, ClientBlockStateColorCache> cachedBlockColorCacheFunction = (blockState) -> this.createBlockColorCache(blockState);
+	private final Function<BlockState, ClientBlockStateColorCache> createCachedBlockColorCacheFunc = (blockState) -> new ClientBlockStateColorCache(blockState, this);
 	
 	
 	private BlockStateWrapper dirtBlockWrapper;
@@ -201,14 +201,12 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	@Override
 	public int getBlockColor(DhBlockPos pos, IBiomeWrapper biome, FullDataSourceV2 fullDataSource, IBlockStateWrapper blockWrapper)
 	{
-		ClientBlockStateColorCache blockColorCache = this.blockCache.computeIfAbsent(
+		ClientBlockStateColorCache blockColorCache = this.blockColorCacheByBlockState.computeIfAbsent(
 				((BlockStateWrapper) blockWrapper).blockState,
-				this.cachedBlockColorCacheFunction);
+				this.createCachedBlockColorCacheFunc);
 		
 		return blockColorCache.getColor((BiomeWrapper) biome, fullDataSource, pos);
 	}
-	/** used by {@link ClientLevelWrapper#cachedBlockColorCacheFunction} */
-	private ClientBlockStateColorCache createBlockColorCache(BlockState block) { return new ClientBlockStateColorCache(block, this); }
 	
 	
 	@Override
@@ -232,7 +230,7 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	}
 	
 	@Override 
-	public void clearBlockColorCache() { this.blockCache.clear(); }
+	public void clearBlockColorCache() { this.blockColorCacheByBlockState.clear(); }
 	
 	@Override
 	public IDimensionTypeWrapper getDimensionType() { return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType()); }

@@ -41,7 +41,7 @@ import java.util.stream.Stream;
 
 public class TintGetterOverride extends AbstractDhTintGetter
 {
-	private final LevelReader parent;
+	private LevelReader parent;
 	
 	
 	
@@ -49,9 +49,11 @@ public class TintGetterOverride extends AbstractDhTintGetter
 	// constructor //
 	//=============//
 	
-	public TintGetterOverride(LevelReader parent, BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
-	{ 
-		super(biomeWrapper, fullDataSource, clientLevelWrapper); 
+	public TintGetterOverride() { }
+	
+	public void update(LevelReader parent, BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
+	{
+		super.update(biomeWrapper, fullDataSource, clientLevelWrapper);
 		this.parent = parent;
 	}
 	

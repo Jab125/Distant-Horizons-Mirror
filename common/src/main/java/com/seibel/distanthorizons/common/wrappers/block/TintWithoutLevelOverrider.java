@@ -23,6 +23,7 @@ import com.seibel.distanthorizons.core.dataObjects.fullData.sources.FullDataSour
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.lighting.LevelLightEngine;
@@ -36,8 +37,8 @@ public class TintWithoutLevelOverrider extends AbstractDhTintGetter
 	// constructor //
 	//=============//
 	
-	public TintWithoutLevelOverrider(BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
-	{ super(biomeWrapper, fullDataSource, clientLevelWrapper); }
+	public TintWithoutLevelOverrider()
+	{ }
 	
 	
 	

@@ -18,8 +18,11 @@ import net.minecraft.world.level.biome.Biome;
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.ConcurrentMap;
+
 import com.seibel.distanthorizons.core.logging.DhLogger;
+
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 #if MC_VER >= MC_1_18_2
 import net.minecraft.core.Holder;
@@ -30,18 +33,22 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	
-	protected final BiomeWrapper biomeWrapper;
-	
-	protected final int smoothingRadiusInBlocks;
-	protected final FullDataSourceV2 fullDataSource;
-	protected final IClientLevelWrapper clientLevelWrapper;
-	
 	#if MC_VER < MC_1_18_2
-	public static final ConcurrentMap<String, Biome> BIOME_BY_RESOURCE_STRING = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<String, Biome> BIOME_BY_RESOURCE_STRING = new ConcurrentHashMap<>();
 	#else
-	public static final ConcurrentMap<String, Holder<Biome>> BIOME_BY_RESOURCE_STRING = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<String, Holder<Biome>> BIOME_BY_RESOURCE_STRING = new ConcurrentHashMap<>();
     #endif
+	
+	private static final ConcurrentHashMap<Biome, Integer> COLOR_BY_BIOME = new ConcurrentHashMap<>();
+	
+	/** returned if the color cache is incomplete */
+	public static final int INVALID_COLOR = Integer.MIN_VALUE;
+	
+	
+	protected BiomeWrapper biomeWrapper;
+	protected FullDataSourceV2 fullDataSource;
+	protected int smoothingRadiusInBlocks;
+	protected IClientLevelWrapper clientLevelWrapper;
 	
 	
 	
@@ -49,7 +56,13 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	// constructor //
 	//=============//
 	
-	public AbstractDhTintGetter(BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
+	public AbstractDhTintGetter() { }
+	
+	/** 
+	 * Mutates this getter so we can access the necessary
+	 * variables for tint getting.
+	 */
+	public void update(BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
 	{
 		this.biomeWrapper = biomeWrapper;
 		this.fullDataSource = fullDataSource;
@@ -63,8 +76,27 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	// shared methods //
 	//================//
 	
+	/** Called by MC's tint getter */
 	@Override
-	public int getBlockTint(BlockPos blockPos, ColorResolver colorResolver)
+	public int getBlockTint(@NotNull BlockPos blockPos, @NotNull ColorResolver colorResolver)
+	{
+		DhBlockPosMutable mutableBlockPos = new DhBlockPosMutable(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+		return this.tryGetBlockTint(mutableBlockPos, colorResolver);
+	}
+	
+	/**
+	 * Can be called by DH directly, skipping some of MC's logic
+	 * to speed up tint getting slightly.
+	 * 
+	 * @return {@link AbstractDhTintGetter#INVALID_COLOR} if any of the biomes needed for this position
+	 *          were not cached. In that case calling {@link AbstractDhTintGetter#getBlockTint(BlockPos, ColorResolver)}
+	 *          will need to be called by MC's ColorResolver so we can
+	 *          populate the color cache.
+	 */
+	public int tryGetBlockTint(DhBlockPosMutable mutableBlockPos)
+	{ return this.tryGetBlockTint(mutableBlockPos, null); }
+	
+	private int tryGetBlockTint(DhBlockPosMutable mutableBlockPos, @Nullable ColorResolver colorResolver)
 	{
 		// determine how wide this data source is so we can determine
 		// if blending should be used
@@ -78,7 +110,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		if (this.smoothingRadiusInBlocks == 0
 			|| dataSourceLodWidthInBlocks > this.smoothingRadiusInBlocks)
 		{
-			return colorResolver.getColor(unwrapClientBiome(this.biomeWrapper.biome, this.clientLevelWrapper), blockPos.getX(), blockPos.getZ());
+			return this.tryGetClientBiomeColor(colorResolver, this.biomeWrapper);
 		}
 		
 		
@@ -88,13 +120,13 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		int rollingGreen = 0;
 		int rollingBlue = 0;
 		
-		int xMin = blockPos.getX() - this.smoothingRadiusInBlocks;
-		int xMax = blockPos.getX() + this.smoothingRadiusInBlocks;
+		int xMin = mutableBlockPos.getX() - this.smoothingRadiusInBlocks;
+		int xMax = mutableBlockPos.getX() + this.smoothingRadiusInBlocks;
 		
-		int zMin = blockPos.getZ() - this.smoothingRadiusInBlocks;
-		int zMax = blockPos.getZ() + this.smoothingRadiusInBlocks;
+		int zMin = mutableBlockPos.getZ() - this.smoothingRadiusInBlocks;
+		int zMax = mutableBlockPos.getZ() + this.smoothingRadiusInBlocks;
 		
-		DhBlockPosMutable mutableBlockPos = new DhBlockPosMutable(0, blockPos.getY(), 0);
+		
 		for (int x = xMin; x < xMax; x++)
 		{
 			for (int z = zMin; z < zMax; z++)
@@ -114,7 +146,11 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 				// get the color for this nearby position
 				int id = FullDataPointUtil.getId(dataPoint);
 				BiomeWrapper biomeWrapper = (BiomeWrapper) this.fullDataSource.mapping.getBiomeWrapper(id);
-				int color = colorResolver.getColor(unwrapClientBiome(biomeWrapper.biome, this.clientLevelWrapper), mutableBlockPos.getX(), mutableBlockPos.getZ());
+				int color = this.tryGetClientBiomeColor(colorResolver, biomeWrapper);
+				if (color == INVALID_COLOR)
+				{
+					return INVALID_COLOR;
+				}
 				
 				
 				// rolling average
@@ -131,7 +167,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		// just use the default center's color
 		if (dataPointCount == 0)
 		{
-			return colorResolver.getColor(unwrapClientBiome(this.biomeWrapper.biome, this.clientLevelWrapper), blockPos.getX(), blockPos.getZ());
+			return this.tryGetClientBiomeColor(colorResolver, this.biomeWrapper);
 		}
 		
 		int colorInt = ColorUtil.argbToInt(
@@ -142,14 +178,38 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		return colorInt;
 	}
 	
-	protected static Biome unwrapClientBiome(#if MC_VER >= MC_1_18_2 Holder<Biome> #else Biome #endif biome, IClientLevelWrapper clientLevelWrapper)
+	/** 
+	 * If given a ColorResolver this will always succeed. <Br> 
+	 * If not it will attempt to use the cached color.
+	 */
+	private int tryGetClientBiomeColor(@Nullable ColorResolver colorResolver, BiomeWrapper biomeWrapper)
 	{
-		BiomeWrapper biomeWrapper = (BiomeWrapper)BiomeWrapper.getBiomeWrapper(biome, clientLevelWrapper);
+		// use the cached color if possible
+		int cachedColor = COLOR_BY_BIOME.getOrDefault(unwrapClientBiome(biomeWrapper), INVALID_COLOR);
+		if (cachedColor != INVALID_COLOR)
+		{
+			return cachedColor;
+		}
 		
+		if (colorResolver == null)
+		{
+			// no color resolver is present,
+			// the cache needs to be populated before 
+			// we can use the fast path
+			return INVALID_COLOR;
+		}
+		
+		return COLOR_BY_BIOME.computeIfAbsent(unwrapClientBiome(biomeWrapper), 
+				// in James' testing the block position isn't needed so we can just default to (0,0)
+				(unwrappedBiome) -> colorResolver.getColor(unwrappedBiome, 0, 0));
+	}
+	
+	protected static Biome unwrapClientBiome(BiomeWrapper biomeWrapper)
+	{
 		String biomeString = biomeWrapper.getSerialString();
 		if (biomeString == null
-				|| biomeString.isEmpty()
-				|| biomeString.equals(BiomeWrapper.EMPTY_BIOME_STRING))
+			|| biomeString.isEmpty()
+			|| biomeString.equals(BiomeWrapper.EMPTY_BIOME_STRING))
 		{
 			// default to "plains" for empty/invalid biomes
 			biomeString = "minecraft:plains";
@@ -203,6 +263,21 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	 */
 	private static #if MC_VER < MC_1_18_2 Biome #else Holder<Biome> #endif getClientBiome(String biomeResourceString)
 	{
+		#if MC_VER < MC_1_18_2 
+		Biome biome;
+		#else 
+		Holder<Biome> biome; 
+		#endif
+		
+		// calling get instead of compute is slightly faster for already
+		// computed values
+		biome = BIOME_BY_RESOURCE_STRING.get(biomeResourceString);
+		if (biome != null)
+		{
+			return biome;
+		}
+		
+		
 		// cache the client biomes so we don't have to re-parse the resource location every time
 		return BIOME_BY_RESOURCE_STRING.compute(biomeResourceString,
 				(resourceString, existingBiome) ->
