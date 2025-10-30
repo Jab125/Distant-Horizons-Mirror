@@ -39,7 +39,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	private static final ConcurrentHashMap<String, Holder<Biome>> BIOME_BY_RESOURCE_STRING = new ConcurrentHashMap<>();
     #endif
 	
-	private static final ConcurrentHashMap<Biome, Integer> COLOR_BY_BIOME = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<BiomeWrapper, Integer> COLOR_BY_BIOME_WRAPPER = new ConcurrentHashMap<>();
 	
 	/** returned if the color cache is incomplete */
 	public static final int INVALID_COLOR = Integer.MIN_VALUE;
@@ -185,7 +185,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	private int tryGetClientBiomeColor(@Nullable ColorResolver colorResolver, BiomeWrapper biomeWrapper)
 	{
 		// use the cached color if possible
-		int cachedColor = COLOR_BY_BIOME.getOrDefault(unwrapClientBiome(biomeWrapper), INVALID_COLOR);
+		int cachedColor = COLOR_BY_BIOME_WRAPPER.getOrDefault(biomeWrapper, INVALID_COLOR);
 		if (cachedColor != INVALID_COLOR)
 		{
 			return cachedColor;
@@ -199,9 +199,9 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 			return INVALID_COLOR;
 		}
 		
-		return COLOR_BY_BIOME.computeIfAbsent(unwrapClientBiome(biomeWrapper), 
+		return COLOR_BY_BIOME_WRAPPER.computeIfAbsent(biomeWrapper, 
 				// in James' testing the block position isn't needed so we can just default to (0,0)
-				(unwrappedBiome) -> colorResolver.getColor(unwrappedBiome, 0, 0));
+				(newBiomeWrapper) -> colorResolver.getColor(unwrapClientBiome(biomeWrapper), 0, 0));
 	}
 	
 	protected static Biome unwrapClientBiome(BiomeWrapper biomeWrapper)
