@@ -137,7 +137,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 				// this can return the same position/datapoint for larger LODs duplicating work,
 				// however for small smoothing ranges that isn't a big deal and for large LODs
 				// we ignore smoothing anyway
-				long dataPoint = this.fullDataSource.getAtBlockPos(mutableBlockPos);
+				long dataPoint = this.fullDataSource.getDataPointAtBlockPos(mutableBlockPos);
 				if (dataPoint == FullDataPointUtil.EMPTY_DATA_POINT)
 				{
 					continue;
