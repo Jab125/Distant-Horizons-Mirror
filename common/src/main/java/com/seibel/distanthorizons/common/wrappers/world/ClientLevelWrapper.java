@@ -199,13 +199,17 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	//====================//
 	
 	@Override
-	public int getBlockColor(DhBlockPos pos, IBiomeWrapper biome, FullDataSourceV2 fullDataSource, IBlockStateWrapper blockWrapper)
+	public int getBlockColor(DhBlockPos blockPos, IBiomeWrapper biome, FullDataSourceV2 fullDataSource, IBlockStateWrapper blockWrapper)
 	{
-		ClientBlockStateColorCache blockColorCache = this.blockColorCacheByBlockState.computeIfAbsent(
-				((BlockStateWrapper) blockWrapper).blockState,
-				this.createCachedBlockColorCacheFunc);
+		ClientBlockStateColorCache blockColorCache = this.blockColorCacheByBlockState.get(((BlockStateWrapper) blockWrapper).blockState);
+		if (blockColorCache == null)
+		{
+			blockColorCache = this.blockColorCacheByBlockState.computeIfAbsent(
+					((BlockStateWrapper) blockWrapper).blockState,
+					this.createCachedBlockColorCacheFunc);
+		}
 		
-		return blockColorCache.getColor((BiomeWrapper) biome, fullDataSource, pos);
+		return blockColorCache.getColor((BiomeWrapper) biome, fullDataSource, blockPos);
 	}
 	
 	

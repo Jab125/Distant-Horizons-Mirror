@@ -51,9 +51,9 @@ public class TintGetterOverride extends AbstractDhTintGetter
 	
 	public TintGetterOverride() { }
 	
-	public void update(LevelReader parent, BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
+	public void update(LevelReader parent, BiomeWrapper biomeWrapper, BlockStateWrapper blockStateWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
 	{
-		super.update(biomeWrapper, fullDataSource, clientLevelWrapper);
+		super.update(biomeWrapper, blockStateWrapper, fullDataSource, clientLevelWrapper);
 		this.parent = parent;
 	}
 	

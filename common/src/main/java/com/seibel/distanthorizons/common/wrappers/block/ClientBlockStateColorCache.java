@@ -94,6 +94,7 @@ public class ClientBlockStateColorCache
 	
 	private final IClientLevelWrapper clientLevelWrapper;
 	private final BlockState blockState;
+	private final BlockStateWrapper blockStateWrapper;
 	
 	private boolean isColorResolved = false;
 	private int baseColor = 0;
@@ -173,10 +174,11 @@ public class ClientBlockStateColorCache
 	// constructor //
 	//=============//
 	
-	public ClientBlockStateColorCache(BlockState blockState, IClientLevelWrapper samplingLevel)
+	public ClientBlockStateColorCache(BlockState blockState, IClientLevelWrapper clientLevelWrapper)
 	{
 		this.blockState = blockState;
-		this.clientLevelWrapper = samplingLevel;
+		this.blockStateWrapper = BlockStateWrapper.fromBlockState(blockState, clientLevelWrapper);
+		this.clientLevelWrapper = clientLevelWrapper;
 		
 		this.resolveColors();
 	}
@@ -472,7 +474,7 @@ public class ClientBlockStateColorCache
 				try
 				{
 					TintWithoutLevelOverrider tintOverride = TintWithoutLevelOverrideGetter.get();
-					tintOverride.update(biomeWrapper, fullDataSource, this.clientLevelWrapper);
+					tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
 					
 					// try using DH's cached tint values first if possible
 					tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
@@ -503,7 +505,7 @@ public class ClientBlockStateColorCache
 				// specifically oceans don't render correctly
 				
 				TintGetterOverride tintOverride = TintOverrideGetter.get();
-				tintOverride.update(biomeWrapper, fullDataSource, this.clientLevelWrapper);
+				tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
 				
 				tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
 				if (tintColor == AbstractDhTintGetter.INVALID_COLOR)
