@@ -396,4 +396,10 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		}
 	}
 	
+	@Override
+	public void setPreventAutoPause(boolean preventAutoPause)
+	{
+		throw new UnsupportedOperationException();
+	}
+	
 }

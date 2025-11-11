@@ -11,6 +11,7 @@ public class MinecraftServerWrapper implements IMinecraftSharedWrapper
 	public static final MinecraftServerWrapper INSTANCE = new MinecraftServerWrapper();
 	
 	public DedicatedServer dedicatedServer = null;
+	public boolean preventAutoPause = false;
 	
 	
 	//=============//
@@ -47,6 +48,12 @@ public class MinecraftServerWrapper implements IMinecraftSharedWrapper
 	public int getPlayerCount()
 	{
 		return this.dedicatedServer.getPlayerCount();
+	}
+	
+	@Override
+	public void setPreventAutoPause(boolean preventAutoPause)
+	{
+		this.preventAutoPause = preventAutoPause;
 	}
 	
 }
