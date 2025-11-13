@@ -3,6 +3,7 @@ package com.seibel.distanthorizons.common.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
+import org.jetbrains.annotations.Nullable;
 
 import static com.seibel.distanthorizons.core.network.messages.MessageRegistry.DEBUG_CODEC_CRASH_MESSAGE;
 import static net.minecraft.commands.Commands.literal;
@@ -12,25 +13,42 @@ import static net.minecraft.commands.Commands.literal;
  */
 public class CommandInitializer
 {
-	private final CommandDispatcher<CommandSourceStack> commandDispatcher;
+	private boolean serverReady = false;
 	
 	/**
-	 * Constructs a new instance of this class.
-	 *
-	 * @param commandDispatcher The dispatcher to use for registering commands.
+	 * A received command dispatcher, which is held until the server is ready to initialize the commands.
 	 */
-	public CommandInitializer(CommandDispatcher<CommandSourceStack> commandDispatcher)
+	@Nullable
+	private CommandDispatcher<CommandSourceStack> commandDispatcher;
+	
+	/**
+	 * Notify the command initializer that the game is ready to accept commands.
+	 * If {@link CommandInitializer#initCommands(CommandDispatcher)} has been fired before it was ready, it will also initialize the commands.
+	 */
+	public void onServerReady()
 	{
-		this.commandDispatcher = commandDispatcher;
+		this.serverReady = true;
+		if (this.commandDispatcher != null)
+		{
+			this.initCommands(this.commandDispatcher);
+			this.commandDispatcher = null;
+		}
 	}
-	
-	
 	
 	/**
 	 * Initializes all available commands.
+	 * If the game is not ready yet, it stores the dispatcher to initialize the commands later.
+	 *
+	 * @param commandDispatcher The command dispatcher to register commands to.
 	 */
-	public void initCommands()
+	public void initCommands(CommandDispatcher<CommandSourceStack> commandDispatcher)
 	{
+		if (!this.serverReady)
+		{
+			this.commandDispatcher = commandDispatcher;
+			return;
+		}
+		
 		LiteralArgumentBuilder<CommandSourceStack> builder = literal("dh")
 				.requires(source -> source.hasPermission(4));
 		
@@ -43,7 +61,7 @@ public class CommandInitializer
 			builder.then(new CrashCommand().buildCommand());
 		}
 		
-		this.commandDispatcher.register(builder);
+		commandDispatcher.register(builder);
 	}
 	
 }
