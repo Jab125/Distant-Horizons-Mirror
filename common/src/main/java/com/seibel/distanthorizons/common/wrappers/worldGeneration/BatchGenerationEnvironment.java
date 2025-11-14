@@ -42,6 +42,8 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.Abstrac
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 
 import java.io.IOException;
+import java.nio.channels.ClosedByInterruptException;
+import java.nio.channels.ClosedChannelException;
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
@@ -681,11 +683,24 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 								actualThrowable = completionException.getCause();
 							}
 							
-							CHUNK_LOAD_LOGGER.warn("DistantHorizons: Couldn't load or make chunk ["+chunkPos+"], error: ["+actualThrowable.getMessage()+"].", actualThrowable);
+							// interrupts mean the world generator is being shut down, no need to log that
+							boolean isShutdownException = 
+									actualThrowable instanceof InterruptedException
+									|| actualThrowable instanceof ClosedByInterruptException;
+							if (!isShutdownException)
+							{
+								CHUNK_LOAD_LOGGER.warn("DistantHorizons: Couldn't load or make chunk ["+chunkPos+"], error: ["+actualThrowable.getMessage()+"].", actualThrowable);
+							}
+							
 							return null;
 						});
 			}
 			#endif
+		}
+		catch (ClosedByInterruptException ignore) 
+		{ 
+			// this just means the world generator is being shut down
+			return CompletableFuture.completedFuture(null);
 		}
 		catch (Exception e)
 		{
@@ -1124,9 +1139,10 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 			{
 				regionStorage.close();
 			}
+			catch (ClosedChannelException ignore) { /* world generator is being shut down */ }
 			catch (IOException e)
 			{
-				EVENT_LOGGER.error("Failed to close region file storage cache!", e);
+				EVENT_LOGGER.error("Failed to close region file storage cache, error: ["+e.getMessage()+"].", e);
 			}
 		}
 		
