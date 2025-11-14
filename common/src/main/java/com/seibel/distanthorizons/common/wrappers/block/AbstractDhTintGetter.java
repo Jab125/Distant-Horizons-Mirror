@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.common.wrappers.block;
 
 import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.dataObjects.BlockBiomeWrapperPair;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.FullDataSourceV2;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
@@ -9,6 +10,7 @@ import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.FullDataPointUtil;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -39,13 +41,13 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	private static final ConcurrentHashMap<String, Holder<Biome>> BIOME_BY_RESOURCE_STRING = new ConcurrentHashMap<>();
     #endif
 	
-	private static final ConcurrentHashMap<BiomeWrapper, Integer> COLOR_BY_BIOME_WRAPPER = new ConcurrentHashMap<>();
-	
+	private static final ConcurrentHashMap<BlockBiomeWrapperPair, Integer> COLOR_BY_BLOCK_BIOME_PAIR = new ConcurrentHashMap<>();
 	/** returned if the color cache is incomplete */
 	public static final int INVALID_COLOR = Integer.MIN_VALUE;
 	
 	
 	protected BiomeWrapper biomeWrapper;
+	protected BlockStateWrapper blockStateWrapper;
 	protected FullDataSourceV2 fullDataSource;
 	protected int smoothingRadiusInBlocks;
 	protected IClientLevelWrapper clientLevelWrapper;
@@ -62,9 +64,10 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	 * Mutates this getter so we can access the necessary
 	 * variables for tint getting.
 	 */
-	public void update(BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
+	public void update(BiomeWrapper biomeWrapper, BlockStateWrapper blockStateWrapper, FullDataSourceV2 fullDataSource, IClientLevelWrapper clientLevelWrapper)
 	{
 		this.biomeWrapper = biomeWrapper;
+		this.blockStateWrapper = blockStateWrapper;
 		this.fullDataSource = fullDataSource;
 		this.clientLevelWrapper = clientLevelWrapper;
 		this.smoothingRadiusInBlocks = Config.Client.Advanced.Graphics.Quality.lodBiomeBlending.get();
@@ -184,9 +187,11 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	 */
 	private int tryGetClientBiomeColor(@Nullable ColorResolver colorResolver, BiomeWrapper biomeWrapper)
 	{
+		BlockBiomeWrapperPair pair = BlockBiomeWrapperPair.get(this.blockStateWrapper, biomeWrapper);
+		
 		// use the cached color if possible
-		int cachedColor = COLOR_BY_BIOME_WRAPPER.getOrDefault(biomeWrapper, INVALID_COLOR);
-		if (cachedColor != INVALID_COLOR)
+		Integer cachedColor = COLOR_BY_BLOCK_BIOME_PAIR.get(pair); // explicit Integer return here reduces unnecessary allocations
+		if (cachedColor != null)
 		{
 			return cachedColor;
 		}
@@ -199,9 +204,10 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 			return INVALID_COLOR;
 		}
 		
-		return COLOR_BY_BIOME_WRAPPER.computeIfAbsent(biomeWrapper, 
-				// in James' testing the block position isn't needed so we can just default to (0,0)
-				(newBiomeWrapper) -> colorResolver.getColor(unwrapClientBiome(biomeWrapper), 0, 0));
+		
+		int color = colorResolver.getColor(unwrapClientBiome(biomeWrapper), 0, 0);
+		COLOR_BY_BLOCK_BIOME_PAIR.put(pair, color);
+		return color;
 	}
 	
 	protected static Biome unwrapClientBiome(BiomeWrapper biomeWrapper)
