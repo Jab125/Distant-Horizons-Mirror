@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
@@ -33,6 +34,7 @@ import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import org.jetbrains.annotations.Nullable;
 
 public final class GenerationEvent
 {
@@ -49,7 +51,7 @@ public final class GenerationEvent
 	public EventTimer timer = null;
 	public long inQueueTime;
 	public long timeoutTime = -1;
-	public CompletableFuture<Void> future = null;
+	public final CompletableFuture<Void> future = new CompletableFuture<>();
 	public final Consumer<IChunkWrapper> resultConsumer;
 	
 	
@@ -76,56 +78,66 @@ public final class GenerationEvent
 			ExecutorService worldGeneratorThreadPool)
 	{
 		GenerationEvent generationEvent = new GenerationEvent(minPos, size, genEnvironment, generatorMode, target, resultConsumer);
-		generationEvent.future = CompletableFuture.supplyAsync(() ->
+		
+		try
 		{
-			long runStartTime = System.nanoTime();
-			generationEvent.timeoutTime = runStartTime;
-			generationEvent.inQueueTime = runStartTime - generationEvent.inQueueTime;
-			generationEvent.timer = new EventTimer("setup");
-			
-			BatchGenerationEnvironment.isDistantGeneratorThread.set(true);
-			
-			try
+			worldGeneratorThreadPool.execute(() ->
 			{
-				genEnvironment.generateLodFromListAsync(generationEvent, (runnable) -> 
+				try
 				{
-					worldGeneratorThreadPool.execute(() ->
+					long runStartTime = System.nanoTime();
+					generationEvent.timeoutTime = runStartTime;
+					generationEvent.inQueueTime = runStartTime - generationEvent.inQueueTime;
+					generationEvent.timer = new EventTimer("setup");
+					
+					BatchGenerationEnvironment.isDistantGeneratorThread.set(true);
+					
+					
+					genEnvironment.generateLodFromListAsync(generationEvent, (runnable) ->
 					{
-						boolean alreadyMarked = BatchGenerationEnvironment.isCurrentThreadDistantGeneratorThread();
-						if (!alreadyMarked)
+						worldGeneratorThreadPool.execute(() ->
 						{
-							BatchGenerationEnvironment.isDistantGeneratorThread.set(true);
-						}
-						
-						try
-						{
-							runnable.run();
-						}
-						catch (Throwable throwable)
-						{
-							handleWorldGenThrowable(generationEvent, throwable);
-						}
-						finally
-						{
+							boolean alreadyMarked = BatchGenerationEnvironment.isCurrentThreadDistantGeneratorThread();
 							if (!alreadyMarked)
 							{
-								BatchGenerationEnvironment.isDistantGeneratorThread.set(false);
+								BatchGenerationEnvironment.isDistantGeneratorThread.set(true);
 							}
-						}
+							
+							try
+							{
+								runnable.run();
+							}
+							catch (Throwable throwable)
+							{
+								handleWorldGenThrowable(generationEvent, throwable);
+							}
+							finally
+							{
+								if (!alreadyMarked)
+								{
+									BatchGenerationEnvironment.isDistantGeneratorThread.set(false);
+								}
+							}
+						});
 					});
-				});
-			}
-			catch (Throwable initialThrowable)
-			{
-				handleWorldGenThrowable(generationEvent, initialThrowable);
-			}
-			finally
-			{
-				BatchGenerationEnvironment.isDistantGeneratorThread.remove();
-			}
-			
-			return null;
-		}, worldGeneratorThreadPool);
+					
+					generationEvent.future.complete(null);
+				}
+				catch (Throwable initialThrowable)
+				{
+					handleWorldGenThrowable(generationEvent, initialThrowable);
+				}
+				finally
+				{
+					BatchGenerationEnvironment.isDistantGeneratorThread.remove();
+				}
+			});
+		}
+		catch (RejectedExecutionException e)
+		{
+			generationEvent.future.completeExceptionally(e);
+		}
+		
 		return generationEvent;
 	}
 	/** There's probably a better way to handle this, but it'll work for now */
@@ -137,9 +149,8 @@ public final class GenerationEvent
 			throwable = throwable.getCause();
 		}
 		
-		if (throwable instanceof InterruptedException
-			|| throwable instanceof UncheckedInterruptedException
-			|| throwable instanceof RejectedExecutionException)
+		boolean isShutdownException = ExceptionUtil.isShutdownException(throwable);
+		if (isShutdownException)
 		{
 			// these exceptions can be ignored, generally they just mean
 			// the thread is busy so it'll need to try again later.

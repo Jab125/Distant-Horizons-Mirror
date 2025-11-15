@@ -32,9 +32,11 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
+import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.util.objects.EventTimer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
+import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
@@ -537,14 +539,10 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 					PREF_LOGGER.debug(genEvent.timer.toString());
 				}
 			}
-			catch (CompletionException e)
+			catch (CompletionException | UncheckedInterruptedException e)
 			{
-				Throwable actualThrowable = e.getCause();
-				
 				// interrupts mean the world generator is being shut down, no need to log that
-				boolean isShutdownException =
-						actualThrowable instanceof InterruptedException
-						|| actualThrowable instanceof ClosedByInterruptException;
+				boolean isShutdownException = ExceptionUtil.isShutdownException(e);
 				if (!isShutdownException)
 				{
 					EVENT_LOGGER.error("Completion error during world gen for min chunk pos ["+genEvent.minPos+"], error: ["+e.getMessage()+"].", e);
@@ -696,10 +694,7 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 								actualThrowable = completionException.getCause();
 							}
 							
-							// interrupts mean the world generator is being shut down, no need to log that
-							boolean isShutdownException = 
-									actualThrowable instanceof InterruptedException
-									|| actualThrowable instanceof ClosedByInterruptException;
+							boolean isShutdownException = ExceptionUtil.isShutdownException(actualThrowable);
 							if (!isShutdownException)
 							{
 								CHUNK_LOAD_LOGGER.warn("DistantHorizons: Couldn't load or make chunk ["+chunkPos+"], error: ["+actualThrowable.getMessage()+"].", actualThrowable);
