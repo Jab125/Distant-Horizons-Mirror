@@ -90,16 +90,6 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 	// events //
 	//========//
 	
-	// ServerTickEvent (at end)
-	@SubscribeEvent
-	public void serverTickEvent(TickEvent.ServerTickEvent event)
-	{
-		if (event.phase == TickEvent.Phase.END)
-		{
-			this.serverApi.serverTickEvent();
-		}
-	}
-	
 	// ServerWorldLoadEvent
 	@SubscribeEvent
 	public void dedicatedWorldLoadEvent(#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1 FMLServerAboutToStartEvent #else ServerAboutToStartEvent #endif event)

@@ -68,23 +68,6 @@ public class NeoforgeServerProxy implements AbstractModInitializer.IEventProxy
 	// events //
 	//========//
 	
-	#if MC_VER < MC_1_20_6
-	@SubscribeEvent
-	public void serverTickEvent(TickEvent.ServerTickEvent event)
-	{
-		if (event.phase == TickEvent.Phase.END)
-		{
-			this.serverApi.serverTickEvent();
-		}
-	}
-	#else
-	@SubscribeEvent
-	public void serverTickEvent(ServerTickEvent.Post event)
-	{
-		this.serverApi.serverTickEvent();
-	}
-	#endif
-	
 	// ServerWorldLoadEvent
 	@SubscribeEvent
 	public void dedicatedWorldLoadEvent(ServerAboutToStartEvent event)

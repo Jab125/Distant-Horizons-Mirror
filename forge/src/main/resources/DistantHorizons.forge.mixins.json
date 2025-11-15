@@ -6,10 +6,9 @@
         "server.MixinUtilBackgroundThread",
         "server.MixinChunkGenerator",
         "server.MixinTFChunkGenerator",
-      "server.MixinChunkMap",
+        "server.MixinChunkMap",
         "server.MixinServerPlayer",
-        "server.MixinEntity",
-        "server.MixinMinecraftServer"
+        "server.MixinEntity"
     ],
     "client": [
         "client.MixinClientPacketListener",

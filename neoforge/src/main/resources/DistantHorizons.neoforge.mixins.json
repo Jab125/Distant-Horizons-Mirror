@@ -9,8 +9,7 @@
     "server.MixinTFChunkGenerator",
     "server.MixinTracingExecutor",
     "server.MixinUtilBackgroundThread",
-    "server.MixinLevelTicks", 
-    "server.MixinMinecraftServer"
+    "server.MixinLevelTicks"
   ],
   "client": [
     "client.MixinClientPacketListener",

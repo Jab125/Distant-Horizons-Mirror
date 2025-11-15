@@ -93,10 +93,6 @@ public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 		
 		/* Register the mod needed event callbacks */
 		
-		// ServerTickEvent
-		ServerTickEvents.END_SERVER_TICK.register((server) -> SERVER_API.serverTickEvent());
-		
-		
 		// can be enabled to test overrides/events without having to build a separate API project 
 		if (false)
 		{

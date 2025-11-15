@@ -537,6 +537,19 @@ public final class BatchGenerationEnvironment extends AbstractBatchGenerationEnv
 					PREF_LOGGER.debug(genEvent.timer.toString());
 				}
 			}
+			catch (CompletionException e)
+			{
+				Throwable actualThrowable = e.getCause();
+				
+				// interrupts mean the world generator is being shut down, no need to log that
+				boolean isShutdownException =
+						actualThrowable instanceof InterruptedException
+						|| actualThrowable instanceof ClosedByInterruptException;
+				if (!isShutdownException)
+				{
+					EVENT_LOGGER.error("Completion error during world gen for min chunk pos ["+genEvent.minPos+"], error: ["+e.getMessage()+"].", e);
+				}
+			}
 			catch (Exception e)
 			{
 				EVENT_LOGGER.error("Unexpected error during world gen for min chunk pos ["+genEvent.minPos+"], error: ["+e.getMessage()+"].", e);
