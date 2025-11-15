@@ -81,8 +81,9 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.core.Registry;
 #elif MC_VER <= MC_1_19_4
 import net.minecraft.core.registries.Registries;
-#elif MC_VER < MC_1_21_3
+#elif MC_VER < MC_1_21_9
 import net.minecraft.core.registries.Registries;
+#else
 #endif
 
 
