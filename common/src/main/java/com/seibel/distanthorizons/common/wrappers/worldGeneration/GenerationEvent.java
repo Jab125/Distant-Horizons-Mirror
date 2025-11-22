@@ -25,11 +25,8 @@ import java.util.function.Consumer;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
-import com.seibel.distanthorizons.core.util.PerfRecorder;
-import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
-import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -48,8 +45,6 @@ public final class GenerationEvent
 	public final int widthInChunks;
 	public final EDhApiWorldGenerationStep targetGenerationStep;
 	public final EDhApiDistantGeneratorMode generatorMode;
-	public long inQueueTime;
-	public long timeoutTime = -1;
 	public final CompletableFuture<Void> future = new CompletableFuture<>();
 	public final Consumer<IChunkWrapper> resultConsumer;
 	
@@ -59,11 +54,10 @@ public final class GenerationEvent
 	// constructor //
 	//=============//
 	
-	public GenerationEvent(
+	private GenerationEvent(
 			DhChunkPos minPos, int widthInChunks, BatchGenerationEnvironment generationGroup,
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep targetGenerationStep, Consumer<IChunkWrapper> resultConsumer)
 	{
-		this.inQueueTime = System.nanoTime();
 		this.id = generationFutureDebugIDs++;
 		this.minPos = minPos;
 		this.widthInChunks = widthInChunks;
@@ -75,12 +69,16 @@ public final class GenerationEvent
 	
 	
 	
+	//=======//
+	// start //
+	//=======//
+	
 	public static GenerationEvent startEvent(
-			DhChunkPos minPos, int size, BatchGenerationEnvironment genEnvironment,
+			DhChunkPos minPos, int widthInChunks, BatchGenerationEnvironment genEnvironment,
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep target, Consumer<IChunkWrapper> resultConsumer,
 			ExecutorService worldGeneratorThreadPool)
 	{
-		GenerationEvent generationEvent = new GenerationEvent(minPos, size, genEnvironment, generatorMode, target, resultConsumer);
+		GenerationEvent generationEvent = new GenerationEvent(minPos, widthInChunks, genEnvironment, generatorMode, target, resultConsumer);
 		
 		try
 		{
@@ -88,10 +86,6 @@ public final class GenerationEvent
 			{
 				try
 				{
-					long runStartTime = System.nanoTime();
-					generationEvent.timeoutTime = runStartTime;
-					generationEvent.inQueueTime = runStartTime - generationEvent.inQueueTime;
-					
 					BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
 					
 					
@@ -168,35 +162,15 @@ public final class GenerationEvent
 		}
 	}
 	
-	public boolean isComplete() { return this.future.isDone(); }
 	
-	public boolean hasTimeout(int duration, TimeUnit unit)
-	{
-		if (this.timeoutTime == -1)
-		{
-			return false;
-		}
-		
-		long currentTime = System.nanoTime();
-		long delta = currentTime - this.timeoutTime;
-		return (delta > TimeUnit.NANOSECONDS.convert(duration, unit));
-	}
 	
-	public boolean terminate()
-	{
-		LOGGER.info("======================DUMPING ALL THREADS FOR WORLD GEN=======================");
-		ThreadPoolUtil.WORLD_GEN_THREAD_FACTORY.dumpAllThreadStacks();
-		this.future.cancel(true);
-		return this.future.isCancelled();
-	}
-	
-	public void refreshTimeout()
-	{
-		this.timeoutTime = System.nanoTime();
-		UncheckedInterruptedException.throwIfInterrupted();
-	}
+	//================//
+	// base overrides //
+	//================//
 	
 	@Override
 	public String toString() { return this.id + ":" + this.widthInChunks + "@" + this.minPos + "(" + this.targetGenerationStep + ")"; }
+	
+	
 	
 }

@@ -418,7 +418,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 								.findFirst()
 								.orElseGet(() -> regionChunks.getFirst());
 						
-						genEvent.refreshTimeout();
 						DhLitWorldGenRegion region = new DhLitWorldGenRegion(
 								centerX, centerZ,
 								centerChunk,
@@ -504,8 +503,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					ChunkWrapper wrappedChunk = chunkWrappersByDhPos.get(dhPos);
 					genEvent.resultConsumer.accept(wrappedChunk);
 				}
-				
-				genEvent.refreshTimeout();
 			}
 			catch (CompletionException | UncheckedInterruptedException e)
 			{
@@ -533,6 +530,11 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		//		new ChunkPos(genMinX + (width - 1) + extraRadius, genMinZ + (width - 1) + extraRadius)
 		//);
 	}
+	
+	
+	
+	// get existing chunk //
+	
 	/** 
 	 * If the given chunk pos already exists in the world, that chunk will be returned,
 	 * otherwise this will return an empty chunk.
@@ -750,6 +752,8 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	
 	
 	
+	// internal server generation //
+	
 	private CompletableFuture<Void> generateChunksViaInternalServerAsync(GenerationEvent genEvent) throws InterruptedException
 	{
 		LinkedBlockingQueue<Runnable> runnableQueue = new LinkedBlockingQueue<>();
@@ -829,8 +833,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 						ChunkPos chunkPos = iterator.next();
 						releaseChunkToServer(this.params.level, chunkPos, true);
 					}
-					
-					genEvent.refreshTimeout();
 				});
 		
 		processGeneratedChunksFuture.whenCompleteAsync((unused, throwable) -> { }, runnableQueue::add); // trigger wakeup
@@ -941,6 +943,10 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		});
 	}
 	
+	
+	
+	// direct generation //
+	
 	public void generateDirect(
 			GenerationEvent genEvent, ArrayGridList<ChunkWrapper> chunkWrappersToGenerate,
 			DhLitWorldGenRegion region) throws InterruptedException
@@ -972,7 +978,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			
 			throwIfThreadInterrupted();
 			this.stepStructureStart.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.STRUCTURE_START));
-			genEvent.refreshTimeout();
 			if (step == EDhApiWorldGenerationStep.STRUCTURE_START)
 			{
 				return;
@@ -980,7 +985,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			
 			throwIfThreadInterrupted();
 			this.stepStructureReference.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.STRUCTURE_REFERENCE));
-			genEvent.refreshTimeout();
 			if (step == EDhApiWorldGenerationStep.STRUCTURE_REFERENCE)
 			{
 				return;
@@ -988,7 +992,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			
 			throwIfThreadInterrupted();
 			this.stepBiomes.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.BIOMES));
-			genEvent.refreshTimeout();
 			if (step == EDhApiWorldGenerationStep.BIOMES)
 			{
 				return;
@@ -996,7 +999,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			
 			throwIfThreadInterrupted();
 			this.stepNoise.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.NOISE));
-			genEvent.refreshTimeout();
 			if (step == EDhApiWorldGenerationStep.NOISE)
 			{
 				return;
@@ -1004,7 +1006,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			
 			throwIfThreadInterrupted();
 			this.stepSurface.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.SURFACE));
-			genEvent.refreshTimeout();
 			if (step == EDhApiWorldGenerationStep.SURFACE)
 			{
 				return;
@@ -1019,7 +1020,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			
 			throwIfThreadInterrupted();
 			this.stepFeatures.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.FEATURES));
-			genEvent.refreshTimeout();
 		}
 		finally
 		{
@@ -1063,8 +1063,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				
 				this.serverLevel.updateBeaconBeamsForChunk(centerChunk, iChunkWrapperList);
 			}
-			
-			genEvent.refreshTimeout();
 		}
 	}
 	private static <T> ArrayGridList<T> GetCutoutFrom(ArrayGridList<T> total, int border) { return new ArrayGridList<>(total, border, total.gridSize - border); }
@@ -1074,14 +1072,14 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	
 	@Override
 	public CompletableFuture<Void> generateChunks(
-			int minX, int minZ, int genSize, 
+			int minX, int minZ, int chunkWidthCount, 
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep targetStep,
 			ExecutorService worldGeneratorThreadPool, Consumer<IChunkWrapper> resultConsumer)
 	{
-		//System.out.println("GenerationEvent: "+genSize+"@"+minX+","+minZ+" "+targetStep);
-		
-		// TODO: Check event overlap via e.tooClose()
-		GenerationEvent genEvent = GenerationEvent.startEvent(new DhChunkPos(minX, minZ), genSize, this, generatorMode, targetStep, resultConsumer, worldGeneratorThreadPool);
+		GenerationEvent genEvent = GenerationEvent.startEvent(
+				new DhChunkPos(minX, minZ), chunkWidthCount, this,
+				generatorMode, targetStep, resultConsumer, 
+				worldGeneratorThreadPool);
 		this.generationEventList.add(genEvent);
 		return genEvent.future;
 	}
