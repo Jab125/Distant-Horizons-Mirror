@@ -17,14 +17,15 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject;
+package com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling;
 
 import com.mojang.serialization.Codec;
 import com.mojang.serialization.Dynamic;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 
@@ -34,22 +35,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-import it.unimi.dsi.fastutil.shorts.ShortList;
 import net.minecraft.core.Registry;
 #if MC_VER >= MC_1_19_4
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 #endif
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
 import net.minecraft.nbt.NbtOps;
 import net.minecraft.nbt.Tag;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.*;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.Biomes;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.*;
 
@@ -86,14 +84,16 @@ import net.minecraft.world.level.chunk.status.ChunkType;
 #endif
 
 import net.minecraft.world.level.material.Fluid;
-import org.jetbrains.annotations.Nullable;
 
 
-public class ChunkFileReader
+public class ChunkCompoundTagParser
 {
 	private static final AtomicBoolean ZERO_CHUNK_POS_ERROR_LOGGED_REF = new AtomicBoolean(false);
 	
-	private static final DhLogger LOGGER = BatchGenerationEnvironment.CHUNK_LOAD_LOGGER;
+	public static final DhLogger LOGGER = new DhLoggerBuilder()
+		.name("LOD Chunk Reader")
+		.fileLevelConfig(Config.Common.Logging.logWorldGenChunkLoadEventToFile)
+		.build();
 	
 	
 	#if MC_VER >= MC_1_21_9
@@ -121,7 +121,7 @@ public class ChunkFileReader
 	// read chunk //
 	//============//
 	
-	public static LevelChunk read(WorldGenLevel level, ChunkPos chunkPos, CompoundTag chunkData)
+	public static LevelChunk createFromTag(WorldGenLevel level, ChunkPos chunkPos, CompoundTag chunkData)
 	{
 		#if MC_VER < MC_1_18_2
 		CompoundTag tagLevel = chunkData.getCompound("Level");
@@ -129,8 +129,8 @@ public class ChunkFileReader
 		CompoundTag tagLevel = chunkData;
 		#endif
 		
-		int chunkX = tagGetInt(tagLevel,"xPos");
-		int chunkZ = tagGetInt(tagLevel, "zPos");
+		int chunkX = CompoundTagUtil.getInt(tagLevel,"xPos");
+		int chunkZ = CompoundTagUtil.getInt(tagLevel, "zPos");
 		ChunkPos actualPos = new ChunkPos(chunkX, chunkZ);
 		
 		if (!Objects.equals(chunkPos, actualPos))
@@ -165,18 +165,25 @@ public class ChunkFileReader
 		chunkType = readChunkType(tagLevel);
 		
 		#if MC_VER < MC_1_18_2
-			if (chunkType != ChunkStatus.ChunkType.LEVELCHUNK)
-				return null;
+		if (chunkType != ChunkStatus.ChunkType.LEVELCHUNK)
+		{
+			return null;
+		}
 		#elif MC_VER < MC_1_21_6
 			
 			BlendingData blendingData = readBlendingData(tagLevel);
 			#if MC_VER < MC_1_19_2
 			if (chunkType == ChunkStatus.ChunkType.PROTOCHUNK && (blendingData == null || !blendingData.oldNoise()))
+			{
 				return null;
+			}
 			#else
 			if (chunkType == #if MC_VER < MC_1_20_6 ChunkStatus.ChunkType.PROTOCHUNK #else ChunkType.PROTOCHUNK #endif && blendingData == null)
+			{
 				return null;
+			}
 			#endif
+			
 		#else
 
 		// ignore blending data, there appears to be an issue with parsing it in 1.21.6
@@ -188,31 +195,31 @@ public class ChunkFileReader
 		}
 		#endif
 		
-		long inhabitedTime = tagGetLong(tagLevel, "InhabitedTime");
+		long inhabitedTime = CompoundTagUtil.getLong(tagLevel, "InhabitedTime");
 		
 		//================== Read params for making the LevelChunk ==================
 		
 		UpgradeData upgradeData = UpgradeData.EMPTY;
 		// commented out 2025-06-04 as a test to see if the upgrade data
 		// is actually necessary for DH or if it can be ignored
-		// (if it can't be ignored we'll need to handle null responses from tagGetCompoundTag())
+		// (if it can't be ignored we'll need to handle null responses from CompoundTagUtil.getCompoundTag())
 		//
 		//#if MC_VER < MC_1_17_1
 		//upgradeData = tagLevel.contains(TAG_UPGRADE_DATA, 10)
-		//		? new UpgradeData(tagGetCompoundTag(tagLevel, TAG_UPGRADE_DATA))
+		//		? new UpgradeData(CompoundTagUtil.getCompoundTag(tagLevel, TAG_UPGRADE_DATA))
 		//		: UpgradeData.EMPTY;
 		//#elif MC_VER < MC_1_21_5
 		//upgradeData = tagLevel.contains(TAG_UPGRADE_DATA, 10)
-		//		? new UpgradeData(tagGetCompoundTag(tagLevel, TAG_UPGRADE_DATA), level)
+		//		? new UpgradeData(CompoundTagUtil.getCompoundTag(tagLevel, TAG_UPGRADE_DATA), level)
 		//		: UpgradeData.EMPTY;
 		//#else
 		//upgradeData = tagLevel.contains(TAG_UPGRADE_DATA)
-		//		? new UpgradeData(tagGetCompoundTag(tagLevel, TAG_UPGRADE_DATA), level)
+		//		? new UpgradeData(CompoundTagUtil.getCompoundTag(tagLevel, TAG_UPGRADE_DATA), level)
 		//		: UpgradeData.EMPTY;
 		//#endif
 		
 		
-		boolean isLightOn = tagGetBoolean(tagLevel, "isLightOn");
+		boolean isLightOn = CompoundTagUtil.getBoolean(tagLevel, "isLightOn");
 		#if MC_VER < MC_1_18_2
 		ChunkBiomeContainer chunkBiomeContainer = new ChunkBiomeContainer(
 				level.getLevel().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY)#if MC_VER >= MC_1_17_1 , level #endif ,
@@ -301,10 +308,10 @@ public class ChunkFileReader
 		int sectionYIndex = #if MC_VER < MC_1_17_1 16; #else level.getSectionsCount(); #endif
 		LevelChunkSection[] chunkSections = new LevelChunkSection[sectionYIndex];
 		
-		ListTag tagSections = tagGetListTag(chunkData, "Sections", 10);
+		ListTag tagSections = CompoundTagUtil.getListTag(chunkData, "Sections", 10);
 		if (tagSections == null || tagSections.isEmpty())
 		{
-			tagSections = tagGetListTag(chunkData, "sections", 10);
+			tagSections = CompoundTagUtil.getListTag(chunkData, "sections", 10);
 		}
 		
 		
@@ -312,13 +319,13 @@ public class ChunkFileReader
 		{
 			for (int j = 0; j < tagSections.size(); ++j)
 			{
-				CompoundTag tagSection = tagGetCompoundTag(tagSections, j);
+				CompoundTag tagSection = CompoundTagUtil.getCompoundTag(tagSections, j);
 				if (tagSection == null)
 				{
 					continue;
 				}
 				
-				final int sectionYPos = tagGetByte(tagSection, "Y");
+				final int sectionYPos = CompoundTagUtil.getByte(tagSection, "Y");
 
 				#if MC_VER < MC_1_18_2
 				if (tagSection.contains("Palette", 9) && tagSection.contains("BlockStates", 12))
@@ -353,11 +360,11 @@ public class ChunkFileReader
 					if (containsBlockStates)
 					{
 						#if MC_VER < MC_1_20_6 
-						blockStateContainer = BLOCK_STATE_CODEC.parse(NbtOps.INSTANCE, tagGetCompoundTag(tagSection, "block_states"))
+						blockStateContainer = BLOCK_STATE_CODEC.parse(NbtOps.INSTANCE, CompoundTagUtil.getCompoundTag(tagSection, "block_states"))
 							.promotePartial(string -> logBlockDeserializationWarning(chunkPos, sectionYPos, string))
 							.getOrThrow(false, (message) -> logParsingWarningOnce(message));
 						#else
-						blockStateContainer = BLOCK_STATE_CODEC.parse(NbtOps.INSTANCE, tagGetCompoundTag(tagSection, "block_states"))
+						blockStateContainer = BLOCK_STATE_CODEC.parse(NbtOps.INSTANCE, CompoundTagUtil.getCompoundTag(tagSection, "block_states"))
 								.promotePartial(string -> logBlockDeserializationWarning(chunkPos, sectionYPos, string))
 								.getOrThrow((message) -> logErrorAndReturnException(message));
 						#endif
@@ -389,11 +396,11 @@ public class ChunkFileReader
 					if (containsBiomes)
 					{
 						#if MC_VER < MC_1_20_6 
-						biomeContainer = biomeCodec.parse(NbtOps.INSTANCE, tagGetCompoundTag(tagSection, "biomes"))
+						biomeContainer = biomeCodec.parse(NbtOps.INSTANCE, CompoundTagUtil.getCompoundTag(tagSection, "biomes"))
 							.promotePartial(string -> logBiomeDeserializationWarning(chunkPos, sectionYIndex, (String) string))
 							.getOrThrow(false, (message) -> logParsingWarningOnce(message));
 						#else
-						biomeContainer = biomeCodec.parse(NbtOps.INSTANCE, tagGetCompoundTag(tagSection, "biomes"))
+						biomeContainer = biomeCodec.parse(NbtOps.INSTANCE, CompoundTagUtil.getCompoundTag(tagSection, "biomes"))
 								.promotePartial(string -> logBiomeDeserializationWarning(chunkPos, sectionYIndex, (String) string))
 								.getOrThrow((message) -> logErrorAndReturnException(message));
 						#endif
@@ -434,7 +441,7 @@ public class ChunkFileReader
 		#else ChunkType #endif 
 	readChunkType(CompoundTag tagLevel)
 	{
-		String statusString = tagGetString(tagLevel,"Status");
+		String statusString = CompoundTagUtil.getString(tagLevel,"Status");
 		if (statusString != null)
 		{
 			ChunkStatus chunkStatus = ChunkStatus.byName(statusString);
@@ -452,7 +459,7 @@ public class ChunkFileReader
 	}
 	private static void readHeightmaps(LevelChunk chunk, CompoundTag chunkData)
 	{
-		CompoundTag tagHeightmaps = tagGetCompoundTag(chunkData, "Heightmaps");
+		CompoundTag tagHeightmaps = CompoundTagUtil.getCompoundTag(chunkData, "Heightmaps");
 		if (tagHeightmaps != null)
 		{
 			for (Heightmap.Types type : ChunkStatus.FULL.heightmapsAfter())
@@ -482,18 +489,18 @@ public class ChunkFileReader
 	// DH probably doesn't need any chunk post-processing data
 	//private static void readPostPocessings(LevelChunk chunk, CompoundTag chunkData)
 	//{
-	//	ListTag tagPostProcessings = tagGetListTag(chunkData,"PostProcessing", 9);
+	//	ListTag tagPostProcessings = CompoundTagUtil.getListTag(chunkData,"PostProcessing", 9);
 	//	if (tagPostProcessings != null)
 	//	{
 	//		for (int i = 0; i < tagPostProcessings.size(); ++i)
 	//		{
-	//			ListTag listTag3 = tagGetListTag(tagPostProcessings, i);
+	//			ListTag listTag3 = CompoundTagUtil.getListTag(tagPostProcessings, i);
 	//			for (int j = 0; j < listTag3.size(); ++j)
 	//			{
 	//			#if MC_VER < MC_1_21_3
 	//				chunk.addPackedPostProcess(listTag3.getShort(j), i);
 	//			#else
-	//			chunk.addPackedPostProcess(ShortList.of(tagGetShort(listTag3, j)), i);
+	//			chunk.addPackedPostProcess(ShortList.of(CompoundTagUtil.getShort(listTag3, j)), i);
 	//			#endif
 	//			}
 	//		}
@@ -547,9 +554,7 @@ public class ChunkFileReader
 	// read chunk lighting //
 	//=====================//
 	
-	/**
-	 * https://minecraft.wiki/w/Chunk_format
-	 */
+	/** https://minecraft.wiki/w/Chunk_format */
 	public static CombinedChunkLightStorage readLight(ChunkAccess chunk, CompoundTag chunkData)
 	{
 		#if MC_VER <= MC_1_17_1
@@ -612,8 +617,8 @@ public class ChunkFileReader
 			
 			
 			// if null all lights = 0
-			byte[] blockLightNibbleArray = tagGetByteArray(chunkSectionCompoundTag, "BlockLight");
-			byte[] skyLightNibbleArray = tagGetByteArray(chunkSectionCompoundTag, "SkyLight");
+			byte[] blockLightNibbleArray = CompoundTagUtil.getByteArray(chunkSectionCompoundTag, "BlockLight");
+			byte[] skyLightNibbleArray = CompoundTagUtil.getByteArray(chunkSectionCompoundTag, "SkyLight");
 			
 			if (blockLightNibbleArray != null 
 				&& skyLightNibbleArray != null)
@@ -721,137 +726,6 @@ public class ChunkFileReader
 		
 		// Currently we want to ignore these errors, if returning null is a problem, we can change this later
 		return null; //new RuntimeException(message);
-	}
-	
-	
-	
-	//====================//
-	// tag helper methods //
-	//====================//
-	
-	// TODO move into separate file (this file is getting long)
-	// these tag helpers are to simplify tag accessing between MC versions
-	
-	/** defaults to "false" if the tag isn't present */
-	private static boolean tagGetBoolean(CompoundTag tag, String key)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getBoolean(key);
-		#else
-		return tag.getBoolean(key).orElse(false);
-		#endif
-	}
-	
-	/** defaults to "0" if the tag isn't present */
-	private static byte tagGetByte(CompoundTag tag, String key)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getByte(key);
-		#else
-		return tag.getByte(key).orElse((byte)0);
-		#endif
-	}
-	
-	/** defaults to "0" if the tag isn't present */
-	private static short tagGetShort(ListTag tag, int index)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getShort(index);
-		#else
-		return tag.getShort(index).orElse((short)0);
-		#endif
-	}
-	
-	/** defaults to "0" if the tag isn't present */
-	private static int tagGetInt(CompoundTag tag, String key)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getInt(key);
-		#else
-		return tag.getInt(key).orElse(0);
-		#endif
-	}
-	
-	/** defaults to "0" if the tag isn't present */
-	private static long tagGetLong(CompoundTag tag, String key)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getInt(key);
-		#else
-		return tag.getLong(key).orElse(0L);
-		#endif
-	}
-	
-	
-	
-	/** defaults to null if the tag isn't present */
-	@Nullable
-	private static String tagGetString(CompoundTag tag, String key)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getString(key);
-		#else
-		return tag.getString(key).orElse(null);
-		#endif
-	}
-	
-	/** defaults to null if the tag isn't present */
-	@Nullable
-	private static byte[] tagGetByteArray(CompoundTag tag, String key)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getByteArray(key);
-		#else
-		return tag.getByteArray(key).orElse(null);
-		#endif
-	}
-	
-	
-	
-	/** defaults to null if the tag isn't present */
-	@Nullable
-	private static CompoundTag tagGetCompoundTag(CompoundTag tag, String key)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getCompound(key);
-		#else
-		return tag.getCompound(key).orElse(null);
-		#endif
-	}
-	/** defaults to null if the tag isn't present */
-	@Nullable
-	private static CompoundTag tagGetCompoundTag(ListTag tag, int index)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getCompound(index);
-		#else
-		return tag.getCompound(index).orElse(null);
-		#endif
-	}
-	
-	/** 
-	 * defaults to null if the tag isn't present
-	 * @param elementType unused after MC 1.21.5
-	 */
-	@Nullable
-	private static ListTag tagGetListTag(CompoundTag tag, String key, int elementType)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getList(key, elementType);
-		#else
-		return tag.getList(key).orElse(null);
-		#endif
-	}
-	
-	/** defaults to null if the tag isn't present */
-	@Nullable
-	private static ListTag tagGetListTag(ListTag tag, int index)
-	{
-		#if MC_VER < MC_1_21_5
-		return tag.getList(index);
-		#else
-		return tag.getList(index).orElse(null);
-		#endif
 	}
 	
 	

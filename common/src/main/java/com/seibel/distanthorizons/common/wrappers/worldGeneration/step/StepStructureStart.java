@@ -71,6 +71,8 @@ public final class StepStructureStart extends AbstractWorldGenStep
 	{
 		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
 		
+		// TODO should be put in wrapped environment so we can skip some other world gen steps
+		//  SURFACE wouldn't need structure generation either
 		#if MC_VER < MC_1_19_2
 		if (!this.environment.params.worldGenSettings.generateFeatures())
 		#elif MC_VER < MC_1_19_4

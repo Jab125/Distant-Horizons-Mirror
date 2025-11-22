@@ -1,6 +1,6 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject;
 
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling.ChunkFileReader;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.NbtIo;
@@ -55,7 +55,7 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 	public RegionFileStorageExternalCache(RegionFileStorage storage) { this.storage = storage; }
 	
 	@Nullable
-	public RegionFile getRegionFile(ChunkPos pos) throws IOException
+	public RegionFile getRegionFile(ChunkPos chunkPos) throws IOException
 	{
 		if (this.storage == null)
 		{
@@ -70,8 +70,8 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 		
 		
 		
-		long posLong = ChunkPos.asLong(pos.getRegionX(), pos.getRegionZ());
-		RegionFile rFile = null;
+		long chunkPosLong = ChunkPos.asLong(chunkPos.getRegionX(), chunkPos.getRegionZ());
+		RegionFile regionFile = null;
 		
 		// Check vanilla cache
 		int retryCount = 0;
@@ -85,7 +85,7 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 				this.getRegionFileLock.lock();
 				
 				#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
-				rFile = this.storage.getRegionFile(pos);
+				regionFile = this.storage.getRegionFile(chunkPos);
 				
 				// keeping the region cache size low helps prevent concurrency issues
 				if (this.storage.regionCache.size() > 150) // max 256
@@ -97,7 +97,7 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 					}
 				}
 				#else
-				rFile = this.storage.regionCache.getOrDefault(posLong, null);	
+				regionFile = this.storage.regionCache.getOrDefault(chunkPosLong, null);	
 				#endif
 				
 				break;
@@ -139,19 +139,19 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 		
 		if (retryCount >= maxRetryCount)
 		{
-			BatchGenerationEnvironment.CHUNK_LOAD_LOGGER.warn("Concurrency issue detected when getting region file for chunk at [" + pos + "].");
+			ChunkFileReader.CHUNK_LOAD_LOGGER.warn("Concurrency issue detected when getting region file for chunk at [" + chunkPos + "].");
 		}
 		
 		
-		if (rFile != null)
+		if (regionFile != null)
 		{
-			return rFile;
+			return regionFile;
 		}
 		
 		// Then check our custom cache
 		for (RegionFileCache cache : this.regionFileCache)
 		{
-			if (cache.pos == posLong)
+			if (cache.pos == chunkPosLong)
 			{
 				return cache.file;
 			}
@@ -170,22 +170,22 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 			return null;
 		}
 		
-		Path regionFilePath = storageFolderPath.resolve("r." + pos.getRegionX() + "." + pos.getRegionZ() + ".mca");
+		Path regionFilePath = storageFolderPath.resolve("r." + chunkPos.getRegionX() + "." + chunkPos.getRegionZ() + ".mca");
 		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
-		rFile = new RegionFile(regionFilePath.toFile(), storageFolderPath.toFile(), false);
+		regionFile = new RegionFile(regionFilePath.toFile(), storageFolderPath.toFile(), false);
 		#elif MC_VER <= MC_1_20_4
-		rFile = new RegionFile(regionFilePath, storageFolderPath, false);
+		regionFile = new RegionFile(regionFilePath, storageFolderPath, false);
 		#else
-		rFile = new RegionFile(new RegionStorageInfo("level", null, "level type"), regionFilePath, storageFolderPath, false);
+		regionFile = new RegionFile(new RegionStorageInfo("level", null, "level type"), regionFilePath, storageFolderPath, false);
 		#endif
 		
-		this.regionFileCache.add(new RegionFileCache(ChunkPos.asLong(pos.getRegionX(), pos.getRegionZ()), rFile));
+		this.regionFileCache.add(new RegionFileCache(ChunkPos.asLong(chunkPos.getRegionX(), chunkPos.getRegionZ()), regionFile));
 		while (this.regionFileCache.size() > MAX_CACHE_SIZE)
 		{
 			this.regionFileCache.poll().file.close();
 		}
 		
-		return rFile;
+		return regionFile;
 	}
 	
 	
