@@ -33,10 +33,8 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
-import com.seibel.distanthorizons.core.util.objects.EventTimer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
-import com.seibel.distanthorizons.core.util.objects.RollingAverage;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
@@ -100,11 +98,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			.fileLevelConfig(Config.Common.Logging.logWorldGenEventToFile)
 			.build();
 	
-	public static final DhLogger PREF_LOGGER = new DhLoggerBuilder()
-			.name("LOD World Gen")
-			.fileLevelConfig(Config.Common.Logging.logWorldGenPerformanceToFile)
-			.maxCountPerSecond(1)
-			.build();
 	public static final DhLogger CHUNK_LOAD_LOGGER = new DhLoggerBuilder()
 			.name("LOD World Gen")
 			.fileLevelConfig(Config.Common.Logging.logWorldGenChunkLoadEventToFile)
@@ -494,12 +487,8 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 						{
 							throw new CompletionException(e);
 						}
-						
-						genEvent.timer.nextEvent("cleanup");
 					}
 				}
-				
-				genEvent.timer.nextEvent("cleanup");
 				
 				
 				
@@ -516,13 +505,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					genEvent.resultConsumer.accept(wrappedChunk);
 				}
 				
-				genEvent.timer.complete();
 				genEvent.refreshTimeout();
-				if (PREF_LOGGER.canLog())
-				{
-					genEvent.threadedParam.perf.recordEvent(genEvent.timer);
-					PREF_LOGGER.debug(genEvent.timer.toString());
-				}
 			}
 			catch (CompletionException | UncheckedInterruptedException e)
 			{
@@ -769,7 +752,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	
 	private CompletableFuture<Void> generateChunksViaInternalServerAsync(GenerationEvent genEvent) throws InterruptedException
 	{
-		genEvent.timer.nextEvent("requestFromServer");
 		LinkedBlockingQueue<Runnable> runnableQueue = new LinkedBlockingQueue<>();
 		
 		Map<DhChunkPos, ChunkWrapper> chunkWrappersByDhPos = Collections.synchronizedMap(new HashMap<>());
@@ -815,7 +797,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				.whenCompleteAsync((voidObj, throwable) ->
 				{
 					// generate chunk lighting using DH's lighting engine
-					genEvent.timer.nextEvent("light");
 					int maxSkyLight = this.serverLevel.getServerLevelWrapper().hasSkyLight() ? LodUtil.MAX_MC_LIGHT : LodUtil.MIN_MC_LIGHT;
 					
 					ArrayList<IChunkWrapper> generatedChunks = new ArrayList<>(chunkWrappersByDhPos.values());
@@ -832,7 +813,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 						this.serverLevel.updateBeaconBeamsForChunk(iChunkWrapper, generatedChunks);
 					}
 					
-					genEvent.timer.nextEvent("cleanup");
 					for (IChunkWrapper iChunkWrapper : generatedChunks)
 					{
 						genEvent.resultConsumer.accept(iChunkWrapper);
@@ -850,13 +830,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 						releaseChunkToServer(this.params.level, chunkPos, true);
 					}
 					
-					genEvent.timer.complete();
 					genEvent.refreshTimeout();
-					if (PREF_LOGGER.canLog())
-					{
-						genEvent.threadedParam.perf.recordEvent(genEvent.timer);
-						PREF_LOGGER.debug(genEvent.timer.toString());
-					}
 				});
 		
 		processGeneratedChunksFuture.whenCompleteAsync((unused, throwable) -> { }, runnableQueue::add); // trigger wakeup
@@ -996,7 +970,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			genEvent.timer.nextEvent("structStart");
 			throwIfThreadInterrupted();
 			this.stepStructureStart.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.STRUCTURE_START));
 			genEvent.refreshTimeout();
@@ -1005,7 +978,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			genEvent.timer.nextEvent("structRef");
 			throwIfThreadInterrupted();
 			this.stepStructureReference.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.STRUCTURE_REFERENCE));
 			genEvent.refreshTimeout();
@@ -1014,7 +986,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			genEvent.timer.nextEvent("biome");
 			throwIfThreadInterrupted();
 			this.stepBiomes.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.BIOMES));
 			genEvent.refreshTimeout();
@@ -1023,7 +994,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			genEvent.timer.nextEvent("noise");
 			throwIfThreadInterrupted();
 			this.stepNoise.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.NOISE));
 			genEvent.refreshTimeout();
@@ -1032,7 +1002,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			genEvent.timer.nextEvent("surface");
 			throwIfThreadInterrupted();
 			this.stepSurface.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.SURFACE));
 			genEvent.refreshTimeout();
@@ -1041,7 +1010,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			genEvent.timer.nextEvent("carver");
 			throwIfThreadInterrupted();
 			// caves can generally be ignored since they aren't generally visible from far away
 			if (step == EDhApiWorldGenerationStep.CARVERS)
@@ -1049,15 +1017,12 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			genEvent.timer.nextEvent("feature");
 			throwIfThreadInterrupted();
 			this.stepFeatures.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.FEATURES));
 			genEvent.refreshTimeout();
 		}
 		finally
 		{
-			genEvent.timer.nextEvent("light");
-			
 			// generate lighting using DH's lighting engine
 				
 			int maxSkyLight = this.serverLevel.getServerLevelWrapper().hasSkyLight() ? 15 : 0;
@@ -1258,73 +1223,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			consumer.accept(new ChunkPos(this.x, this.z));
 			return true;
 		}
-	}
-	
-	public static class PerfCalculator
-	{
-		private static final String[] TIME_NAMES = {
-				"total",
-				"setup",
-				"structStart",
-				"structRef",
-				"biome",
-				"noise",
-				"surface",
-				"carver",
-				"feature",
-				"light",
-				"cleanup",
-				//"lodCreation" (No longer used)
-		};
-		
-		public static final int ROLLING_AVG_SIZE = 50;
-		ArrayList<RollingAverage> rollingAverageList = new ArrayList<>();
-		
-		
-		
-		//=============//
-		// constructor //
-		//=============//
-		
-		public PerfCalculator()
-		{
-			for (int i = 0; i < TIME_NAMES.length; i++)
-			{
-				this.rollingAverageList.add(new RollingAverage(ROLLING_AVG_SIZE));
-			}
-		}
-		
-		public void recordEvent(EventTimer event)
-		{
-			for (EventTimer.Event e : event.events)
-			{
-				String name = e.name;
-				int index = Arrays.asList(TIME_NAMES).indexOf(name);
-				if (index == -1)
-				{
-					continue;
-				}
-				
-				this.rollingAverageList.get(index).add(e.timeNs);
-			}
-			this.rollingAverageList.get(0).add(event.getTotalTimeNs());
-		}
-		
-		public String toString()
-		{
-			StringBuilder builder = new StringBuilder();
-			for (int i = 0; i < this.rollingAverageList.size(); i++)
-			{
-				if (this.rollingAverageList.get(i).getAverage() == 0)
-				{
-					continue;
-				}
-				
-				builder.append(TIME_NAMES[i]).append(": ").append(this.rollingAverageList.get(i).getAverageRoundedString()).append("\n");
-			}
-			return builder.toString();
-		}
-		
 	}
 	
 	

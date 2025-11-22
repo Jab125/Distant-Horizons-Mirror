@@ -20,7 +20,6 @@
 
 package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment.PerfCalculator;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.WorldGenStructFeatManager;
 
 import net.minecraft.server.level.ServerLevel;
@@ -42,7 +41,6 @@ public final class ThreadWorldGenParams
 	#endif
 	
 	boolean isValid = true;
-	public final PerfCalculator perf = new PerfCalculator();
 	
 	// used for some older MC versions
 	private static GlobalWorldGenParams previousGlobalWorldGenParams = null;
