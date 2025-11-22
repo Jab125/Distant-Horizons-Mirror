@@ -27,26 +27,26 @@ public abstract class AbstractWorldGenStep
 	
 	
 	/** @return the list of chunks that have an earlier status and can be generated */
-	protected ArrayList<ChunkAccess> getChunksToGenerate(List<ChunkWrapper> chunkWrappers)
+	protected ArrayList<ChunkWrapper> getChunkWrappersToGenerate(List<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToGenerate = new ArrayList<>();
+		ArrayList<ChunkWrapper> chunkWrappersToGenerate = new ArrayList<>(chunkWrappers.size());
 		
 		for (ChunkWrapper chunkWrapper : chunkWrappers)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
 			if (chunkWrapper.getStatus().isOrAfter(this.getChunkStatus()))
 			{
-				// this chunk has already generated this step
+				// this chunk has already been generated up to this step
 				continue;
 			}
 			else if (chunk instanceof ProtoChunk)
 			{
 				chunkWrapper.trySetStatus(this.getChunkStatus());
-				chunksToGenerate.add(chunk);
+				chunkWrappersToGenerate.add(chunkWrapper);
 			}
 		}
 		
-		return chunksToGenerate;
+		return chunkWrappersToGenerate;
 	}
 	
 	

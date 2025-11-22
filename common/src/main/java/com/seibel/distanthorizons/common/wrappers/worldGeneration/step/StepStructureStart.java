@@ -69,71 +69,75 @@ public final class StepStructureStart extends AbstractWorldGenStep
 			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToDo = this.getChunksToGenerate(chunkWrappers);
+		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
 		
 		#if MC_VER < MC_1_19_2
-		if (this.environment.params.worldGenSettings.generateFeatures())
-		{
+		if (!this.environment.params.worldGenSettings.generateFeatures())
 		#elif MC_VER < MC_1_19_4
-		if (this.environment.params.worldGenSettings.generateStructures()) 
-		{
+		if (!this.environment.params.worldGenSettings.generateStructures()) 
 		#else
-		if (this.environment.params.worldOptions.generateStructures())
-		{
+		if (!this.environment.params.worldOptions.generateStructures())
 		#endif
-			for (ChunkAccess chunk : chunksToDo)
+		{
+			return;
+		}
+		
+		
+		
+		for (ChunkWrapper chunkWrapper : chunksToDo)
+		{
+			ChunkAccess chunk = chunkWrapper.getChunk();
+			
+			// hopefully this shouldn't cause any performance issues (this step is generally quite quick so hopefully it should be fine)
+			// and should prevent some concurrency issues
+			STRUCTURE_PLACEMENT_LOCK.lock();
+			
+			#if MC_VER < MC_1_19_2
+			this.environment.params.generator.createStructures(this.environment.params.registry, tParams.structFeat, chunk, this.environment.params.structures,
+					this.environment.params.worldSeed);
+			#elif MC_VER < MC_1_19_4
+			this.environment.params.generator.createStructures(this.environment.params.registry, this.environment.params.randomState, tParams.structFeat, chunk, this.environment.params.structures,
+					this.environment.params.worldSeed);
+			#elif MC_VER <= MC_1_21_3
+			this.environment.params.generator.createStructures(this.environment.params.registry,
+					this.environment.params.level.getChunkSource().getGeneratorState(),
+					tParams.structFeat, chunk, this.environment.params.structures);
+			#else
+			this.environment.params.generator.createStructures(this.environment.params.registry,
+					this.environment.params.level.getChunkSource().getGeneratorState(),
+					tParams.structFeat, chunk, this.environment.params.structures, 
+					this.environment.params.level.dimension());
+			#endif
+			
+			#if MC_VER >= MC_1_18_2
+			try
 			{
-				// hopefully this shouldn't cause any performance issues (this step is generally quite quick so hopefully it should be fine)
-				// and should prevent some concurrency issues
-				STRUCTURE_PLACEMENT_LOCK.lock();
+				tParams.structCheck.onStructureLoad(chunk.getPos(), chunk.getAllStarts());
+			}
+			catch (ArrayIndexOutOfBoundsException firstEx)
+			{
+				// There's a rare issue with StructStart where it throws ArrayIndexOutOfBounds
+				// This means the structFeat is corrupted (For some reason) and I need to reset it.
+				// TODO: Figure out in the future why this happens even though I am using new structFeat - OLD
 				
-				#if MC_VER < MC_1_19_2
-				this.environment.params.generator.createStructures(this.environment.params.registry, tParams.structFeat, chunk, this.environment.params.structures,
-						this.environment.params.worldSeed);
-				#elif MC_VER < MC_1_19_4
-				this.environment.params.generator.createStructures(this.environment.params.registry, this.environment.params.randomState, tParams.structFeat, chunk, this.environment.params.structures,
-						this.environment.params.worldSeed);
-				#elif MC_VER <= MC_1_21_3
-				this.environment.params.generator.createStructures(this.environment.params.registry,
-						this.environment.params.level.getChunkSource().getGeneratorState(),
-						tParams.structFeat, chunk, this.environment.params.structures);
-				#else
-				this.environment.params.generator.createStructures(this.environment.params.registry,
-						this.environment.params.level.getChunkSource().getGeneratorState(),
-						tParams.structFeat, chunk, this.environment.params.structures, 
-						this.environment.params.level.dimension());
-				#endif
+				// reset the structureStart
+				tParams.recreateStructureCheck();
 				
-				#if MC_VER >= MC_1_18_2
 				try
 				{
+					// try running the structure logic again
 					tParams.structCheck.onStructureLoad(chunk.getPos(), chunk.getAllStarts());
 				}
-				catch (ArrayIndexOutOfBoundsException firstEx)
+				catch (ArrayIndexOutOfBoundsException secondEx)
 				{
-					// There's a rare issue with StructStart where it throws ArrayIndexOutOfBounds
-					// This means the structFeat is corrupted (For some reason) and I need to reset it.
-					// TODO: Figure out in the future why this happens even though I am using new structFeat - OLD
-					
-					// reset the structureStart
-					tParams.recreateStructureCheck();
-					
-					try
-					{
-						// try running the structure logic again
-						tParams.structCheck.onStructureLoad(chunk.getPos(), chunk.getAllStarts());
-					}
-					catch (ArrayIndexOutOfBoundsException secondEx)
-					{
-						// the structure logic failed again, log it and move on
-						LOGGER.error("Unable to create structure starts for " + chunk.getPos() + ". This is an error with MC's world generation. Ignoring and continuing generation. Error: " + secondEx.getMessage()); // don't log the full stack trace since it is long and will generally end up in MC's code
-					}
+					// the structure logic failed again, log it and move on
+					LOGGER.error("Unable to create structure starts for " + chunk.getPos() + ". This is an error with MC's world generation. Ignoring and continuing generation. Error: " + secondEx.getMessage()); // don't log the full stack trace since it is long and will generally end up in MC's code
 				}
-				
-				#endif
-				
-				STRUCTURE_PLACEMENT_LOCK.unlock();
 			}
+			
+			#endif
+			
+			STRUCTURE_PLACEMENT_LOCK.unlock();
 		}
 	}
 	

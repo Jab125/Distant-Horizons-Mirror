@@ -65,34 +65,21 @@ public final class StepSurface extends AbstractWorldGenStep
 			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToDo = new ArrayList<>();
-		
-		for (ChunkWrapper chunkWrapper : chunkWrappers)
+		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
+		for (ChunkWrapper chunkWrapper : chunksToDo)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
-			if (chunkWrapper.getStatus().isOrAfter(STATUS))
-			{
-				// this chunk has already generated this step
-				continue;
-			}
-			else if (chunk instanceof ProtoChunk)
-			{
-				chunkWrapper.trySetStatus(STATUS);
-				chunksToDo.add(chunk);
-			}
-		}
-		
-		for (ChunkAccess chunk : chunksToDo)
-		{
-			// System.out.println("StepSurface: "+chunk.getPos());
+			
 			#if MC_VER < MC_1_18_2
-			environment.params.generator.buildSurfaceAndBedrock(worldGenRegion, chunk);
+			this.environment.params.generator.buildSurfaceAndBedrock(worldGenRegion, chunk);
 			#elif MC_VER < MC_1_19_2
-			environment.params.generator.buildSurface(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), chunk);
+			this.environment.params.generator.buildSurface(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), chunk);
 			#else
-			environment.params.generator.buildSurface(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), environment.params.randomState, chunk);
+			this.environment.params.generator.buildSurface(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), this.environment.params.randomState, chunk);
 			#endif
 		}
 	}
+	
+	
 	
 }

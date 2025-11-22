@@ -68,21 +68,11 @@ public final class StepNoise extends AbstractWorldGenStep
 			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToDo = new ArrayList<>();
-		
-		for (ChunkWrapper chunkWrapper : chunkWrappers)
+		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
+		for (ChunkWrapper chunkWrapper : chunksToDo)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
-			if (chunkWrapper.getStatus().isOrAfter(STATUS))
-			{
-				continue;
-			}
-			chunkWrapper.trySetStatus(STATUS);
-			chunksToDo.add(chunk);
-		}
-		
-		for (ChunkAccess chunk : chunksToDo)
-		{
+			
 			#if MC_VER < MC_1_17_1
 			this.environment.params.generator.fillFromNoise(worldGenRegion, tParams.structFeat, chunk);
 			#elif MC_VER < MC_1_18_2
@@ -114,7 +104,6 @@ public final class StepNoise extends AbstractWorldGenStep
 							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
 							chunk));
 			#endif
-			UncheckedInterruptedException.throwIfInterrupted();
 		}
 	}
 	

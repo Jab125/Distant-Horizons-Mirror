@@ -67,9 +67,12 @@ public final class StepBiomes extends AbstractWorldGenStep
 			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion, 
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToDo = this.getChunksToGenerate(chunkWrappers);
-		for (ChunkAccess chunk : chunksToDo)
+		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
+		for (ChunkWrapper chunkWrapper : chunksToDo)
 		{
+			ChunkAccess chunk = chunkWrapper.getChunk();
+			
+			
 			#if MC_VER < MC_1_18_2
 			this.environment.params.generator.createBiomes(this.environment.params.biomes, chunk);
 			#elif MC_VER < MC_1_19_2
