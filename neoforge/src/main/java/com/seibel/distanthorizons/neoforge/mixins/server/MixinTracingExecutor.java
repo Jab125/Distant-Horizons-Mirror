@@ -35,7 +35,7 @@ public class MixinTracingExecutor
 }
 #else
 
-import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import net.minecraft.TracingExecutor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -55,11 +55,6 @@ import java.util.concurrent.Executor;
 @Mixin(TracingExecutor.class)
 public class MixinTracingExecutor
 {
-	// TODO put in a common location
-	private static boolean isWorldGenThread()
-	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
-	
-	
 	// Util.backgroundExecutor().forName("init_biomes")
 	// needed for world gen
 	
@@ -67,7 +62,7 @@ public class MixinTracingExecutor
 	@Inject(method = "forName(Ljava/lang/String;)Ljava/util/concurrent/Executor;", at = @At("HEAD"), cancellable = true)
 	private void forName(String executorName, CallbackInfoReturnable<Executor> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			// run this task on the current DH thread instead of a new MC thread
 			ci.setReturnValue(new RunOnThisThreadExecutorService());

@@ -36,15 +36,29 @@ import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 #if MC_VER < MC_1_19_2
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 #else
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.levelgen.RandomState;
-#if MC_VER >= MC_1_19_4
-import net.minecraft.world.level.levelgen.WorldOptions;
-import net.minecraft.core.registries.Registries;
-#endif
 #endif
 import net.minecraft.world.level.storage.WorldData;
 
+#if MC_VER < MC_1_19_4
+#elif MC_VER < MC_1_21_3
+import net.minecraft.core.registries.Registries;
+#else
+import net.minecraft.core.registries.Registries;
+#endif
+
+#if MC_VER < MC_1_19_4
+import net.minecraft.world.level.levelgen.WorldGenSettings;
+#else
+import net.minecraft.world.level.levelgen.WorldOptions;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
+import net.minecraft.world.level.levelgen.RandomState;
+#endif
+
+/**
+ * Handles parameters that are relevant for the entire MC world.
+ * 
+ * @see ThreadWorldGenParams
+ */
 public final class GlobalWorldGenParams
 {
 	public final ChunkGenerator generator;
@@ -87,7 +101,7 @@ public final class GlobalWorldGenParams
 		MinecraftServer server = this.level.getServer();
 		WorldData worldData = server.getWorldData();
 		this.registry = server.registryAccess();
-
+		
 		#if MC_VER < MC_1_19_4
 		this.worldGenSettings = worldData.worldGenSettings();
 		this.biomes = registry.registryOrThrow(Registry.BIOME_REGISTRY);
@@ -115,5 +129,7 @@ public final class GlobalWorldGenParams
 		this.randomState = this.level.getChunkSource().randomState();
 		#endif
 	}
+	
+	
 	
 }

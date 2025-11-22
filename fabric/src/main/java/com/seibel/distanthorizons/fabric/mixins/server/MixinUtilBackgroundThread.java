@@ -19,14 +19,19 @@
 
 package com.seibel.distanthorizons.fabric.mixins.server;
 
-import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import org.spongepowered.asm.mixin.Mixin;
 
 import net.minecraft.Util;
 
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
 #if MC_VER < MC_1_16_5
 #elif MC_VER < MC_1_21_3
+import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 #else
 #endif
@@ -41,15 +46,11 @@ import java.util.function.Supplier;
 @Mixin(Util.class)
 public class MixinUtilBackgroundThread
 {
-	private static boolean isWorldGenThread()
-	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
-	
-	
 	#if MC_VER < MC_1_21_3
 	@Inject(method = "backgroundExecutor", at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$backgroundExecutor(CallbackInfoReturnable<ExecutorService> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			// run this task on the current DH thread instead of a new MC thread
 			ci.setReturnValue(new RunOnThisThreadExecutorService());
@@ -65,7 +66,7 @@ public class MixinUtilBackgroundThread
 			at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskName(String string, Runnable r, CallbackInfoReturnable<Runnable> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			//ApiShared.LOGGER.info("util wrapThreadWithTaskName(Runnable) triggered");
 			ci.setReturnValue(r);
@@ -81,7 +82,7 @@ public class MixinUtilBackgroundThread
 			at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskNameForSupplier(String string, Supplier<?> r, CallbackInfoReturnable<Supplier<?>> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			//ApiShared.LOGGER.info("util wrapThreadWithTaskName(Supplier) triggered");
 			ci.setReturnValue(r);

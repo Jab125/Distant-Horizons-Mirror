@@ -22,12 +22,15 @@ package com.seibel.distanthorizons.forge.mixins.server;
 import java.util.concurrent.ExecutorService;
 import java.util.function.Supplier;
 
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.seibel.distanthorizons.common.wrappers.DependencySetupDoneCheck;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 
 import net.minecraft.Util;
@@ -35,17 +38,17 @@ import net.minecraft.Util;
 @Mixin(Util.class)
 public class MixinUtilBackgroundThread
 {
-	private static boolean shouldApplyOverride()
-	{
-		return DependencySetupDoneCheck.isDone && DependencySetupDoneCheck.getIsCurrentThreadDistantGeneratorThread.get();
-	}
+	@Unique
+	private static final DhLogger LOGGER = new DhLoggerBuilder().name("MixinUtilBackgroundThread").build();
+	
+	
 	
 	@Inject(method = "backgroundExecutor", at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$backgroundExecutor(CallbackInfoReturnable<ExecutorService> ci)
 	{
-		if (shouldApplyOverride())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
-			//ApiShared.LOGGER.info("util backgroundExecutor triggered");
+			//LOGGER.info("util backgroundExecutor triggered");
 			ci.setReturnValue(new RunOnThisThreadExecutorService());
 		}
 	}
@@ -55,21 +58,22 @@ public class MixinUtilBackgroundThread
 			at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskName(String string, Runnable r, CallbackInfoReturnable<Runnable> ci)
 	{
-		if (shouldApplyOverride())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
-			//ApiShared.LOGGER.info("util wrapThreadWithTaskName(Runnable) triggered");
+			//LOGGER.info("util wrapThreadWithTaskName(Runnable) triggered");
 			ci.setReturnValue(r);
 		}
 	}
 	#endif
+	
 	#if MC_VER >= MC_1_18_2
 	@Inject(method = "wrapThreadWithTaskName(Ljava/lang/String;Ljava/util/function/Supplier;)Ljava/util/function/Supplier;",
 			at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskNameForSupplier(String string, Supplier<?> r, CallbackInfoReturnable<Supplier<?>> ci)
 	{
-		if (shouldApplyOverride())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
-			//ApiShared.LOGGER.info("util wrapThreadWithTaskName(Supplier) triggered");
+			//LOGGER.info("util wrapThreadWithTaskName(Supplier) triggered");
 			ci.setReturnValue(r);
 		}
 	}

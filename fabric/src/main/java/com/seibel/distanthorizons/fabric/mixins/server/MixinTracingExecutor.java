@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.fabric.mixins.server;
 
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import org.spongepowered.asm.mixin.Mixin;
 
 #if MC_VER < MC_1_21_3
@@ -35,7 +36,6 @@ public class MixinTracingExecutor
 }
 #else
 
-import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import net.minecraft.TracingExecutor;
 import org.spongepowered.asm.mixin.injection.At;
@@ -54,16 +54,11 @@ import java.util.concurrent.Executor;
 @Mixin(TracingExecutor.class)
 public class MixinTracingExecutor
 {
-	// TODO put in a common location
-	private static boolean isWorldGenThread()
-	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
-	
-	
 	// replaced with TracingExecutor in MC 1.21.3+
 	@Inject(method = "forName(Ljava/lang/String;)Ljava/util/concurrent/Executor;", at = @At("HEAD"), cancellable = true)
 	private void forName(String executorName, CallbackInfoReturnable<Executor> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			// run this task on the current DH thread instead of a new MC thread
 			ci.setReturnValue(new RunOnThisThreadExecutorService());

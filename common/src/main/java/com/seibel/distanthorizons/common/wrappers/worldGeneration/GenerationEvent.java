@@ -102,7 +102,7 @@ public final class GenerationEvent
 						worldGeneratorThreadPool.execute(() ->
 						{
 							// TODO why not just always set this each time?
-							boolean alreadyMarked = BatchGenerationEnvironment.isCurrentThreadDistantGeneratorThread();
+							boolean alreadyMarked = BatchGenerationEnvironment.isThisDhWorldGenThread();
 							if (!alreadyMarked)
 							{
 								BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
