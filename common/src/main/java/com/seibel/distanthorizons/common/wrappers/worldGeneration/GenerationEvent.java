@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
@@ -35,17 +36,18 @@ public final class GenerationEvent
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();;
 	
-	private static int generationFutureDebugIDs = 0; // TODO make atomic int?
+	private static final AtomicInteger DEBUG_ID_REF = new AtomicInteger(0);
 	
 	
+	/** can be used for troubleshooting */
 	public final int id;
+	
 	public final ThreadWorldGenParams threadedParam;
 	public final DhChunkPos minPos;
-	/** the number of chunks wide this event is */
 	public final int widthInChunks;
 	public final EDhApiWorldGenerationStep targetGenerationStep;
 	public final EDhApiDistantGeneratorMode generatorMode;
-	public final CompletableFuture<Void> future = new CompletableFuture<>();
+	public final CompletableFuture<Void> future;
 	public final Consumer<IChunkWrapper> resultConsumer;
 	
 	
@@ -58,13 +60,14 @@ public final class GenerationEvent
 			DhChunkPos minPos, int widthInChunks, BatchGenerationEnvironment generationGroup,
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep targetGenerationStep, Consumer<IChunkWrapper> resultConsumer)
 	{
-		this.id = generationFutureDebugIDs++;
+		this.id = DEBUG_ID_REF.getAndIncrement();
 		
 		this.minPos = minPos;
 		this.widthInChunks = widthInChunks;
-		this.generatorMode = generatorMode;
 		this.targetGenerationStep = targetGenerationStep;
+		this.generatorMode = generatorMode;
 		this.threadedParam = ThreadWorldGenParams.getOrMake(generationGroup.params);
+		this.future = new CompletableFuture<>();
 		this.resultConsumer = resultConsumer;
 	}
 	
@@ -74,7 +77,7 @@ public final class GenerationEvent
 	// start //
 	//=======//
 	
-	public static GenerationEvent startEvent(
+	public static GenerationEvent start(
 			DhChunkPos minPos, int widthInChunks, BatchGenerationEnvironment genEnvironment,
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep target, Consumer<IChunkWrapper> resultConsumer,
 			ExecutorService worldGeneratorThreadPool)
@@ -97,36 +100,18 @@ public final class GenerationEvent
 					}
 					else
 					{
-						genEnvironment.generateLodFromListAsync(genEvent, (runnable) ->
+						try
 						{
-							worldGeneratorThreadPool.execute(() ->
-							{
-								// TODO why not just always set this each time?
-								boolean alreadyMarked = BatchGenerationEnvironment.isThisDhWorldGenThread();
-								if (!alreadyMarked)
-								{
-									BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
-								}
-								
-								try
-								{
-									runnable.run();
-								}
-								catch (Throwable throwable)
-								{
-									handleWorldGenThrowable(genEvent, throwable);
-								}
-								finally
-								{
-									if (!alreadyMarked)
-									{
-										BatchGenerationEnvironment.isDhWorldGenThreadRef.set(false);
-									}
-								}
-							});
-						});
-						
-						genEvent.future.complete(null);
+							genEnvironment.generateEvent(genEvent);
+						}
+						catch (Throwable throwable)
+						{
+							handleWorldGenThrowable(genEvent, throwable);
+						}
+						finally
+						{
+							genEvent.future.complete(null);
+						}
 					}
 				}
 				catch (Throwable initialThrowable)
