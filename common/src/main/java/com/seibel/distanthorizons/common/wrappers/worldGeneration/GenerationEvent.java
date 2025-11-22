@@ -59,6 +59,7 @@ public final class GenerationEvent
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep targetGenerationStep, Consumer<IChunkWrapper> resultConsumer)
 	{
 		this.id = generationFutureDebugIDs++;
+		
 		this.minPos = minPos;
 		this.widthInChunks = widthInChunks;
 		this.generatorMode = generatorMode;
@@ -78,7 +79,7 @@ public final class GenerationEvent
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep target, Consumer<IChunkWrapper> resultConsumer,
 			ExecutorService worldGeneratorThreadPool)
 	{
-		GenerationEvent generationEvent = new GenerationEvent(minPos, widthInChunks, genEnvironment, generatorMode, target, resultConsumer);
+		GenerationEvent genEvent = new GenerationEvent(minPos, widthInChunks, genEnvironment, generatorMode, target, resultConsumer);
 		
 		try
 		{
@@ -89,40 +90,48 @@ public final class GenerationEvent
 					BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
 					
 					
-					genEnvironment.generateLodFromListAsync(generationEvent, (runnable) ->
+					if (genEvent.generatorMode == EDhApiDistantGeneratorMode.INTERNAL_SERVER)
 					{
-						worldGeneratorThreadPool.execute(() ->
+						genEnvironment.internalServerGenerator.generateChunksViaInternalServer(genEvent);
+						genEvent.future.complete(null);
+					}
+					else
+					{
+						genEnvironment.generateLodFromListAsync(genEvent, (runnable) ->
 						{
-							// TODO why not just always set this each time?
-							boolean alreadyMarked = BatchGenerationEnvironment.isThisDhWorldGenThread();
-							if (!alreadyMarked)
+							worldGeneratorThreadPool.execute(() ->
 							{
-								BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
-							}
-							
-							try
-							{
-								runnable.run();
-							}
-							catch (Throwable throwable)
-							{
-								handleWorldGenThrowable(generationEvent, throwable);
-							}
-							finally
-							{
+								// TODO why not just always set this each time?
+								boolean alreadyMarked = BatchGenerationEnvironment.isThisDhWorldGenThread();
 								if (!alreadyMarked)
 								{
-									BatchGenerationEnvironment.isDhWorldGenThreadRef.set(false);
+									BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
 								}
-							}
+								
+								try
+								{
+									runnable.run();
+								}
+								catch (Throwable throwable)
+								{
+									handleWorldGenThrowable(genEvent, throwable);
+								}
+								finally
+								{
+									if (!alreadyMarked)
+									{
+										BatchGenerationEnvironment.isDhWorldGenThreadRef.set(false);
+									}
+								}
+							});
 						});
-					});
-					
-					generationEvent.future.complete(null);
+						
+						genEvent.future.complete(null);
+					}
 				}
 				catch (Throwable initialThrowable)
 				{
-					handleWorldGenThrowable(generationEvent, initialThrowable);
+					handleWorldGenThrowable(genEvent, initialThrowable);
 				}
 				finally
 				{
@@ -132,10 +141,10 @@ public final class GenerationEvent
 		}
 		catch (RejectedExecutionException e)
 		{
-			generationEvent.future.completeExceptionally(e);
+			genEvent.future.completeExceptionally(e);
 		}
 		
-		return generationEvent;
+		return genEvent;
 	}
 	/** There's probably a better way to handle this, but it'll work for now */
 	private static void handleWorldGenThrowable(GenerationEvent generationEvent, Throwable initialThrowable)
