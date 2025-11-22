@@ -35,10 +35,9 @@ public class MixinTracingExecutor
 }
 #else
 
-import com.seibel.distanthorizons.common.wrappers.DependencySetupDoneCheck;
+import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import net.minecraft.TracingExecutor;
-import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -57,7 +56,7 @@ public class MixinTracingExecutor
 {
 	// TODO put in a common location
 	private static boolean isWorldGenThread()
-	{ return DependencySetupDoneCheck.isDone && DependencySetupDoneCheck.getIsCurrentThreadDistantGeneratorThread.get(); }
+	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
 	
 	
 	// replaced with TracingExecutor in MC 1.21.3+

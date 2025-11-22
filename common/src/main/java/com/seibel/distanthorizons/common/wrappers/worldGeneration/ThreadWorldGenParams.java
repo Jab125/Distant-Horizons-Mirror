@@ -29,9 +29,10 @@ import net.minecraft.world.level.WorldGenLevel;
 import net.minecraft.world.level.levelgen.structure.StructureCheck;
 #endif
 
-public final class ThreadedParameters
+public final class ThreadWorldGenParams
 {
-	private static final ThreadLocal<ThreadedParameters> LOCAL_PARAM = new ThreadLocal<>();
+	private static final ThreadLocal<ThreadWorldGenParams> LOCAL_PARAM = new ThreadLocal<>();
+	
 	
 	final ServerLevel level;
 	public WorldGenStructFeatManager structFeat = null;
@@ -41,26 +42,32 @@ public final class ThreadedParameters
 	boolean isValid = true;
 	public final PerfCalculator perf = new PerfCalculator();
 	
-	private static GlobalParameters previousGlobalParameters = null;
+	private static GlobalWorldGenParams previousGlobalWorldGenParams = null;
 	
 	
 	
-	public static ThreadedParameters getOrMake(GlobalParameters param)
+	//=============//
+	// constructor //
+	//=============//
+	
+	public static ThreadWorldGenParams getOrMake(GlobalWorldGenParams globalParams)
 	{
-		ThreadedParameters tParam = LOCAL_PARAM.get();
-		if (tParam != null && tParam.isValid && tParam.level == param.level)
+		ThreadWorldGenParams threadParam = LOCAL_PARAM.get();
+		if (threadParam != null
+			&& threadParam.isValid 
+			&& threadParam.level == globalParams.level)
 		{
-			return tParam;
+			return threadParam;
 		}
 		
-		tParam = new ThreadedParameters(param);
-		LOCAL_PARAM.set(tParam);
-		return tParam;
+		threadParam = new ThreadWorldGenParams(globalParams);
+		LOCAL_PARAM.set(threadParam);
+		return threadParam;
 	}
 	
-	private ThreadedParameters(GlobalParameters param)
+	private ThreadWorldGenParams(GlobalWorldGenParams param)
 	{
-		previousGlobalParameters = param;
+		previousGlobalWorldGenParams = param;
 		
 		this.level = param.level;
 		#if MC_VER < MC_1_18_2
@@ -70,20 +77,18 @@ public final class ThreadedParameters
 		#else
 		this.structCheck = new StructureCheck(param.chunkScanner, param.registry, param.structures,
 				param.level.dimension(), param.generator, param.randomState, level, param.generator.getBiomeSource(), param.worldSeed,
-				param.fixerUpper);
+				param.dataFixer);
 		#endif
 	}
 	
 	
 	
-	public void markAsInvalid() { isValid = false; }
-	
-	public void makeStructFeat(WorldGenLevel genLevel, GlobalParameters param)
+	public void makeStructFeat(WorldGenLevel genLevel, GlobalWorldGenParams param)
 	{
 		#if MC_VER < MC_1_19_4
-		structFeat = new WorldGenStructFeatManager(param.worldGenSettings, genLevel #if MC_VER >= MC_1_18_2 , structCheck #endif );
+		this.structFeat = new WorldGenStructFeatManager(param.worldGenSettings, genLevel #if MC_VER >= MC_1_18_2 , this.structCheck #endif );
 		#else
-		structFeat = new WorldGenStructFeatManager(param.worldOptions, genLevel, structCheck);
+		this.structFeat = new WorldGenStructFeatManager(param.worldOptions, genLevel, this.structCheck);
 		#endif
 	}
 	

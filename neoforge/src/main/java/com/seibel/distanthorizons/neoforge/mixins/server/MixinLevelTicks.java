@@ -13,7 +13,7 @@ public class MixinLevelTicks<T>
 
 #else
 
-import com.seibel.distanthorizons.common.wrappers.DependencySetupDoneCheck;
+import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
 import net.minecraft.world.ticks.LevelTicks;
 import net.minecraft.world.ticks.ScheduledTick;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +26,7 @@ public class MixinLevelTicks<T>
 {
 	// TODO put in a common location
 	private static boolean isWorldGenThread()
-	{ return DependencySetupDoneCheck.isDone && DependencySetupDoneCheck.getIsCurrentThreadDistantGeneratorThread.get(); }
+	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
 	
 	
 	

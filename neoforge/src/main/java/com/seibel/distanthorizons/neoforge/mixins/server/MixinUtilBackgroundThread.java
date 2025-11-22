@@ -19,16 +19,10 @@
 
 package com.seibel.distanthorizons.neoforge.mixins.server;
 
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
-
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.seibel.distanthorizons.common.wrappers.DependencySetupDoneCheck;
+import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
 
 import net.minecraft.Util;
 
@@ -43,7 +37,7 @@ import net.minecraft.Util;
 public class MixinUtilBackgroundThread
 {
 	private static boolean isWorldGenThread()
-	{ return DependencySetupDoneCheck.isDone && DependencySetupDoneCheck.getIsCurrentThreadDistantGeneratorThread.get(); }
+	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
 	
 	
 	

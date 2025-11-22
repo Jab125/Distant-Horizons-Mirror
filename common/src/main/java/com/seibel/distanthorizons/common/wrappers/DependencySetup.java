@@ -56,7 +56,7 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IVersionConstants.class, VersionConstants.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IWrapperFactory.class, WrapperFactory.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IKeyedClientLevelManager.class, KeyedClientLevelManager.INSTANCE);
-		DependencySetupDoneCheck.isDone = true;
+		WorldGenThreadCheck.isSetup = true;
 	}
 	
 	public static void createServerBindings()

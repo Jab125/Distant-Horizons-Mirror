@@ -19,7 +19,6 @@
 
 package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
@@ -34,18 +33,19 @@ import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
-import org.jetbrains.annotations.Nullable;
 
 public final class GenerationEvent
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();;
-	private static int generationFutureDebugIDs = 0;
+	
+	private static int generationFutureDebugIDs = 0; // TODO make atomic int?
+	
 	
 	public final int id;
-	public final ThreadedParameters threadedParam;
+	public final ThreadWorldGenParams threadedParam;
 	public final DhChunkPos minPos;
 	/** the number of chunks wide this event is */
-	public final int size;
+	public final int widthInChunks;
 	public final EDhApiWorldGenerationStep targetGenerationStep;
 	public final EDhApiDistantGeneratorMode generatorMode;
 	public EventTimer timer = null;
@@ -56,17 +56,21 @@ public final class GenerationEvent
 	
 	
 	
+	//=============//
+	// constructor //
+	//=============//
+	
 	public GenerationEvent(
-			DhChunkPos minPos, int size, BatchGenerationEnvironment generationGroup,
+			DhChunkPos minPos, int widthInChunks, BatchGenerationEnvironment generationGroup,
 			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep targetGenerationStep, Consumer<IChunkWrapper> resultConsumer)
 	{
 		this.inQueueTime = System.nanoTime();
 		this.id = generationFutureDebugIDs++;
 		this.minPos = minPos;
-		this.size = size;
+		this.widthInChunks = widthInChunks;
 		this.generatorMode = generatorMode;
 		this.targetGenerationStep = targetGenerationStep;
-		this.threadedParam = ThreadedParameters.getOrMake(generationGroup.params);
+		this.threadedParam = ThreadWorldGenParams.getOrMake(generationGroup.params);
 		this.resultConsumer = resultConsumer;
 	}
 	
@@ -90,17 +94,18 @@ public final class GenerationEvent
 					generationEvent.inQueueTime = runStartTime - generationEvent.inQueueTime;
 					generationEvent.timer = new EventTimer("setup");
 					
-					BatchGenerationEnvironment.isDistantGeneratorThread.set(true);
+					BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
 					
 					
 					genEnvironment.generateLodFromListAsync(generationEvent, (runnable) ->
 					{
 						worldGeneratorThreadPool.execute(() ->
 						{
+							// TODO why not just always set this each time?
 							boolean alreadyMarked = BatchGenerationEnvironment.isCurrentThreadDistantGeneratorThread();
 							if (!alreadyMarked)
 							{
-								BatchGenerationEnvironment.isDistantGeneratorThread.set(true);
+								BatchGenerationEnvironment.isDhWorldGenThreadRef.set(true);
 							}
 							
 							try
@@ -115,7 +120,7 @@ public final class GenerationEvent
 							{
 								if (!alreadyMarked)
 								{
-									BatchGenerationEnvironment.isDistantGeneratorThread.set(false);
+									BatchGenerationEnvironment.isDhWorldGenThreadRef.set(false);
 								}
 							}
 						});
@@ -129,7 +134,7 @@ public final class GenerationEvent
 				}
 				finally
 				{
-					BatchGenerationEnvironment.isDistantGeneratorThread.remove();
+					BatchGenerationEnvironment.isDhWorldGenThreadRef.remove();
 				}
 			});
 		}
@@ -194,6 +199,6 @@ public final class GenerationEvent
 	}
 	
 	@Override
-	public String toString() { return this.id + ":" + this.size + "@" + this.minPos + "(" + this.targetGenerationStep + ")"; }
+	public String toString() { return this.id + ":" + this.widthInChunks + "@" + this.minPos + "(" + this.targetGenerationStep + ")"; }
 	
 }

@@ -19,16 +19,11 @@
 
 package com.seibel.distanthorizons.fabric.mixins.server;
 
-import com.seibel.distanthorizons.common.wrappers.DependencySetupDoneCheck;
+import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import net.minecraft.Util;
-
-import java.util.concurrent.ExecutorService;
 
 #if MC_VER < MC_1_16_5
 #elif MC_VER < MC_1_21_3
@@ -47,7 +42,7 @@ import java.util.function.Supplier;
 public class MixinUtilBackgroundThread
 {
 	private static boolean isWorldGenThread()
-	{ return DependencySetupDoneCheck.isDone && DependencySetupDoneCheck.getIsCurrentThreadDistantGeneratorThread.get(); }
+	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
 	
 	
 	#if MC_VER < MC_1_21_3

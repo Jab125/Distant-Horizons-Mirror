@@ -35,7 +35,7 @@ public class MixinTracingExecutor
 }
 #else
 
-import com.seibel.distanthorizons.common.wrappers.DependencySetupDoneCheck;
+import com.seibel.distanthorizons.common.wrappers.WorldGenThreadCheck;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import net.minecraft.TracingExecutor;
 import org.spongepowered.asm.mixin.Mixin;
@@ -57,7 +57,7 @@ public class MixinTracingExecutor
 {
 	// TODO put in a common location
 	private static boolean isWorldGenThread()
-	{ return DependencySetupDoneCheck.isDone && DependencySetupDoneCheck.getIsCurrentThreadDistantGeneratorThread.get(); }
+	{ return WorldGenThreadCheck.isSetup && WorldGenThreadCheck.isCurrentThreadDhWorldGenThread.get(); }
 	
 	
 	// Util.backgroundExecutor().forName("init_biomes")

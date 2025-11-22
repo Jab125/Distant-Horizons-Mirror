@@ -27,14 +27,12 @@ import net.minecraft.core.Registry;
 import net.minecraft.core.RegistryAccess;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ThreadedLevelLightEngine;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeManager;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 #if MC_VER >= MC_1_18_2
 import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 #endif
-import net.minecraft.world.level.levelgen.WorldGenSettings;
 #if MC_VER < MC_1_19_2
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 #else
@@ -47,7 +45,7 @@ import net.minecraft.core.registries.Registries;
 #endif
 import net.minecraft.world.level.storage.WorldData;
 
-public final class GlobalParameters
+public final class GlobalWorldGenParams
 {
 	public final ChunkGenerator generator;
 	public final IDhServerLevel lodLevel;
@@ -55,7 +53,7 @@ public final class GlobalParameters
 	public final Registry<Biome> biomes;
 	public final RegistryAccess registry;
 	public final long worldSeed;
-	public final DataFixer fixerUpper;
+	public final DataFixer dataFixer;
 	
 	#if MC_VER < MC_1_19_2
 	public final StructureManager structures;
@@ -72,10 +70,16 @@ public final class GlobalParameters
 	
 	#if MC_VER >= MC_1_18_2
 	public final BiomeManager biomeManager;
-	public final ChunkScanAccess chunkScanner; // FIXME: Figure out if this is actually needed
+	public final ChunkScanAccess chunkScanner;
 	#endif
 	
-	public GlobalParameters(IDhServerLevel lodLevel)
+	
+	
+	//=============//
+	// constructor //
+	//=============//
+	
+	public GlobalWorldGenParams(IDhServerLevel lodLevel)
 	{
 		this.lodLevel = lodLevel;
 		
@@ -102,9 +106,11 @@ public final class GlobalParameters
 		this.biomeManager = new BiomeManager(this.level, BiomeManager.obfuscateSeed(this.worldSeed));
 		this.chunkScanner = this.level.getChunkSource().chunkScanner();
 		#endif
+		
 		this.structures = server.getStructureManager();
 		this.generator = this.level.getChunkSource().getGenerator();
-		this.fixerUpper = server.getFixerUpper();
+		this.dataFixer = server.getFixerUpper();
+		
 		#if MC_VER >= MC_1_19_2
 		this.randomState = this.level.getChunkSource().randomState();
 		#endif
