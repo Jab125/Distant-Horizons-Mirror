@@ -21,6 +21,7 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
 import com.google.common.collect.ImmutableMap;
+import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
@@ -36,7 +37,10 @@ import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
+import com.seibel.distanthorizons.core.util.objects.RollingAverage;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
+import com.seibel.distanthorizons.core.util.threading.PriorityTaskPicker;
+import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.IBatchGeneratorEnvironmentWrapper;
@@ -46,6 +50,7 @@ import java.util.*;
 import java.util.concurrent.*;
 import java.util.function.Consumer;
 
+import com.seibel.distanthorizons.coreapi.ModInfo;
 import org.jetbrains.annotations.NotNull;
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepBiomes;
@@ -84,6 +89,11 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	public static final DhLogger LOGGER = new DhLoggerBuilder()
 			.name("LOD World Gen")
 			.fileLevelConfig(Config.Common.Logging.logWorldGenEventToFile)
+			.build();
+	
+	public static final DhLogger RATE_LIMITED_LOGGER = new DhLoggerBuilder()
+			.name("LOD World Gen")
+			.maxCountPerSecond(1)
 			.build();
 	
 	@NotNull
@@ -284,6 +294,14 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		// We handle this later, although that handling would need to change if the gen size ever changes.
 		LodUtil.assertTrue(genEvent.widthInChunks % 2 == 0, "Generation events are expected to be an evan number of chunks wide.");
 		
+		if (!DhApi.isDhThread()
+			&& ModInfo.IS_DEV_BUILD)
+		{
+			throw new IllegalStateException("Batch world generation should be called from one of DH's world gen thread. Current thread: ["+Thread.currentThread().getName()+"]");
+		}
+		
+		
+		
 		int borderSize = MAX_WORLD_GEN_CHUNK_BORDER_NEEDED;
 		// genEvent.size - 1 converts the even width size to an odd number for MC compatability
 		int refSize = (genEvent.widthInChunks - 1) + (borderSize * 2);
@@ -308,7 +326,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		// futures to handle getting empty chunks
 		CompletableFuture<?>[] readFutures = 
 				// the extra radius of 8 is to account for structure references which need a chunk radius of 8
-				ChunkPosGenStream.getStream(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 8)
+				ChunkPosGenStream.getStream(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 8)// TODO
 				.map((chunkPos) -> this.chunkFileReader.createEmptyOrPreExistingChunkAsync(chunkPos.x, chunkPos.z, chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, generatedChunkByDhPos))
 				.toArray(CompletableFuture[]::new);
 		
@@ -433,7 +451,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			// submit generated chunks //
 			//=========================//
 			
-			Iterator<ChunkPos> iterator = ChunkPosGenStream.getStream(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 0).iterator();
+			Iterator<ChunkPos> iterator = ChunkPosGenStream.getIterator(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 0);
 			while (iterator.hasNext())
 			{
 				ChunkPos pos = iterator.next();
@@ -478,7 +496,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				if (chunk instanceof ProtoChunk)
 				{
 					ProtoChunk protoChunk = ((ProtoChunk) chunk);
-					
 					protoChunk.setLightEngine(region.getLightEngine());
 				}
 			});
@@ -525,13 +542,13 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				return;
 			}
 			
-			throwIfThreadInterrupted();
-			// caves can generally be ignored since they aren't generally visible from far away
-			if (step == EDhApiWorldGenerationStep.CARVERS)
-			{
-				return;
-			}
-			
+//			throwIfThreadInterrupted();
+//			// caves can generally be ignored since they aren't generally visible from far away
+//			if (step == EDhApiWorldGenerationStep.CARVERS)
+//			{
+//				return;
+//			}
+
 			throwIfThreadInterrupted();
 			this.stepFeatures.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.FEATURES));
 		}
@@ -574,6 +591,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				{
 					DhLightingEngine.INSTANCE.bakeChunkBlockLighting(centerChunk, iChunkWrapperList, maxSkyLight);
 				}
+//				centerChunk.setIsDhBlockLightCorrect(true);
 				
 				this.dhServerLevel.updateBeaconBeamsForChunk(centerChunk, iChunkWrapperList);
 			}

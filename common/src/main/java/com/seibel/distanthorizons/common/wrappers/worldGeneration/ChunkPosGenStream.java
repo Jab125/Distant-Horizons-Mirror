@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
 import net.minecraft.world.level.ChunkPos;
 
+import java.util.Iterator;
 import java.util.Spliterator;
 import java.util.Spliterators;
 import java.util.function.Consumer;
@@ -11,10 +12,13 @@ import java.util.stream.StreamSupport;
 public class ChunkPosGenStream
 {
 	
+	public static Iterator<ChunkPos> getIterator(int genMinX, int genMinZ, int width, int extraRadius)
+	{ return getStream(genMinX, genMinZ, width, extraRadius).iterator(); }
 	/** @param extraRadius in both the positive and negative directions */
 	public static Stream<ChunkPos> getStream(int genMinX, int genMinZ, int width, int extraRadius)
 	{ return StreamSupport.stream(new InclusiveChunkPosIterator(genMinX, genMinZ, width, extraRadius), false); }
-	public static class InclusiveChunkPosIterator extends Spliterators.AbstractSpliterator<ChunkPos>
+	
+	private static class InclusiveChunkPosIterator extends Spliterators.AbstractSpliterator<ChunkPos>
 	{
 		private final int minX;
 		private final int minZ;

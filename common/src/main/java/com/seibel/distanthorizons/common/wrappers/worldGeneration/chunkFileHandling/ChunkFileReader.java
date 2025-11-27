@@ -107,6 +107,13 @@ public class ChunkFileReader implements AutoCloseable
 		ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
 		DhChunkPos dhChunkPos = new DhChunkPos(chunkX, chunkZ);
 		
+//		if (true)
+//		{
+//			ChunkAccess newChunk = CreateEmptyChunk(this.params.level, chunkPos);
+//			generatedChunkByDhPos.put(dhChunkPos, newChunk);
+//			return CompletableFuture.completedFuture(newChunk);
+//		}
+		
 		if (generatedChunkByDhPos.containsKey(dhChunkPos))
 		{
 			return CompletableFuture.completedFuture(generatedChunkByDhPos.get(dhChunkPos));
