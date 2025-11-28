@@ -34,7 +34,7 @@ public final class ThreadWorldGenParams
 	
 	
 	final ServerLevel level;
-	public WorldGenStructFeatManager structFeat = null;
+	public WorldGenStructFeatManager structFeatManager = null;
 	
 	#if MC_VER >= MC_1_18_2
 	public StructureCheck structCheck;
@@ -92,11 +92,11 @@ public final class ThreadWorldGenParams
 	public void makeStructFeatManager(WorldGenLevel genLevel, GlobalWorldGenParams param)
 	{
 		#if MC_VER < MC_1_18_2
-		this.structFeat = new WorldGenStructFeatManager(param.worldGenSettings, genLevel);
+		this.structFeatManager = new WorldGenStructFeatManager(param.worldGenSettings, genLevel);
 		#elif MC_VER < MC_1_19_4
-		this.structFeat = new WorldGenStructFeatManager(param.worldGenSettings, genLevel, this.structCheck);
+		this.structFeatManager = new WorldGenStructFeatManager(param.worldGenSettings, genLevel, this.structCheck);
 		#else
-		this.structFeat = new WorldGenStructFeatManager(param.worldOptions, genLevel, this.structCheck);
+		this.structFeatManager = new WorldGenStructFeatManager(param.worldOptions, genLevel, this.structCheck);
 		#endif
 	}
 	

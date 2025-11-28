@@ -74,7 +74,7 @@ public final class StepSurface extends AbstractWorldGenStep
 			#elif MC_VER < MC_1_19_2
 			this.environment.params.generator.buildSurface(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), chunk);
 			#else
-			this.environment.params.generator.buildSurface(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), this.environment.params.randomState, chunk);
+			this.environment.globalParams.generator.buildSurface(worldGenRegion, tParams.structFeatManager.forWorldGenRegion(worldGenRegion), this.environment.globalParams.randomState, chunk);
 			#endif
 		}
 	}

@@ -110,7 +110,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	
 	
 	public final LinkedBlockingQueue<GenerationEvent> generationEventQueue = new LinkedBlockingQueue<>();
-	public final GlobalWorldGenParams params;
+	public final GlobalWorldGenParams globalParams;
 	
 	public final StepStructureStart stepStructureStart = new StepStructureStart(this);
 	public final StepStructureReference stepStructureReference = new StepStructureReference(this);
@@ -168,9 +168,9 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	public BatchGenerationEnvironment(IDhServerLevel dhServerLevel)
 	{
 		this.dhServerLevel = dhServerLevel;
-		this.params = new GlobalWorldGenParams(dhServerLevel);
-		this.internalServerGenerator = new InternalServerGenerator(this.params, this.dhServerLevel);
-		this.chunkFileReader = new ChunkFileReader(this.params);
+		this.globalParams = new GlobalWorldGenParams(dhServerLevel);
+		this.internalServerGenerator = new InternalServerGenerator(this.globalParams, this.dhServerLevel);
+		this.chunkFileReader = new ChunkFileReader(this.globalParams);
 		
 		ChunkGenerator generator = ((ServerLevelWrapper) (dhServerLevel.getServerLevelWrapper())).getLevel().getChunkSource().getGenerator();
 		boolean isMcGenerator = 
@@ -309,7 +309,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		int refPosX = genEvent.minPos.getX() - borderSize;
 		int refPosZ = genEvent.minPos.getZ() - borderSize;
 		
-		LightGetterAdaptor lightGetterAdaptor = new LightGetterAdaptor(this.params.level);
+		LightGetterAdaptor lightGetterAdaptor = new LightGetterAdaptor(this.globalParams.level);
 		DummyLightEngine dummyLightEngine = new DummyLightEngine(lightGetterAdaptor);
 		
 		// reused data between each offset
@@ -371,7 +371,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			// create empty chunks outside the generation radius
 			if (!readFutureByDhChunkPos.containsKey(dhChunkPos))
 			{
-				ChunkAccess chunk = ChunkFileReader.CreateEmptyChunk(this.params.level, chunkPos);
+				ChunkAccess chunk = ChunkFileReader.CreateEmptyChunk(this.globalParams.level, chunkPos);
 				generatedChunkByDhPos.put(dhChunkPos, chunk);
 			}
 		}
@@ -424,14 +424,14 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					DhLitWorldGenRegion region = new DhLitWorldGenRegion(
 							centerX, centerZ,
 							centerChunk,
-							this.params.level, dummyLightEngine, regionChunks,
+							this.globalParams.level, dummyLightEngine, regionChunks,
 							ChunkStatus.STRUCTURE_STARTS, radius,
 							// this method shouldn't be necessary since we're passing in a pre-populated
 							// list of chunks, but just in case
 							fallbackChunkGetterFunc
 					);
 					lightGetterAdaptor.setRegion(region);
-					genEvent.threadedParam.makeStructFeatManager(region, this.params);
+					genEvent.threadedParam.makeStructFeatManager(region, this.globalParams);
 					
 					
 					

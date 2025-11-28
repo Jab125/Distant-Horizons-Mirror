@@ -84,7 +84,7 @@ public final class StepFeatures extends AbstractWorldGenStep
 				#else
 				if (worldGenRegion.hasChunk(chunkWrapper.getChunkPos().getX(), chunkWrapper.getChunkPos().getZ()))
 				{
-					this.environment.params.generator.applyBiomeDecoration(worldGenRegion, chunk, tParams.structFeat.forWorldGenRegion(worldGenRegion));
+					this.environment.globalParams.generator.applyBiomeDecoration(worldGenRegion, chunk, tParams.structFeatManager.forWorldGenRegion(worldGenRegion));
 				}
 				else
 				{

@@ -68,7 +68,7 @@ public final class StepStructureReference extends AbstractWorldGenStep
 		for (ChunkWrapper chunkWrapper : chunksToDo)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
-			this.environment.params.generator.createReferences(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), chunk);
+			this.environment.globalParams.generator.createReferences(worldGenRegion, tParams.structFeatManager.forWorldGenRegion(worldGenRegion), chunk);
 		}
 	}
 	

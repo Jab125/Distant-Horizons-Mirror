@@ -78,7 +78,7 @@ public final class StepStructureStart extends AbstractWorldGenStep
 		#elif MC_VER < MC_1_19_4
 		if (!this.environment.params.worldGenSettings.generateStructures()) 
 		#else
-		if (!this.environment.params.worldOptions.generateStructures())
+		if (!this.environment.globalParams.worldOptions.generateStructures())
 		#endif
 		{
 			return;
@@ -105,10 +105,10 @@ public final class StepStructureStart extends AbstractWorldGenStep
 					this.environment.params.level.getChunkSource().getGeneratorState(),
 					tParams.structFeat, chunk, this.environment.params.structures);
 			#else
-			this.environment.params.generator.createStructures(this.environment.params.registry,
-					this.environment.params.level.getChunkSource().getGeneratorState(),
-					tParams.structFeat, chunk, this.environment.params.structures, 
-					this.environment.params.level.dimension());
+			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry,
+					this.environment.globalParams.level.getChunkSource().getGeneratorState(),
+					tParams.structFeatManager, chunk, this.environment.globalParams.structures, 
+					this.environment.globalParams.level.dimension());
 			#endif
 			
 			#if MC_VER >= MC_1_18_2

@@ -97,10 +97,10 @@ public final class StepNoise extends AbstractWorldGenStep
 							chunk));
 			#else
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.fillFromNoise(
+						this.environment.globalParams.generator.fillFromNoise(
 							Blender.of(worldGenRegion), 
-							this.environment.params.randomState,
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							this.environment.globalParams.randomState,
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk));
 			#endif
 		}

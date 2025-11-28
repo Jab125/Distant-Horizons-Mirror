@@ -66,7 +66,7 @@ public final class GenerationEvent
 		this.widthInChunks = widthInChunks;
 		this.targetGenerationStep = targetGenerationStep;
 		this.generatorMode = generatorMode;
-		this.threadedParam = ThreadWorldGenParams.getOrMake(generationGroup.params);
+		this.threadedParam = ThreadWorldGenParams.getOrMake(generationGroup.globalParams);
 		this.future = new CompletableFuture<>();
 		this.resultConsumer = resultConsumer;
 	}

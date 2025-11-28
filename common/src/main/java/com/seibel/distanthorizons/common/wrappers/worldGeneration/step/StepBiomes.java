@@ -104,10 +104,10 @@ public final class StepBiomes extends AbstractWorldGenStep
 					);
 			#else
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
-							this.environment.params.randomState, 
+						this.environment.globalParams.generator.createBiomes(
+							this.environment.globalParams.randomState, 
 							Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#endif
