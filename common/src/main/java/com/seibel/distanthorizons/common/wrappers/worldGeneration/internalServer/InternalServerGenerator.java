@@ -1,20 +1,22 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.internalServer;
 
 import com.seibel.distanthorizons.api.DhApi;
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.ChunkPosGenStream;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.GenerationEvent;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.GlobalWorldGenParams;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
+import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.core.util.TimerUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IC2meAccessor;
 import com.seibel.distanthorizons.coreapi.ModInfo;
@@ -49,6 +51,15 @@ public class InternalServerGenerator
 	
 	private static final IC2meAccessor C2ME_ACCESSOR = ModAccessorInjector.INSTANCE.get(IC2meAccessor.class);
 	
+	/**
+	 * Used to revert the ignore logic in {@link SharedApi} so
+	 * that given chunk pos can be handled again.
+	 * A timer is used so we don't have to inject into MC's code and it works sell enough
+	 * most of the time.
+	 * If a chunk does get through due the timeout not being long enough that isn't the end of the world.
+	 */
+	private static final int MS_TO_IGNORE_CHUNK_AFTER_COMPLETION = 5_000;
+	
 	#if MC_VER < MC_1_21_5
 	private static final TicketType<ChunkPos> DH_SERVER_GEN_TICKET = TicketType.create("dh_server_gen_ticket", Comparator.comparingLong(ChunkPos::toLong));
 	#elif MC_VER < MC_1_21_9
@@ -62,6 +73,7 @@ public class InternalServerGenerator
 	
 	private final GlobalWorldGenParams params;
 	private final IDhServerLevel dhServerLevel;
+	private final Timer chunkSaveIgnoreTimer = TimerUtil.CreateTimer("ChunkSaveIgnoreTimer");
 	
 	
 	
@@ -223,6 +235,9 @@ public class InternalServerGenerator
 		{
 			ServerLevel level = this.params.level;
 			
+			// ignore chunk update events for this position
+			SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+			
 			#if MC_VER < MC_1_21_5
 			int chunkLevel = 33; // 33 is equivalent to FULL Chunk
 			level.getChunkSource().distanceManager.addTicket(DH_SERVER_GEN_TICKET, chunkPos, chunkLevel, chunkPos);
@@ -257,7 +272,7 @@ public class InternalServerGenerator
 	 * mitigates out of memory issues in the vanilla chunk system. <br>
 	 * See: https://github.com/pop4959/Chunky/pull/383
 	 */
-	private void releaseChunkFromServer(ServerLevel level, ChunkPos pos)
+	private void releaseChunkFromServer(ServerLevel level, ChunkPos chunkPos)
 	{
 		level.getChunkSource().chunkMap.mainThreadExecutor.execute(() ->
 		{
@@ -265,9 +280,9 @@ public class InternalServerGenerator
 			{
 				#if MC_VER < MC_1_21_5
 				int chunkLevel = 33; // 33 is equivalent to FULL Chunk
-				level.getChunkSource().distanceManager.removeTicket(DH_SERVER_GEN_TICKET, pos, chunkLevel, pos);
+				level.getChunkSource().distanceManager.removeTicket(DH_SERVER_GEN_TICKET, chunkPos, chunkLevel, chunkPos);
 				#else
-				level.getChunkSource().removeTicketWithRadius(DH_SERVER_GEN_TICKET, pos, 0);
+				level.getChunkSource().removeTicketWithRadius(DH_SERVER_GEN_TICKET, chunkPos, 0);
 				#endif
 				
 				level.getChunkSource().chunkMap.tick(() -> false);
@@ -275,6 +290,16 @@ public class InternalServerGenerator
 				#if MC_VER > MC_1_16_5
 				level.entityManager.tick();
 				#endif
+				
+				
+				// give MC a few seconds to save the chunk before
+				// we can process update events there again
+				this.chunkSaveIgnoreTimer.schedule(new TimerTask()
+				{
+					@Override
+					public void run() { SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.removePosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z)); }
+				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
+				
 			}
 			catch (Exception e)
 			{
