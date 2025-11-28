@@ -74,9 +74,9 @@ public final class StepStructureStart extends AbstractWorldGenStep
 		// TODO should be put in wrapped environment so we can skip some other world gen steps
 		//  SURFACE wouldn't need structure generation either
 		#if MC_VER < MC_1_19_2
-		if (!this.environment.params.worldGenSettings.generateFeatures())
+		if (!this.environment.globalParams.worldGenSettings.generateFeatures())
 		#elif MC_VER < MC_1_19_4
-		if (!this.environment.params.worldGenSettings.generateStructures()) 
+		if (!this.environment.globalParams.worldGenSettings.generateStructures()) 
 		#else
 		if (!this.environment.globalParams.worldOptions.generateStructures())
 		#endif
@@ -95,15 +95,15 @@ public final class StepStructureStart extends AbstractWorldGenStep
 			STRUCTURE_PLACEMENT_LOCK.lock();
 			
 			#if MC_VER < MC_1_19_2
-			this.environment.params.generator.createStructures(this.environment.params.registry, tParams.structFeat, chunk, this.environment.params.structures,
-					this.environment.params.worldSeed);
+			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry, tParams.structFeatManager, chunk, this.environment.globalParams.structures,
+					this.environment.globalParams.worldSeed);
 			#elif MC_VER < MC_1_19_4
-			this.environment.params.generator.createStructures(this.environment.params.registry, this.environment.params.randomState, tParams.structFeat, chunk, this.environment.params.structures,
-					this.environment.params.worldSeed);
+			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry, this.environment.globalParams.randomState, tParams.structFeatManager, chunk, this.environment.globalParams.structures,
+					this.environment.globalParams.worldSeed);
 			#elif MC_VER <= MC_1_21_3
-			this.environment.params.generator.createStructures(this.environment.params.registry,
-					this.environment.params.level.getChunkSource().getGeneratorState(),
-					tParams.structFeat, chunk, this.environment.params.structures);
+			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry,
+					this.environment.globalParams.level.getChunkSource().getGeneratorState(),
+					tParams.structFeatManager, chunk, this.environment.globalParams.structures);
 			#else
 			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry,
 					this.environment.globalParams.level.getChunkSource().getGeneratorState(),

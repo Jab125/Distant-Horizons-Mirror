@@ -25,6 +25,15 @@ import org.spongepowered.asm.mixin.Mixin;
 
 import net.minecraft.Util;
 
+#if MC_VER < MC_1_21_3
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
+
+import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
+#endif
+
 /**
  * This is needed for DH's world gen so we can run
  * world gen on our own threads instead of using MC thread pools.

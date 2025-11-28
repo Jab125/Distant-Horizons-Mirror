@@ -23,7 +23,12 @@ import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
+
+#if MC_VER <= MC_1_20_4
+import net.minecraft.world.level.chunk.ChunkStatus;
+#else
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+#endif
 
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -220,7 +225,7 @@ public class InternalServerGenerator
 			
 			#if MC_VER < MC_1_21_5
 			int chunkLevel = 33; // 33 is equivalent to FULL Chunk
-			level.getChunkSource().distanceManager.addTicket(DH_SERVER_GEN_TICKET, pos, chunkLevel, pos);
+			level.getChunkSource().distanceManager.addTicket(DH_SERVER_GEN_TICKET, chunkPos, chunkLevel, chunkPos);
 			#else
 			level.getChunkSource().addTicketWithRadius(DH_SERVER_GEN_TICKET, chunkPos, 0);
 			#endif
@@ -235,13 +240,13 @@ public class InternalServerGenerator
 			}
 			
 			#if MC_VER <= MC_1_20_4
-			return chunkHolder.getOrScheduleFuture(ChunkStatus.FEATURES, level.getChunkSource().chunkMap)
+			return chunkHolder.getOrScheduleFuture(ChunkStatus.FULL, level.getChunkSource().chunkMap)
 					.thenApply(result -> result.left().orElseThrow(() -> new RuntimeException(result.right().get().toString()))); // can throw if the server is shutting down
 			#elif MC_VER <= MC_1_20_6
-			return chunkHolder.getOrScheduleFuture(ChunkStatus.FEATURES, level.getChunkSource().chunkMap)
+			return chunkHolder.getOrScheduleFuture(ChunkStatus.FULL, level.getChunkSource().chunkMap)
 					.thenApply(result -> result.orElseThrow(() -> new RuntimeException(result.toString()))); // can throw if the server is shutting down
 			#else
-			return chunkHolder.scheduleChunkGenerationTask(ChunkStatus.FEATURES, level.getChunkSource().chunkMap)
+			return chunkHolder.scheduleChunkGenerationTask(ChunkStatus.FULL, level.getChunkSource().chunkMap)
 					.thenApply(result -> result.orElseThrow(() -> new RuntimeException(result.getError()))); // can throw if the server is shutting down
 			#endif
 			

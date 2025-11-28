@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling;
 
 import com.mojang.serialization.Codec;
+import com.mojang.serialization.DataResult;
 import com.mojang.serialization.Dynamic;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 
@@ -53,6 +54,11 @@ import net.minecraft.world.level.chunk.*;
 
 #if MC_VER < MC_1_21_3
 import net.minecraft.world.level.chunk.storage.ChunkSerializer;
+#else
+#endif
+
+#if MC_VER < MC_1_21_9
+import net.minecraft.world.level.block.Blocks;
 #else
 #endif
 
@@ -168,7 +174,7 @@ public class ChunkCompoundTagParser
 		{
 			return null;
 		}
-		#elif MC_VER < MC_1_19_2
+		#elif MC_VER < MC_1_20_6
 		if (chunkType == ChunkStatus.ChunkType.PROTOCHUNK)
 		{
 			return null;
@@ -376,7 +382,7 @@ public class ChunkCompoundTagParser
 					
 					Registry<Biome> biomeRegistry = getBiomeRegistry(level);
 					
-					#if MC_VER < MC_1_18_2 
+					#if MC_VER < MC_1_19_2
 					Codec<PalettedContainer<Biome>> biomeCodec;
 					#else 
 					Codec<PalettedContainer<Holder<Biome>>> biomeCodec;
@@ -401,12 +407,13 @@ public class ChunkCompoundTagParser
 							biomeTag = CompoundTagUtil.getCompoundTag(tagSection, "biomes");
 						}
 						
-						if (biomeTag != null)
+						if (biomeTag != null
+							&& !biomeTag.isEmpty())
 						{
-							#if MC_VER < MC_1_20_6 
-							biomeContainer = biomeCodec.parse(NbtOps.INSTANCE, biomeTag)
-								.promotePartial(string -> logBiomeDeserializationWarning(chunkPos, sectionYIndex, (String) string))
-								.getOrThrow(false, (message) -> logParsingWarningOnce(message));
+							#if MC_VER < MC_1_20_6
+							biomeContainer = new PalettedContainer<Holder<Biome>>(
+								biomeRegistry.asHolderIdMap(),
+								biomeRegistry.getHolderOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES);
 							#else
 							biomeContainer = biomeCodec.parse(NbtOps.INSTANCE, biomeTag)
 								.promotePartial(string -> logBiomeDeserializationWarning(chunkPos, sectionYIndex, (String) string))
@@ -448,9 +455,11 @@ public class ChunkCompoundTagParser
 	
 	private static Codec<PalettedContainer<BlockState>> getBlockStateCodec(LevelAccessor level)
 	{
-		#if MC_VER <= MC_1_18_2
+		#if MC_VER < MC_1_18_2
+		return null; // unused for older MC versions
+		#elif MC_VER < MC_1_19_2
 		return PalettedContainer.codec(Block.BLOCK_STATE_REGISTRY, BlockState.CODEC, PalettedContainer.Strategy.SECTION_STATES, Blocks.AIR.defaultBlockState());
-		#elif MC_VER <= MC_1_19_2
+		#elif MC_VER <= MC_1_21_8
 		return PalettedContainer.codecRW(Block.BLOCK_STATE_REGISTRY, BlockState.CODEC, PalettedContainer.Strategy.SECTION_STATES, Blocks.AIR.defaultBlockState());
 		#else
 		return PalettedContainerFactory.create(level.registryAccess()).blockStatesContainerCodec();
@@ -471,13 +480,15 @@ public class ChunkCompoundTagParser
 		#endif	
 	}
 	private static 
-		#if MC_VER < MC_1_18_2 Codec<PalettedContainer<Biome>>
+		#if MC_VER < MC_1_19_2 Codec<PalettedContainer<Biome>>
 		#else Codec<PalettedContainer<Holder<Biome>>>
 		#endif
 		getBiomeCodec(LevelAccessor level, Registry<Biome> biomeRegistry)
 	{
 		#if MC_VER < MC_1_18_2
-		Codec<PalettedContainer<Biome>> biomeCodec = PalettedContainer.codec(
+		return null; // unused for older MC versions
+		#elif MC_VER < MC_1_19_2
+		return PalettedContainer.codec(
 				biomeRegistry, biomeRegistry.byNameCodec(), PalettedContainer.Strategy.SECTION_BIOMES, biomeRegistry.getOrThrow(Biomes.PLAINS));
 		#elif MC_VER < MC_1_19_2
 		return PalettedContainer.codec(

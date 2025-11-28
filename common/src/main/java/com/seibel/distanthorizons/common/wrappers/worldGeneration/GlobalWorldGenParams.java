@@ -33,9 +33,14 @@ import net.minecraft.world.level.chunk.ChunkGenerator;
 #if MC_VER >= MC_1_18_2
 import net.minecraft.world.level.chunk.storage.ChunkScanAccess;
 #endif
+
 #if MC_VER < MC_1_19_2
 import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
+#elif MC_VER < MC_1_19_2
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureManager;
 #else
+import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
 #endif
 import net.minecraft.world.level.storage.WorldData;
 

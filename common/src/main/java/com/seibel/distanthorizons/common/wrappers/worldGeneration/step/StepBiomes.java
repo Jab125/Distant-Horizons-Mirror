@@ -74,32 +74,32 @@ public final class StepBiomes extends AbstractWorldGenStep
 			
 			
 			#if MC_VER < MC_1_18_2
-			this.environment.params.generator.createBiomes(this.environment.params.biomes, chunk);
+			this.environment.globalParams.generator.createBiomes(this.environment.globalParams.biomes, chunk);
 			#elif MC_VER < MC_1_19_2
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
-							this.environment.params.biomes, 
+						this.environment.globalParams.generator.createBiomes(
+							this.environment.globalParams.biomes, 
 							Runnable::run, 
 							Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#elif MC_VER < MC_1_19_4
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
-							this.environment.params.biomes, 
+						this.environment.globalParams.generator.createBiomes(
+							this.environment.globalParams.biomes, 
 							Runnable::run, 
-							this.environment.params.randomState, Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							this.environment.globalParams.randomState, Blender.of(worldGenRegion),
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#elif MC_VER < MC_1_21_1
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
+						this.environment.globalParams.generator.createBiomes(
 							Runnable::run, 
-							this.environment.params.randomState, 
+							this.environment.globalParams.randomState, 
 							Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#else

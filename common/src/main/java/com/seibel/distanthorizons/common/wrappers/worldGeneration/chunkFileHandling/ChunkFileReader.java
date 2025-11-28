@@ -11,16 +11,16 @@ import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
+
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.PalettedContainerFactory;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.storage.IOWorker;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
+
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -30,6 +30,25 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
 import java.util.concurrent.atomic.AtomicReference;
+
+#if MC_VER <= MC_1_17_1
+import net.minecraft.world.level.chunk.ChunkStatus;
+#elif MC_VER <= MC_1_19_2
+import net.minecraft.world.level.chunk.ChunkStatus;
+import net.minecraft.core.Registry;
+#elif MC_VER <= MC_1_19_4
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.chunk.ChunkStatus;
+#elif MC_VER <= MC_1_20_6
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.chunk.ChunkStatus;
+#elif MC_VER <= MC_1_21_10
+import net.minecraft.core.registries.Registries;
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+#else
+import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.chunk.PalettedContainerFactory;
+#endif
 
 public class ChunkFileReader implements AutoCloseable
 {

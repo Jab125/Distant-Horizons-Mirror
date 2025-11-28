@@ -73,7 +73,7 @@ public final class ThreadWorldGenParams
 		this.level = param.level;
 		
 		#if MC_VER < MC_1_18_2
-		this.structFeat = new WorldGenStructFeatManager(param.worldGenSettings, this.level);
+		this.structFeatManager = new WorldGenStructFeatManager(param.worldGenSettings, this.level);
 		#elif MC_VER < MC_1_19_2
 		this.structCheck = this.createStructureCheck(param);
 		#else
