@@ -223,7 +223,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 		// render event //
 		//==============//
 
-		// TODO wait for fabric to re-add their rendering API
+		
 		#if MC_VER < MC_1_21_9
 		WorldRenderEvents.AFTER_SETUP.register((renderContext) ->
 		{
