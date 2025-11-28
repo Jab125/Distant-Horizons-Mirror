@@ -124,10 +124,10 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		int rollingBlue = 0;
 		
 		int xMin = mutableBlockPos.getX() - this.smoothingRadiusInBlocks;
-		int xMax = mutableBlockPos.getX() + this.smoothingRadiusInBlocks;
+		int xMax = mutableBlockPos.getX() + this.smoothingRadiusInBlocks + 1; // +1 to account for the center block
 		
 		int zMin = mutableBlockPos.getZ() - this.smoothingRadiusInBlocks;
-		int zMax = mutableBlockPos.getZ() + this.smoothingRadiusInBlocks;
+		int zMax = mutableBlockPos.getZ() + this.smoothingRadiusInBlocks + 1;
 		
 		int levelMinY = this.clientLevelWrapper.getMinHeight();
 		
@@ -141,7 +141,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 				// this can return the same position/datapoint for larger LODs duplicating work,
 				// however for small smoothing ranges that isn't a big deal and for large LODs
 				// we ignore smoothing anyway
-				long dataPoint = this.fullDataSource.getDataPointAtBlockPos(mutableBlockPos.getX(), mutableBlockPos.getY(), mutableBlockPos.getZ());
+				long dataPoint = this.fullDataSource.getDataPointAtBlockPos(mutableBlockPos.getX(), mutableBlockPos.getY(), mutableBlockPos.getZ(), levelMinY);
 				if (dataPoint == FullDataPointUtil.EMPTY_DATA_POINT)
 				{
 					continue;
