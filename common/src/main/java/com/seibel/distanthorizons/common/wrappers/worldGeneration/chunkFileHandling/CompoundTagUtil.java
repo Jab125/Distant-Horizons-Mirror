@@ -134,4 +134,15 @@ public class CompoundTagUtil
 	
 	
 	
+	public static boolean contains(CompoundTag tag, String key, int index)
+	{
+		#if MC_VER < MC_1_21_5
+		return tag.contains(key, index);
+		#else
+		return tag.contains(key);
+		#endif
+	}
+	
+	
+	
 }

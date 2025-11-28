@@ -37,10 +37,7 @@ import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
-import com.seibel.distanthorizons.core.util.objects.RollingAverage;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
-import com.seibel.distanthorizons.core.util.threading.PriorityTaskPicker;
-import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.IBatchGeneratorEnvironmentWrapper;
@@ -302,6 +299,10 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		
 		
 		
+		//================//
+		// variable setup //
+		//================//
+		
 		int borderSize = MAX_WORLD_GEN_CHUNK_BORDER_NEEDED;
 		// genEvent.size - 1 converts the even width size to an odd number for MC compatability
 		int refSize = (genEvent.widthInChunks - 1) + (borderSize * 2);
@@ -311,29 +312,75 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		LightGetterAdaptor lightGetterAdaptor = new LightGetterAdaptor(this.params.level);
 		DummyLightEngine dummyLightEngine = new DummyLightEngine(lightGetterAdaptor);
 		
-		
-		
-		//====================================//
-		// offset and generate odd width area //
-		//====================================//
-		
 		// reused data between each offset
 		Map<DhChunkPos, ChunkLightStorage> chunkSkyLightingByDhPos = Collections.synchronizedMap(new HashMap<>());
 		Map<DhChunkPos, ChunkLightStorage> chunkBlockLightingByDhPos = Collections.synchronizedMap(new HashMap<>());
 		Map<DhChunkPos, ChunkAccess> generatedChunkByDhPos = Collections.synchronizedMap(new HashMap<>());
 		Map<DhChunkPos, ChunkWrapper> chunkWrappersByDhPos = Collections.synchronizedMap(new HashMap<>());
 		
-		// futures to handle getting empty chunks
-		CompletableFuture<?>[] readFutures = 
-				// the extra radius of 8 is to account for structure references which need a chunk radius of 8
-				ChunkPosGenStream.getStream(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 8)// TODO
-				.map((chunkPos) -> this.chunkFileReader.createEmptyOrPreExistingChunkAsync(chunkPos.x, chunkPos.z, chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, generatedChunkByDhPos))
-				.toArray(CompletableFuture[]::new);
 		
-		// join to prevent an issue where DH queues too many tasks or something(?)
-		// also allows file IO to run in parallel so no one thread is waiting on disk IO (this is only an issue when C2ME is present)
-		CompletableFuture.allOf(readFutures).join();
 		
+		//================================//
+		// read existing chunks from file //
+		//================================//
+		
+		HashMap<DhChunkPos, CompletableFuture<ChunkAccess>> readFutureByDhChunkPos = new HashMap<>();
+		
+		Iterator<ChunkPos> existingChunkPosIterator = ChunkPosGenStream.getIterator(
+			genEvent.minPos.getX(), genEvent.minPos.getZ(),
+			genEvent.widthInChunks,
+			// 0 radius -> only pull existing chunks from disk
+			0);
+		while (existingChunkPosIterator.hasNext())
+		{
+			ChunkPos chunkPos = existingChunkPosIterator.next();
+			DhChunkPos dhChunkPos = new DhChunkPos(chunkPos.x, chunkPos.z);
+			
+			CompletableFuture<ChunkAccess> getExistingChunkFuture
+				// running async allows file IO to run in parallel when C2ME is present
+				= this.chunkFileReader.createEmptyOrPreExistingChunkAsync(
+					chunkPos.x, chunkPos.z,
+					chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, generatedChunkByDhPos);
+			
+			readFutureByDhChunkPos.put(dhChunkPos, getExistingChunkFuture);
+		}
+		
+		// normally DH will handle each of these futures serially
+		// but if C2ME is present these will be completed in parallel
+		for (CompletableFuture<ChunkAccess> readChunkFuture : readFutureByDhChunkPos.values())
+		{
+			readChunkFuture.join();
+		}
+		
+		
+		
+		//===================================//
+		// create empty chunks for world gen //
+		//===================================//
+		
+		Iterator<ChunkPos> emptyChunkPosIterator = ChunkPosGenStream.getIterator(
+			genEvent.minPos.getX(), genEvent.minPos.getZ(), 
+			genEvent.widthInChunks,
+			// the extra radius of 8 is to account for structure references which need a chunk radius of 8
+			8);
+		while (emptyChunkPosIterator.hasNext())
+		{
+			ChunkPos chunkPos = emptyChunkPosIterator.next();
+			DhChunkPos dhChunkPos = new DhChunkPos(chunkPos.x, chunkPos.z);
+			
+			// create empty chunks outside the generation radius
+			if (!readFutureByDhChunkPos.containsKey(dhChunkPos))
+			{
+				ChunkAccess chunk = ChunkFileReader.CreateEmptyChunk(this.params.level, chunkPos);
+				generatedChunkByDhPos.put(dhChunkPos, chunk);
+			}
+		}
+		
+		
+		
+		//=================//
+		// generate chunks //
+		//=================//
 		
 		try
 		{
@@ -358,14 +405,14 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					int centerZ = refPosZ + radius + zOffset;
 					
 					// get/create the list of chunks we're going to generate
-					IEmptyChunkRetrievalFunc fallbackFunc =
-							(chunkPosX, chunkPosZ) -> Objects.requireNonNull(
-									generatedChunkByDhPos.get(new DhChunkPos(chunkPosX, chunkPosZ)),
-									() -> String.format("Requested chunk [%d, %d] unavailable during world generation", chunkPosX, chunkPosZ));
+					IEmptyChunkRetrievalFunc fallbackChunkGetterFunc =
+						(chunkPosX, chunkPosZ) -> Objects.requireNonNull(
+							generatedChunkByDhPos.get(new DhChunkPos(chunkPosX, chunkPosZ)),
+							() -> String.format("Requested chunk [%d, %d] unavailable during world generation", chunkPosX, chunkPosZ));
 					
 					ArrayGridList<ChunkAccess> regionChunks = new ArrayGridList<>(
 							refSize,
-							(relX, relZ) -> fallbackFunc.getChunk(
+							(relX, relZ) -> fallbackChunkGetterFunc.getChunk(
 									relX + refPosX + xOffsetFinal,
 									relZ + refPosZ + zOffsetFinal));
 					
@@ -381,10 +428,10 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 							ChunkStatus.STRUCTURE_STARTS, radius,
 							// this method shouldn't be necessary since we're passing in a pre-populated
 							// list of chunks, but just in case
-							fallbackFunc
+							fallbackChunkGetterFunc
 					);
 					lightGetterAdaptor.setRegion(region);
-					genEvent.threadedParam.makeStructFeat(region, this.params);
+					genEvent.threadedParam.makeStructFeatManager(region, this.params);
 					
 					
 					

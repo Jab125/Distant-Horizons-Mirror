@@ -107,13 +107,6 @@ public class ChunkFileReader implements AutoCloseable
 		ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
 		DhChunkPos dhChunkPos = new DhChunkPos(chunkX, chunkZ);
 		
-//		if (true)
-//		{
-//			ChunkAccess newChunk = CreateEmptyChunk(this.params.level, chunkPos);
-//			generatedChunkByDhPos.put(dhChunkPos, newChunk);
-//			return CompletableFuture.completedFuture(newChunk);
-//		}
-		
 		if (generatedChunkByDhPos.containsKey(dhChunkPos))
 		{
 			return CompletableFuture.completedFuture(generatedChunkByDhPos.get(dhChunkPos));
@@ -155,7 +148,6 @@ public class ChunkFileReader implements AutoCloseable
 				return newChunk;
 			});
 	}
-	// TODO FIXME this method can be called up to 25 times for the same chunk position, why?
 	private CompletableFuture<CompoundTag> getChunkNbtDataAsync(ChunkPos chunkPos)
 	{
 		ServerLevel level = this.params.level;
@@ -265,8 +257,6 @@ public class ChunkFileReader implements AutoCloseable
 		{
 			try
 			{
-				CHUNK_LOAD_LOGGER.debug("DistantHorizons: Loading chunk [" + chunkPos + "] from disk.");
-				
 				@Nullable
 				ChunkAccess chunk = ChunkCompoundTagParser.createFromTag(level, chunkPos, chunkTagData);
 				if (chunk != null)
@@ -298,7 +288,8 @@ public class ChunkFileReader implements AutoCloseable
 			}
 		}
 	}
-	private static ProtoChunk CreateEmptyChunk(ServerLevel level, ChunkPos chunkPos)
+	
+	public static ProtoChunk CreateEmptyChunk(ServerLevel level, ChunkPos chunkPos)
 	{
 		#if MC_VER <= MC_1_16_5
 		return new ProtoChunk(chunkPos, UpgradeData.EMPTY);

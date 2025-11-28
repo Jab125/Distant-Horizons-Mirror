@@ -27,7 +27,6 @@ import com.seibel.distanthorizons.common.wrappers.worldGeneration.ThreadWorldGen
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.DhLitWorldGenRegion;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
-import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 #if MC_VER >= MC_1_18_2

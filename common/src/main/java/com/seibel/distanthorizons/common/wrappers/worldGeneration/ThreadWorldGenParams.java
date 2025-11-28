@@ -89,7 +89,7 @@ public final class ThreadWorldGenParams
 	// builders //
 	//==========//
 	
-	public void makeStructFeat(WorldGenLevel genLevel, GlobalWorldGenParams param)
+	public void makeStructFeatManager(WorldGenLevel genLevel, GlobalWorldGenParams param)
 	{
 		#if MC_VER < MC_1_18_2
 		this.structFeat = new WorldGenStructFeatManager(param.worldGenSettings, genLevel);
