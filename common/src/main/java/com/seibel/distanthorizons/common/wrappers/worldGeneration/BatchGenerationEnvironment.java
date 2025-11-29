@@ -504,7 +504,13 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				ChunkPos pos = iterator.next();
 				DhChunkPos dhPos = new DhChunkPos(pos.x, pos.z);
 				ChunkWrapper wrappedChunk = chunkWrappersByDhPos.get(dhPos);
-				genEvent.resultConsumer.accept(wrappedChunk);
+				
+				// only pass along chunks that have been generated up to BIOMES
+				// this is to prevent issues with generating existing
+				if (wrappedChunk.getStatus().isOrAfter(ChunkStatus.BIOMES))
+				{
+					genEvent.resultConsumer.accept(wrappedChunk);
+				}
 			}
 		}
 		catch (CompletionException | UncheckedInterruptedException e)
@@ -630,17 +636,17 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				
 				// make sure the height maps are all properly generated
 				// if this isn't done everything else afterward may fail
-				Heightmap.primeHeightmaps(centerChunk.getChunk(), ChunkStatus.FEATURES.heightmapsAfter());
+				//Heightmap.primeHeightmaps(centerChunk.getChunk(), ChunkStatus.FEATURES.heightmapsAfter());
 				centerChunk.recalculateDhHeightMapsIfNeeded();
 				
 				// pre-generated chunks should have lighting but new ones won't
-				if (!centerChunk.isDhBlockLightingCorrect())
-				{
-					DhLightingEngine.INSTANCE.bakeChunkBlockLighting(centerChunk, iChunkWrapperList, maxSkyLight);
-				}
-//				centerChunk.setIsDhBlockLightCorrect(true);
+				//if (!centerChunk.isDhBlockLightingCorrect())
+				//{
+				//	DhLightingEngine.INSTANCE.bakeChunkBlockLighting(centerChunk, iChunkWrapperList, maxSkyLight);
+				//}
+				centerChunk.setIsDhBlockLightCorrect(true);
 				
-				this.dhServerLevel.updateBeaconBeamsForChunk(centerChunk, iChunkWrapperList);
+				//this.dhServerLevel.updateBeaconBeamsForChunk(centerChunk, iChunkWrapperList);
 			}
 		}
 	}
