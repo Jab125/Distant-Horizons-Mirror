@@ -15,7 +15,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.ChunkPos;
-import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.chunk.storage.IOWorker;
@@ -117,64 +116,57 @@ public class ChunkFileReader implements AutoCloseable
 	 * If the given chunk pos already exists in the world, that chunk will be returned,
 	 * otherwise this will return an empty chunk.
 	 */
-	public CompletableFuture<ChunkAccess> createEmptyOrPreExistingChunkAsync(
+	public CompletableFuture<ChunkWrapper> createEmptyOrPreExistingChunkWrapperAsync(
 		int chunkX, int chunkZ,
 		Map<DhChunkPos, ChunkLightStorage> chunkSkyLightingByDhPos,
 		Map<DhChunkPos, ChunkLightStorage> chunkBlockLightingByDhPos,
-		Map<DhChunkPos, ChunkAccess> generatedChunkByDhPos)
+		Map<DhChunkPos, ChunkWrapper> generatedChunkWrapperByDhPos)
 	{
 		ChunkPos chunkPos = new ChunkPos(chunkX, chunkZ);
 		DhChunkPos dhChunkPos = new DhChunkPos(chunkX, chunkZ);
 		
-		if (generatedChunkByDhPos.containsKey(dhChunkPos))
+		if (generatedChunkWrapperByDhPos.containsKey(dhChunkPos))
 		{
-			return CompletableFuture.completedFuture(generatedChunkByDhPos.get(dhChunkPos));
+			return CompletableFuture.completedFuture(generatedChunkWrapperByDhPos.get(dhChunkPos));
 		}
 		
 		return this.getChunkNbtDataAsync(chunkPos)
 			.thenApply((CompoundTag chunkData) ->
 			{
-				ChunkAccess newChunk = this.loadOrMakeChunk(chunkPos, chunkData);
+				ChunkWrapper newChunkWrapper = this.loadOrMakeChunkWrapper(chunkPos, chunkData);
 				
-				if (Config.Common.LodBuilding.pullLightingForPregeneratedChunks.get())
+				// attempt to get chunk lighting
+				ChunkCompoundTagParser.CombinedChunkLightStorage combinedLights = ChunkCompoundTagParser.readLight(newChunkWrapper.getChunk(), chunkData);
+				if (combinedLights != null)
 				{
-					// attempt to get chunk lighting
-					ChunkCompoundTagParser.CombinedChunkLightStorage combinedLights = ChunkCompoundTagParser.readLight(newChunk, chunkData);
-					if (combinedLights != null)
-					{
-						chunkSkyLightingByDhPos.put(dhChunkPos, combinedLights.skyLightStorage);
-						chunkBlockLightingByDhPos.put(dhChunkPos, combinedLights.blockLightStorage);
-					}
+					// may be empty, empty checks are handled later
+					chunkSkyLightingByDhPos.put(dhChunkPos, combinedLights.skyLightStorage);
+					chunkBlockLightingByDhPos.put(dhChunkPos, combinedLights.blockLightStorage);
 				}
 				
-				return newChunk;
+				return newChunkWrapper;
 			})
 			// separate handle so we can cleanly handle missing chunks and/or thrown errors 
-			.handle((newChunk, throwable) ->
+			.handle((ChunkWrapper newChunkWrapper, Throwable throwable) ->
 			{
-				if (newChunk != null)
+				if (newChunkWrapper != null)
 				{
-					return newChunk;
+					return newChunkWrapper;
 				}
 				else
 				{
-					return CreateEmptyChunk(this.params.level, chunkPos);
+					return this.CreateProtoChunkWrapper(this.params.mcServerLevel, chunkPos);
 				}
 			})
-			.thenApply((newChunk) ->
+			.thenApply((ChunkWrapper newChunkWrapper) ->
 			{
-				generatedChunkByDhPos.put(dhChunkPos, newChunk);
-				return newChunk;
+				generatedChunkWrapperByDhPos.put(dhChunkPos, newChunkWrapper);
+				return newChunkWrapper;
 			});
 	}
 	private CompletableFuture<CompoundTag> getChunkNbtDataAsync(ChunkPos chunkPos)
 	{
-		ServerLevel level = this.params.level;
-		
-		//if (true)
-		//	return CompletableFuture.completedFuture(null);
-		
-		// TODO disabling drastically reduces GC overhead (2Gb/s -> 1GB/s)
+		ServerLevel level = this.params.mcServerLevel;
 		
 		try
 		{
@@ -190,7 +182,7 @@ public class ChunkFileReader implements AutoCloseable
 			{
 				try
 				{
-					RegionFileStorage storage = this.params.level.getChunkSource().chunkMap.worker.storage;
+					RegionFileStorage storage = this.params.mcServerLevel.getChunkSource().chunkMap.worker.storage;
 					RegionFileStorageExternalCache cache = this.getOrCreateRegionFileCache(storage);
 					return CompletableFuture.completedFuture(cache.read(chunkPos));
 				}
@@ -264,35 +256,24 @@ public class ChunkFileReader implements AutoCloseable
 			return CompletableFuture.completedFuture(null);
 		}
 	}
-	private ChunkAccess loadOrMakeChunk(ChunkPos chunkPos, CompoundTag chunkTagData)
+	private ChunkWrapper loadOrMakeChunkWrapper(ChunkPos chunkPos, CompoundTag chunkTagData)
 	{
-		ServerLevel level = this.params.level;
+		ServerLevel mcServerLevel = this.params.mcServerLevel;
 		
 		if (chunkTagData == null)
 		{
-			return CreateEmptyChunk(level, chunkPos);
+			return this.CreateProtoChunkWrapper(mcServerLevel, chunkPos);
 		}
 		else
 		{
 			try
 			{
-				@Nullable
-				ChunkAccess chunk = ChunkCompoundTagParser.createFromTag(level, chunkPos, chunkTagData);
-				if (chunk != null)
+				ChunkWrapper chunkWrapper = ChunkCompoundTagParser.createFromTag(mcServerLevel, this.params.dhServerLevel, chunkPos, chunkTagData);
+				if (chunkWrapper == null)
 				{
-					if (Config.Common.LodBuilding.assumePreExistingChunksAreFinished.get())
-					{
-						// Sometimes the chunk status is wrong 
-						// (this might be an issue with some versions of chunky)
-						// which can cause issues with some world gen steps re-running and locking up
-						ChunkWrapper.trySetStatus(chunk, ChunkStatus.FULL);
-					}
+					chunkWrapper = this.CreateProtoChunkWrapper(mcServerLevel, chunkPos);
 				}
-				else
-				{
-					chunk = CreateEmptyChunk(level, chunkPos);
-				}
-				return chunk;
+				return chunkWrapper;
 			}
 			catch (Exception e)
 			{
@@ -303,12 +284,17 @@ public class ChunkFileReader implements AutoCloseable
 						"Error: [" + e.getMessage() + "]."
 					, e);
 				
-				return CreateEmptyChunk(level, chunkPos);
+				return this.CreateProtoChunkWrapper(mcServerLevel, chunkPos);
 			}
 		}
 	}
 	
-	public static ProtoChunk CreateEmptyChunk(ServerLevel level, ChunkPos chunkPos)
+	public ChunkWrapper CreateProtoChunkWrapper(ServerLevel level, ChunkPos chunkPos)
+	{
+		ProtoChunk chunk = CreateProtoChunk(level, chunkPos);
+		return new ChunkWrapper(chunk, this.params.dhServerLevel.getLevelWrapper());
+	}
+	public static ProtoChunk CreateProtoChunk(ServerLevel level, ChunkPos chunkPos)
 	{
 		#if MC_VER <= MC_1_16_5
 		return new ProtoChunk(chunkPos, UpgradeData.EMPTY);

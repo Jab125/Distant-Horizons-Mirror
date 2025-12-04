@@ -67,8 +67,8 @@ import net.minecraft.world.level.levelgen.RandomState;
 public final class GlobalWorldGenParams
 {
 	public final ChunkGenerator generator;
-	public final IDhServerLevel lodLevel;
-	public final ServerLevel level;
+	public final IDhServerLevel dhServerLevel;
+	public final ServerLevel mcServerLevel;
 	public final Registry<Biome> biomes;
 	public final RegistryAccess registry;
 	public final long worldSeed;
@@ -98,12 +98,12 @@ public final class GlobalWorldGenParams
 	// constructor //
 	//=============//
 	
-	public GlobalWorldGenParams(IDhServerLevel lodLevel)
+	public GlobalWorldGenParams(IDhServerLevel dhServerLevel)
 	{
-		this.lodLevel = lodLevel;
+		this.dhServerLevel = dhServerLevel;
 		
-		this.level = ((ServerLevelWrapper) lodLevel.getServerLevelWrapper()).getWrappedMcObject();
-		MinecraftServer server = this.level.getServer();
+		this.mcServerLevel = ((ServerLevelWrapper) dhServerLevel.getServerLevelWrapper()).getWrappedMcObject();
+		MinecraftServer server = this.mcServerLevel.getServer();
 		WorldData worldData = server.getWorldData();
 		this.registry = server.registryAccess();
 		
@@ -122,16 +122,16 @@ public final class GlobalWorldGenParams
 		#endif
 		
 		#if MC_VER >= MC_1_18_2
-		this.biomeManager = new BiomeManager(this.level, BiomeManager.obfuscateSeed(this.worldSeed));
-		this.chunkScanner = this.level.getChunkSource().chunkScanner();
+		this.biomeManager = new BiomeManager(this.mcServerLevel, BiomeManager.obfuscateSeed(this.worldSeed));
+		this.chunkScanner = this.mcServerLevel.getChunkSource().chunkScanner();
 		#endif
 		
 		this.structures = server.getStructureManager();
-		this.generator = this.level.getChunkSource().getGenerator();
+		this.generator = this.mcServerLevel.getChunkSource().getGenerator();
 		this.dataFixer = server.getFixerUpper();
 		
 		#if MC_VER >= MC_1_19_2
-		this.randomState = this.level.getChunkSource().randomState();
+		this.randomState = this.mcServerLevel.getChunkSource().randomState();
 		#endif
 	}
 	

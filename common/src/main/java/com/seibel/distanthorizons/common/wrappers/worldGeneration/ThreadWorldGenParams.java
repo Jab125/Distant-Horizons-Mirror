@@ -56,7 +56,7 @@ public final class ThreadWorldGenParams
 		ThreadWorldGenParams threadParam = LOCAL_PARAM_REF.get();
 		if (threadParam != null
 			&& threadParam.isValid 
-			&& threadParam.level == globalParams.level)
+			&& threadParam.level == globalParams.mcServerLevel)
 		{
 			return threadParam;
 		}
@@ -70,7 +70,7 @@ public final class ThreadWorldGenParams
 	{
 		previousGlobalWorldGenParams = param;
 		
-		this.level = param.level;
+		this.level = param.mcServerLevel;
 		
 		#if MC_VER < MC_1_18_2
 		this.structFeatManager = new WorldGenStructFeatManager(param.worldGenSettings, this.level);
@@ -78,7 +78,7 @@ public final class ThreadWorldGenParams
 		this.structCheck = this.createStructureCheck(param);
 		#else
 		this.structCheck = new StructureCheck(param.chunkScanner, param.registry, param.structures,
-				param.level.dimension(), param.generator, param.randomState, this.level, param.generator.getBiomeSource(), param.worldSeed,
+				param.mcServerLevel.dimension(), param.generator, param.randomState, this.level, param.generator.getBiomeSource(), param.worldSeed,
 				param.dataFixer);
 		#endif
 	}

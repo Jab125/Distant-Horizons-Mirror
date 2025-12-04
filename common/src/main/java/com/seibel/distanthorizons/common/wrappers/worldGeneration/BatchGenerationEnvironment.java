@@ -34,6 +34,7 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
+import com.seibel.distanthorizons.core.sql.dto.BeaconBeamDTO;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
@@ -61,7 +62,6 @@ import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.*;
 import net.minecraft.world.level.levelgen.DebugLevelSource;
 import net.minecraft.world.level.levelgen.FlatLevelSource;
-import net.minecraft.world.level.levelgen.Heightmap;
 import net.minecraft.world.level.levelgen.NoiseBasedChunkGenerator;
 
 #if MC_VER <= MC_1_17_1
@@ -309,13 +309,12 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		int refPosX = genEvent.minPos.getX() - borderSize;
 		int refPosZ = genEvent.minPos.getZ() - borderSize;
 		
-		LightGetterAdaptor lightGetterAdaptor = new LightGetterAdaptor(this.globalParams.level);
+		LightGetterAdaptor lightGetterAdaptor = new LightGetterAdaptor(this.globalParams.mcServerLevel);
 		DummyLightEngine dummyLightEngine = new DummyLightEngine(lightGetterAdaptor);
 		
 		// reused data between each offset
 		Map<DhChunkPos, ChunkLightStorage> chunkSkyLightingByDhPos = Collections.synchronizedMap(new HashMap<>());
 		Map<DhChunkPos, ChunkLightStorage> chunkBlockLightingByDhPos = Collections.synchronizedMap(new HashMap<>());
-		Map<DhChunkPos, ChunkAccess> generatedChunkByDhPos = Collections.synchronizedMap(new HashMap<>());
 		Map<DhChunkPos, ChunkWrapper> chunkWrappersByDhPos = Collections.synchronizedMap(new HashMap<>());
 		
 		
@@ -324,7 +323,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		// read existing chunks from file //
 		//================================//
 		
-		HashMap<DhChunkPos, CompletableFuture<ChunkAccess>> readFutureByDhChunkPos = new HashMap<>();
+		HashMap<DhChunkPos, CompletableFuture<ChunkWrapper>> readFutureByDhChunkPos = new HashMap<>();
 		
 		Iterator<ChunkPos> existingChunkPosIterator = ChunkPosGenStream.getIterator(
 			genEvent.minPos.getX(), genEvent.minPos.getZ(),
@@ -336,18 +335,18 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			ChunkPos chunkPos = existingChunkPosIterator.next();
 			DhChunkPos dhChunkPos = new DhChunkPos(chunkPos.x, chunkPos.z);
 			
-			CompletableFuture<ChunkAccess> getExistingChunkFuture
+			CompletableFuture<ChunkWrapper> getExistingChunkFuture
 				// running async allows file IO to run in parallel when C2ME is present
-				= this.chunkFileReader.createEmptyOrPreExistingChunkAsync(
+				= this.chunkFileReader.createEmptyOrPreExistingChunkWrapperAsync(
 					chunkPos.x, chunkPos.z,
-					chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, generatedChunkByDhPos);
+					chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, chunkWrappersByDhPos);
 			
 			readFutureByDhChunkPos.put(dhChunkPos, getExistingChunkFuture);
 		}
 		
 		// normally DH will handle each of these futures serially
 		// but if C2ME is present these will be completed in parallel
-		for (CompletableFuture<ChunkAccess> readChunkFuture : readFutureByDhChunkPos.values())
+		for (CompletableFuture<ChunkWrapper> readChunkFuture : readFutureByDhChunkPos.values())
 		{
 			readChunkFuture.join();
 		}
@@ -371,8 +370,8 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			// create empty chunks outside the generation radius
 			if (!readFutureByDhChunkPos.containsKey(dhChunkPos))
 			{
-				ChunkAccess chunk = ChunkFileReader.CreateEmptyChunk(this.globalParams.level, chunkPos);
-				generatedChunkByDhPos.put(dhChunkPos, chunk);
+				ChunkWrapper chunkWrapper = this.chunkFileReader.CreateProtoChunkWrapper(this.globalParams.mcServerLevel, chunkPos);
+				chunkWrappersByDhPos.put(dhChunkPos, chunkWrapper);
 			}
 		}
 		
@@ -407,7 +406,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					// get/create the list of chunks we're going to generate
 					IEmptyChunkRetrievalFunc fallbackChunkGetterFunc =
 						(chunkPosX, chunkPosZ) -> Objects.requireNonNull(
-							generatedChunkByDhPos.get(new DhChunkPos(chunkPosX, chunkPosZ)),
+							chunkWrappersByDhPos.get(new DhChunkPos(chunkPosX, chunkPosZ)).getChunk(),
 							() -> String.format("Requested chunk [%d, %d] unavailable during world generation", chunkPosX, chunkPosZ));
 					
 					ArrayGridList<ChunkAccess> regionChunks = new ArrayGridList<>(
@@ -424,7 +423,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					DhLitWorldGenRegion region = new DhLitWorldGenRegion(
 							centerX, centerZ,
 							centerChunk,
-							this.globalParams.level, dummyLightEngine, regionChunks,
+							this.globalParams.mcServerLevel, dummyLightEngine, regionChunks,
 							ChunkStatus.STRUCTURE_STARTS, radius,
 							// this method shouldn't be necessary since we're passing in a pre-populated
 							// list of chunks, but just in case
@@ -436,8 +435,8 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					
 					
 					//=============================//
-					// create chunk wrappers       //
-					// and process existing chunks //
+					// process existing chunks //
+					//
 					//=============================//
 					
 					ArrayGridList<ChunkWrapper> chunkWrapperList = new ArrayGridList<>(regionChunks.gridSize);
@@ -454,17 +453,32 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 						}
 						else if (chunk != null)
 						{
-							// wrap the chunk
+							// 
 							ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.dhServerLevel.getLevelWrapper());
 							chunkWrapperList.set(relX, relZ, chunkWrapper);
 							
 							// try setting the wrapper's lighting
 							if (chunkBlockLightingByDhPos.containsKey(chunkWrapper.getChunkPos()))
 							{
-								chunkWrapper.setBlockLightStorage(chunkBlockLightingByDhPos.get(chunkWrapper.getChunkPos()));
-								chunkWrapper.setSkyLightStorage(chunkSkyLightingByDhPos.get(chunkWrapper.getChunkPos()));
-								chunkWrapper.setIsDhBlockLightCorrect(true);
-								chunkWrapper.setIsDhSkyLightCorrect(true);
+								// block
+								ChunkLightStorage blockLightStorage = chunkBlockLightingByDhPos.get(chunkWrapper.getChunkPos());
+								// if the light storage is empty then we should try generating the lighting
+								// ourselves, the light data is probably missing
+								if (blockLightStorage != null
+									&& !blockLightStorage.isEmpty())
+								{
+									chunkWrapper.setBlockLightStorage(blockLightStorage);
+									chunkWrapper.setIsDhBlockLightCorrect(true);
+								}
+								
+								// sky
+								ChunkLightStorage skyLightStorage = chunkSkyLightingByDhPos.get(chunkWrapper.getChunkPos());
+								if (skyLightStorage != null
+									&& !skyLightStorage.isEmpty())
+								{
+									chunkWrapper.setSkyLightStorage(skyLightStorage);
+									chunkWrapper.setIsDhSkyLightCorrect(true);
+								}
 							}
 							
 							chunkWrappersByDhPos.put(chunkPos, chunkWrapper);
@@ -553,6 +567,16 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				}
 			});
 			
+			
+			// if we're only working with pre-existing chunks,
+			// biomes need to be initialized but no other steps should be done
+			if (genEvent.generatorMode == EDhApiDistantGeneratorMode.PRE_EXISTING_ONLY)
+			{
+				this.stepBiomes.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.BIOMES));
+				return;
+			}
+			
+			
 			EDhApiWorldGenerationStep step = genEvent.targetGenerationStep;
 			if (step == EDhApiWorldGenerationStep.EMPTY)
 			{
@@ -626,27 +650,25 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			// light each chunk in the list
 			for (int i = 0; i < iChunkWrapperList.size(); i++)
 			{
-				ChunkWrapper centerChunk = (ChunkWrapper) iChunkWrapperList.get(i);
-				if (centerChunk == null)
+				ChunkWrapper centerChunkWrapper = (ChunkWrapper) iChunkWrapperList.get(i);
+				if (centerChunkWrapper == null)
 				{
 					continue;
 				}
 				
 				throwIfThreadInterrupted();
 				
-				// make sure the height maps are all properly generated
-				// if this isn't done everything else afterward may fail
-				//Heightmap.primeHeightmaps(centerChunk.getChunk(), ChunkStatus.FEATURES.heightmapsAfter());
-				centerChunk.recalculateDhHeightMapsIfNeeded();
-				
 				// pre-generated chunks should have lighting but new ones won't
-				//if (!centerChunk.isDhBlockLightingCorrect())
-				//{
-				//	DhLightingEngine.INSTANCE.bakeChunkBlockLighting(centerChunk, iChunkWrapperList, maxSkyLight);
-				//}
-				centerChunk.setIsDhBlockLightCorrect(true);
+				if (!centerChunkWrapper.isDhBlockLightingCorrect())
+				{
+					DhLightingEngine.INSTANCE.bakeChunkBlockLighting(centerChunkWrapper, iChunkWrapperList, maxSkyLight);
+				}
 				
-				//this.dhServerLevel.updateBeaconBeamsForChunk(centerChunk, iChunkWrapperList);
+				List<BeaconBeamDTO> activeBeamList = centerChunkWrapper.getAllActiveBeacons(iChunkWrapperList);
+				if (!activeBeamList.isEmpty())
+				{
+					this.dhServerLevel.updateBeaconBeamsForChunkPos(centerChunkWrapper.getChunkPos(), activeBeamList);
+				}
 			}
 		}
 	}

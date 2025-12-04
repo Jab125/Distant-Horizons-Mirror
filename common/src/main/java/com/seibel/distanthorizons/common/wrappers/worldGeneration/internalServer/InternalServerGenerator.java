@@ -172,7 +172,6 @@ public class InternalServerGenerator
 			for (int i = 0; i < chunkWrappers.size(); i++)
 			{
 				ChunkWrapper chunkWrapper = (ChunkWrapper)chunkWrappers.get(i);
-				chunkWrapper.recalculateDhHeightMapsIfNeeded();
 				
 				// pre-generated chunks should have lighting but new ones won't
 				if (!chunkWrapper.isDhBlockLightingCorrect())
@@ -191,7 +190,7 @@ public class InternalServerGenerator
 			while (chunkPosIterator.hasNext())
 			{
 				ChunkPos chunkPos = chunkPosIterator.next();
-				this.releaseChunkFromServer(this.params.level, chunkPos);
+				this.releaseChunkFromServer(this.params.mcServerLevel, chunkPos);
 			}
 		}
 	}
@@ -233,7 +232,7 @@ public class InternalServerGenerator
 	{
 		return CompletableFuture.supplyAsync(() ->
 		{
-			ServerLevel level = this.params.level;
+			ServerLevel level = this.params.mcServerLevel;
 			
 			// ignore chunk update events for this position
 			SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
@@ -265,7 +264,7 @@ public class InternalServerGenerator
 					.thenApply(result -> result.orElseThrow(() -> new RuntimeException(result.getError()))); // can throw if the server is shutting down
 			#endif
 			
-		}, this.params.level.getChunkSource().chunkMap.mainThreadExecutor)
+		}, this.params.mcServerLevel.getChunkSource().chunkMap.mainThreadExecutor)
 		.thenCompose(Function.identity());
 	}
 	/**

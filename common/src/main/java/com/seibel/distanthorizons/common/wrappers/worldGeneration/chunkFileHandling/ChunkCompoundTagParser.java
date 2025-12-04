@@ -20,11 +20,10 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling;
 
 import com.mojang.serialization.Codec;
-import com.mojang.serialization.DataResult;
-import com.mojang.serialization.Dynamic;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 
 import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.LodUtil;
@@ -36,6 +35,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import net.minecraft.core.Registry;
 #if MC_VER >= MC_1_19_4
 import net.minecraft.core.registries.Registries;
@@ -64,7 +64,6 @@ import net.minecraft.world.level.block.Blocks;
 
 import net.minecraft.world.level.levelgen.Heightmap;
 #if MC_VER >= MC_1_18_2
-import net.minecraft.world.level.levelgen.blending.BlendingData;
 #if MC_VER < MC_1_19_2
 import net.minecraft.world.level.levelgen.feature.StructureFeature;
 #endif
@@ -86,7 +85,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkType;
 #elif MC_VER >= MC_1_21_1
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import net.minecraft.world.level.chunk.status.ChunkType;
 #endif
 
 import net.minecraft.world.level.material.Fluid;
@@ -111,7 +109,9 @@ public class ChunkCompoundTagParser
 	// read chunk //
 	//============//
 	
-	public static LevelChunk createFromTag(WorldGenLevel level, ChunkPos chunkPos, CompoundTag chunkData)
+	public static ChunkWrapper createFromTag(
+		WorldGenLevel mcWorldGenLevel, IDhServerLevel dhServerLevel, 
+		ChunkPos chunkPos, CompoundTag chunkData)
 	{
 		#if MC_VER < MC_1_18_2
 		CompoundTag tagLevel = chunkData.getCompound("Level");
@@ -158,57 +158,27 @@ public class ChunkCompoundTagParser
 		
 		
 		
-		//==========================//
-		// ignore incomplete chunks //
-		//==========================//
-		
-		#if MC_VER < MC_1_20_6
-		ChunkStatus.ChunkType chunkType;
-		#else
-		ChunkType chunkType;
-		#endif
-		chunkType = readChunkType(tagLevel);
-		
-		#if MC_VER < MC_1_18_2
-		if (chunkType != ChunkStatus.ChunkType.LEVELCHUNK)
-		{
-			return null;
-		}
-		#elif MC_VER < MC_1_20_6
-		if (chunkType == ChunkStatus.ChunkType.PROTOCHUNK)
-		{
-			return null;
-		}
-		#else
-		if (chunkType == ChunkType.PROTOCHUNK)
-		{
-			return null;
-		}
-		#endif
-		
-		
-		
 		//===========//
 		// get ticks //
 		//===========//
 		
 		#if MC_VER < MC_1_18_2
 		ChunkBiomeContainer chunkBiomeContainer = new ChunkBiomeContainer(
-				level.getLevel().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY), #if MC_VER >= MC_1_17_1 level, #endif
-				chunkPos, level.getLevel().getChunkSource().getGenerator().getBiomeSource(),
+				mcWorldGenLevel.getLevel().registryAccess().registryOrThrow(Registry.BIOME_REGISTRY), #if MC_VER >= MC_1_17_1 mcWorldGenLevel, #endif
+				chunkPos, mcWorldGenLevel.getLevel().getChunkSource().getGenerator().getBiomeSource(),
 				tagLevel.contains("Biomes", 11) ? tagLevel.getIntArray("Biomes") : null);
 		
 		String BLOCK_TICKS_TAG_PRE18 = "TileTicks";
 		TickList<Block> blockTicks = tagLevel.contains(BLOCK_TICKS_TAG_PRE18, 9)
 				? ChunkTickList.create(tagLevel.getList(BLOCK_TICKS_TAG_PRE18, 10), Registry.BLOCK::getKey, Registry.BLOCK::get)
 				: new ProtoTickList<Block>(block -> (block == null || block.defaultBlockState().isAir()), chunkPos,
-				tagLevel.getList("ToBeTicked", 9) #if MC_VER >= MC_1_17_1 , level #endif );
+				tagLevel.getList("ToBeTicked", 9) #if MC_VER >= MC_1_17_1 , mcWorldGenLevel #endif );
 		
 		String FLUID_TICKS_TAG_PRE18 = "LiquidTicks";
 		TickList<Fluid> fluidTicks = tagLevel.contains(FLUID_TICKS_TAG_PRE18, 9)
 				? ChunkTickList.create(tagLevel.getList(FLUID_TICKS_TAG_PRE18, 10), Registry.FLUID::getKey, Registry.FLUID::get)
 				: new ProtoTickList<Fluid>(fluid -> (fluid == null || fluid == Fluids.EMPTY), chunkPos,
-				tagLevel.getList("LiquidsToBeTicked", 9) #if MC_VER >= MC_1_17_1 , level #endif );
+				tagLevel.getList("LiquidsToBeTicked", 9) #if MC_VER >= MC_1_17_1 , mcWorldGenLevel #endif );
 		#else
 		// ticks shouldn't be needed so ignore them for MC versions after 1.18.2
 		LevelChunkTicks<Block> blockTicks = new LevelChunkTicks<>();
@@ -221,7 +191,10 @@ public class ChunkCompoundTagParser
 		// get misc properties //
 		//=====================//
 		
-		LevelChunkSection[] levelChunkSections = readSections(level, chunkPos, tagLevel);
+		int sectionYCount = #if MC_VER < MC_1_17_1 16; #else mcWorldGenLevel.getSectionsCount(); #endif
+		LevelChunkSection[] chunkSections = new LevelChunkSection[sectionYCount];
+		boolean hasBlocks = readAndPopulateSections(mcWorldGenLevel, chunkPos, tagLevel, chunkSections);
+		
 		long inhabitedTime = CompoundTagUtil.getLong(tagLevel, "InhabitedTime");
 		boolean isLightOn = CompoundTagUtil.getBoolean(tagLevel, "isLightOn");
 		
@@ -232,48 +205,20 @@ public class ChunkCompoundTagParser
 		//============//
 		
 		#if MC_VER < MC_1_18_2
-		LevelChunk chunk = new LevelChunk((Level) level.getLevel(), chunkPos, chunkBiomeContainer, UpgradeData.EMPTY, blockTicks,
-				fluidTicks, inhabitedTime, levelChunkSections, null);
+		LevelChunk chunk = new LevelChunk((Level) mcWorldGenLevel.getLevel(), chunkPos, chunkBiomeContainer, UpgradeData.EMPTY, blockTicks,
+				fluidTicks, inhabitedTime, chunkSections, null);
 		#else
-		LevelChunk chunk = new LevelChunk((Level) level, chunkPos, UpgradeData.EMPTY, blockTicks,
-				fluidTicks, inhabitedTime, levelChunkSections, null, null);
+		LevelChunk chunk = new LevelChunk((Level) mcWorldGenLevel, chunkPos, UpgradeData.EMPTY, blockTicks,
+				fluidTicks, inhabitedTime, chunkSections, null, null);
 		#endif
 		
 		// Set some states after object creation
 		chunk.setLightCorrect(isLightOn);
-		readHeightmaps(chunk, chunkData);
+		boolean hasHeightmapData = readHeightmaps(chunk, chunkData);
 		
-		return chunk;
-	}
-	
-	
-	
-	//==========================//
-	//       chunk type         //
-	// (incomplete chunk check) //
-	//==========================//
-	
-	private static 
-		#if MC_VER < MC_1_20_6 ChunkStatus.ChunkType
-		#elif MC_VER < MC_1_21_1 ChunkType
-		#else ChunkType #endif
-		readChunkType(CompoundTag tagLevel)
-	{
-		String statusString = CompoundTagUtil.getString(tagLevel,"Status");
-		if (statusString != null)
-		{
-			ChunkStatus chunkStatus = ChunkStatus.byName(statusString);
-			if (chunkStatus != null)
-			{
-				return chunkStatus.getChunkType();
-			}
-		}
-		
-		#if MC_VER <= MC_1_20_4
-		return ChunkStatus.ChunkType.PROTOCHUNK;
-		#else
-		return ChunkType.PROTOCHUNK;
-		#endif
+		// chunk wrapper so we can pass along extra data more easily
+		ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, dhServerLevel.getServerLevelWrapper(), !hasHeightmapData);
+		return chunkWrapper;
 	}
 	
 	
@@ -284,10 +229,11 @@ public class ChunkCompoundTagParser
 	//=================//
 	
 	/** handles both blocks and biomes */
-	private static LevelChunkSection[] readSections(LevelAccessor level, ChunkPos chunkPos, CompoundTag chunkData)
+	private static boolean readAndPopulateSections(
+		LevelAccessor level, ChunkPos chunkPos, CompoundTag chunkData,
+		LevelChunkSection[] chunkSections)
 	{
-		int sectionYIndex = #if MC_VER < MC_1_17_1 16; #else level.getSectionsCount(); #endif
-		LevelChunkSection[] chunkSections = new LevelChunkSection[sectionYIndex];
+		int sectionYCount = #if MC_VER < MC_1_17_1 16; #else level.getSectionsCount(); #endif
 		
 		ListTag tagSections = CompoundTagUtil.getListTag(chunkData, "Sections", 10);
 		// try lower-case "sections" if capital "Sections" is missing
@@ -298,6 +244,7 @@ public class ChunkCompoundTagParser
 		}
 		
 		
+		boolean blocksFound = false;
 		if (tagSections != null)
 		{
 			for (int j = 0; j < tagSections.size(); ++j)
@@ -364,6 +311,8 @@ public class ChunkCompoundTagParser
 							.promotePartial(string -> logBlockDeserializationWarning(chunkPos, sectionYPos, string))
 							.getOrThrow((message) -> logErrorAndReturnException(message));
 						#endif
+						
+						blocksFound = true;
 					}
 					else
 					{
@@ -416,7 +365,7 @@ public class ChunkCompoundTagParser
 								biomeRegistry.getHolderOrThrow(Biomes.PLAINS), PalettedContainer.Strategy.SECTION_BIOMES);
 							#else
 							biomeContainer = biomeCodec.parse(NbtOps.INSTANCE, biomeTag)
-								.promotePartial(string -> logBiomeDeserializationWarning(chunkPos, sectionYIndex, (String) string))
+								.promotePartial(string -> logBiomeDeserializationWarning(chunkPos, sectionYCount, (String) string))
 								.getOrThrow((message) -> logErrorAndReturnException(message));
 							#endif
 						}
@@ -450,7 +399,7 @@ public class ChunkCompoundTagParser
 			}	
 		}
 		
-		return chunkSections;
+		return blocksFound;
 	}
 	
 	private static Codec<PalettedContainer<BlockState>> getBlockStateCodec(LevelAccessor level)
@@ -511,12 +460,12 @@ public class ChunkCompoundTagParser
 	// heightmaps //
 	//============//
 	
-	private static void readHeightmaps(LevelChunk chunk, CompoundTag chunkData)
+	private static boolean readHeightmaps(LevelChunk chunk, CompoundTag chunkData)
 	{
 		CompoundTag tagHeightmaps = CompoundTagUtil.getCompoundTag(chunkData, "Heightmaps");
 		if (tagHeightmaps == null)
 		{
-			return;
+			return false;
 		}
 		
 		
@@ -542,6 +491,7 @@ public class ChunkCompoundTagParser
 		}
 		
 		Heightmap.primeHeightmaps(chunk, ChunkStatus.FULL.heightmapsAfter());
+		return true;
 	}
 	
 	

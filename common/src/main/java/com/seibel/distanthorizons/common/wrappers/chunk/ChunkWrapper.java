@@ -18,10 +18,10 @@
  */
 package com.seibel.distanthorizons.common.wrappers.chunk;
 
+import com.google.gson.internal.NonNullElementWrapperList;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.MutableBlockPosWrapper;
-import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
@@ -98,9 +98,9 @@ public class ChunkWrapper implements IChunkWrapper
 	private int maxNonEmptyHeight = Integer.MAX_VALUE;
 	
 	/** will be null if we are using MC heightmaps */
-	private final int[][] solidHeightMap;
+	private int[][] solidHeightMap = null;
 	/** will be null if we are using MC heightmaps */
-	private final int[][] lightBlockingHeightMap;
+	private int[][] lightBlockingHeightMap = null;
 	
 	
 	
@@ -110,22 +110,17 @@ public class ChunkWrapper implements IChunkWrapper
 	
 	public ChunkWrapper(ChunkAccess chunk, ILevelWrapper wrappedLevel)
 	{
+		this(chunk, wrappedLevel, true);
+	}
+	public ChunkWrapper(ChunkAccess chunk, ILevelWrapper wrappedLevel, boolean recreateHeightmaps)
+	{
 		this.chunk = chunk;
 		this.wrappedLevel = wrappedLevel;
 		this.chunkPos = new DhChunkPos(chunk.getPos().x, chunk.getPos().z);
 		
-		// use DH heightmaps if requested
-		if (Config.Common.LodBuilding.recalculateChunkHeightmaps.get())
+		if (recreateHeightmaps)
 		{
-			this.solidHeightMap = new int[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH];
-			this.lightBlockingHeightMap = new int[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH];
-			
-			this.recalculateDhHeightMapsIfNeeded();
-		}
-		else
-		{
-			this.solidHeightMap = null;
-			this.lightBlockingHeightMap = null;
+			this.createDhHeightMaps();
 		}
 	}
 	
@@ -248,56 +243,66 @@ public class ChunkWrapper implements IChunkWrapper
 	}
 	private int getChunkSectionMinHeight(int index) { return (index * 16) + this.getInclusiveMinBuildHeight(); }
 	
-	/** Will only run if the config says the MC heightmaps shouldn't be trusted. */
-	public void recalculateDhHeightMapsIfNeeded()
+	public void createDhHeightMaps()
 	{
+		// only continue if we haven't already generated the DH heightmaps
+		if (this.solidHeightMap != null)
+		{
+			return;
+		}
+		
+		
 		// re-calculate the min/max heights for consistency (during world gen these may be wrong)
 		this.minNonEmptyHeight = Integer.MIN_VALUE;
 		this.maxNonEmptyHeight = Integer.MAX_VALUE;
 		
 		
-		// recalculate heightmaps if needed
-		if (this.solidHeightMap != null)
+		this.solidHeightMap = new int[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH];
+		this.lightBlockingHeightMap = new int[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH];
+		
+		for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
 		{
-			for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+			for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
 			{
-				for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+				int minInclusiveBuildHeight = this.getMinNonEmptyHeight();
+				// if no blocks are found the height map will be at the bottom of the world
+				int solidHeight = minInclusiveBuildHeight;
+				int lightBlockingHeight = minInclusiveBuildHeight;
+				
+				
+				int y = this.getMaxNonEmptyHeight(); //this.getExclusiveMaxBuildHeight();
+				IBlockStateWrapper block = this.getBlockState(x, y, z);
+				while (// go down until we reach the minimum build height
+						y > minInclusiveBuildHeight
+						// keep going until we find both height map values
+						&& 
+						(
+							solidHeight == minInclusiveBuildHeight 
+							|| lightBlockingHeight == minInclusiveBuildHeight
+						)
+					)
 				{
-					int minInclusiveBuildHeight = this.getMinNonEmptyHeight();
-					// if no blocks are found the height map will be at the bottom of the world
-					int solidHeight = minInclusiveBuildHeight;
-					int lightBlockingHeight = minInclusiveBuildHeight;
-					
-					
-					int y = this.getMaxNonEmptyHeight(); //this.getExclusiveMaxBuildHeight();
-					IBlockStateWrapper block = this.getBlockState(x, y, z);
-					while (// go down until we reach the minimum build height
-							y > minInclusiveBuildHeight
-							// keep going until we find both height map values
-							&& (solidHeight == minInclusiveBuildHeight || lightBlockingHeight == minInclusiveBuildHeight))
+					// is this block solid?
+					if (solidHeight == minInclusiveBuildHeight
+						&& block.isSolid())
 					{
-						// is this block solid?
-						if (solidHeight == minInclusiveBuildHeight
-							&& block.isSolid())
-						{
-							solidHeight = y;
-						}
-						
-						// is this block light blocking?
-						if (lightBlockingHeight == minInclusiveBuildHeight
-							&& block.getOpacity() != LodUtil.BLOCK_FULLY_TRANSPARENT)
-						{
-							lightBlockingHeight = y;
-						}
-						
-						// get the next block down
-						y--;
-						block = this.getBlockState(x, y, z);
+						solidHeight = y;
 					}
 					
-					this.solidHeightMap[x][z] = solidHeight;
-					this.lightBlockingHeightMap[x][z] = lightBlockingHeight;
+					// is this block light blocking?
+					if (lightBlockingHeight == minInclusiveBuildHeight
+						&& block.getOpacity() != LodUtil.BLOCK_FULLY_TRANSPARENT)
+					{
+						lightBlockingHeight = y;
+					}
+					
+					// get the next block down
+					y--;
+					block = this.getBlockState(x, y, z);
 				}
+				
+				this.solidHeightMap[x][z] = solidHeight;
+				this.lightBlockingHeightMap[x][z] = lightBlockingHeight;
 			}
 		}
 	}

@@ -106,9 +106,9 @@ public final class StepStructureStart extends AbstractWorldGenStep
 					tParams.structFeatManager, chunk, this.environment.globalParams.structures);
 			#else
 			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry,
-					this.environment.globalParams.level.getChunkSource().getGeneratorState(),
+					this.environment.globalParams.mcServerLevel.getChunkSource().getGeneratorState(),
 					tParams.structFeatManager, chunk, this.environment.globalParams.structures, 
-					this.environment.globalParams.level.dimension());
+					this.environment.globalParams.mcServerLevel.dimension());
 			#endif
 			
 			#if MC_VER >= MC_1_18_2
