@@ -112,7 +112,7 @@ public final class ThreadWorldGenParams
 	private StructureCheck createStructureCheck(GlobalWorldGenParams param)
 	{
 		return new StructureCheck(param.chunkScanner, param.registry, param.structures,
-				param.level.dimension(), param.generator, this.level, param.generator.getBiomeSource(), param.worldSeed,
+				param.mcServerLevel.dimension(), param.generator, this.level, param.generator.getBiomeSource(), param.worldSeed,
 				param.dataFixer);
 	}
 	#else

@@ -18,7 +18,6 @@
  */
 package com.seibel.distanthorizons.common.wrappers.chunk;
 
-import com.google.gson.internal.NonNullElementWrapperList;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.MutableBlockPosWrapper;

@@ -102,7 +102,7 @@ public final class StepStructureStart extends AbstractWorldGenStep
 					this.environment.globalParams.worldSeed);
 			#elif MC_VER <= MC_1_21_3
 			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry,
-					this.environment.globalParams.level.getChunkSource().getGeneratorState(),
+					this.environment.globalParams.mcServerLevel.getChunkSource().getGeneratorState(),
 					tParams.structFeatManager, chunk, this.environment.globalParams.structures);
 			#else
 			this.environment.globalParams.generator.createStructures(this.environment.globalParams.registry,
