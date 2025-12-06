@@ -24,7 +24,7 @@ import java.util.concurrent.locks.ReentrantLock;
 
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.ThreadWorldGenParams;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.ThreadWorldGenParams;
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.DhLitWorldGenRegion;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;

@@ -1,10 +1,8 @@
-package com.seibel.distanthorizons.common.wrappers.worldGeneration.internalServer;
+package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.ChunkPosGenStream;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.GenerationEvent;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.GlobalWorldGenParams;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.config.Config;

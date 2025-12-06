@@ -18,7 +18,7 @@
  */
 
 
-package com.seibel.distanthorizons.common.wrappers.worldGeneration;
+package com.seibel.distanthorizons.common.wrappers.worldGeneration.params;
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.WorldGenStructFeatManager;
 

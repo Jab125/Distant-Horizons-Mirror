@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.wrappers.worldGeneration;
+package com.seibel.distanthorizons.common.wrappers.worldGeneration.params;
 
 import com.mojang.datafixers.DataFixer;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
@@ -55,8 +55,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.levelgen.WorldGenSettings;
 #else
 import net.minecraft.world.level.levelgen.WorldOptions;
-import net.minecraft.world.level.levelgen.structure.templatesystem.StructureTemplateManager;
-import net.minecraft.world.level.levelgen.RandomState;
 #endif
 
 /**

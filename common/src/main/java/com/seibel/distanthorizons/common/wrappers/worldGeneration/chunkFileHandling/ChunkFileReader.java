@@ -1,7 +1,7 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling;
 
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.GlobalWorldGenParams;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.RegionFileStorageExternalCache;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -19,8 +19,6 @@ import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.chunk.UpgradeData;
 import net.minecraft.world.level.chunk.storage.IOWorker;
 import net.minecraft.world.level.chunk.storage.RegionFileStorage;
-
-import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.nio.channels.ClosedByInterruptException;
@@ -45,7 +43,6 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 #else
-import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.world.level.chunk.PalettedContainerFactory;
 #endif
 

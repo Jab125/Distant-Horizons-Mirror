@@ -26,8 +26,8 @@ import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGenerat
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling.ChunkFileReader;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.internalServer.InternalServerGenerator;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.*;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.config.Config;

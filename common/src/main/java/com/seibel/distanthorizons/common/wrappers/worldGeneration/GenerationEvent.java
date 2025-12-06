@@ -25,6 +25,7 @@ import java.util.function.Consumer;
 
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.ThreadWorldGenParams;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
