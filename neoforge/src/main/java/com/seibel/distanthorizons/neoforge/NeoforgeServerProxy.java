@@ -30,8 +30,7 @@ import java.util.function.Supplier;
 
 #if MC_VER < MC_1_20_6
 import net.neoforged.neoforge.event.TickEvent;
-#else
-import net.neoforged.neoforge.event.tick.ServerTickEvent;
+#else 
 #endif
 
 
@@ -52,7 +51,7 @@ public class NeoforgeServerProxy implements AbstractModInitializer.IEventProxy
 	public NeoforgeServerProxy(boolean isDedicated)
 	{
 		this.isDedicated = isDedicated;
-		isGenerationThreadChecker = BatchGenerationEnvironment::isCurrentThreadDistantGeneratorThread;
+		isGenerationThreadChecker = BatchGenerationEnvironment::isThisDhWorldGenThread;
 	}
 	
 	@Override

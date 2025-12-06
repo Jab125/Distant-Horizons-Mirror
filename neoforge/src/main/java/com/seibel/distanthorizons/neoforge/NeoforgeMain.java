@@ -30,9 +30,13 @@ import com.seibel.distanthorizons.core.network.messages.AbstractNetworkMessage;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSender;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IC2meAccessor;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 import com.seibel.distanthorizons.coreapi.ModInfo;
+import com.seibel.distanthorizons.neoforge.wrappers.modAccessor.C2meAccessor;
+import com.seibel.distanthorizons.neoforge.wrappers.modAccessor.IrisAccessor;
 import com.seibel.distanthorizons.neoforge.wrappers.NeoforgeMinecraftRenderWrapper;
 import com.seibel.distanthorizons.neoforge.wrappers.modAccessor.ModChecker;
 import com.seibel.distanthorizons.neoforge.wrappers.modAccessor.OptifineAccessor;
@@ -144,6 +148,12 @@ public class NeoforgeMain extends AbstractModInitializer
 	protected void initializeModCompat()
 	{
 		this.tryCreateModCompatAccessor("optifine", IOptifineAccessor.class, OptifineAccessor::new);
+		this.tryCreateModCompatAccessor("c2me", IC2meAccessor.class, C2meAccessor::new);
+		
+		#if MC_VER >= MC_1_20_6
+		// 1.20.6 is the lowest version Iris supports Neoforge
+		this.tryCreateModCompatAccessor("iris", IIrisAccessor.class, IrisAccessor::new);
+		#endif
 		
 		#if MC_VER < MC_1_20_6
 		ModLoadingContext.get().registerExtensionPoint(ConfigScreenHandler.ConfigScreenFactory.class,

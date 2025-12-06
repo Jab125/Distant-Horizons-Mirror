@@ -274,7 +274,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		HashSet<String> baseIgnoredBlock = new HashSet<>();
 		baseIgnoredBlock.add(AIR_STRING);
-		rendererIgnoredBlocks = getBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderBlockCsv, baseIgnoredBlock, levelWrapper);
+		rendererIgnoredBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderBlockCsv, baseIgnoredBlock, levelWrapper);
 		return rendererIgnoredBlocks;
 	}
 	/**
@@ -291,7 +291,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		HashSet<String> baseIgnoredBlock = new HashSet<>();
 		baseIgnoredBlock.add(AIR_STRING);
-		rendererIgnoredCaveBlocks = getBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderCaveBlockCsv, baseIgnoredBlock, levelWrapper);
+		rendererIgnoredCaveBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderCaveBlockCsv, baseIgnoredBlock, levelWrapper);
 		return rendererIgnoredCaveBlocks;
 	}
 	
@@ -302,7 +302,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	
 	// lod builder helpers //
 	
-	private static HashSet<IBlockStateWrapper> getBlockWrappers(ConfigEntry<String> config, HashSet<String> baseResourceLocations, ILevelWrapper levelWrapper)
+	private static HashSet<IBlockStateWrapper> getAllBlockWrappers(ConfigEntry<String> config, HashSet<String> baseResourceLocations, ILevelWrapper levelWrapper)
 	{
 		// get the base blocks 
 		HashSet<String> blockStringList = new HashSet<>();
@@ -318,9 +318,9 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			blockStringList.addAll(Arrays.asList(ignoreBlockCsv.split(",")));
 		}
 		
-		return getBlockWrappers(blockStringList, levelWrapper);
+		return getAllBlockWrappers(blockStringList, levelWrapper);
 	}
-	private static HashSet<IBlockStateWrapper> getBlockWrappers(HashSet<String> blockResourceLocationSet, ILevelWrapper levelWrapper)
+	private static HashSet<IBlockStateWrapper> getAllBlockWrappers(HashSet<String> blockResourceLocationSet, ILevelWrapper levelWrapper)
 	{
 		// deserialize each of the given resource locations
 		HashSet<IBlockStateWrapper> blockStateWrappers = new HashSet<>();
@@ -587,7 +587,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		// we need the final string for the concurrent hash map later
 		final String finalResourceStateString = resourceStateString;
 		
-		if (finalResourceStateString.equals(AIR_STRING) || finalResourceStateString.equals("")) // the empty string shouldn't normally happen, but just in case
+		if (finalResourceStateString.equals(AIR_STRING) 
+			|| finalResourceStateString.equals("")) // the empty string shouldn't normally happen, but just in case
 		{
 			return AIR;
 		}

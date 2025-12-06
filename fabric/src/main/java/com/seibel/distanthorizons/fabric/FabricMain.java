@@ -47,8 +47,6 @@ import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 #endif
 
-import javax.swing.*;
-import java.awt.*;
 import java.util.function.Consumer;
 
 /**
@@ -110,6 +108,7 @@ public class FabricMain extends AbstractModInitializer implements ClientModIniti
 		this.tryCreateModCompatAccessor("starlight", IStarlightAccessor.class, StarlightAccessor::new);
 		this.tryCreateModCompatAccessor("optifine", IOptifineAccessor.class, OptifineAccessor::new);
 		this.tryCreateModCompatAccessor("bclib", IBCLibAccessor.class, BCLibAccessor::new);
+		this.tryCreateModCompatAccessor("c2me", IC2meAccessor.class, C2meAccessor::new);
 		#if MC_VER >= MC_1_19_4
 		// 1.19.4 is the lowest version Iris supports DH
 		this.tryCreateModCompatAccessor("iris", IIrisAccessor.class, IrisAccessor::new);

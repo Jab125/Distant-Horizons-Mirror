@@ -17,20 +17,16 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.wrappers;
+package com.seibel.distanthorizons.neoforge.wrappers.modAccessor;
 
-import java.util.function.Supplier;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IC2meAccessor;
 
-public class DependencySetupDoneCheck
+public class C2meAccessor implements IC2meAccessor
 {
-	// TODO move to DependencySetup
-	public static boolean isDone = false;
-	/** 
-	 * This is used so we can override some MC logic when running
-	 * in DH's world generator.
-	 * Specifically so we can redirect threads to run on DH threads instead
-	 * of MC threads.
-	 */
-	public static Supplier<Boolean> getIsCurrentThreadDistantGeneratorThread = (() -> { return false; });
+	@Override
+	public String getModName()
+	{
+		return "c2me";
+	}
 	
 }

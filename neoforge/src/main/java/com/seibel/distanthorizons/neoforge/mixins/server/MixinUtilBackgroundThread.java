@@ -19,18 +19,20 @@
 
 package com.seibel.distanthorizons.neoforge.mixins.server;
 
-import java.util.concurrent.ExecutorService;
-import java.util.function.Supplier;
-
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import org.spongepowered.asm.mixin.Mixin;
+
+import net.minecraft.Util;
+
+#if MC_VER < MC_1_21_3
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import com.seibel.distanthorizons.common.wrappers.DependencySetupDoneCheck;
-
-import net.minecraft.Util;
+import java.util.concurrent.ExecutorService;
+import java.util.function.Supplier;
+#endif
 
 /**
  * This is needed for DH's world gen so we can run
@@ -42,16 +44,13 @@ import net.minecraft.Util;
 @Mixin(Util.class)
 public class MixinUtilBackgroundThread
 {
-	private static boolean isWorldGenThread()
-	{ return DependencySetupDoneCheck.isDone && DependencySetupDoneCheck.getIsCurrentThreadDistantGeneratorThread.get(); }
-	
 	
 	
 	#if MC_VER < MC_1_21_3
 	@Inject(method = "backgroundExecutor", at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$backgroundExecutor(CallbackInfoReturnable<ExecutorService> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			// run this task on the current DH thread instead of a new MC thread
 			ci.setReturnValue(new RunOnThisThreadExecutorService());
@@ -67,7 +66,7 @@ public class MixinUtilBackgroundThread
 			at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskName(String string, Runnable r, CallbackInfoReturnable<Runnable> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			//ApiShared.LOGGER.info("util wrapThreadWithTaskName(Runnable) triggered");
 			ci.setReturnValue(r);
@@ -83,7 +82,7 @@ public class MixinUtilBackgroundThread
 			at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskNameForSupplier(String string, Supplier<?> r, CallbackInfoReturnable<Supplier<?>> ci)
 	{
-		if (isWorldGenThread())
+		if (BatchGenerationEnvironment.isThisDhWorldGenThread())
 		{
 			//ApiShared.LOGGER.info("util wrapThreadWithTaskName(Supplier) triggered");
 			ci.setReturnValue(r);

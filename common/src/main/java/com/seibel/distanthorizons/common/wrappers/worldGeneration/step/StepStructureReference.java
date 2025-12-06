@@ -20,17 +20,14 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.step;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.ThreadedParameters;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.ThreadWorldGenParams;
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.DhLitWorldGenRegion;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
-import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ProtoChunk;
 
 #if MC_VER <= MC_1_20_4
 import net.minecraft.world.level.chunk.ChunkStatus;
@@ -64,30 +61,14 @@ public final class StepStructureReference extends AbstractWorldGenStep
 	
 	@Override
 	public void generateGroup(
-			ThreadedParameters tParams, DhLitWorldGenRegion worldGenRegion,
+			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToDo = new ArrayList<ChunkAccess>();
-		
-		for (ChunkWrapper chunkWrapper : chunkWrappers)
+		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
+		for (ChunkWrapper chunkWrapper : chunksToDo)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
-			if (chunkWrapper.getStatus().isOrAfter(STATUS))
-			{
-				// this chunk has already generated this step
-				continue;
-			}
-			else if (chunk instanceof ProtoChunk)
-			{
-				chunkWrapper.trySetStatus(STATUS);
-				chunksToDo.add(chunk);
-			}
-		}
-		
-		for (ChunkAccess chunk : chunksToDo)
-		{
-			// System.out.println("StepStructureReference: "+chunk.getPos());
-			this.environment.params.generator.createReferences(worldGenRegion, tParams.structFeat.forWorldGenRegion(worldGenRegion), chunk);
+			this.environment.globalParams.generator.createReferences(worldGenRegion, tParams.structFeatManager.forWorldGenRegion(worldGenRegion), chunk);
 		}
 	}
 	

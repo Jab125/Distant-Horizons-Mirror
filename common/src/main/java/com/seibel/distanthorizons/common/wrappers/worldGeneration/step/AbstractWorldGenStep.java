@@ -1,7 +1,7 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.step;
 
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.ThreadedParameters;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.ThreadWorldGenParams;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.DhLitWorldGenRegion;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -19,7 +19,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 public abstract class AbstractWorldGenStep
 {
 	public abstract void generateGroup(
-			ThreadedParameters tParams, DhLitWorldGenRegion worldGenRegion,
+			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
 			ArrayGridList<ChunkWrapper> chunkWrappers);
 	
 	public abstract ChunkStatus getChunkStatus();
@@ -27,26 +27,26 @@ public abstract class AbstractWorldGenStep
 	
 	
 	/** @return the list of chunks that have an earlier status and can be generated */
-	protected ArrayList<ChunkAccess> getChunksToGenerate(List<ChunkWrapper> chunkWrappers)
+	protected ArrayList<ChunkWrapper> getChunkWrappersToGenerate(List<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToGenerate = new ArrayList<>();
+		ArrayList<ChunkWrapper> chunkWrappersToGenerate = new ArrayList<>(chunkWrappers.size());
 		
 		for (ChunkWrapper chunkWrapper : chunkWrappers)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
 			if (chunkWrapper.getStatus().isOrAfter(this.getChunkStatus()))
 			{
-				// this chunk has already generated this step
+				// this chunk has already been generated up to this step
 				continue;
 			}
 			else if (chunk instanceof ProtoChunk)
 			{
 				chunkWrapper.trySetStatus(this.getChunkStatus());
-				chunksToGenerate.add(chunk);
+				chunkWrappersToGenerate.add(chunkWrapper);
 			}
 		}
 		
-		return chunksToGenerate;
+		return chunkWrappersToGenerate;
 	}
 	
 	

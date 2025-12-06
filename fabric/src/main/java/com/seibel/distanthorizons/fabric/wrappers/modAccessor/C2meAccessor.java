@@ -17,40 +17,16 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
+package com.seibel.distanthorizons.fabric.wrappers.modAccessor;
 
-package com.seibel.distanthorizons.common.wrappers.worldGeneration;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IC2meAccessor;
 
-//FIXME: Move this outside the WorldGenerationStep thingy
-public class Rolling
+public class C2meAccessor implements IC2meAccessor
 {
-	
-	private final int size;
-	private double total = 0d;
-	private int index = 0;
-	private final double[] samples;
-	
-	public Rolling(int size)
+	@Override
+	public String getModName()
 	{
-		this.size = size;
-		samples = new double[size];
-		for (int i = 0; i < size; i++)
-		{
-			samples[i] = 0d;
-		}
-	}
-	
-	public void add(double x)
-	{
-		total -= samples[index];
-		samples[index] = x;
-		total += x;
-		if (++index == size)
-			index = 0; // cheaper than modulus
-	}
-	
-	public double getAverage()
-	{
-		return size == 0 ? 0 : total / size;
+		return "c2me";
 	}
 	
 }

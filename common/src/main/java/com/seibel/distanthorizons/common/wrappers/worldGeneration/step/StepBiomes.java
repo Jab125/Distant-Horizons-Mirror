@@ -23,13 +23,11 @@ import java.util.ArrayList;
 
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.ThreadedParameters;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.ThreadWorldGenParams;
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.DhLitWorldGenRegion;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
-import net.minecraft.server.level.WorldGenRegion;
 import net.minecraft.world.level.chunk.ChunkAccess;
-import net.minecraft.world.level.chunk.ProtoChunk;
 
 #if MC_VER >= MC_1_18_2
 import net.minecraft.world.level.levelgen.blending.Blender;
@@ -66,47 +64,50 @@ public final class StepBiomes extends AbstractWorldGenStep
 	
 	@Override 
 	public void generateGroup(
-			ThreadedParameters tParams, DhLitWorldGenRegion worldGenRegion, 
+			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion, 
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkAccess> chunksToDo = this.getChunksToGenerate(chunkWrappers);
-		for (ChunkAccess chunk : chunksToDo)
+		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
+		for (ChunkWrapper chunkWrapper : chunksToDo)
 		{
+			ChunkAccess chunk = chunkWrapper.getChunk();
+			
+			
 			#if MC_VER < MC_1_18_2
-			this.environment.params.generator.createBiomes(this.environment.params.biomes, chunk);
+			this.environment.globalParams.generator.createBiomes(this.environment.globalParams.biomes, chunk);
 			#elif MC_VER < MC_1_19_2
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
-							this.environment.params.biomes, 
+						this.environment.globalParams.generator.createBiomes(
+							this.environment.globalParams.biomes, 
 							Runnable::run, 
 							Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#elif MC_VER < MC_1_19_4
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
-							this.environment.params.biomes, 
+						this.environment.globalParams.generator.createBiomes(
+							this.environment.globalParams.biomes, 
 							Runnable::run, 
-							this.environment.params.randomState, Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							this.environment.globalParams.randomState, Blender.of(worldGenRegion),
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#elif MC_VER < MC_1_21_1
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
+						this.environment.globalParams.generator.createBiomes(
 							Runnable::run, 
-							this.environment.params.randomState, 
+							this.environment.globalParams.randomState, 
 							Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#else
 			chunk = this.environment.confirmFutureWasRunSynchronously(
-						this.environment.params.generator.createBiomes(
-							this.environment.params.randomState, 
+						this.environment.globalParams.generator.createBiomes(
+							this.environment.globalParams.randomState, 
 							Blender.of(worldGenRegion),
-							tParams.structFeat.forWorldGenRegion(worldGenRegion), 
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
 							chunk)
 					);
 			#endif
