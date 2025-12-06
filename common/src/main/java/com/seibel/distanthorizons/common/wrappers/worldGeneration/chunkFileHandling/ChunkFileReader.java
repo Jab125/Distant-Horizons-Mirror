@@ -40,9 +40,6 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.core.registries.Registries;
 #elif MC_VER <= MC_1_21_3
 import net.minecraft.core.registries.Registries;
-import net.minecraft.world.level.chunk.ChunkStatus;
-#elif MC_VER <= MC_1_21_3
-import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 #elif MC_VER <= MC_1_21_8
 import net.minecraft.core.registries.Registries;
