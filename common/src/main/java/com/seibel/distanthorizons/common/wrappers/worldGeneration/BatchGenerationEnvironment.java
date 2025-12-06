@@ -120,6 +120,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	public final StepFeatures stepFeatures = new StepFeatures(this);
 	
 	public boolean unsafeThreadingRecorded = false;
+	public boolean generatedChunkWithoutBiomeWarningLogged = false;
 	public int unknownExceptionCount = 0;
 	public long lastExceptionTriggerTime = 0;
 	
@@ -524,6 +525,15 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				if (wrappedChunk.getStatus().isOrAfter(ChunkStatus.BIOMES))
 				{
 					genEvent.resultConsumer.accept(wrappedChunk);
+				}
+				else
+				{
+					// this shouldn't happen, but if it does log it
+					if (!this.generatedChunkWithoutBiomeWarningLogged)
+					{
+						this.generatedChunkWithoutBiomeWarningLogged = true;
+						LOGGER.warn("Chunk [" + dhPos + "] wasn't generated up to BIOMES, world gen may appear empty.");
+					}
 				}
 			}
 		}
