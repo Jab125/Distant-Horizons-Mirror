@@ -668,6 +668,10 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				
 				throwIfThreadInterrupted();
 				
+				// not always necessary, but sometimes MC heightmap is wrong
+				// and can cause LODs to generate incorrectly
+				centerChunkWrapper.createDhHeightMaps();
+				
 				// pre-generated chunks should have lighting but new ones won't
 				if (!centerChunkWrapper.isDhBlockLightingCorrect())
 				{

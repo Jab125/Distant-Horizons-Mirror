@@ -244,13 +244,6 @@ public class ChunkWrapper implements IChunkWrapper
 	
 	public void createDhHeightMaps()
 	{
-		// only continue if we haven't already generated the DH heightmaps
-		if (this.solidHeightMap != null)
-		{
-			return;
-		}
-		
-		
 		// re-calculate the min/max heights for consistency (during world gen these may be wrong)
 		this.minNonEmptyHeight = Integer.MIN_VALUE;
 		this.maxNonEmptyHeight = Integer.MAX_VALUE;

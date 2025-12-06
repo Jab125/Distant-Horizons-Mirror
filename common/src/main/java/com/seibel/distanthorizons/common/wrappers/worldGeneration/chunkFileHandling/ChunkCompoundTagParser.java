@@ -194,6 +194,11 @@ public class ChunkCompoundTagParser
 		int sectionYCount = #if MC_VER < MC_1_17_1 16; #else mcWorldGenLevel.getSectionsCount(); #endif
 		LevelChunkSection[] chunkSections = new LevelChunkSection[sectionYCount];
 		boolean hasBlocks = readAndPopulateSections(mcWorldGenLevel, chunkPos, tagLevel, chunkSections);
+		if (!hasBlocks)
+		{
+			return null;
+		}
+		
 		
 		long inhabitedTime = CompoundTagUtil.getLong(tagLevel, "InhabitedTime");
 		boolean isLightOn = CompoundTagUtil.getBoolean(tagLevel, "isLightOn");
@@ -218,7 +223,49 @@ public class ChunkCompoundTagParser
 		
 		// chunk wrapper so we can pass along extra data more easily
 		ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, dhServerLevel.getServerLevelWrapper(), !hasHeightmapData);
-		return chunkWrapper;
+		
+		
+		
+		//===========================//
+		// check if chunk has blocks //
+		//===========================//
+		
+		// in some MC versions all the NBT data will be there
+		// but the chunk will be totally empty,
+		// usually this means the chunk was only partially generated.
+		// If that happens we should try to generate the chunk from scratch
+		// otherwise we can end up with large empty holes in the world.
+		
+		// walking through the heightmap (recreated by DH if missing)
+		// is a fast way to check if there are any blocks in the chunk
+		boolean chunkHasBlocks = false;
+		int serverMinHeight = dhServerLevel.getServerLevelWrapper().getMinHeight();
+		for (int x = 0; x < 16 && !chunkHasBlocks; x++)
+		{
+			for (int z = 0; z < 16 && !chunkHasBlocks; z++)
+			{
+				int heightMap = Math.max(
+					// max between both heightmaps just in case there's a discrepancy
+					chunkWrapper.getLightBlockingHeightMapValue(x, z),
+					chunkWrapper.getSolidHeightMapValue(x, z)
+				);
+				if (heightMap != serverMinHeight)
+				{
+					chunkHasBlocks = true;
+				}
+			}
+		}
+		
+		
+		if (chunkHasBlocks)
+		{
+			return chunkWrapper;
+		}
+		else
+		{
+			// no blocks detected, this chunk should be generated from scratch
+			return null;
+		}
 	}
 	
 	
@@ -247,9 +294,9 @@ public class ChunkCompoundTagParser
 		boolean blocksFound = false;
 		if (tagSections != null)
 		{
-			for (int j = 0; j < tagSections.size(); ++j)
+			for (int i = 0; i < tagSections.size(); ++i)
 			{
-				CompoundTag tagSection = CompoundTagUtil.getCompoundTag(tagSections, j);
+				CompoundTag tagSection = CompoundTagUtil.getCompoundTag(tagSections, i);
 				if (tagSection == null)
 				{
 					continue;
