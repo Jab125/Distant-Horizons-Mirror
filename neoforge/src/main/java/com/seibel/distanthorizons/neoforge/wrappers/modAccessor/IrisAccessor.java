@@ -17,16 +17,14 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.fabric.wrappers.modAccessor;
+package com.seibel.distanthorizons.neoforge.wrappers.modAccessor;
 
-#if MC_VER >= MC_1_19_4
+// 1.20.6 is the lowest version Iris supports Neoforge
+#if MC_VER >= MC_1_20_6
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 
-#if MC_VER <= MC_1_20_4
-import net.coderbot.iris.Iris;
-import net.irisshaders.iris.api.v0.IrisApi;
-#else
+#if MC_VER != MC_1_21_9
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.api.v0.IrisApi;
 #endif
@@ -34,14 +32,36 @@ import net.irisshaders.iris.api.v0.IrisApi;
 public class IrisAccessor implements IIrisAccessor
 {
 	@Override
-	public String getModName() { return Iris.MODID; }
+	public String getModName() 
+	{
+		#if MC_VER == MC_1_21_9
+		return "iris"; // Iris doesn't support this MC version
+		#else
+		return Iris.MODID;
+		#endif
+	}
 	
 	@Override
-	public boolean isShaderPackInUse() { return IrisApi.getInstance().isShaderPackInUse(); }
+	public boolean isShaderPackInUse() 
+	{
+		#if MC_VER == MC_1_21_9
+		return true; // Iris doesn't support this MC version
+		#else
+		return IrisApi.getInstance().isShaderPackInUse();
+		#endif
+	}
 	
 	@Override
-	public boolean isRenderingShadowPass() { return IrisApi.getInstance().isRenderingShadowPass(); }
+	public boolean isRenderingShadowPass() 
+	{
+		#if MC_VER == MC_1_21_9
+		return false; // Iris doesn't support this MC version
+		#else
+		return IrisApi.getInstance().isRenderingShadowPass();
+		#endif
+	}
 	
 }
 
 #endif
+

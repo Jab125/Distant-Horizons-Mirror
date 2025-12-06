@@ -65,6 +65,10 @@ dependencies {
     
     // Neoforge
     neoForge "net.neoforged:neoforge:${rootProject.neoforge_version}"
+
+    // Iris
+    addMod("maven.modrinth:iris:${rootProject.neo_iris_version}", rootProject.neo_enable_iris)
+
 }
 
 
