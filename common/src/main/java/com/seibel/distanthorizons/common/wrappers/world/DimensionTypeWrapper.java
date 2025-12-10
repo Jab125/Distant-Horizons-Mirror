@@ -75,7 +75,12 @@ public class DimensionTypeWrapper implements IDimensionTypeWrapper
 		
 		
 		// create the missing wrapper
+		#if MC_VER <= MC_1_21_10
+		DimensionTypeWrapper dimensionTypeWrapper = new DimensionTypeWrapper(dimensionType);
+		#else
 		DimensionTypeWrapper dimensionTypeWrapper = new DimensionTypeWrapper(dimensionType, dimName);
+		#endif
+		
 		DIMENSION_WRAPPER_BY_NAME.put(dimName, dimensionTypeWrapper);
 		return dimensionTypeWrapper;
 	}

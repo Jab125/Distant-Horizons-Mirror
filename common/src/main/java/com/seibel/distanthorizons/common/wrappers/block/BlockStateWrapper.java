@@ -92,7 +92,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public static HashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
 	
 	/** keep track of broken blocks so we don't log every time */
-	#if MC_VER < MC_1_21_10
+	#if MC_VER <= MC_1_21_10
 	private static final HashSet<ResourceLocation> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
 	#else
 	private static final HashSet<Identifier> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();

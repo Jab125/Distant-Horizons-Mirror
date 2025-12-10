@@ -185,7 +185,7 @@ public class ClassicConfigGUI
 						0, 
 						#if MC_VER < MC_1_21_1
 						new ResourceLocation(ModInfo.ID, "textures/gui/changelog.png"),
-						#elif MC_VER < MC_1_21_10
+						#elif MC_VER <= MC_1_21_10
 						ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
 						#else
 						Identifier.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),

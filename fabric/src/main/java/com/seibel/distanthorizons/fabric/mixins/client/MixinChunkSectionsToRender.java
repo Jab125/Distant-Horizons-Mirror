@@ -27,8 +27,7 @@ import org.spongepowered.asm.mixin.Mixin;
 public class MixinChunkSectionsToRender
 { /* rendering before was handled via Fabric API events */ }
 #else
-
-import com.mojang.blaze3d.textures.GpuSampler;
+	
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import net.minecraft.client.Minecraft;
@@ -38,6 +37,11 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+#if MC_VER <= MC_1_21_10
+#else
+import com.mojang.blaze3d.textures.GpuSampler;
+#endif
 
 @Mixin(ChunkSectionsToRender.class)
 public class MixinChunkSectionsToRender

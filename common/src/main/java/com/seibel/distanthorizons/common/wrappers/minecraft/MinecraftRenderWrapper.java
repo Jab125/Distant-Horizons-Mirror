@@ -59,7 +59,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAc
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.effect.MobEffects;
 
 import net.minecraft.world.phys.Vec3;
@@ -79,6 +78,11 @@ import net.minecraft.world.level.material.FogType;
 #if MC_VER >= MC_1_21_5
 import com.mojang.blaze3d.opengl.GlTexture;
 #else
+#endif
+
+#if MC_VER <= MC_1_21_10
+#else
+import net.minecraft.world.attribute.EnvironmentAttributes;
 #endif
 
 /**

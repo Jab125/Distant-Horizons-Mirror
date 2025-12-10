@@ -3,12 +3,16 @@ package com.seibel.distanthorizons.common.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.server.permissions.PermissionCheck;
-import net.minecraft.server.permissions.Permissions;
 import org.jetbrains.annotations.Nullable;
 
 import static com.seibel.distanthorizons.core.network.messages.MessageRegistry.DEBUG_CODEC_CRASH_MESSAGE;
 import static net.minecraft.commands.Commands.literal;
+
+#if MC_VER <= MC_1_21_10
+#else
+import net.minecraft.server.permissions.PermissionCheck;
+import net.minecraft.server.permissions.Permissions;
+#endif
 
 public class CommandInitializer
 {
