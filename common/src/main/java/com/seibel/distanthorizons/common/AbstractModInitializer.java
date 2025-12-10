@@ -116,7 +116,7 @@ public abstract class AbstractModInitializer
 		
 		LOGGER.info(ModInfo.READABLE_NAME + " server Initialized, adding event subscribers...");
 		this.commandInitializer = new CommandInitializer();
-		this.subscribeRegisterCommandsEvent(dispatcher -> { commandInitializer.initCommands(dispatcher); });
+		this.subscribeRegisterCommandsEvent(dispatcher -> { this.commandInitializer.initCommands(dispatcher); });
 		
 		this.subscribeServerStartingEvent(server -> 
 		{

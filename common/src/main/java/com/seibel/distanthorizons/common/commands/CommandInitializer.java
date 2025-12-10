@@ -3,17 +3,23 @@ package com.seibel.distanthorizons.common.commands;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
+import net.minecraft.server.permissions.PermissionCheck;
+import net.minecraft.server.permissions.Permissions;
 import org.jetbrains.annotations.Nullable;
 
 import static com.seibel.distanthorizons.core.network.messages.MessageRegistry.DEBUG_CODEC_CRASH_MESSAGE;
 import static net.minecraft.commands.Commands.literal;
 
-/**
- * Initializes commands of the mod.
- */
 public class CommandInitializer
 {
 	private boolean serverReady = false;
+	
+	#if MC_VER <= MC_1_21_10
+	private static final int REQUIRED_PERMISSION_LEVEL = 4;
+	#else
+	private static final PermissionCheck COMMAND_PERMISSION_CHECK = new PermissionCheck.Require(Permissions.COMMANDS_OWNER);
+	#endif
+	
 	
 	/**
 	 * A received command dispatcher, which is held until the server is ready to initialize the commands.
@@ -50,7 +56,14 @@ public class CommandInitializer
 		}
 		
 		LiteralArgumentBuilder<CommandSourceStack> builder = literal("dh")
-				.requires(source -> source.hasPermission(4));
+				.requires((source) ->
+				{
+					#if MC_VER <= MC_1_21_10
+					return source.hasPermission(REQUIRED_PERMISSION_LEVEL);
+					#else
+					return COMMAND_PERMISSION_CHECK.check(source.permissions());
+					#endif
+				});
 		
 		builder.then(new ConfigCommand().buildCommand());
 		builder.then(new DebugCommand().buildCommand());

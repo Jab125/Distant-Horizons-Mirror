@@ -15,7 +15,6 @@ accessible field net/minecraft/client/renderer/LevelRenderer level Lnet/minecraf
 accessible field net/minecraft/client/renderer/LevelRenderer visibleSections Lit/unimi/dsi/fastutil/objects/ObjectArrayList;
 
 # world generation
-# accessible method net/minecraft/world/level/lighting/LayerLightEngine queueSectionData (JLnet/minecraft/world/level/chunk/DataLayer;Z)V
 accessible field net/minecraft/world/level/chunk/LevelChunk loaded Z
 accessible field net/minecraft/world/level/lighting/LightEngine storage Lnet/minecraft/world/level/lighting/LayerLightSectionStorage;
 accessible method net/minecraft/world/level/lighting/LayerLightSectionStorage lightOnInSection (J)Z

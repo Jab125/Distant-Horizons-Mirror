@@ -29,7 +29,6 @@ import java.util.concurrent.ConcurrentMap;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import net.minecraft.world.level.Level;
-import org.apache.logging.log4j.LogManager;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
@@ -46,7 +45,12 @@ import net.minecraft.core.Holder;
 import net.minecraft.core.registries.Registries;
 #endif
 
+#if MC_VER <= MC_1_21_10
 import net.minecraft.resources.ResourceLocation;
+#else
+import net.minecraft.resources.Identifier;
+#endif
+
 import net.minecraft.world.level.biome.Biome;
 
 #if MC_VER >= MC_1_18_2
@@ -217,7 +221,12 @@ public class BiomeWrapper implements IBiomeWrapper
 		Level level = (Level)levelWrapper.getWrappedMcObject();
 		net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 		
+		#if MC_VER < MC_1_21_11
 		ResourceLocation resourceLocation;
+		#else
+		Identifier resourceLocation;
+		#endif
+		
 		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
 		resourceLocation = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getKey(this.biome);
 		#elif MC_VER == MC_1_18_2 || MC_VER == MC_1_19_2
@@ -324,13 +333,19 @@ public class BiomeWrapper implements IBiomeWrapper
 			throw new IOException("Unable to parse resource location string: [" + resourceLocationString + "].");
 		}
 		
+		#if MC_VER < MC_1_21_11
 		ResourceLocation resourceLocation;
+		#else
+		Identifier resourceLocation;
+		#endif
 		try
 		{
-			#if MC_VER < MC_1_21_1
+			#if MC_VER <= MC_1_20_6
 			resourceLocation = new ResourceLocation(resourceLocationString.substring(0, separatorIndex), resourceLocationString.substring(separatorIndex + 1));
-			#else
+			#elif MC_VER <= MC_1_21_10
 			resourceLocation = ResourceLocation.fromNamespaceAndPath(resourceLocationString.substring(0, separatorIndex), resourceLocationString.substring(separatorIndex + 1));
+			#else
+			resourceLocation = Identifier.fromNamespaceAndPath(resourceLocationString.substring(0, separatorIndex), resourceLocationString.substring(separatorIndex + 1));
 			#endif
 		}
 		catch (Exception e)

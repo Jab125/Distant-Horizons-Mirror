@@ -28,6 +28,7 @@ public class MixinChunkSectionsToRender
 { /* rendering before was handled via Fabric API events */ }
 #else
 
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import net.minecraft.client.Minecraft;
@@ -43,10 +44,17 @@ public class MixinChunkSectionsToRender
 {
 	
 	
+	#if MC_VER <= MC_1_21_10
 	// needs to fire at HEAD with a lower than normal order (less than 1000)
 	// otherwise it will be canceled by Sodium
 	@Inject(at = @At("HEAD"), method = "renderGroup", order = 800)
 	private void renderDeferredLayer(ChunkSectionLayerGroup chunkSectionLayerGroup, CallbackInfo ci)
+	#else
+	// needs to fire at HEAD with a lower than normal order (less than 1000)
+	// otherwise it will be canceled by Sodium
+	@Inject(at = @At("HEAD"), method = "renderGroup", order = 800)
+	private void renderDeferredLayer(ChunkSectionLayerGroup chunkSectionLayerGroup, GpuSampler gpuSampler, CallbackInfo ci)
+	#endif
 	{
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, Minecraft.getInstance().levelRenderer.level);
 		

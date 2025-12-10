@@ -172,10 +172,24 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	
 	
 	@Override
-	public DimensionTypeWrapper getDimensionType() { return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType()); }
-
+	public DimensionTypeWrapper getDimensionType() 
+	{
+		#if MC_VER <= MC_1_21_10
+		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType());
+		#else
+		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType(), this.getDimensionName());
+		#endif
+	}
+	
 	@Override
-	public String getDimensionName() { return this.level.dimension().location().toString(); }
+	public String getDimensionName()
+	{
+		#if MC_VER <= MC_1_21_10
+		return this.level.dimension().location().toString();
+		#else
+		return this.level.dimension().identifier().getPath();
+		#endif
+	}
 	
 	@Override
 	public long getHashedSeed() { return this.level.getBiomeManager().biomeZoomSeed; }

@@ -58,6 +58,8 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAc
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
+import net.minecraft.core.BlockPos;
+import net.minecraft.world.attribute.EnvironmentAttributes;
 import net.minecraft.world.effect.MobEffects;
 
 import net.minecraft.world.phys.Vec3;
@@ -121,8 +123,13 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	@Override
 	public Vec3f getLookAtVector()
 	{
+		#if MC_VER <= MC_1_21_10
 		Camera camera = MC.gameRenderer.getMainCamera();
 		return new Vec3f(camera.getLookVector().x(), camera.getLookVector().y(), camera.getLookVector().z());
+		#else
+		Camera camera = MC.gameRenderer.getMainCamera();
+		return new Vec3f(camera.forwardVector().x(), camera.forwardVector().y(), camera.forwardVector().z());
+		#endif
 	}
 	
 	@Override
@@ -151,7 +158,11 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public Vec3d getCameraExactPosition()
 	{
 		Camera camera = MC.gameRenderer.getMainCamera();
+		#if MC_VER <= MC_1_21_10
 		Vec3 projectedView = camera.getPosition();
+		#else
+		Vec3 projectedView = camera.position();
+		#endif
 		
 		return new Vec3d(projectedView.x, projectedView.y, projectedView.z);
 	}
@@ -185,8 +196,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 				Math.max(0f, Math.min(colorValues.z, 1f)), // b
 				Math.max(0f, Math.min(colorValues.w, 1f))  // a
 		);
-		#else
-			
+		#elif MC_VER <= MC_1_21_10
 		if (mcFogRenderer == null)
 		{
 			mcFogRenderer = new FogRenderer();
@@ -210,6 +220,31 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 				Math.max(0f, Math.min(colorValues.z, 1f)), // b
 				Math.max(0f, Math.min(colorValues.w, 1f))  // a
 		);
+		#else
+			
+		if (mcFogRenderer == null)
+		{
+			mcFogRenderer = new FogRenderer();
+		}
+		
+		if (MC.level == null)
+		{
+			// shouldn't happen, but just in case
+			return Color.white;
+		}
+		
+		Vector4f colorValues = mcFogRenderer.setupFog(
+			MC.gameRenderer.getMainCamera(),
+			MC.options.getEffectiveRenderDistance(),
+			MC.deltaTracker,
+			MC.gameRenderer.getDarkenWorldAmount(MC.deltaTracker.getGameTimeDeltaPartialTick(true)),
+			MC.level);
+		return new Color(
+				Math.max(0f, Math.min(colorValues.x, 1f)), // r
+				Math.max(0f, Math.min(colorValues.y, 1f)), // g
+				Math.max(0f, Math.min(colorValues.z, 1f)), // b
+				Math.max(0f, Math.min(colorValues.w, 1f))  // a
+		);
 		#endif
 	}
 	// getSpecialFogColor() is the same as getFogColor()
@@ -224,8 +259,10 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			frameTime = MC.getFrameTime();
 			#elif MC_VER < MC_1_21_3
 			frameTime = MC.getTimer().getRealtimeDeltaTicks();
-			#else
+			#elif MC_VER <= MC_1_21_10
 			frameTime = MC.deltaTracker.getGameTimeDeltaTicks();
+			#else
+			frameTime = 0f; // unused
 			#endif
 			
 			#if MC_VER < MC_1_17_1
@@ -234,9 +271,12 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			#elif MC_VER < MC_1_21_3
 			Vec3 colorValues = MC.level.getSkyColor(MC.gameRenderer.getMainCamera().getPosition(), frameTime);
 			return new Color((float) colorValues.x, (float) colorValues.y, (float) colorValues.z);
+			#elif MC_VER <= MC_1_21_10
+			int argbColorInt = MC.level.getSkyColor(MC.gameRenderer.getMainCamera().getPosition(), frameTime);
+			return ColorUtil.toColorObjARGB(argbColorInt);
 			#else
-			int argbColorInt = MC.level.getSkyColor(MC.gameRenderer.getMainCamera().getPosition(), frameTime);;
-			return ColorUtil.toColorObjARGB(argbColorInt); // TODO MC changed color formats
+			int argbColor = MC.level.environmentAttributes().getValue(EnvironmentAttributes.SKY_COLOR, BlockPos.ZERO);
+			return new Color(ColorUtil.getRed(argbColor), ColorUtil.getGreen(argbColor), ColorUtil.getBlue(argbColor), 255 /* ignore alpha since DH clouds don't render correctly with transparency */);
 			#endif
 		}
 		else

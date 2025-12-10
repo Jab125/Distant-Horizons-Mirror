@@ -26,13 +26,12 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IDimensionTypeWra
 
 import net.minecraft.world.level.dimension.DimensionType;
 
-/**
- * @author James Seibel
- */
 public class DimensionTypeWrapper implements IDimensionTypeWrapper
 {
 	private static final ConcurrentMap<String, DimensionTypeWrapper> DIMENSION_WRAPPER_BY_NAME = new ConcurrentHashMap<>();
 	private final DimensionType dimensionType;
+	
+	private final String name;
 	
 	
 	
@@ -40,11 +39,32 @@ public class DimensionTypeWrapper implements IDimensionTypeWrapper
 	// Constructor //
 	//=============//
 	
-	public DimensionTypeWrapper(DimensionType dimensionType) { this.dimensionType = dimensionType; }
-	
-	public static DimensionTypeWrapper getDimensionTypeWrapper(DimensionType dimensionType)
+	#if MC_VER <= MC_1_21_10
+	public DimensionTypeWrapper(DimensionType dimensionType)
+	#else
+	public DimensionTypeWrapper(DimensionType dimensionType, String name)
+	#endif
 	{
-		String dimName = getName(dimensionType);
+		this.dimensionType = dimensionType; 
+		
+		#if MC_VER <= MC_1_21_10
+		this.name = determineName(dimensionType);
+		#else
+		this.name = name;
+		#endif
+	}
+	
+	#if MC_VER <= MC_1_21_10
+	public static DimensionTypeWrapper getDimensionTypeWrapper(DimensionType dimensionType)
+	#else
+	public static DimensionTypeWrapper getDimensionTypeWrapper(DimensionType dimensionType, String name)
+	#endif
+	{
+		#if MC_VER <= MC_1_21_10
+		String dimName = determineName(dimensionType);
+		#else
+		String dimName = name;
+		#endif
 		
 		// check if the dimension has already been wrapped
 		if (DIMENSION_WRAPPER_BY_NAME.containsKey(dimName) 
@@ -55,9 +75,20 @@ public class DimensionTypeWrapper implements IDimensionTypeWrapper
 		
 		
 		// create the missing wrapper
-		DimensionTypeWrapper dimensionTypeWrapper = new DimensionTypeWrapper(dimensionType);
+		DimensionTypeWrapper dimensionTypeWrapper = new DimensionTypeWrapper(dimensionType, dimName);
 		DIMENSION_WRAPPER_BY_NAME.put(dimName, dimensionTypeWrapper);
 		return dimensionTypeWrapper;
+	}
+	private static String determineName(DimensionType dimensionType)
+	{
+		#if MC_VER <= MC_1_16_5
+		// effectsLocation() is marked as client only, so using the backing field directly
+		return dimensionType.effectsLocation.getPath();
+		#elif MC_VER <= MC_1_21_10
+		return dimensionType.effectsLocation().getPath();
+		#else
+		throw new UnsupportedOperationException("As of MC 1.21.11 the dimension type no longer stores it's name and must be determined from the level.");
+		#endif
 	}
 	
 	public static void clearMap() { DIMENSION_WRAPPER_BY_NAME.clear(); }
@@ -69,16 +100,7 @@ public class DimensionTypeWrapper implements IDimensionTypeWrapper
 	//=================//
 	
 	@Override
-	public String getName() { return getName(this.dimensionType); }
-	public static String getName(DimensionType dimensionType)
-	{
-		#if MC_VER <= MC_1_16_5
-		// effectsLocation() is marked as client only, so using the backing field directly
-		return dimensionType.effectsLocation.getPath();
-		#else
-		return dimensionType.effectsLocation().getPath();
-		#endif
-	}
+	public String getName() { return this.name; }
 	
 	@Override
 	public boolean hasCeiling() { return this.dimensionType.hasCeiling(); }
@@ -89,13 +111,11 @@ public class DimensionTypeWrapper implements IDimensionTypeWrapper
 	@Override
 	public Object getWrappedMcObject() { return this.dimensionType; }
 	
-	// there's definitely a better way of doing this, but it should work well enough for now
 	@Override
 	public boolean isTheEnd() { return this.getName().equalsIgnoreCase("the_end"); }
 	
 	@Override
 	public double getCoordinateScale() { return this.dimensionType.coordinateScale(); }
-	
 	
 	
 	

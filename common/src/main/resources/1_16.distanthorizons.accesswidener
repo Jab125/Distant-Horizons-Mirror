@@ -18,7 +18,6 @@ accessible field net/minecraft/client/renderer/LevelRenderer$RenderChunkInfo chu
 # used for grabbing vanilla rendered chunks
 accessible class net/minecraft/client/renderer/LevelRenderer$RenderChunkInfo
 accessible field net/minecraft/client/renderer/LevelRenderer$RenderChunkInfo chunk Lnet/minecraft/client/renderer/chunk/ChunkRenderDispatcher$RenderChunk;
-#accessible field net/minecraft/world/entity/Entity blockPosition Lnet/minecraft/core/BlockPos;
 
 # lighting
 accessible field net/minecraft/client/renderer/LightTexture lightPixels Lcom/mojang/blaze3d/platform/NativeImage;
@@ -30,8 +29,6 @@ accessible field net/minecraft/world/level/lighting/LevelLightEngine skyEngine L
 accessible method net/minecraft/world/level/levelgen/Heightmap setHeight (III)V
 accessible field net/minecraft/world/level/biome/Biome generationSettings Lnet/minecraft/world/level/biome/BiomeGenerationSettings;
 accessible field net/minecraft/world/level/biome/Biome biomeCategory Lnet/minecraft/world/level/biome/Biome$BiomeCategory;
-#accessible field net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator settings Lnet/minecraft/core/Holder;
-#accessible method net/minecraft/world/level/levelgen/NoiseBasedChunkGenerator doCreateBiomes (Lnet/minecraft/core/Registry;Lnet/minecraft/world/level/levelgen/blending/Blender;Lnet/minecraft/world/level/StructureFeatureManager;Lnet/minecraft/world/level/chunk/ChunkAccess;)V
 accessible method net/minecraft/world/level/lighting/LayerLightEngine queueSectionData (JLnet/minecraft/world/level/chunk/DataLayer;Z)V
 accessible field net/minecraft/server/level/ServerChunkCache distanceManager Lnet/minecraft/server/level/DistanceManager;
 accessible method net/minecraft/server/level/ChunkMap getUpdatingChunkIfPresent (J)Lnet/minecraft/server/level/ChunkHolder;

@@ -9,14 +9,21 @@ import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.jar.installer.ModrinthGetter;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+
+import net.minecraft.client.gui.screens.Screen;
+
 #if MC_VER >= MC_1_20_1
 import net.minecraft.client.gui.GuiGraphics;
 #else
 import com.mojang.blaze3d.vertex.PoseStack;
 #endif
-import net.minecraft.client.gui.screens.Screen;
+
+#if MC_VER <= MC_1_21_10
 import net.minecraft.resources.ResourceLocation;
-import com.seibel.distanthorizons.core.logging.DhLogger;
+#else
+import net.minecraft.resources.Identifier;
+#endif
 
 import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.*;
 
@@ -88,10 +95,12 @@ public class UpdateModScreen extends DhScreen
 					0, 0,
 					// Some textuary stuff
 					0, 
-					#if MC_VER < MC_1_21_1
+					#if MC_VER <= MC_1_20_6
 					new ResourceLocation(ModInfo.ID, "logo.png"),
-					#else
+					#elif MC_VER <= MC_1_21_10
 					ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "logo.png"),
+					#else
+					Identifier.fromNamespaceAndPath(ModInfo.ID, "logo.png"),
 					#endif
 					195, 65,
 					// Create the button and tell it where to go
@@ -121,12 +130,14 @@ public class UpdateModScreen extends DhScreen
 					0, 
 					#if MC_VER < MC_1_21_1
 					new ResourceLocation(ModInfo.ID, "textures/gui/changelog.png"),
-					#else
+					#elif MC_VER <= MC_1_21_10
 					ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
+					#else
+					Identifier.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
 					#endif
 					20, 20,
 					// Create the button and tell it where to go
-					(buttonWidget) -> Objects.requireNonNull(minecraft).setScreen(new ChangelogScreen(this, this.newVersionID)), // TODO: Add a proper easter egg to pressing the logo (maybe with confetti)
+					(buttonWidget) -> Objects.requireNonNull(this.minecraft).setScreen(new ChangelogScreen(this, this.newVersionID)),
 					// Add a title to the button
 					Translatable(ModInfo.ID + ".updater.title")
 			));

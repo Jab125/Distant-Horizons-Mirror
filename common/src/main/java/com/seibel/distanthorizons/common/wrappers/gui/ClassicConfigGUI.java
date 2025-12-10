@@ -37,7 +37,6 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,6 +51,12 @@ import net.minecraft.client.gui.GuiGraphics;
 
 #if MC_VER >= MC_1_17_1
 import net.minecraft.client.gui.narration.NarratableEntry;
+#endif
+
+#if MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#else
+import net.minecraft.resources.Identifier;
 #endif
 
 import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.*;
@@ -180,8 +185,10 @@ public class ClassicConfigGUI
 						0, 
 						#if MC_VER < MC_1_21_1
 						new ResourceLocation(ModInfo.ID, "textures/gui/changelog.png"),
-						#else
+						#elif MC_VER < MC_1_21_10
 						ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
+						#else
+						Identifier.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
 						#endif
 						20, 20,
 						// Create the button and tell it where to go

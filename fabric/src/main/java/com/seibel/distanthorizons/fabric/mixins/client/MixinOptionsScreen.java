@@ -28,7 +28,6 @@ import net.minecraft.network.chat.Component;
 #if MC_VER < MC_1_19_2
 import net.minecraft.network.chat.TranslatableComponent;
 #endif
-import net.minecraft.resources.ResourceLocation;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
@@ -51,6 +50,11 @@ import net.minecraft.client.gui.screens.OptionsScreen;
 import net.minecraft.client.gui.screens.options.OptionsScreen;
 #endif
 
+#if MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#else
+import net.minecraft.resources.Identifier;
+#endif
 
 /**
  * Adds a button to the menu to goto the config
@@ -62,13 +66,16 @@ import net.minecraft.client.gui.screens.options.OptionsScreen;
 public class MixinOptionsScreen extends Screen
 {
 	/** Texture used for the config opening button */
+	#if MC_VER <= MC_1_20_6
 	@Unique
-	private static final ResourceLocation ICON_TEXTURE =
-		#if MC_VER < MC_1_21_1
-		new ResourceLocation(ModInfo.ID, "textures/gui/button.png");
-		#else
-		ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "textures/gui/button.png");
-		#endif 
+	private static final ResourceLocation ICON_TEXTURE = new ResourceLocation(ModInfo.ID, "textures/gui/button.png");
+	#elif MC_VER <= MC_1_21_10
+	@Unique
+	private static final ResourceLocation ICON_TEXTURE = ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "textures/gui/button.png");
+	#else
+	@Unique
+	private static final Identifier ICON_TEXTURE = Identifier.fromNamespaceAndPath(ModInfo.ID, "textures/gui/button.png");
+	#endif 
 	
 	
 	@Unique

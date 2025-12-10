@@ -14,9 +14,13 @@ import java.util.List;
 
 import net.minecraft.client.gui.components.debug.DebugScreenDisplayer;
 import net.minecraft.client.gui.components.debug.DebugScreenEntries;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.LevelChunk;
+
+#if MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#endif
+
 #endif
 
 #if MC_VER < MC_1_21_9
@@ -31,7 +35,12 @@ public class DhDebugScreenEntry implements net.minecraft.client.gui.components.d
 		// This method is private, so its access will need to be widened
 		DebugScreenEntries.register(
 				// The id, this will be displayed on the options screen
+				#if MC_VER <= MC_1_21_10
 				ResourceLocation.fromNamespaceAndPath(ModInfo.RESOURCE_NAMESPACE, "distant_horizons"),
+				#else
+				"distant_horizons",
+				#endif	
+				
 				// The screen entry
 				new DhDebugScreenEntry()
 		);

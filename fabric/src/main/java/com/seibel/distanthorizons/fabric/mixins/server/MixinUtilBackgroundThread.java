@@ -23,7 +23,11 @@ import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGeneratio
 import com.seibel.distanthorizons.core.util.objects.RunOnThisThreadExecutorService;
 import org.spongepowered.asm.mixin.Mixin;
 
+#if MC_VER <= MC_1_21_10
 import net.minecraft.Util;
+#else
+import net.minecraft.util.Util;
+#endif
 
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;

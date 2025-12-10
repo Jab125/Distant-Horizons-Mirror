@@ -36,7 +36,6 @@ import net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents;
 import net.fabricmc.fabric.api.event.Event;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.commands.CommandSourceStack;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.MinecraftServer;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
@@ -45,6 +44,12 @@ import org.lwjgl.util.tinyfd.TinyFileDialogs;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 #else // < 1.19.2
 import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
+#endif
+
+#if MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#else
+import net.minecraft.resources.Identifier;
 #endif
 
 import java.util.function.Consumer;
@@ -56,10 +61,12 @@ import java.util.function.Consumer;
  */
 public class FabricMain extends AbstractModInitializer implements ClientModInitializer, DedicatedServerModInitializer
 {
-	#if MC_VER >= MC_1_21_1
+	#if MC_VER <= MC_1_20_6
+	private static final ResourceLocation INITIAL_PHASE = new ResourceLocation(ModInfo.RESOURCE_NAMESPACE, ModInfo.DEDICATED_SERVER_INITIAL_PATH);
+	#elif MC_VER <= MC_1_21_10
 	private static final ResourceLocation INITIAL_PHASE = ResourceLocation.fromNamespaceAndPath(ModInfo.RESOURCE_NAMESPACE, ModInfo.DEDICATED_SERVER_INITIAL_PATH);
 	#else
-	private static final ResourceLocation INITIAL_PHASE = new ResourceLocation(ModInfo.RESOURCE_NAMESPACE, ModInfo.DEDICATED_SERVER_INITIAL_PATH);
+	private static final Identifier INITIAL_PHASE = Identifier.fromNamespaceAndPath(ModInfo.RESOURCE_NAMESPACE, ModInfo.DEDICATED_SERVER_INITIAL_PATH);
 	#endif
 	
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();

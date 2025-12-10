@@ -28,7 +28,6 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
-import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
@@ -63,6 +62,12 @@ import net.minecraft.world.level.EmptyBlockGetter;
 import net.minecraft.core.Holder;
 #endif
 
+#if MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#else
+import net.minecraft.resources.Identifier;
+#endif
+
 public class BlockStateWrapper implements IBlockStateWrapper
 {
 	/** example "minecraft:water" */
@@ -87,7 +92,11 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public static HashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
 	
 	/** keep track of broken blocks so we don't log every time */
+	#if MC_VER < MC_1_21_10
 	private static final HashSet<ResourceLocation> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
+	#else
+	private static final HashSet<Identifier> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
+	#endif
 	
 	
 	
@@ -555,7 +564,12 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 		#endif
 		
+		#if MC_VER < MC_1_21_11
 		ResourceLocation resourceLocation;
+		#else
+		Identifier resourceLocation;
+		#endif
+		
 		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
 		resourceLocation = Registry.BLOCK.getKey(this.blockState.getBlock());
 		#elif MC_VER == MC_1_18_2 || MC_VER == MC_1_19_2
@@ -622,13 +636,20 @@ public class BlockStateWrapper implements IBlockStateWrapper
 				throw new IOException("Unable to parse Resource Location out of string: [" + resourceStateString + "].");
 			}
 			
+			#if MC_VER < MC_1_21_11
 			ResourceLocation resourceLocation;
+			#else
+			Identifier resourceLocation;
+			#endif
+			
 			try
 			{
 				#if MC_VER < MC_1_21_1
 				resourceLocation = new ResourceLocation(resourceStateString.substring(0, separatorIndex), resourceStateString.substring(separatorIndex + 1));
-				#else
+				#elif MC_VER <= MC_1_21_10
 				resourceLocation = ResourceLocation.fromNamespaceAndPath(resourceStateString.substring(0, separatorIndex), resourceStateString.substring(separatorIndex + 1));
+				#else
+				resourceLocation = Identifier.fromNamespaceAndPath(resourceStateString.substring(0, separatorIndex), resourceStateString.substring(separatorIndex + 1));
 				#endif
 			}
 			catch (Exception e)

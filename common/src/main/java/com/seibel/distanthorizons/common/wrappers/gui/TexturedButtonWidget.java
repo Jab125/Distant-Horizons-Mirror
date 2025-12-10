@@ -20,7 +20,6 @@
 package com.seibel.distanthorizons.common.wrappers.gui;
 
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
 
 #if MC_VER >= MC_1_17_1
 import net.minecraft.client.gui.components.Button;
@@ -42,10 +41,19 @@ import net.minecraft.client.gui.GuiGraphics;
 #elif MC_VER < MC_1_21_6
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
-#else
+#elif MC_VER <= MC_1_21_10
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderPipelines;
+#else
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+#endif
+
+#if MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#else
+import net.minecraft.resources.Identifier;
 #endif
 
 /**
@@ -67,18 +75,33 @@ public class TexturedButtonWidget extends Button
 	private final int v;
 	private final int hoveredVOffset;
 	
+	#if MC_VER <= MC_1_21_10 
 	private final ResourceLocation textureResourceLocation;
+	#else
+	private final Identifier textureResourceLocation;
+	#endif
 	
 	private final int textureWidth;
 	private final int textureHeight;
 	#endif
 	
 	
-	public TexturedButtonWidget(int x, int y, int width, int height, int u, int v, int hoveredVOffset, ResourceLocation textureResourceLocation, int textureWidth, int textureHeight, OnPress pressAction, Component text) 
+	public TexturedButtonWidget(
+		int x, int y, int width, int height, int u, int v, int hoveredVOffset, 
+		#if MC_VER <= MC_1_21_10 ResourceLocation textureResourceLocation, 
+		#else Identifier textureResourceLocation, 
+		#endif 
+		int textureWidth, int textureHeight, OnPress pressAction, Component text) 
 	{
 		this(x, y, width, height, u, v, hoveredVOffset, textureResourceLocation, textureWidth, textureHeight, pressAction, text, true);
 	}
-	public TexturedButtonWidget(int x, int y, int width, int height, int u, int v, int hoveredVOffset, ResourceLocation textureResourceLocation, int textureWidth, int textureHeight, OnPress pressAction, Component text, boolean renderBackground)
+	public TexturedButtonWidget(
+		int x, int y, int width, int height, int u, int v, int hoveredVOffset, 
+		#if MC_VER <= MC_1_21_10 ResourceLocation textureResourceLocation, 
+		#else Identifier textureResourceLocation, 
+		#endif
+		int textureWidth, int textureHeight, OnPress pressAction, Component text, 
+		boolean renderBackground)
 	{
 		#if MC_VER < MC_1_20_2
 		super(x, y, width, height, u, v, hoveredVOffset, textureResourceLocation, textureWidth, textureHeight, pressAction, text);
@@ -169,8 +192,13 @@ public class TexturedButtonWidget extends Button
 	#endif
 	
 	#else
+		#if MC_VER < MC_1_21_11
 	@Override
 	public void renderWidget(GuiGraphics matrices, int mouseX, int mouseY, float delta)
+		#else
+	@Override 
+	protected void renderContents(GuiGraphics matrices, int mouseX, int mouseY, float delta)
+		#endif
 	{
 		if (this.renderBackground)
 		{

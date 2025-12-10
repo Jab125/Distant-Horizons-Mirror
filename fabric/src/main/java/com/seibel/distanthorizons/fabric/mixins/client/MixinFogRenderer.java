@@ -160,9 +160,12 @@ public class MixinFogRenderer
 	{
 		#if MC_VER < MC_1_21_6
 		Entity entity = camera.getEntity();
+		#elif MC_VER <= MC_1_21_10
+		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
+		Entity entity = camera.getEntity();
 		#else
 		Camera camera = Minecraft.getInstance().gameRenderer.getMainCamera();
-		Entity entity = camera.getEntity();	
+		Entity entity = camera.entity();	
 		#endif
 		
 		

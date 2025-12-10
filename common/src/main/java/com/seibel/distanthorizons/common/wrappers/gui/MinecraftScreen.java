@@ -95,10 +95,22 @@ public class MinecraftScreen
 			super.render(matrices, mouseX, mouseY, delta); // Render the vanilla stuff (currently only used for the background and tint)
 		}
 		
+		#if MC_VER <= MC_1_21_10
 		@Override
 		public void resize(Minecraft mc, int width, int height)
+		#else
+		@Override
+		public void resize(int width, int height)
+		#endif
 		{
-			super.resize(mc, width, height); // Resize Minecraft's screen
+			// Resize Minecraft's screen
+			#if MC_VER <= MC_1_21_10
+			super.resize(mc, width, height);
+			#else
+			super.resize(width, height);
+			#endif
+			
+			
 			Window mcWindow = this.minecraft.getWindow();
 			this.screen.width = mcWindow.getWidth();
 			this.screen.height = mcWindow.getHeight();

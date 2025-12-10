@@ -21,6 +21,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IDimensionTypeWra
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -49,6 +50,12 @@ import net.minecraft.world.phys.Vec3;
 #else
 import com.seibel.distanthorizons.core.util.ColorUtil;
 #endif
+
+#if MC_VER <= MC_1_21_10
+#else
+import net.minecraft.world.attribute.EnvironmentAttributes;
+#endif
+
 
 public class ClientLevelWrapper implements IClientLevelWrapper
 {
@@ -92,7 +99,7 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	 * IE rendering.
 	 */
 	@Nullable
-	public static IClientLevelWrapper getWrapperIfDifferent(@Nullable IClientLevelWrapper levelWrapper, @NotNull ClientLevel level)
+	public static IClientLevelWrapper getWrapperIfDifferent(@Nullable IClientLevelWrapper levelWrapper, @NotNull ClientLevel level) // TODO handle null level
 	{
 		if (KEYED_CLIENT_LEVEL_MANAGER.isEnabled() && KEYED_CLIENT_LEVEL_MANAGER.getServerKeyedLevel() != levelWrapper)
 		{
@@ -237,11 +244,24 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	public void clearBlockColorCache() { this.blockColorCacheByBlockState.clear(); }
 	
 	@Override
-	public IDimensionTypeWrapper getDimensionType() { return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType()); }
-	
+	public IDimensionTypeWrapper getDimensionType()
+	{
+		#if MC_VER <= MC_1_21_10
+		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType());
+		#else
+		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType(), this.getDimensionName());
+		#endif
+	}
 	
 	@Override
-	public String getDimensionName() { return this.level.dimension().location().toString(); }
+	public String getDimensionName()
+	{
+		#if MC_VER <= MC_1_21_10
+		return this.level.dimension().location().toString();
+		#else
+		return this.level.dimension().identifier().getPath();
+		#endif
+	}
 	
 	@Override
 	public long getHashedSeed() { return this.level.getBiomeManager().biomeZoomSeed; }
@@ -342,9 +362,12 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		#if MC_VER < MC_1_21_3
 		Vec3 colorVec3 = this.level.getCloudColor(tickDelta);
 		return new Color((float)colorVec3.x, (float)colorVec3.y, (float)colorVec3.z);
-		#else
+		#elif MC_VER <= MC_1_21_10
 		int argbColor = this.level.getCloudColor(tickDelta);
 		return ColorUtil.toColorObjARGB(argbColor);
+		#else
+		int argbColor = this.level.environmentAttributes().getValue(EnvironmentAttributes.CLOUD_COLOR, BlockPos.ZERO);
+		return new Color(ColorUtil.getRed(argbColor), ColorUtil.getGreen(argbColor), ColorUtil.getBlue(argbColor), 255 /* ignore alpha since DH clouds don't render correctly with transparency */);
 		#endif
 	}
 	

@@ -19,7 +19,7 @@ plugins {
     id "systems.manifold.manifold-gradle-plugin" version "0.0.2-alpha"
 
     // Architectury is used here only as a replacement for forge's own loom
-    id "dev.architectury.loom" version "1.11-SNAPSHOT" apply false
+    id "dev.architectury.loom" version "1.13-SNAPSHOT" apply false
 }
 
 
