@@ -28,9 +28,6 @@ public class OptifineAccessor extends AbstractOptifineAccessor
 {
 	
 	@Override
-	public String getModName()
-	{
-		return "Optifine-Forge-1.18.X";
-	}
+	public String getModName() { return "Optifine-Forge"; }
 	
 }

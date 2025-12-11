@@ -26,6 +26,7 @@ import java.lang.invoke.MethodType;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.ISodiumAccessor;
+import net.minecraft.client.Minecraft;
 
 
 #if MC_VER < MC_1_20_1
@@ -50,9 +51,11 @@ public class SodiumAccessor implements ISodiumAccessor
 	 */
 	public static final boolean isSodiumV5OrLess;
 	
-	#if MC_VER >= MC_1_20_1
+	#if MC_VER <= MC_1_19_4
+	#elif MC_VER <= MC_1_21_10
 	private static MethodHandle setFogOcclusionMethod;
 	private static Object sodiumPerformanceOptions;
+	#else
 	#endif
 	
 	static {
@@ -78,7 +81,8 @@ public class SodiumAccessor implements ISodiumAccessor
 	@Override
 	public void setFogOcclusion(boolean occlusionEnabled)
 	{
-		#if MC_VER >= MC_1_20_1
+		#if MC_VER <= MC_1_19_4
+		#elif MC_VER <= MC_1_21_10
 		try
 		{
 			if (sodiumPerformanceOptions == null)
@@ -122,6 +126,8 @@ public class SodiumAccessor implements ISodiumAccessor
 		{
 			throw new RuntimeException(e);
 		}
+		#else
+		// in newer versions of Sodium this doesn't appear to be an issue so it can probably just be ignored
 		#endif
 	}
 

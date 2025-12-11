@@ -2,16 +2,18 @@ package com.seibel.distanthorizons.common.wrappers.minecraft;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import net.minecraft.server.dedicated.DedicatedServer;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 
-//@Environment(EnvType.SERVER)
 public class MinecraftServerWrapper implements IMinecraftSharedWrapper
 {
 	public static final MinecraftServerWrapper INSTANCE = new MinecraftServerWrapper();
 	
+	/** set during server startup */
+	@Nullable
 	public DedicatedServer dedicatedServer = null;
-	public boolean preventAutoPause = false;
+	
 	
 	
 	//=============//
@@ -34,7 +36,7 @@ public class MinecraftServerWrapper implements IMinecraftSharedWrapper
 	{
 		if (this.dedicatedServer == null)
 		{
-			throw new IllegalStateException("Trying to get Installation Direction before Dedicated server completed initialization!");
+			throw new IllegalStateException("Trying to get Installation Direction before dedicated server completed initialization!");
 		}
 		
 		#if MC_VER < MC_1_21_1
@@ -45,15 +47,16 @@ public class MinecraftServerWrapper implements IMinecraftSharedWrapper
 	}
 	
 	@Override
-	public int getPlayerCount()
+	public int getPlayerCount() 
 	{
-		return this.dedicatedServer.getPlayerCount();
+		if (this.dedicatedServer == null)
+		{
+			throw new IllegalStateException("Trying to get player count before dedicated server completed initialization!");
+		}
+		
+		return this.dedicatedServer.getPlayerCount(); 
 	}
 	
-	@Override
-	public void setPreventAutoPause(boolean preventAutoPause)
-	{
-		this.preventAutoPause = preventAutoPause;
-	}
+	
 	
 }

@@ -25,9 +25,13 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.seibel.distanthorizons.api.enums.config.EDhApiLodShading;
+import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 
+import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
@@ -52,13 +56,12 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IDimensionTypeWra
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
 import com.seibel.distanthorizons.core.util.math.Vec3f;
-import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.Direction;
 import net.minecraft.world.effect.MobEffects;
 
 import net.minecraft.world.phys.Vec3;
@@ -95,8 +98,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private static final Minecraft MC = Minecraft.getInstance();
-	
-	private static final IOptifineAccessor OPTIFINE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
 	
 	/** 
 	 * In the case of immersive portals multiple levels may be active at once, causing conflicting lightmaps. <br> 
@@ -136,8 +137,11 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		#endif
 	}
 	
+	/** 
+	 * Unless you really need to know if the player is blind, 
+	 * use {@link MinecraftRenderWrapper#isFogStateSpecial()} or {@link IMinecraftRenderWrapper#isFogStateSpecial()} instead 
+	 */
 	@Override
-	/** Unless you really need to know if the player is blind, use {@link MinecraftRenderWrapper#isFogStateSpecial()}/{@link IMinecraftRenderWrapper#isFogStateSpecial()} instead */
 	public boolean playerHasBlindingEffect()
 	{
 		if (MC.player == null)
@@ -251,7 +255,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		);
 		#endif
 	}
-	// getSpecialFogColor() is the same as getFogColor()
 	
 	@Override
 	public Color getSkyColor()
@@ -290,10 +293,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
-	public double getFov(float partialTicks)
-	{
-		return MC.gameRenderer.getFov(MC.gameRenderer.getMainCamera(), partialTicks, true);
-	}
+	public double getFov(float partialTicks) { return MC.gameRenderer.getFov(MC.gameRenderer.getMainCamera(), partialTicks, true); }
 	
 	/** Measured in chunks */
 	@Override
@@ -305,41 +305,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		#else
 		return MC.options.getEffectiveRenderDistance();
 		#endif
-	}
-	
-	@Override
-	public int getScreenWidth()
-	{
-		// alternate ways of getting the window's resolution,
-		// using one of these methods may fix the optifine render resolution bug
-		// TODO: test these once we can run with Optifine again
-//		int[] heightArray = new int[1];
-//		int[] widthArray = new int[1];
-//		
-//		long window = GLProxy.getInstance().minecraftGlContext;
-//		GLFW.glfwGetWindowSize(window, widthArray, heightArray); // option 1
-//		GLFW.glfwGetFramebufferSize(window, widthArray, heightArray); // option 2
-		
-		
-		
-		int width = MC.getWindow().getWidth();
-		if (OPTIFINE_ACCESSOR != null)
-		{
-			// TODO remove comment after testing:
-			// this should fix the issue where different optifine render resolutions screw up the LOD rendering
-			width *= OPTIFINE_ACCESSOR.getRenderResolutionMultiplier();
-		}
-		return width;
-	}
-	@Override
-	public int getScreenHeight()
-	{
-		int height = MC.getWindow().getHeight();
-		if (OPTIFINE_ACCESSOR != null)
-		{
-			height *= OPTIFINE_ACCESSOR.getRenderResolutionMultiplier();
-		}
-		return height;
 	}
 	
 	protected RenderTarget getRenderTarget() { return MC.getMainRenderTarget(); }
@@ -509,5 +474,46 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
 		wrapper.setLightmapId(tetxureId);
 	}
+	
+	@Override
+	public float getShade(EDhDirection lodDirection)
+	{
+		EDhApiLodShading lodShading = Config.Client.Advanced.Graphics.Quality.lodShading.get();
+		switch (lodShading)
+		{
+			default:
+			case AUTO:
+				if (MC.level != null)
+				{
+					Direction mcDir = McObjectConverter.Convert(lodDirection);
+					return MC.level.getShade(mcDir, true);
+				}
+				else
+				{
+					return 0.0f;
+				}
+			
+			case ENABLED:
+				switch (lodDirection)
+				{
+					case DOWN:
+						return 0.5F;
+					default:
+					case UP:
+						return 1.0F;
+					case NORTH:
+					case SOUTH:
+						return 0.8F;
+					case WEST:
+					case EAST:
+						return 0.6F;
+				}
+			
+			case DISABLED:
+				return 1.0F;
+		}
+	}
+	
+	
 	
 }
