@@ -24,7 +24,7 @@ package com.seibel.distanthorizons.neoforge.wrappers.modAccessor;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 
-#if MC_VER != MC_1_21_9 && MC_VER != MC_1_21_11
+#if MC_VER != MC_1_21_9
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.api.v0.IrisApi;
 #endif
@@ -53,7 +53,7 @@ public class IrisAccessor implements IIrisAccessor
 	@Override
 	public boolean isShaderPackInUse() 
 	{
-		#if MC_VER == MC_1_21_9 || MC_VER == MC_1_21_11
+		#if MC_VER == MC_1_21_9
 		return true; // Iris doesn't support this MC version
 		#else
 		return IrisApi.getInstance().isShaderPackInUse();
@@ -63,7 +63,7 @@ public class IrisAccessor implements IIrisAccessor
 	@Override
 	public boolean isRenderingShadowPass() 
 	{
-		#if MC_VER == MC_1_21_9 || MC_VER == MC_1_21_11
+		#if MC_VER == MC_1_21_9
 		return false; // Iris doesn't support this MC version
 		#else
 		return IrisApi.getInstance().isRenderingShadowPass();
