@@ -27,7 +27,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSende
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.ModInfo;
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 import com.seibel.distanthorizons.forge.wrappers.modAccessor.ModChecker;
 import com.seibel.distanthorizons.forge.wrappers.modAccessor.OptifineAccessor;
