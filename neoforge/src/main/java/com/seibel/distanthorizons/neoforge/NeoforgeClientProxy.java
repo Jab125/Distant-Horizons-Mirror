@@ -73,29 +73,6 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	
 	
 	
-	//=============//
-	// tick events //
-	//=============//
-	
-	#if MC_VER < MC_1_20_6
-	@SubscribeEvent
-	public void clientTickEvent(TickEvent.ClientTickEvent event)
-	{
-		if (event.phase == TickEvent.Phase.START)
-		{
-			ClientApi.INSTANCE.clientTickEvent();
-		}
-	}
-	#else
-	@SubscribeEvent
-	public void clientTickEvent(ClientTickEvent.Pre event)
-	{
-		ClientApi.INSTANCE.clientTickEvent();
-	}
-	#endif
-	
-	
-	
 	//==============//
 	// world events //
 	//==============//

@@ -107,21 +107,6 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	
 	
 	
-	//=============//
-	// tick events //
-	//=============//
-	
-	@SubscribeEvent
-	public void clientTickEvent(TickEvent.ClientTickEvent event)
-	{
-		if (event.phase == TickEvent.Phase.START)
-		{
-			ClientApi.INSTANCE.clientTickEvent();
-		}
-	}
-	
-	
-	
 	//==============//
 	// world events //
 	//==============//

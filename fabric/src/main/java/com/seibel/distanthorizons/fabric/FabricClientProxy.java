@@ -113,14 +113,6 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 		
 		
 		
-		//=============//
-		// tick events //
-		//=============//
-		
-		ClientTickEvents.START_CLIENT_TICK.register((client) -> { ClientApi.INSTANCE.clientTickEvent(); });
-		
-		
-		
 		//==============//
 		// chunk events //
 		//==============//
