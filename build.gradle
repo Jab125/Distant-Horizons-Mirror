@@ -5,6 +5,9 @@ import org.apache.tools.zip.ZipEntry
 import javax.annotation.Nonnull
 import org.apache.tools.zip.ZipOutputStream
 
+import java.util.function.Function
+import java.util.function.Predicate
+
 
 plugins {
     id "java"
@@ -73,11 +76,22 @@ writeBuildGradlePredefine(rootProject.mcVers, rootProject.mcIndex)
 rootProject.versionStr = rootProject.mod_version + "-" + rootProject.minecraft_version // + "-" + new Date().format("yyyy_MM_dd_HH_mm")
 
 class NativeTransformer implements Transformer {
+    private Predicate<String> fileMatcher
+    private Function<String, String> filePathMapper
+
     private final HashMap<String, String> replacements = new HashMap()
     private final HashMap<String, byte[]> rewrittenFiles = new HashMap()
     private var nativeRelocator
 
     public File rootDir
+
+    void matchFiles(Predicate<String> matcher) {
+        fileMatcher = matcher
+    }
+
+    void mapPaths(Function<String, String> mapper) {
+        filePathMapper = mapper
+    }
 
     void relocateNative(String target, String replacement) {
         if (replacement.length() > target.length()) {
@@ -89,9 +103,7 @@ class NativeTransformer implements Transformer {
 
     @Override
     boolean canTransformResource(@Nonnull FileTreeElement element) {
-        return replacements.keySet().stream().anyMatch {
-            element.name.startsWith(it as String)
-        }
+        return fileMatcher.test(element.name)
     }
 
     @Override
@@ -103,11 +115,9 @@ class NativeTransformer implements Transformer {
         }
 
         try {
-            Map.Entry<String, String> pathReplacement = replacements.entrySet().stream().filter {
-                context.path.startsWith(it.key as String)
-            }.findFirst().orElseThrow()
-
-            String path = context.path.replace(pathReplacement.key as String, pathReplacement.value as String)
+            String path = filePathMapper != null
+                ? filePathMapper.apply(context.path)
+                : context.path
             content = nativeRelocator.processBinary(path, content, replacements)
 
             rewrittenFiles.put(path, content)
@@ -351,8 +361,32 @@ subprojects { p ->
 
         transform(NativeTransformer) {
             rootDir = project.rootDir
+
+            matchFiles { it.startsWith("org/sqlite") }
+            mapPaths { it.replace("org/sqlite", "dh_sqlite") }
+
             relocateNative "org/sqlite", "dh_sqlite"
             relocateNative "org_sqlite", "dh_1sqlite"
+        }
+
+        // ZStd
+        // librariesLocation isn't used because it's too long for replacing paths in native libraries
+        // Allowing strings larger than the original string would require shifting the entire binary's contents
+        relocate "com.github.luben", "dhcomgithubluben", {
+            exclude "aix.ppc64/**"
+            exclude "darwin/**"
+            exclude "freebsd/**"
+            exclude "linux/**"
+            exclude "win/**"
+        }
+
+        transform(NativeTransformer) {
+            rootDir = project.rootDir
+
+            matchFiles { it.contains("libzstd-jni") && !it.contains("ppc64") }
+
+            relocateNative "com/github/luben", "dhcomgithubluben"
+            relocateNative "com_github_luben", "dhcomgithubluben"
         }
         
         
