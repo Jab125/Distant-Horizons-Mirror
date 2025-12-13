@@ -166,6 +166,10 @@ public abstract class AbstractModInitializer
 			//noinspection unchecked
 			ModAccessorInjector.INSTANCE.bind((Class<? extends IModAccessor>) accessorClass, accessorConstructor.get());
 		}
+		else
+		{
+			LOGGER.debug("Skipping mod compatibility accessor for: ["+modId+"]");
+		}
 	}
 	
 	private void initConfig()
