@@ -372,18 +372,15 @@ subprojects { p ->
         // ZStd
         // librariesLocation isn't used because it's too long for replacing paths in native libraries
         // Allowing strings larger than the original string would require shifting the entire binary's contents
-        relocate "com.github.luben", "dhcomgithubluben", {
-            exclude "aix.ppc64/**"
-            exclude "darwin/**"
-            exclude "freebsd/**"
-            exclude "linux/**"
-            exclude "win/**"
-        }
+        relocate "com.github.luben", "dhcomgithubluben"
+        relocate "libzstd-jni", "libzstd-jni_dh"
+        relocate "zstd-jni", "zstd-jni_dh"
 
         transform(NativeTransformer) {
             rootDir = project.rootDir
 
-            matchFiles { it.contains("libzstd-jni") && !it.contains("ppc64") }
+            matchFiles { it.contains("libzstd-jni") && !it.contains("aix/ppc64") }
+            mapPaths { it.replace("libzstd-jni", "libzstd-jni_dh") }
 
             relocateNative "com/github/luben", "dhcomgithubluben"
             relocateNative "com_github_luben", "dhcomgithubluben"

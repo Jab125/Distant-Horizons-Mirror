@@ -12,15 +12,29 @@ How to add a library's natives:
 Example:
 
 ```groovy
+// Relocate the namespace (Java side)
 relocate "org.sqlite", "dh_sqlite", {
+    // (Specific to SQLite's relocation)
+    // Make sure that native paths are not changed before steps below
     exclude "org/sqlite/native/**"
 }
+// Shadow also replaces strings inside the Java code
+// See the library's source code to find strings used to call into the native code
+// This also includes native library paths, if you use mapPaths {} below they will likely need adjustment as well
+relocate "jdbc:sqlite", "jdbc:dh_sqlite"
 
 transform(NativeTransformer) {
     // NativeTransformer configuration
     rootDir = project.rootDir
 
+    // Match native libraries
+    matchFiles { it.startsWith("org/sqlite") }
+    // Replace paths with ones that won't overlap with other mods
+    // Libraries are the ones choosing the path to use for natives; check the source code to see which paths are acceptable.
+    mapPaths { it.replace("org/sqlite", "dh_sqlite") }
+
     // Replace native strings, e.g. used in calls back to Java
+    // They must be of the same length or shorter!
     relocateNative "org/sqlite", "dh_sqlite"
     // Rename native methods used when calling from Java
     relocateNative "org_sqlite", "dh_1sqlite"
