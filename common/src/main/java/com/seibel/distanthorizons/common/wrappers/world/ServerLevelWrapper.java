@@ -187,7 +187,9 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 		#if MC_VER <= MC_1_21_10
 		return this.level.dimension().location().toString();
 		#else
-		return this.level.dimension().identifier().getPath();
+		String namespace = this.level.dimension().identifier().getNamespace();
+		String path = this.level.dimension().identifier().getPath();
+		return namespace + "@@" + path;
 		#endif
 	}
 	
