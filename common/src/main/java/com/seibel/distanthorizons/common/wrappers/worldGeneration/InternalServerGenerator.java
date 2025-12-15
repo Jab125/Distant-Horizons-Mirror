@@ -51,7 +51,7 @@ public class InternalServerGenerator
 	
 	/**
 	 * Used to revert the ignore logic in {@link SharedApi} so
-	 * that given chunk pos can be handled again.
+	 * that a given chunk pos can be handled again.
 	 * A timer is used so we don't have to inject into MC's code and it works sell enough
 	 * most of the time.
 	 * If a chunk does get through due the timeout not being long enough that isn't the end of the world.

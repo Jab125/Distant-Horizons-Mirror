@@ -28,6 +28,7 @@ import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling.ChunkFileReader;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.*;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
+import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.config.Config;
@@ -37,6 +38,7 @@ import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.sql.dto.BeaconBeamDTO;
 import com.seibel.distanthorizons.core.util.ExceptionUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.core.util.TimerUtil;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
 import com.seibel.distanthorizons.core.util.objects.UncheckedInterruptedException;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
@@ -100,12 +102,23 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	public static final long EXCEPTION_TIMER_RESET_TIME = TimeUnit.NANOSECONDS.convert(1, TimeUnit.SECONDS);
 	public static final int EXCEPTION_COUNTER_TRIGGER = 20;
 	
+	/**
+	 * Used to revert the ignore logic in {@link SharedApi} so
+	 * that a given chunk pos can be handled again.
+	 * A timer is used so we don't have to inject into MC's code and it works sell enough
+	 * most of the time.
+	 * If a chunk does get through due the timeout not being long enough that isn't the end of the world.
+	 */
+	private static final int MS_TO_IGNORE_CHUNK_AFTER_COMPLETION = 5_000;
+	
 	
 	
 	private final IDhServerLevel dhServerLevel;
 	
 	public final InternalServerGenerator internalServerGenerator;
 	public final ChunkFileReader chunkFileReader;
+	
+	private final Timer chunkSaveIgnoreTimer = TimerUtil.CreateTimer("ChunkSaveIgnoreTimer");
 	
 	
 	
@@ -575,6 +588,11 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					ProtoChunk protoChunk = ((ProtoChunk) chunk);
 					protoChunk.setLightEngine(region.getLightEngine());
 				}
+				
+				// usually ignoring the chunk's position is unnecessary,
+				// but this improves performance if a chunk update event does sneak through 
+				SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.addPosToIgnore(chunkWrapper.getChunkPos());
+				
 			});
 			
 			
@@ -683,6 +701,24 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				{
 					this.dhServerLevel.updateBeaconBeamsForChunkPos(centerChunkWrapper.getChunkPos(), activeBeamList);
 				}
+			}
+			
+			
+			for (int i = 0; i < iChunkWrapperList.size(); i++)
+			{
+				ChunkWrapper chunkWrapper = (ChunkWrapper) iChunkWrapperList.get(i);
+				if (chunkWrapper == null)
+				{
+					continue;
+				}
+				
+				// give MC a few seconds to save the chunk before
+				// we can process update events there again
+				this.chunkSaveIgnoreTimer.schedule(new TimerTask()
+				{
+					@Override
+					public void run() { SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.removePosToIgnore(chunkWrapper.getChunkPos()); }
+				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
 			}
 		}
 	}
