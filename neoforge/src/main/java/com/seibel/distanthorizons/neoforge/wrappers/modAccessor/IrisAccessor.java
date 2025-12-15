@@ -33,9 +33,9 @@ public class IrisAccessor implements IIrisAccessor
 {
 	public IrisAccessor()
 	{
-		#if MC_VER == MC_1_21_11
-		throw new UnsupportedOperationException("Iris isn't supported on this version of DH. When this version of DH was created Iris wasn't available for Neoforge yet.");
-		#endif
+		//#if MC_VER == MC_1_21_11
+		//throw new UnsupportedOperationException("Iris isn't supported on this version of DH. When this version of DH was created Iris wasn't available for Neoforge yet.");
+		//#endif
 	}
 	
 	
