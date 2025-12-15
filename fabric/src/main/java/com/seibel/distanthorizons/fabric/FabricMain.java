@@ -25,6 +25,7 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.NativeDialogUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSender;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.*;
@@ -38,7 +39,6 @@ import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.server.MinecraftServer;
 import com.seibel.distanthorizons.core.logging.DhLogger;
-import org.lwjgl.util.tinyfd.TinyFileDialogs;
 
 #if MC_VER >= MC_1_19_2
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
@@ -103,7 +103,7 @@ public class FabricMain extends AbstractModInitializer implements ClientModIniti
 				String indiumMissingMessage = ModInfo.READABLE_NAME + " needs Indium to work with Sodium.\nPlease download Indium from https://modrinth.com/mod/indium";
 				LOGGER.fatal(indiumMissingMessage);
 				
-				TinyFileDialogs.tinyfd_messageBox(ModInfo.READABLE_NAME, indiumMissingMessage, "ok", "error", false);
+				NativeDialogUtil.showDialog(ModInfo.READABLE_NAME, indiumMissingMessage, "ok", "error");
 				
 				IMinecraftClientWrapper mc = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 				String errorMessage = "loading Distant Horizons. Distant Horizons requires Indium in order to run with Sodium.";
