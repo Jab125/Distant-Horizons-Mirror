@@ -203,19 +203,13 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 			return;
 		}
 		
-		if (!GLProxy.hasInstance())
-		{
-			// rendering setup hasn't finished
-			return;
-		}
-		
         #if MC_VER < MC_1_19_2
 		player.sendMessage(new TextComponent(string), getPlayer().getUUID());
         #elif MC_VER < MC_1_21_9
 		player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/false);
 		#else
 		
-		GLProxy.getInstance().queueRunningOnRenderThread(() -> 
+		GLProxy.queueRunningOnRenderThread(() -> 
 		{
 			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/false);
 		});
