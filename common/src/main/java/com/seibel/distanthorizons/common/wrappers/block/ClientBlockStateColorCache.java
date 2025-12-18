@@ -293,7 +293,7 @@ public class ClientBlockStateColorCache
         #else
         List<BlockModelPart> blockModelPartList = Minecraft.getInstance().getModelManager().getBlockModelShaper().
                 getBlockModel(effectiveBlockState).collectParts(RANDOM);
-        
+		
         quads = new ArrayList<>();
         if (blockModelPartList != null)
         {
