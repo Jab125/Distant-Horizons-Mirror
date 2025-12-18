@@ -286,24 +286,24 @@ public class ClientBlockStateColorCache
 		{
 			effectiveBlockState = this.blockState.setValue( SlabBlock.TYPE, SlabType.DOUBLE );
 		}
-        
-        #if MC_VER < MC_1_21_5
+		
+		#if MC_VER < MC_1_21_5
 		quads = Minecraft.getInstance().getModelManager().getBlockModelShaper().
 			getBlockModel(effectiveBlockState).getQuads(effectiveBlockState, direction, RANDOM);
-        #else
-        List<BlockModelPart> blockModelPartList = Minecraft.getInstance().getModelManager().getBlockModelShaper().
-                getBlockModel(effectiveBlockState).collectParts(RANDOM);
+		#else
+		List<BlockModelPart> blockModelPartList = Minecraft.getInstance().getModelManager().getBlockModelShaper().
+			getBlockModel(effectiveBlockState).collectParts(RANDOM);
 		
-        quads = new ArrayList<>();
-        if (blockModelPartList != null)
-        {
-            for (int i = 0; i < blockModelPartList.size(); i++)
-            {
-                // if direction is null this will return the unculled quads
-                quads.addAll(blockModelPartList.get(i).getQuads(direction));
-            }
-        }
-        #endif
+		quads = new ArrayList<>();
+		if (blockModelPartList != null)
+		{
+			for (int i = 0; i < blockModelPartList.size(); i++)
+			{
+				// if direction is null this will return the unculled quads
+				quads.addAll(blockModelPartList.get(i).getQuads(direction));
+			}
+		}
+		#endif
 		
 		return quads;
 	}
