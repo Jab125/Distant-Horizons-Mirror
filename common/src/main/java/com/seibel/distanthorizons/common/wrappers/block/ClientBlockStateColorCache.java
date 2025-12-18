@@ -30,10 +30,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.FlowerBlock;
-import net.minecraft.world.level.block.LeavesBlock;
-import net.minecraft.world.level.block.RotatedPillarBlock;
+import net.minecraft.world.level.block.*;
 #if MC_VER >= MC_1_19_2
 import net.minecraft.util.RandomSource;
 #else
@@ -41,6 +38,7 @@ import java.util.Random;
 #endif
 import net.minecraft.world.level.block.state.BlockState;
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import net.minecraft.world.level.block.state.properties.SlabType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -282,24 +280,30 @@ public class ClientBlockStateColorCache
 	private List<BakedQuad> getQuadsForDirection(@Nullable Direction direction)
 	{
 		List<BakedQuad> quads = null;
+		BlockState effectiveBlockState = this.blockState;
 		
-		#if MC_VER < MC_1_21_5
-		quads = Minecraft.getInstance().getModelManager().getBlockModelShaper().
-				getBlockModel(this.blockState).getQuads(this.blockState, direction, RANDOM);
-		#else
-		List<BlockModelPart> blockModelPartList = Minecraft.getInstance().getModelManager().getBlockModelShaper().
-				getBlockModel(this.blockState).collectParts(RANDOM);
-		
-		quads = new ArrayList<>();
-		if (blockModelPartList != null)
+		if (this.blockState.getBlock() instanceof SlabBlock)
 		{
-			for (int i = 0; i < blockModelPartList.size(); i++)
-			{
-				// if direction is null this will return the unculled quads
-				quads.addAll(blockModelPartList.get(i).getQuads(direction));
-			}
+			effectiveBlockState = this.blockState.setValue( SlabBlock.TYPE, SlabType.DOUBLE );
 		}
-		#endif
+        
+        #if MC_VER < MC_1_21_5
+		quads = Minecraft.getInstance().getModelManager().getBlockModelShaper().
+			getBlockModel(effectiveBlockState).getQuads(effectiveBlockState, direction, RANDOM);
+        #else
+        List<BlockModelPart> blockModelPartList = Minecraft.getInstance().getModelManager().getBlockModelShaper().
+                getBlockModel(effectiveBlockState).collectParts(RANDOM);
+        
+        quads = new ArrayList<>();
+        if (blockModelPartList != null)
+        {
+            for (int i = 0; i < blockModelPartList.size(); i++)
+            {
+                // if direction is null this will return the unculled quads
+                quads.addAll(blockModelPartList.get(i).getQuads(direction));
+            }
+        }
+        #endif
 		
 		return quads;
 	}
