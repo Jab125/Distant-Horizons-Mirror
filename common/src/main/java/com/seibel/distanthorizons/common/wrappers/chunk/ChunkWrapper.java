@@ -614,15 +614,6 @@ public class ChunkWrapper implements IChunkWrapper
 	
 	
 	
-	//===============//
-	// other methods //
-	//===============//
-	
-	@Override
-	public boolean isStillValid() { return this.wrappedLevel.tryGetChunk(this.chunkPos) == this; }
-	
-	
-	
 	//================//
 	// base overrides //
 	//================//
