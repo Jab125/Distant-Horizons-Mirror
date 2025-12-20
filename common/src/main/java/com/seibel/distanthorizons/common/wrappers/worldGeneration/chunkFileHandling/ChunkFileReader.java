@@ -293,7 +293,7 @@ public class ChunkFileReader implements AutoCloseable
 	public ChunkWrapper CreateProtoChunkWrapper(ServerLevel level, ChunkPos chunkPos)
 	{
 		ProtoChunk chunk = CreateProtoChunk(level, chunkPos);
-		return new ChunkWrapper(chunk, this.params.dhServerLevel.getLevelWrapper(), false);
+		return new ChunkWrapper(chunk, this.params.dhServerLevel.getLevelWrapper());
 	}
 	public static ProtoChunk CreateProtoChunk(ServerLevel level, ChunkPos chunkPos)
 	{

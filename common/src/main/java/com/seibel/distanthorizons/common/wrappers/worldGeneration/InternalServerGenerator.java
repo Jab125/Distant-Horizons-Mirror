@@ -156,6 +156,7 @@ public class InternalServerGenerator
 				if (chunk != null)
 				{
 					ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.dhServerLevel.getLevelWrapper());
+					chunkWrapper.createDhHeightMaps();
 					chunkWrappers.add(chunkWrapper);
 				}
 			}

@@ -222,7 +222,8 @@ public class ChunkCompoundTagParser
 		boolean hasHeightmapData = readHeightmaps(chunk, chunkData);
 		
 		// chunk wrapper so we can pass along extra data more easily
-		ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, dhServerLevel.getServerLevelWrapper(), !hasHeightmapData);
+		ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, dhServerLevel.getServerLevelWrapper());
+		chunkWrapper.createDhHeightMaps();
 		
 		
 		

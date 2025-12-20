@@ -18,6 +18,7 @@
  */
 package com.seibel.distanthorizons.common.wrappers.chunk;
 
+import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.MutableBlockPosWrapper;
@@ -80,6 +81,8 @@ public class ChunkWrapper implements IChunkWrapper
 	private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_BLOCK_POS_REF = ThreadLocal.withInitial(() -> new BlockPos.MutableBlockPos());
 	private static final ThreadLocal<MutableBlockPosWrapper> MUTABLE_BLOCK_POS_WRAPPER_REF = ThreadLocal.withInitial(() -> new MutableBlockPosWrapper());
 	
+	private static boolean heightmapThreadWarningLogged = false;
+	
 	
 	private final ChunkAccess chunk;
 	private final DhChunkPos chunkPos;
@@ -107,21 +110,20 @@ public class ChunkWrapper implements IChunkWrapper
 	// constructor //
 	//=============//
 	
+	/**
+	 * Note: this constructor should be very
+	 * fast since it will be called frequently on the MC
+	 * server thread and a slow method will cause server lag.
+	 */
 	public ChunkWrapper(ChunkAccess chunk, ILevelWrapper wrappedLevel)
-	{
-		this(chunk, wrappedLevel, true);
-	}
-	public ChunkWrapper(ChunkAccess chunk, ILevelWrapper wrappedLevel, boolean recreateHeightmaps)
 	{
 		this.chunk = chunk;
 		this.wrappedLevel = wrappedLevel;
 		this.chunkPos = new DhChunkPos(chunk.getPos().x, chunk.getPos().z);
-		
-		if (recreateHeightmaps)
-		{
-			this.createDhHeightMaps();
-		}
 	}
+	
+	@Override
+	public ChunkWrapper copy() { return new ChunkWrapper(this.chunk, this.wrappedLevel); }
 	
 	
 	
@@ -242,11 +244,15 @@ public class ChunkWrapper implements IChunkWrapper
 	}
 	private int getChunkSectionMinHeight(int index) { return (index * 16) + this.getInclusiveMinBuildHeight(); }
 	
+	@Override
 	public void createDhHeightMaps()
 	{
-		// re-calculate the min/max heights for consistency (during world gen these may be wrong)
-		this.minNonEmptyHeight = Integer.MIN_VALUE;
-		this.maxNonEmptyHeight = Integer.MAX_VALUE;
+		if (heightmapThreadWarningLogged 
+			&& !DhApi.isDhThread())
+		{
+			LOGGER.warn("ChunkWrapper Height maps created on non-DH thread ["+Thread.currentThread().getName()+"]. This may cause stuttering.");
+		}
+		
 		
 		
 		this.solidHeightMap = new int[LodUtil.CHUNK_WIDTH][LodUtil.CHUNK_WIDTH];

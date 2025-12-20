@@ -448,10 +448,9 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					
 					
 					
-					//=============================//
+					//=========================//
 					// process existing chunks //
-					//
-					//=============================//
+					//=========================//
 					
 					ArrayGridList<ChunkWrapper> chunkWrapperList = new ArrayGridList<>(regionChunks.gridSize);
 					regionChunks.forEachPos((relX, relZ) ->
@@ -467,8 +466,8 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 						}
 						else if (chunk != null)
 						{
-							// 
 							ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.dhServerLevel.getLevelWrapper());
+							chunkWrapper.createDhHeightMaps();
 							chunkWrapperList.set(relX, relZ, chunkWrapper);
 							
 							// try setting the wrapper's lighting
