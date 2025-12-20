@@ -154,6 +154,16 @@ public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 			if (this.isValidTime())
 			{
 				ServerApi.INSTANCE.serverPlayerJoinEvent(this.getServerPlayerWrapper(handler.player));
+				
+				// Send identification for all loaded levels to the joining player
+				// This is necessary for Immersive Portals which can render multiple dimensions at once
+				for (ServerLevel level : server.getAllLevels())
+				{
+					if (level != handler.player.level())
+					{
+						ServerApi.INSTANCE.serverLevelLoadEvent(this.getServerLevelWrapper(level));
+					}
+				}
 			}
 		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
