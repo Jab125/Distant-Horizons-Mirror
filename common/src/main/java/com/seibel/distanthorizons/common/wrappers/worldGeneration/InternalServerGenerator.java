@@ -7,6 +7,7 @@ import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
+import com.seibel.distanthorizons.core.enums.EMinecraftColor;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -218,8 +219,7 @@ public class InternalServerGenerator
 			if (Config.Common.Logging.Warning.showSlowWorldGenSettingWarnings.get())
 			{
 				String message =
-					// orange text
-					"\u00A76" + "Distant Horizons: slow world gen." + "\u00A7r\n" +
+					EMinecraftColor.ORANGE + "Distant Horizons: slow world gen." + EMinecraftColor.CLEAR_FORMATTING + "\n" +
 						c2meWarning;
 				ClientApi.INSTANCE.showChatMessageNextFrame(message);
 			}
