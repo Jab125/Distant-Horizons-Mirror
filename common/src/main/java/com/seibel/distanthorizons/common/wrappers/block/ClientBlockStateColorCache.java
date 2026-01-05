@@ -62,6 +62,8 @@ public class ClientBlockStateColorCache
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
+	private static final Minecraft MC = Minecraft.getInstance();
+	
 	private static final HashSet<BlockState> BLOCK_STATES_THAT_NEED_LEVEL = new HashSet<>();
 	private static final HashSet<BlockState> BROKEN_BLOCK_STATES = new HashSet<>();
 	
@@ -279,22 +281,23 @@ public class ClientBlockStateColorCache
 	@Nullable
 	private List<BakedQuad> getQuadsForDirection(@Nullable Direction direction)
 	{
-		List<BakedQuad> quads = null;
 		BlockState effectiveBlockState = this.blockState;
 		
+		// if this block is a slab, use it's double variant so we can get the top face,
+		// otherwise the color will use the side, which isn't as accurate
 		if (this.blockState.getBlock() instanceof SlabBlock)
 		{
 			effectiveBlockState = this.blockState.setValue( SlabBlock.TYPE, SlabType.DOUBLE );
 		}
 		
 		#if MC_VER < MC_1_21_5
-		quads = Minecraft.getInstance().getModelManager().getBlockModelShaper().
+		quads = MC.getModelManager().getBlockModelShaper().
 			getBlockModel(effectiveBlockState).getQuads(effectiveBlockState, direction, RANDOM);
 		#else
-		List<BlockModelPart> blockModelPartList = Minecraft.getInstance().getModelManager().getBlockModelShaper().
+		List<BlockModelPart> blockModelPartList = MC.getModelManager().getBlockModelShaper().
 			getBlockModel(effectiveBlockState).collectParts(RANDOM);
 		
-		quads = new ArrayList<>();
+		List<BakedQuad> quads = new ArrayList<>();
 		if (blockModelPartList != null)
 		{
 			for (int i = 0; i < blockModelPartList.size(); i++)
