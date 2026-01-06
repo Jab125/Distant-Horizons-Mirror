@@ -14,7 +14,7 @@ import com.seibel.distanthorizons.core.config.ConfigHandler;
 import com.seibel.distanthorizons.core.config.eventHandlers.presets.ThreadPresetConfigEventHandler;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.enums.EMinecraftColor;
+import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.jar.ModJarInfo;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -240,7 +240,7 @@ public abstract class AbstractModInitializer
 			if (showChatWarnings)
 			{
 				String message =
-					EMinecraftColor.ORANGE + "Distant Horizons: Alex's Cave detected." + EMinecraftColor.CLEAR_FORMATTING +
+					MinecraftTextFormat.ORANGE + "Distant Horizons: Alex's Cave detected." + MinecraftTextFormat.CLEAR_FORMATTING +
 								"You may have to change Alex's config for DH to render. ";
 				ClientApi.INSTANCE.showChatMessageNextFrame(message);
 			}
@@ -262,7 +262,7 @@ public abstract class AbstractModInitializer
 			if (showChatWarnings)
 			{
 				String message =
-					EMinecraftColor.ORANGE + "Distant Horizons: WWOO detected." + EMinecraftColor.CLEAR_FORMATTING + "\n" +
+					MinecraftTextFormat.ORANGE + "Distant Horizons: WWOO detected." + MinecraftTextFormat.CLEAR_FORMATTING + "\n" +
 								wwooWarning;
 				ClientApi.INSTANCE.showChatMessageNextFrame(message);
 			}
@@ -292,7 +292,7 @@ public abstract class AbstractModInitializer
 			if (showChatWarnings)
 			{
 				String message =
-					EMinecraftColor.ORANGE + "Distant Horizons: Chunky detected." + EMinecraftColor.CLEAR_FORMATTING + "\n" +
+					MinecraftTextFormat.ORANGE + "Distant Horizons: Chunky detected." + MinecraftTextFormat.CLEAR_FORMATTING + "\n" +
 								chunkyWarning;
 				ClientApi.INSTANCE.showChatMessageNextFrame(message);
 			}
