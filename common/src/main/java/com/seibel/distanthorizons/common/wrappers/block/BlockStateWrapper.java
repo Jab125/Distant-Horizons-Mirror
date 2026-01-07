@@ -225,6 +225,12 @@ public class BlockStateWrapper implements IBlockStateWrapper
 				// bedrock is a special case fully opaque block that does allow beacons through
 				allowsBeaconBeamPassage = true;
 			}
+			else if (lowercaseSerial.contains("minecraft:tinted_glass"))
+			{
+				// tinted glass is a special case where it isn't fully opaque,
+				// but should block beacons
+				allowsBeaconBeamPassage = false;
+			}
 			else if (propagatesSkyLightDown || !canOcclude)
 			{
 				// stairs, cake, fences, etc.
