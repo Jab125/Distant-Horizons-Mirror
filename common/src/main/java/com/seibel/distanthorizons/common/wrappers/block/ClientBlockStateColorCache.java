@@ -290,6 +290,8 @@ public class ClientBlockStateColorCache
 			effectiveBlockState = this.blockState.setValue( SlabBlock.TYPE, SlabType.DOUBLE );
 		}
 		
+		List<BakedQuad> quads;
+		
 		#if MC_VER < MC_1_21_5
 		quads = MC.getModelManager().getBlockModelShaper().
 			getBlockModel(effectiveBlockState).getQuads(effectiveBlockState, direction, RANDOM);
@@ -297,7 +299,7 @@ public class ClientBlockStateColorCache
 		List<BlockModelPart> blockModelPartList = MC.getModelManager().getBlockModelShaper().
 			getBlockModel(effectiveBlockState).collectParts(RANDOM);
 		
-		List<BakedQuad> quads = new ArrayList<>();
+		quads = new ArrayList<>();
 		if (blockModelPartList != null)
 		{
 			for (int i = 0; i < blockModelPartList.size(); i++)
@@ -565,10 +567,22 @@ public class ClientBlockStateColorCache
 		
 		static EColorMode getColorMode(Block block)
 		{
-			if (block instanceof LeavesBlock) return Leaves;
-			if (block instanceof FlowerBlock) return Flower;
-			if (block.toString().contains("glass")) return Glass;
-			if (block.toString().equals("Block{chiselsandbits:chiseled}")) return Chisel;
+			if (block instanceof LeavesBlock)
+			{
+				return Leaves;
+			}
+			if (block instanceof FlowerBlock)
+			{
+				return Flower;
+			}
+			if (block.toString().contains("glass"))
+			{
+				return Glass;
+			}
+			if (block.toString().equals("Block{chiselsandbits:chiseled}"))
+			{
+				return Chisel;
+			}
 			return Default;
 		}
 	}
