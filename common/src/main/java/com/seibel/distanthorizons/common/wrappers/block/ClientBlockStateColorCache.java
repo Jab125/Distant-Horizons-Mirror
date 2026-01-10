@@ -28,6 +28,7 @@ import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.block.model.BakedQuad;
+import net.minecraft.client.renderer.block.model.SimpleModelWrapper;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.*;
@@ -79,7 +80,16 @@ public class ClientBlockStateColorCache
 	
 	
 	/** This is the order each direction on a block is processed when attempting to get the texture/color */
-	private static final Direction[] COLOR_RESOLUTION_DIRECTION_ORDER = { Direction.UP, Direction.NORTH, Direction.EAST, Direction.WEST, Direction.SOUTH, Direction.DOWN };
+	private static final @Nullable Direction[] COLOR_RESOLUTION_DIRECTION_ORDER = 
+		{ 
+			Direction.UP,
+			null, // null represents "unculled" faces, IE the top of farmland
+			Direction.NORTH, 
+			Direction.EAST, 
+			Direction.WEST, 
+			Direction.SOUTH, 
+			Direction.DOWN 
+		};
 	
 	private static final int FLOWER_COLOR_SCALE = 5;
 	
