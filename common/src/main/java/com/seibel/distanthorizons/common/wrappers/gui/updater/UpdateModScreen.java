@@ -120,26 +120,26 @@ public class UpdateModScreen extends DhScreen
 		if (!ModInfo.IS_DEV_BUILD)
 		{
 			this.addBtn(new TexturedButtonWidget(
-					// Where the button is on the screen
-					this.width / 2 - 97, this.height / 2 + 8,
-					// Width and height of the button
-					20, 20,
-					// Offset
-					0, 0,
-					// Some textuary stuff
-					0, 
-					#if MC_VER < MC_1_21_1
-					new ResourceLocation(ModInfo.ID, "textures/gui/changelog.png"),
-					#elif MC_VER <= MC_1_21_10
-					ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
-					#else
-					Identifier.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
-					#endif
-					20, 20,
-					// Create the button and tell it where to go
-					(buttonWidget) -> Objects.requireNonNull(this.minecraft).setScreen(new ChangelogScreen(this, this.newVersionID)),
-					// Add a title to the button
-					Translatable(ModInfo.ID + ".updater.title")
+				// Where the button is on the screen
+				this.width / 2 - 97, this.height / 2 + 8,
+				// Width and height of the button
+				20, 20,
+				// Offset
+				0, 0,
+				// Some textuary stuff
+				0, 
+				#if MC_VER < MC_1_21_1
+				new ResourceLocation(ModInfo.ID, "textures/gui/changelog.png"),
+				#elif MC_VER <= MC_1_21_10
+				ResourceLocation.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
+				#else
+				Identifier.fromNamespaceAndPath(ModInfo.ID, "textures/gui/changelog.png"),
+				#endif
+				20, 20,
+				// Create the button and tell it where to go
+				(buttonWidget) -> Objects.requireNonNull(this.minecraft).setScreen(new ChangelogScreen(this, this.newVersionID)),
+				// Add a title to the button
+				Translatable(ModInfo.ID + ".updater.title")
 			));
 		}
 		

@@ -137,24 +137,24 @@ public class MixinOptionsScreen extends Screen
 		if (this.optionsButton == null)
 		{
 			this.optionsButton
-					= new TexturedButtonWidget(
-					// Where the button is on the screen
-					this.width / 2 - 180, this.height / 6 - 12,
-					// Width and height of the button
-					20, 20,
-					// texture UV Offset
-					0, 0,
-					// Some textuary stuff
-					20, ICON_TEXTURE, 20, 40,
-					// Create the button and tell it where to go
-					// For now it goes to the client option by default
-					(buttonWidget) -> Objects.requireNonNull(this.minecraft).setScreen(GetConfigScreen.getScreen(this)),
-					// Add a title to the button
-	                #if MC_VER < MC_1_19_2
-					new TranslatableComponent(ModInfo.ID + ".title"));
-	                #else
-					Component.translatable(ModInfo.ID + ".title"));
-					#endif
+				= new TexturedButtonWidget(
+				// Where the button is on the screen
+				this.width / 2 - 180, this.height / 6 - 12,
+				// Width and height of the button
+				20, 20,
+				// texture UV Offset
+				0, 0,
+				// Some textuary stuff
+				20, ICON_TEXTURE, 20, 40,
+				// Create the button and tell it where to go
+				// For now it goes to the client option by default
+				(buttonWidget) -> Objects.requireNonNull(this.minecraft).setScreen(GetConfigScreen.getScreen(this)),
+				// Add a title to the button
+                #if MC_VER < MC_1_19_2
+				new TranslatableComponent(ModInfo.ID + ".title"));
+                #else
+				Component.translatable(ModInfo.ID + ".title"));
+				#endif
 		}
 		
 		return this.optionsButton;
