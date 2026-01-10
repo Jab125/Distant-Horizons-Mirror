@@ -13,6 +13,7 @@ import java.util.regex.Pattern;
 
 import com.seibel.distanthorizons.api.enums.config.DisallowSelectingViaConfigGui;
 import com.seibel.distanthorizons.common.wrappers.gui.config.ConfigGuiInfo;
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftClientWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.ConfigHandler;
 import com.seibel.distanthorizons.core.config.types.*;
@@ -26,6 +27,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.AnnotationUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.IConfigGui;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -59,6 +61,9 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.Identifier;
 #endif
 
+import org.lwjgl.glfw.GLFW;
+import com.mojang.blaze3d.platform.InputConstants;
+
 import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.*;
 import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.Translatable;
 
@@ -83,6 +88,8 @@ public class ClassicConfigGUI
 			.build();
 	
 	public static final ConfigCoreInterface CONFIG_CORE_INTERFACE = new ConfigCoreInterface();
+	
+	private static final MinecraftClientWrapper MC_CLIENT = MinecraftClientWrapper.INSTANCE;
 	
 	
 	
@@ -415,17 +422,25 @@ public class ClassicConfigGUI
 			final ConfigGuiInfo configGuiInfo = ((ConfigGuiInfo) enumConfigEntry.guiValue);
 			
 			Function<Object, Component> getEnumTranslatableFunc = (value) -> Translatable(TRANSLATION_PREFIX + "enum." + enumClass.getSimpleName() + "." + enumConfigEntry.get().toString());
-			configGuiInfo.buttonOptionMap = 
-					new AbstractMap.SimpleEntry<Button.OnPress, Function<Object, Component>>(
+			configGuiInfo.buttonOptionMap =
+				new AbstractMap.SimpleEntry<Button.OnPress, Function<Object, Component>>(
 					(button) ->
 			{
 				// get the currently selected enum and enum index
 				int startingIndex = enumList.indexOf(enumConfigEntry.get());
 				Enum<?> enumValue = enumList.get(startingIndex);
 				
-				// search for the next enum that is selectable
-				int index = startingIndex + 1;
+				boolean shiftPressed = 
+					InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_LEFT_SHIFT)
+					|| InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_RIGHT_SHIFT);
+				
+				
+				
+				// move forward or backwards depending on if the shift key is pressed
+				int index = shiftPressed ? startingIndex-1 : startingIndex+1;
 				index = (index >= enumList.size()) ? 0 : index;
+				
+				// walk through the enums to find the next selectable one
 				while (index != startingIndex)
 				{
 					enumValue = enumList.get(index);
@@ -436,13 +451,24 @@ public class ClassicConfigGUI
 						break;
 					}
 					
-					index++;
-					index = (index >= enumList.size()) ? 0 : index;
+					// move forward or backwards depending on if the shift key is pressed
+					index = shiftPressed ? index-1 : index+1;
+					
+					// wrap around to the other side of the array when necessary
+					if (index >= enumList.size())
+					{
+						index = 0;
+					}
+					else if (index < 0)
+					{
+						index = enumList.size() - 1;
+					}
 				}
+				
 				
 				if (index == startingIndex)
 				{
-					// none of the enums should be selectable, this is a programmer error
+					// one of the enums should be selectable, this is a programmer error
 					enumValue = enumList.get(startingIndex);
 					LOGGER.warn("Enum [" + enumValue.getClass() + "] doesn't contain any values that should be selectable via the UI, sticking to the currently selected value [" + enumValue + "].");
 				}

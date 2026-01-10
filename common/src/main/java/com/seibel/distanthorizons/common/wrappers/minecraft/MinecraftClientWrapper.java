@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.wrappers.minecraft;
 
 import java.io.File;
 
+import com.mojang.blaze3d.platform.Window;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.render.glObject.GLProxy;
@@ -261,6 +262,24 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	//======//
 	// misc //
 	//======//
+	
+	/** 
+	 * no override and not included in {@link IMinecraftClientWrapper}
+	 * since this would only be used in common/client, not core.
+	 */
+	public 
+		#if MC_VER < MC_1_21_9 long
+		#else Window 
+		#endif
+		getGlfwWindowId()
+	{
+		#if MC_VER < MC_1_21_9
+		long glfwWindowId = MINECRAFT.getWindow().getWindow();
+		return glfwWindowId;
+		#else
+		return MINECRAFT.getWindow();
+		#endif
+	}
 	
 	@Override
 	public IProfilerWrapper getProfiler()
