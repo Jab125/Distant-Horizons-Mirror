@@ -22,8 +22,10 @@ package com.seibel.distanthorizons.fabric;
 import com.seibel.distanthorizons.common.AbstractModInitializer;
 import com.seibel.distanthorizons.common.AbstractPluginPacketSender;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftClientWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
+import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
@@ -64,11 +66,13 @@ import java.util.concurrent.AbstractExecutorService;
 import net.fabricmc.fabric.api.client.rendering.v1.WorldRenderEvents;
 #endif
 
+import com.mojang.blaze3d.platform.InputConstants;
+
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.phys.HitResult;
-import com.seibel.distanthorizons.core.logging.DhLogger;
+
 import org.lwjgl.glfw.GLFW;
 
 /**
@@ -82,13 +86,12 @@ import org.lwjgl.glfw.GLFW;
 @Environment(EnvType.CLIENT)
 public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 {
-	private final ClientApi clientApi = ClientApi.INSTANCE;
-	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-	private static final AbstractPluginPacketSender PACKET_SENDER = (AbstractPluginPacketSender) SingletonInjector.INSTANCE.get(IPluginPacketSender.class);
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	// TODO we shouldn't be filtering keys on the Forge/Fabric side, only in ClientApi
-	private static final int[] KEY_TO_CHECK_FOR = { GLFW.GLFW_KEY_F6, GLFW.GLFW_KEY_F8, GLFW.GLFW_KEY_P};
+	private static final MinecraftClientWrapper MC = MinecraftClientWrapper.INSTANCE;
+	private static final AbstractPluginPacketSender PACKET_SENDER = (AbstractPluginPacketSender) SingletonInjector.INSTANCE.get(IPluginPacketSender.class);
+	
+	private static final ClientApi clientApi = ClientApi.INSTANCE;
 	
 	HashSet<Integer> previouslyPressKeyCodes = new HashSet<>();
 	
@@ -336,23 +339,13 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		HashSet<Integer> currentKeyDown = new HashSet<>();
 		
-		// Note: Minecraft's InputConstants is same as GLFW Key values
-		//TODO: Use mixin to hook directly into the GLFW Keyboard event in minecraft KeyboardHandler
-		// Check all keys we need
-		for (int keyCode = GLFW.GLFW_KEY_A; keyCode <= GLFW.GLFW_KEY_Z; keyCode++)
+		// Note: Minecraft's InputConstants are the same as GLFW Key values
+		for (int keyCode = GLFW.GLFW_KEY_0; keyCode <= GLFW.GLFW_KEY_LAST; keyCode++)
 		{
-			//if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), keyCode))
-			//{
-			//	currentKeyDown.add(keyCode);
-			//}
-		}
-		
-		for (int keyCode : KEY_TO_CHECK_FOR)
-		{
-			//if (InputConstants.isKeyDown(Minecraft.getInstance().getWindow().getWindow(), keyCode))
-			//{
-			//	currentKeyDown.add(keyCode);
-			//}
+			if (InputConstants.isKeyDown(MC.getGlfwWindowId(), keyCode))
+			{
+				currentKeyDown.add(keyCode);
+			}
 		}
 		
 		// Diff and trigger events
