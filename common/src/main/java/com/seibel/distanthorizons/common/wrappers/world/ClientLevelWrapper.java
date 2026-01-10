@@ -77,6 +77,8 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	private final Function<BlockState, ClientBlockStateColorCache> createCachedBlockColorCacheFunc = (blockState) -> new ClientBlockStateColorCache(blockState, this);
 	
 	
+	private boolean cloudColorFailLogged = false;
+	
 	private BlockStateWrapper dirtBlockWrapper;
 	private IDhLevel dhLevel;
 	
@@ -343,14 +345,68 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	public Color getCloudColor(float tickDelta)
 	{
 		#if MC_VER < MC_1_21_3
-		Vec3 colorVec3 = this.level.getCloudColor(tickDelta);
-		return new Color((float)colorVec3.x, (float)colorVec3.y, (float)colorVec3.z);
+		Vec3 colorVec3 = null;
+		try
+		{
+			colorVec3 = this.level.getCloudColor(tickDelta);
+			return new Color((float)colorVec3.x, (float)colorVec3.y, (float)colorVec3.z);
+		}
+		catch (Exception e)
+		{
+			// extra logging is due to some mods returning weird values, this way we can track down the issue better
+			if (!this.cloudColorFailLogged)
+			{
+				this.cloudColorFailLogged = true;
+				
+				String colorString = "NULL";
+				if (colorVec3 != null)
+				{
+					colorString = "r["+(float)colorVec3.x+"] g["+(float)colorVec3.y+"] b["+(float)colorVec3.z+"]";
+				}
+				LOGGER.warn("Failed to get cloud color for ["+this.getDhIdentifier()+"]. vec3 ["+colorString+"], error: ["+e.getMessage()+"].", e);
+			}
+			
+			// default to white if there's an issue
+			return Color.WHITE;
+		}
 		#elif MC_VER <= MC_1_21_10
-		int argbColor = this.level.getCloudColor(tickDelta);
-		return ColorUtil.toColorObjARGB(argbColor);
+		int argbColor = 0;
+		try
+		{
+			argbColor = this.level.getCloudColor(tickDelta);
+			return ColorUtil.toColorObjARGB(argbColor);
+		}
+		catch (Exception e)
+		{
+			// extra logging is due to some mods returning weird values, this way we can track down the issue better
+			if (!this.cloudColorFailLogged)
+			{
+				this.cloudColorFailLogged = true;
+				LOGGER.warn("Failed to get cloud color for ["+this.getDhIdentifier()+"]. Int ["+argbColor+"], col ["+ColorUtil.toString(argbColor)+"], error: ["+e.getMessage()+"].", e);
+			}
+			
+			// default to white if there's an issue
+			return Color.WHITE;
+		}
 		#else
-		int argbColor = this.level.environmentAttributes().getValue(EnvironmentAttributes.CLOUD_COLOR, BlockPos.ZERO);
-		return new Color(ColorUtil.getRed(argbColor), ColorUtil.getGreen(argbColor), ColorUtil.getBlue(argbColor), 255 /* ignore alpha since DH clouds don't render correctly with transparency */);
+		int argbColor = 0;
+		try
+		{
+			argbColor = this.level.environmentAttributes().getValue(EnvironmentAttributes.CLOUD_COLOR, BlockPos.ZERO);
+			return new Color(ColorUtil.getRed(argbColor), ColorUtil.getGreen(argbColor), ColorUtil.getBlue(argbColor), 255 /* ignore alpha since DH clouds don't render correctly with transparency */);
+		}
+		catch (Exception e)
+		{
+			// extra logging is due to some mods returning weird values, this way we can track down the issue better
+			if (!this.cloudColorFailLogged)
+			{
+				this.cloudColorFailLogged = true;
+				LOGGER.warn("Failed to get cloud color for ["+this.getDhIdentifier()+"]. Int ["+argbColor+"], col ["+ColorUtil.toString(argbColor)+"], error: ["+e.getMessage()+"].", e);
+			}
+			
+			// default to white if there's an issue
+			return Color.WHITE;
+		}
 		#endif
 	}
 	
