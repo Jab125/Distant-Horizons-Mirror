@@ -142,9 +142,9 @@ public class MixinLevelRenderer
 		
 		
 		#if MC_VER < MC_1_21_1
-		ClientApi.RENDER_STATE.frameTime = Minecraft.getInstance().getFrameTime();
+		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getFrameTime();
 		#else
-		ClientApi.RENDER_STATE.frameTime = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
+		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
 		#endif
 		
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.level);

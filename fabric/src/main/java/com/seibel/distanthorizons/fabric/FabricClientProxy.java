@@ -231,9 +231,9 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 			#endif
 			
 			#if MC_VER < MC_1_21_1
-			ClientApi.RENDER_STATE.frameTime = renderContext.tickDelta();
+			ClientApi.RENDER_STATE.partialTickTime = renderContext.tickDelta();
 			#else
-			ClientApi.RENDER_STATE.frameTime = renderContext.tickCounter().getGameTimeDeltaTicks();
+			ClientApi.RENDER_STATE.partialTickTime = renderContext.tickCounter().getGameTimeDeltaTicks();
 			#endif
 			
 			ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, renderContext.world());
@@ -254,9 +254,9 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 			#endif
 			
 			#if MC_VER < MC_1_21_1
-			ClientApi.RENDER_STATE.frameTime = renderContext.tickDelta();
+			ClientApi.RENDER_STATE.partialTickTime = renderContext.tickDelta();
 			#else
-			ClientApi.RENDER_STATE.frameTime = renderContext.tickCounter().getGameTimeDeltaTicks();
+			ClientApi.RENDER_STATE.partialTickTime = renderContext.tickCounter().getGameTimeDeltaTicks();
 			#endif
 			
 			ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, renderContext.world());
@@ -276,9 +276,9 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 			#endif
 			
 			#if MC_VER < MC_1_21_1
-			ClientApi.RENDER_STATE.frameTime = renderContext.tickDelta();
+			ClientApi.RENDER_STATE.partialTickTime = renderContext.tickDelta();
 			#else
-			ClientApi.RENDER_STATE.frameTime = renderContext.tickCounter().getGameTimeDeltaTicks();
+			ClientApi.RENDER_STATE.partialTickTime = renderContext.tickCounter().getGameTimeDeltaTicks();
 			#endif
 			
 			ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, renderContext.world());

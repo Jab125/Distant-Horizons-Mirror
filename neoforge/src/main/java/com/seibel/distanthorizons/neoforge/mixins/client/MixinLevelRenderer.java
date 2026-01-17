@@ -27,9 +27,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 #else
-import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -50,13 +48,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
-import com.seibel.distanthorizons.neoforge.NeoforgeClientProxy;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
-import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 
 import org.spongepowered.asm.mixin.Mixin;
@@ -110,11 +105,11 @@ public class MixinLevelRenderer
 		
 		
 		#if MC_VER < MC_1_21_1
-		ClientApi.RENDER_STATE.frameTime = Minecraft.getInstance().getFrameTime();
+		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getFrameTime();
 		#elif MC_VER < MC_1_21_3
-		ClientApi.RENDER_STATE.frameTime = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
+		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
 		#else
-		ClientApi.RENDER_STATE.frameTime = Minecraft.getInstance().deltaTracker.getRealtimeDeltaTicks();
+		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().deltaTracker.getRealtimeDeltaTicks();
 		#endif
 		
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.level);
