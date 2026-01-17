@@ -45,7 +45,7 @@ public class NeoforgeMinecraftRenderWrapper extends MinecraftRenderWrapper
 				this.depthTextureCastFailLogged = true;
 				LOGGER.error("Unable to cast render Target depth texture to GlTexture. MC or a rendering mod may have changed the object type.", e);
 			}
-			return 0;
+			return -1;
 		}
 		#endif
 	}
@@ -72,7 +72,7 @@ public class NeoforgeMinecraftRenderWrapper extends MinecraftRenderWrapper
 				this.colorTextureCastFailLogged = true;
 				LOGGER.error("Unable to cast render Target color texture to ValidationGpuTexture or GlTexture. MC, Neoforge, or a rendering mod may have changed the object type.", e);
 			}
-			return 0;
+			return -1;
 		}
 		#endif
 	}

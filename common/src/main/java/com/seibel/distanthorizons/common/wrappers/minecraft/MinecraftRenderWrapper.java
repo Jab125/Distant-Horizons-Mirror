@@ -362,7 +362,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			if (glTexture == null)
 			{
 				// shouldn't happen, but just in case
-				return 0;
+				return -1;
 			}
 
 			return glTexture.glId();
@@ -376,7 +376,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 				this.depthTextureCastFailLogged = true;
 				LOGGER.error("Unable to cast render Target depth texture to GlTexture. MC or a rendering mod may have changed the object type.", e);
 			}
-			return 0;
+			return -1;
 		}
 		#endif
 	}
@@ -392,7 +392,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			if (glTexture == null)
 			{
 				// shouldn't happen, but just in case
-				return 0;
+				return -1;
 			}
 			
 			return glTexture.glId();
@@ -405,7 +405,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 				this.colorTextureCastFailLogged = true;
 				LOGGER.error("Unable to cast render Target color texture to GlTexture. MC or a rendering mod may have changed the object type.", e);
 			}
-			return 0;
+			return -1;
 		}
 		#endif
 	}
