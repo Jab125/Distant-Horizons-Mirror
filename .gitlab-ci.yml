@@ -106,10 +106,8 @@ pages:
 
 translations:
   stage: translations
+  needs: []
   image: crowdin/cli:latest
-  rules:
-    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
-      when: manual
   script:
     - crowdin upload sources
     - crowdin download --export-only-approved --skip-untranslated-files
