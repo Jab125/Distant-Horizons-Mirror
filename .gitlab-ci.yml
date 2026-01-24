@@ -5,6 +5,7 @@ image: eclipse-temurin:21
 # all stages need to be defined here
 # TODO: Make stages depend on what is in versionProperties
 stages:
+  - translations
   - build
   - api
   - pages
@@ -102,3 +103,14 @@ pages:
       - public
   allow_failure: false
   extends: .build_java
+
+translations:
+  stage: translations
+  image: crowdin/cli:latest
+  rules:
+    - if: '$CI_COMMIT_BRANCH == $CI_DEFAULT_BRANCH'
+      when: manual
+  script:
+    - crowdin upload sources
+    - crowdin download --export-only-approved --skip-untranslated-files
+    - for f in coreSubProjects/core/src/main/resources/assets/distanthorizons/lang/*.json; do [ -e "$f" ] || continue; n="$(basename "$f" | tr '[:upper:]' '[:lower:]')"; [ "$(basename "$f")" = "$n" ] || mv "$f" "$(dirname "$f")/$n"; done
