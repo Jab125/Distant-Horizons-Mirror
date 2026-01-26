@@ -111,6 +111,6 @@ translations:
   needs: []
   image: crowdin/cli:latest
   script:
-    - crowdin upload sources
+    - if [ "$CI_COMMIT_BEFORE_SHA" = "0000000000000000000000000000000000000000" ] || git diff --name-only "$CI_COMMIT_BEFORE_SHA" "$CI_COMMIT_SHA" -- coreSubProjects/core/src/main/resources/assets/distanthorizons/lang | grep -q .; then crowdin upload sources; fi
     - crowdin download --export-only-approved --skip-untranslated-files
     - for f in coreSubProjects/core/src/main/resources/assets/distanthorizons/lang/*.json; do [ -e "$f" ] || continue; n="$(basename "$f" | tr '[:upper:]' '[:lower:]')"; [ "$(basename "$f")" = "$n" ] || mv "$f" "$(dirname "$f")/$n"; done
