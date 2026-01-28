@@ -136,9 +136,8 @@ public class NeoforgeMain extends AbstractModInitializer
 	@Override
 	protected void createInitialClientBindings()
 	{
-		// replace MC RenderWrapper with more specific neoforge version
-		SingletonInjector.INSTANCE.unbind(IMinecraftRenderWrapper.class, MinecraftRenderWrapper.INSTANCE); // TODO replace with a replaceOrBind for simplicity
-		SingletonInjector.INSTANCE.bind(IMinecraftRenderWrapper.class, NeoforgeMinecraftRenderWrapper.INSTANCE);
+		// replace MC RenderWrapper with the more specific neoforge version
+		SingletonInjector.INSTANCE.replaceBinding(IMinecraftRenderWrapper.class, NeoforgeMinecraftRenderWrapper.INSTANCE);
 	}
 	
 	@Override
