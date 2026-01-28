@@ -20,12 +20,14 @@
 package com.seibel.distanthorizons.fabric.mixins.client;
 
 #if MC_VER < MC_1_19_4
+import com.seibel.distanthorizons.core.util.math.Mat4f;
 import net.minecraft.client.renderer.RenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Matrix4f;
 import org.lwjgl.opengl.GL32;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 #elif MC_VER < MC_1_21_6
+import com.seibel.distanthorizons.core.util.math.Mat4f;
 import net.minecraft.client.renderer.RenderType;
 import com.mojang.blaze3d.vertex.PoseStack;
 import org.joml.Matrix4f;
@@ -34,6 +36,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.framegraph.FrameGraphBuilder;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+import com.seibel.distanthorizons.core.util.math.Mat4f;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
