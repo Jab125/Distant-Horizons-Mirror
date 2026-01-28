@@ -371,7 +371,6 @@ public class ChunkWrapper implements IChunkWrapper
 		blockPos.setY(relY);
 		blockPos.setZ(relZ);
 		
-		// TODO copy into pooled array, this isn't thread safe and can cause MC to throw errors if the chunk is loaded
 		return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(blockPos), this.wrappedLevel);
 	}
 	
@@ -413,8 +412,10 @@ public class ChunkWrapper implements IChunkWrapper
 			LevelChunkSection section = sections[i];
 			if (section != null)
 			{
-	            // TODO implement section cloning for older MC versions, only 1.21.4 MC (and maybe other semi recent versions) have a clean way to handle this
-	            // TODO we probably want a wrapper object instead
+	            // Implementation notes:
+	            // implement section cloning for older MC versions, only 1.21.4 MC (and maybe other semi recent versions) have a clean way to handle this
+	            // we probably want a wrapper object instead
+	            
 				#if MC_VER < MC_1_21_4
 				this.levelChunkSections[i] = section;
 				#else

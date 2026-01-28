@@ -216,13 +216,6 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 	public LevelTickAccess<Fluid> getFluidTicks() { return BlackholeTickAccess.emptyLevelList(); }
 	#endif
 	
-	// TODO Check this
-//	@Override
-//	public List<? extends StructureStart<?>> startsForFeature(SectionPos sectionPos,
-//			StructureFeature<?> structureFeature) {
-//		return structFeat.startsForFeature(sectionPos, structureFeature);
-//	}
-	
 	// Skip updating the related tile entities
 	@Override
 	public boolean setBlock(BlockPos blockPos, BlockState blockState, int i, int j)
