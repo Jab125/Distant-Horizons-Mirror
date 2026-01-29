@@ -67,8 +67,8 @@ public final class StepNoise extends AbstractWorldGenStep
 			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
-		for (ChunkWrapper chunkWrapper : chunksToDo)
+		ArrayList<ChunkWrapper> chunksToGen = this.getChunkWrappersToGenerate(chunkWrappers);
+		for (ChunkWrapper chunkWrapper : chunksToGen)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
 			

@@ -69,10 +69,8 @@ public final class StepStructureStart extends AbstractWorldGenStep
 			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
 			ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
-		ArrayList<ChunkWrapper> chunksToDo = this.getChunkWrappersToGenerate(chunkWrappers);
+		ArrayList<ChunkWrapper> chunksToGen = this.getChunkWrappersToGenerate(chunkWrappers);
 		
-		// TODO should be put in wrapped environment so we can skip some other world gen steps
-		//  SURFACE wouldn't need structure generation either
 		#if MC_VER < MC_1_19_2
 		if (!this.environment.globalParams.worldGenSettings.generateFeatures())
 		#elif MC_VER < MC_1_19_4
@@ -86,7 +84,7 @@ public final class StepStructureStart extends AbstractWorldGenStep
 		
 		
 		
-		for (ChunkWrapper chunkWrapper : chunksToDo)
+		for (ChunkWrapper chunkWrapper : chunksToGen)
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
 			
@@ -111,6 +109,8 @@ public final class StepStructureStart extends AbstractWorldGenStep
 					this.environment.globalParams.mcServerLevel.dimension());
 			#endif
 			
+			
+			
 			#if MC_VER >= MC_1_18_2
 			try
 			{
@@ -120,7 +120,6 @@ public final class StepStructureStart extends AbstractWorldGenStep
 			{
 				// There's a rare issue with StructStart where it throws ArrayIndexOutOfBounds
 				// This means the structFeat is corrupted (For some reason) and I need to reset it.
-				// TODO: Figure out in the future why this happens even though I am using new structFeat - OLD
 				
 				// reset the structureStart
 				tParams.recreateStructureCheck();
