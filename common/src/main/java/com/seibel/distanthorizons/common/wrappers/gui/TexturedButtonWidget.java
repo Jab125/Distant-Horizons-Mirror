@@ -106,8 +106,7 @@ public class TexturedButtonWidget extends Button
 		#if MC_VER < MC_1_20_2
 		super(x, y, width, height, u, v, hoveredVOffset, textureResourceLocation, textureWidth, textureHeight, pressAction, text);
 		#else
-		// We don't pass on the text option as otherwise it will render (we normally pass it for narration)
-		// TODO: Find a fix for it
+		// We don't pass in the text option since it will render (we normally pass it in for narration)
 		super(x, y, width, height, Component.empty(), pressAction, DEFAULT_NARRATION);
 		
 		this.u = u;
