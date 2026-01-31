@@ -21,11 +21,11 @@ public class GetConfigScreen
 	
 	public static Screen getScreen(Screen parent)
 	{
-		// TODO it'd be nice to have this run automatically on startup
-		//  but this will only work once MC has added our lang file,
-		//  which won't be for sure added until we request a GUI
 		if (ModInfo.IS_DEV_BUILD)
 		{
+			// it'd be nice to have this run automatically on startup
+			// but this will only work once MC has added our lang file,
+			// which won't be for sure added until we request a GUI
 			String missingLangEntries = ConfigHandler.INSTANCE.generateLang(true, true);
 			
 			// trim to remove any newlines/spaces
@@ -45,7 +45,6 @@ public class GetConfigScreen
 			case Classic:
 				return ClassicConfigGUI.getScreen(parent, "client");
 			case JavaSwing:
-				//return MinecraftScreen.getScreen(parent, new JavaScreenHandlerScreen(new ConfigScreen()), ModInfo.ID + ".title");
 				return MinecraftScreen.getScreen(parent, new JavaScreenHandlerScreen(new JavaScreenHandlerScreen.ExampleScreen()), ModInfo.ID + ".title");
 			default:
 				throw new IllegalArgumentException("No config screen implementation defined for ["+useScreen+"].");

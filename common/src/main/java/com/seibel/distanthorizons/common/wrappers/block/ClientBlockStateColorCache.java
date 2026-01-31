@@ -322,7 +322,7 @@ public class ClientBlockStateColorCache
 		return quads;
 	}
 	
-	//TODO: Perhaps make this not just use the first frame?
+	/** if multiple frames are present, just the first one will be used */
 	private static int calculateColorFromTexture(TextureAtlasSprite texture, EColorMode colorMode)
 	{
 		int count = 0;

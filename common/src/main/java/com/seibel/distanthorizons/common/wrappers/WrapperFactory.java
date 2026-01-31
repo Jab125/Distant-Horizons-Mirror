@@ -103,7 +103,7 @@ public class WrapperFactory implements IWrapperFactory
 	@Override
 	public IBiomeWrapper deserializeBiomeWrapper(String str, ILevelWrapper levelWrapper) throws IOException { return BiomeWrapper.deserialize(str, levelWrapper); }
 	@Override 
-	public IBiomeWrapper getPlainsBiomeWrapper(ILevelWrapper levelWrapper) // TODO is there a way we could get this without the levelWrapper? it isn't necessary but would clean up the code a bit
+	public IBiomeWrapper getPlainsBiomeWrapper(ILevelWrapper levelWrapper)
 	{
 		try
 		{

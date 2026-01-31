@@ -29,10 +29,6 @@ public class MixinChunkMapCommon
 			return;
 		}
 		
-		// TODO are the following validations necessary since we are checking above if 
-		//  the callback return value should state if the chunk was actually saved or not?
-		//  Do we trust it to always be correct?
-		
 		
 		
 		// corrupt/incomplete chunk validation //

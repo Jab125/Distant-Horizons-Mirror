@@ -37,8 +37,6 @@ import java.util.*;
  *
  * @author coolGi
  */
-// TODO: After finishing the config, rewrite this in openGL as well
-// TODO: Make this
 public class ChangelogScreen extends DhScreen
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();

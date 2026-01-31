@@ -34,8 +34,6 @@ import java.util.*;
  *
  * @author coolGi
  */
-// TODO: After finishing the config, rewrite this in Java Swing as well
-// and also maybe add this suggestion https://discord.com/channels/881614130614767666/1035863487110467625/1035949054485594192
 public class UpdateModScreen extends DhScreen
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
@@ -105,7 +103,7 @@ public class UpdateModScreen extends DhScreen
 					195, 65,
 					// Create the button and tell it where to go
 					// For now it goes to the client option by default
-					(buttonWidget) -> System.out.println("Nice, you found an easter egg :)"), // TODO: Add a proper easter egg to pressing the logo (maybe with confetti)
+					(buttonWidget) -> LOGGER.info("Nice, you found an Easter egg :)"),
 					// Add a title to the button
 					Translatable(ModInfo.ID + ".updater.title"),
 					// Dont render the background of the button
