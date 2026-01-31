@@ -299,11 +299,20 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	@Override
 	public int getRenderDistance()
 	{
-		#if MC_VER < MC_1_18_2
-		//FIXME: How to resolve this?
+		#if MC_VER <= MC_1_17_1
 		return MC.options.renderDistance;
 		#else
 		return MC.options.getEffectiveRenderDistance();
+		#endif
+	}
+	
+	@Override
+	public int getFrameLimit()
+	{
+		#if MC_VER <= MC_1_18_2
+		return MC.options.framerateLimit;
+		#else
+		return MC.options.framerateLimit().get();
 		#endif
 	}
 	

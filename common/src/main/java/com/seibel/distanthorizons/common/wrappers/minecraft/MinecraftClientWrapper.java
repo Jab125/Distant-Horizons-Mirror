@@ -76,6 +76,7 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	//======================//
 	// multiplayer handling //
 	//======================//
+	//region
 	
 	@Override
 	public boolean hasSinglePlayerServer() { return MINECRAFT.hasSingleplayerServer(); }
@@ -125,11 +126,14 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		return (server != null) ? server.version.getString() : "UNKOWN";
 	}
 	
+	//endregion
+	
 	
 	
 	//=================//
 	// player handling //
 	//=================//
+	//region
 	
 	public LocalPlayer getPlayer() { return MINECRAFT.player; }
 	
@@ -166,11 +170,14 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		return new DhChunkPos(playerPos.x, playerPos.z);
 	}
 	
+	//endregion
+	
 	
 	
 	//================//
 	// level handling //
 	//================//
+	//region
 	
 	@Nullable
 	@Override
@@ -189,11 +196,14 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		return ClientLevelWrapper.getWrapper(level, bypassLevelKeyManager);
 	}
 	
+	//endregion
+	
 	
 	
 	//===========//
 	// messaging //
 	//===========//
+	//region
 	
 	@Override
 	public void sendChatMessage(String string)
@@ -233,11 +243,14 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
         #endif
 	}
 	
+	//endregion
+	
 	
 	
 	//==========================//
 	// vanilla option overrides //
 	//==========================//
+	//region
 	
 	public void disableVanillaClouds()
 	{
@@ -257,11 +270,14 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		#endif
 	}
 	
+	//endregion
+	
 	
 	
 	//======//
 	// misc //
 	//======//
+	//region
 	
 	/** 
 	 * no override and not included in {@link IMinecraftClientWrapper}
@@ -315,20 +331,29 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		#endif
 	}
 	
+	@Override
+	public void executeOnRenderThread(Runnable runnable) { MINECRAFT.execute(runnable); }
+	
+	//endregion
+	
 	
 	
 	//=============//
 	// mod support //
 	//=============//
+	//region
 	
 	@Override
 	public Object getOptionsObject() { return MINECRAFT.options; }
+	
+	//endregion
 	
 	
 	
 	//========//
 	// shared //
 	//========//
+	//region
 	
 	@Override
 	public boolean isDedicatedServer() { return false; }
@@ -349,6 +374,8 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 			return MINECRAFT.getSingleplayerServer().getPlayerCount();
 		}
 	}
+	
+	//endregion
 	
 	
 	
