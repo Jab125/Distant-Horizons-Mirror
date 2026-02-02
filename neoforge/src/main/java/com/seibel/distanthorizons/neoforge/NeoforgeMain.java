@@ -159,7 +159,6 @@ public class NeoforgeMain extends AbstractModInitializer
 				() -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> GetConfigScreen.getScreen(parent)));
 		#else
 		ModLoadingContext.get().registerExtensionPoint(IConfigScreenFactory.class,
-				// TODO fix potential null pointer
 				() -> (client, parent) -> GetConfigScreen.getScreen(parent));
 		#endif
 		
