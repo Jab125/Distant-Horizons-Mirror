@@ -27,6 +27,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
 #else
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.Camera;
@@ -101,17 +102,10 @@ public class MixinLevelRenderer
 		#else
 		ClientApi.RENDER_STATE.mcProjectionMatrix = McObjectConverter.Convert(projectionMatrix);
 		#endif
-	
 		
 		
-		#if MC_VER < MC_1_21_1
-		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getFrameTime();
-		#elif MC_VER < MC_1_21_3
-		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
-		#else
-		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().deltaTracker.getRealtimeDeltaTicks();
-		#endif
 		
+		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.level);
 		
 		

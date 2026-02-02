@@ -28,6 +28,7 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.seibel.distanthorizons.api.enums.config.EDhApiLodShading;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 
@@ -176,6 +177,18 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
+	public float getPartialTickTime()
+	{
+		#if MC_VER < MC_1_21_1
+		return MC.getFrameTime();
+		#elif MC_VER < MC_1_21_3
+		return MC.getTimer().getRealtimeDeltaTicks();
+		#else
+		return MC.deltaTracker.getRealtimeDeltaTicks();
+		#endif
+	}
+	
+	@Override
 	public Color getFogColor(float partialTicks)
 	{
 		#if MC_VER < MC_1_17_1
@@ -261,24 +274,16 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	{
 		if (MC.level.dimensionType().hasSkyLight())
 		{
-			float frameTime;
-			#if MC_VER < MC_1_21_1
-			frameTime = MC.getFrameTime();
-			#elif MC_VER < MC_1_21_3
-			frameTime = MC.getTimer().getRealtimeDeltaTicks();
-			#elif MC_VER <= MC_1_21_10
-			frameTime = MC.deltaTracker.getGameTimeDeltaTicks();
-			#else
-			frameTime = 0f; // unused
-			#endif
-			
 			#if MC_VER < MC_1_17_1
+			float frameTime = this.getPartialTickTime();
 			Vec3 colorValues = MC.level.getSkyColor(MC.gameRenderer.getMainCamera().getBlockPosition(), frameTime);
 			return new Color((float) colorValues.x, (float) colorValues.y, (float) colorValues.z);
 			#elif MC_VER < MC_1_21_3
+			float frameTime = this.getPartialTickTime();
 			Vec3 colorValues = MC.level.getSkyColor(MC.gameRenderer.getMainCamera().getPosition(), frameTime);
 			return new Color((float) colorValues.x, (float) colorValues.y, (float) colorValues.z);
 			#elif MC_VER <= MC_1_21_10
+			float frameTime = this.getPartialTickTime();
 			int argbColorInt = MC.level.getSkyColor(MC.gameRenderer.getMainCamera().getPosition(), frameTime);
 			return ColorUtil.toColorObjARGB(argbColorInt);
 			#else

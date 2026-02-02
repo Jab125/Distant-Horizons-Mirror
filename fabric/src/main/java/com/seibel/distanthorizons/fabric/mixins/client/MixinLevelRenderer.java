@@ -50,6 +50,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 #else
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
@@ -145,20 +146,12 @@ public class MixinLevelRenderer
 	    ClientApi.RENDER_STATE.mcProjectionMatrix = new Mat4f();
 	    ClientApi.RENDER_STATE.mcProjectionMatrix.setIdentity();
 		#else
-	    ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.Convert(positionMatrix);
-	    ClientApi.RENDER_STATE.mcProjectionMatrix = McObjectConverter.Convert(projectionMatrix);
+		ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.Convert(positionMatrix);
+		ClientApi.RENDER_STATE.mcProjectionMatrix = McObjectConverter.Convert(projectionMatrix);
 		#endif
-	    
-		// TODO move this into a common place
-		#if MC_VER < MC_1_21_1
-		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getFrameTime();
-		#elif MC_VER < MC_1_21_3
-		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
-		#else
-	    ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().deltaTracker.getRealtimeDeltaTicks();
-		#endif
-	    
-	    ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.level);
+		
+		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
+		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.level);
 	    
 	    
 	    

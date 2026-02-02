@@ -33,6 +33,8 @@ import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.LightTexture;
 import org.joml.Matrix4f;
 #endif
+
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
@@ -141,12 +143,7 @@ public class MixinLevelRenderer
 		#endif
 		
 		
-		#if MC_VER < MC_1_21_1
-		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getFrameTime();
-		#else
-		ClientApi.RENDER_STATE.partialTickTime = Minecraft.getInstance().getTimer().getRealtimeDeltaTicks();
-		#endif
-		
+		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.level);
 		
 		
