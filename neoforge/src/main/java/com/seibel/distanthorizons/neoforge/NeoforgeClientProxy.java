@@ -90,7 +90,6 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 		
 		ClientLevel clientLevel = (ClientLevel) level;
 		IClientLevelWrapper clientLevelWrapper = ClientLevelWrapper.getWrapper(clientLevel, true);
-		// TODO this causes a crash due to level being set to null somewhere
 		ClientApi.INSTANCE.clientLevelLoadEvent(clientLevelWrapper);
 	}
 	@SubscribeEvent

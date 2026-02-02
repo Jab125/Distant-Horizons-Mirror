@@ -16,8 +16,7 @@
         "client.MixinFogRenderer",
         "client.MixinLevelRenderer",
         "client.MixinLightTexture",
-        "client.MixinOptionsScreen",
-        "client.MixinTextureUtil"
+        "client.MixinOptionsScreen"
     ],
     "server": []
 }
