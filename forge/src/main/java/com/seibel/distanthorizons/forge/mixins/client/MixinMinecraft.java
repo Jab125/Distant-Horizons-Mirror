@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.forge.mixins.client;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiUpdateBranch;
 import com.seibel.distanthorizons.common.wrappers.gui.updater.UpdateModScreen;
+import com.seibel.distanthorizons.common.commonMixins.DhUpdateScreenBase;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.jar.installer.GitlabGetter;
@@ -86,52 +87,7 @@ public class MixinMinecraft
 	)
 	private void buildInitialScreens(Runnable runnable)
 	{
-		boolean showUpdater = SelfUpdater.onStart();  // always needs to be called, otherwise auto update setup won't be completed
-	
-		// TODO merge logic for forge, neo, and fabric
-		if (
-				showUpdater
-				&& Config.Client.Advanced.AutoUpdater.enableAutoUpdater.get() // Don't do anything if the user doesn't want it
-			)
-		{
-			runnable = () -> 
-			{
-				String versionId;
-				EDhApiUpdateBranch updateBranch = EDhApiUpdateBranch.convertAutoToStableOrNightly(Config.Client.Advanced.AutoUpdater.updateBranch.get());
-				if (updateBranch == EDhApiUpdateBranch.STABLE)
-				{
-					versionId = ModrinthGetter.getLatestIDForVersion(SingletonInjector.INSTANCE.get(IVersionConstants.class).getMinecraftVersion());
-				}
-				else
-				{
-					versionId = GitlabGetter.INSTANCE.projectPipelines.get(0).get("sha");
-				}
-				
-				if (versionId != null)
-				{
-					try
-					{
-						
-						Minecraft.getInstance().setScreen(new UpdateModScreen(
-								// TODO: Change to runnable, instead of tittle screen
-								new TitleScreen(false), // We don't want to use the vanilla title screen as it would fade the buttons
-								versionId
-						));
-					}
-					catch (Exception e)
-					{
-						// info instead of error since this can be ignored and probably just means
-						// there isn't a new DH version available
-						LOGGER.info("Unable to show DH update screen, reason: ["+e.getMessage()+"].");
-					}
-				}
-				else
-				{
-					LOGGER.info("Unable to find new DH update for the ["+updateBranch+"] branch. Assuming DH is up to date...");
-				}
-			};
-			runnable.run();
-		}
+		DhUpdateScreenBase.tryShowUpdateScreenAndRunAutoUpdateStartup(runnable);
 	}
 	#endif
 	

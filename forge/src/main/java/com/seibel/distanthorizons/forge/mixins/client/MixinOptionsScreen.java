@@ -54,7 +54,7 @@ public class MixinOptionsScreen extends Screen
 	}
 	
 	@Inject(at = @At("HEAD"), method = "init")
-	private void lodconfig$init(CallbackInfo ci)
+	private void dhConfig$init(CallbackInfo ci)
 	{
 		if (Config.Client.showDhOptionsButtonInMinecraftUi.get())
 		{

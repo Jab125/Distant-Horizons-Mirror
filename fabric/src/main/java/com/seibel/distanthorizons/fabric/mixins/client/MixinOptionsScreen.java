@@ -96,7 +96,7 @@ public class MixinOptionsScreen extends Screen
 	protected MixinOptionsScreen(Component title) { super(title); }
 	
 	@Inject(at = @At("RETURN"), method = "init")
-	private void lodconfig$init(CallbackInfo ci)
+	private void dhConfig$init(CallbackInfo ci)
 	{
 		if (Config.Client.showDhOptionsButtonInMinecraftUi.get())
 		{
@@ -110,7 +110,6 @@ public class MixinOptionsScreen extends Screen
 			this.addRenderableWidget(this.getOptionsButton());
 			
 			// add the button to the correct location in the UI
-			// TODO is there a better way to do this instead of using access transformers to inject into the exact UI elements?
 			LinearLayout layout = (LinearLayout) this.layout.headerFrame.children.get(0).child;
 			
 			// determine how wide the other option buttons are so we can put our botton to the left of them all
