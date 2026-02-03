@@ -69,18 +69,6 @@ public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 	
 	
 	
-	// TODO rename
-	private boolean isValidTime()
-	{
-		if (this.isDedicatedServer)
-		{
-			return true;
-		}
-		
-		//FIXME: This may cause init issue...
-		return !(Minecraft.getInstance().screen instanceof TitleScreen);
-	}
-	
 	private IClientLevelWrapper getClientLevelWrapper(ClientLevel level) { return ClientLevelWrapper.getWrapper(level); }
 	private ServerLevelWrapper getServerLevelWrapper(ServerLevel level) { return ServerLevelWrapper.getWrapper(level); }
 	private ServerPlayerWrapper getServerPlayerWrapper(ServerPlayer player) { return ServerPlayerWrapper.getWrapper(player); }
@@ -104,74 +92,50 @@ public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 		// ServerWorldLoadEvent
 		ServerLifecycleEvents.SERVER_STARTING.register((server) ->
 		{
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverLoadEvent(this.isDedicatedServer);
-			}
+			ServerApi.INSTANCE.serverLoadEvent(this.isDedicatedServer);
 		});
 		// ServerWorldUnloadEvent
 		ServerLifecycleEvents.SERVER_STOPPED.register((server) ->
 		{
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverUnloadEvent();
-			}
+			ServerApi.INSTANCE.serverUnloadEvent();
 		});
 		
 		// ServerLevelLoadEvent
 		ServerWorldEvents.LOAD.register((server, level) ->
 		{
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverLevelLoadEvent(this.getServerLevelWrapper(level));
-			}
+			ServerApi.INSTANCE.serverLevelLoadEvent(this.getServerLevelWrapper(level));
 		});
 		// ServerLevelUnloadEvent
 		ServerWorldEvents.UNLOAD.register((server, level) ->
 		{
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverLevelUnloadEvent(this.getServerLevelWrapper(level));
-			}
+			ServerApi.INSTANCE.serverLevelUnloadEvent(this.getServerLevelWrapper(level));
 		});
 		
 		// ServerChunkLoadEvent
 		ServerChunkEvents.CHUNK_LOAD.register((server, chunk) ->
 		{
 			ILevelWrapper level = this.getServerLevelWrapper((ServerLevel) chunk.getLevel());
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverChunkLoadEvent(
-						new ChunkWrapper(chunk, level),
-						level);
-			}
+			ServerApi.INSTANCE.serverChunkLoadEvent(
+				new ChunkWrapper(chunk, level),
+				level);
 		});
 		// ServerChunkSaveEvent - Done in MixinChunkMap
 		
 		ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
 		{
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverPlayerJoinEvent(this.getServerPlayerWrapper(handler.player));
-			}
+			ServerApi.INSTANCE.serverPlayerJoinEvent(this.getServerPlayerWrapper(handler.player));
 		});
 		ServerPlayConnectionEvents.DISCONNECT.register((handler, server) ->
 		{
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverPlayerDisconnectEvent(this.getServerPlayerWrapper(handler.player));
-			}
+			ServerApi.INSTANCE.serverPlayerDisconnectEvent(this.getServerPlayerWrapper(handler.player));
 		});
 		ServerEntityWorldChangeEvents.AFTER_PLAYER_CHANGE_WORLD.register((player, originLevel, destinationLevel) ->
 		{
-			if (this.isValidTime())
-			{
-				ServerApi.INSTANCE.serverPlayerLevelChangeEvent(
-						this.getServerPlayerWrapper(player),
-						this.getServerLevelWrapper(originLevel),
-						this.getServerLevelWrapper(destinationLevel)
-				);
-			}
+			ServerApi.INSTANCE.serverPlayerLevelChangeEvent(
+				this.getServerPlayerWrapper(player),
+				this.getServerLevelWrapper(originLevel),
+				this.getServerLevelWrapper(destinationLevel)
+			);
 		});
 		
 		#if MC_VER >= MC_1_20_6
