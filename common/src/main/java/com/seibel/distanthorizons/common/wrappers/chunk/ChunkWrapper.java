@@ -628,15 +628,14 @@ public class ChunkWrapper implements IChunkWrapper
 	@Override
 	public String toString() { return this.chunk.getClass().getSimpleName() + this.chunk.getPos(); }
 	
-	//@Override 
+	//@Override
 	//public int hashCode()
 	//{
 	//	if (this.blockBiomeHashCode == 0)
 	//	{
 	//		this.blockBiomeHashCode = this.getBlockBiomeHashCode();
 	//	}
-	//	
+	//
 	//	return this.blockBiomeHashCode;
 	//}
-	
 }

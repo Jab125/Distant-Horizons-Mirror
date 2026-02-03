@@ -51,6 +51,7 @@ import net.minecraft.client.Minecraft;
 import net.neoforged.neoforge.client.event.InputEvent;
 import net.neoforged.bus.api.SubscribeEvent;
 import org.lwjgl.opengl.GL32;
+import com.seibel.distanthorizons.common.ImmersivePortalsCompat;
 
 #if MC_VER < MC_1_20_6
 import net.neoforged.neoforge.event.TickEvent;
@@ -222,12 +223,23 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void afterLevelEntityRenderEvent(RenderLevelStageEvent.AfterEntities event)
 	{
-		#if MC_VER < MC_1_21_9
-		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, (ClientLevel)event.getLevel());
-		#else
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, event.getLevelRenderer().level);
-		#endif
-		
+
+		if (ClientApi.RENDER_STATE.clientLevelWrapper instanceof ClientLevelWrapper)
+		{
+			ClientLevelWrapper wrapper = (ClientLevelWrapper) ClientApi.RENDER_STATE.clientLevelWrapper;
+			if (ImmersivePortalsCompat.isImmersivePortalsActive())
+			{
+				if (!wrapper.isDhLevelLoaded())
+				{
+					LOGGER.debug("IP detected - On-demand loading level " + wrapper.getDhIdentifier() + " during rendering");
+					ClientApi.INSTANCE.clientLevelLoadEvent(wrapper);
+				}
+			}
+
+			wrapper.markRendered();
+		}
+
 		ClientApi.INSTANCE.renderFadeTransparent();
 	}
 	
@@ -240,7 +252,22 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 		#else
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, event.getLevelRenderer().level);
 		#endif
-		
+
+		if (ClientApi.RENDER_STATE.clientLevelWrapper instanceof ClientLevelWrapper)
+		{
+			ClientLevelWrapper wrapper = (ClientLevelWrapper) ClientApi.RENDER_STATE.clientLevelWrapper;
+			if (ImmersivePortalsCompat.isImmersivePortalsActive())
+			{
+				if (!wrapper.isDhLevelLoaded())
+				{
+					LOGGER.debug("IP detected - On-demand loading level " + wrapper.getDhIdentifier() + " during rendering");
+					ClientApi.INSTANCE.clientLevelLoadEvent(wrapper);
+				}
+			}
+
+			wrapper.markRendered();
+		}
+
 		ClientApi.INSTANCE.renderDeferredLodsForShaders();
 	}
 	
@@ -252,8 +279,22 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 		#else
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, event.getLevelRenderer().level);
 		#endif
-		
-		
+
+		if (ClientApi.RENDER_STATE.clientLevelWrapper instanceof ClientLevelWrapper)
+		{
+			ClientLevelWrapper wrapper = (ClientLevelWrapper) ClientApi.RENDER_STATE.clientLevelWrapper;
+			if (ImmersivePortalsCompat.isImmersivePortalsActive())
+			{
+				if (!wrapper.isDhLevelLoaded())
+				{
+					LOGGER.debug("IP detected - On-demand loading level " + wrapper.getDhIdentifier() + " during rendering");
+					ClientApi.INSTANCE.clientLevelLoadEvent(wrapper);
+				}
+			}
+
+			wrapper.markRendered();
+		}
+
 		try
 		{
 			// should generally only need to be set once per game session
@@ -265,8 +306,7 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 		{
 			LOGGER.error("Unexpected error in afterLevelRenderEvent: "+e.getMessage(), e);
 		}
-		
-		
+
 		ClientApi.INSTANCE.renderFadeOpaque();
 	}
 	

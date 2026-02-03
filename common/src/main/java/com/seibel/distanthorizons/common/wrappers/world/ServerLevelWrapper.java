@@ -49,6 +49,12 @@ import net.minecraft.world.level.chunk.ChunkStatus;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 #endif
 
+#if MC_VER <= MC_1_21_10
+#else
+import net.minecraft.world.level.ChunkPos;
+import net.minecraft.server.level.ChunkHolder;
+#endif
+
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,7 +68,7 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	private static final Map<ServerLevel, WeakReference<ServerLevelWrapper>> LEVEL_WRAPPER_REF_BY_SERVER_LEVEL = Collections.synchronizedMap(new WeakHashMap<>());
 	
 	private final ServerLevel level;
-	private IDhLevel dhLevel;
+	private volatile IDhLevel dhLevel;
 	
 	/** 
 	 * this name is cached to prevent issues during shutdown where
@@ -221,6 +227,41 @@ public class ServerLevelWrapper implements IServerLevelWrapper
         #else
 		return this.level.getMinY();
         #endif
+	}
+	
+	public IChunkWrapper tryGetChunk(DhChunkPos pos)
+	{
+		#if MC_VER < MC_1_21_11
+		if (!this.level.hasChunk(pos.getX(), pos.getZ()))
+		{
+			return null;
+		}
+		
+		ChunkAccess chunk = this.level.getChunk(pos.getX(), pos.getZ(), ChunkStatus.FULL, false);
+		if (chunk == null)
+		{
+			return null;
+		}
+		
+		return new ChunkWrapper(chunk, this);
+		#else
+		
+		// directly hitting the chunkMap is required otherwise MC will run this on the main server thread,
+		// causing lag
+		ChunkHolder chunkHolder = this.level.getChunkSource().chunkMap.getVisibleChunkIfPresent(new ChunkPos(pos.getX(), pos.getZ()).toLong());
+		if (chunkHolder == null)
+		{
+			return null;
+		}
+		
+		ChunkAccess chunk = chunkHolder.getChunkIfPresent(ChunkStatus.FULL);
+		if (chunk == null)
+		{
+			return null;
+		}
+		
+		return new ChunkWrapper(chunk, this);
+		#endif
 	}
 	
 	@Override
