@@ -169,7 +169,6 @@ public class TestGenericWorldGenerator implements IDhApiWorldGenerator
 					block = borderBlock;
 				}
 				
-				// TODO make mutable dataPoint object
 				// sky lighting can be ignored. DH will auto light the LODs after they've been submitted
 				// block lighting however will need to be generated here
 				dataPoints.add(DhApiTerrainDataPoint.create((byte)0, 0, 0, 0, maxHeight, block, biome));

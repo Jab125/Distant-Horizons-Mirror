@@ -102,7 +102,6 @@ public class FabricServerProxy implements AbstractModInitializer.IEventProxy
 		
 		
 		// ServerWorldLoadEvent
-		//TODO: Check if both of these use the correct timed events. (i.e. is it 'ed' or 'ing' one?)
 		ServerLifecycleEvents.SERVER_STARTING.register((server) ->
 		{
 			if (this.isValidTime())

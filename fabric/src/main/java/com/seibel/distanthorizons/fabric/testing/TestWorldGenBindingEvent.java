@@ -8,7 +8,6 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.server.level.ServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
-// TODO add to API example once Builderb0y has given the all-clear
 public class TestWorldGenBindingEvent extends DhApiLevelLoadEvent
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();

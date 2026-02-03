@@ -42,9 +42,6 @@ public class MixinSodiumRenderer
 
         if (renderPass.equals(DefaultTerrainRenderPasses.SOLID))
         {
-            //TODO: use matrices.modelView() and matrices.projection() instead of
-            // SodiumAccessor.mcModelViewMatrix,
-            // SodiumAccessor.mcProjectionMatrix,
             ClientApi.INSTANCE.renderLods(accessor.levelWrapper,
                     accessor.mcModelViewMatrix,
                     accessor.mcProjectionMatrix,
@@ -89,9 +86,6 @@ public class MixinSodiumRenderer
 
         if (pass.equals(BlockRenderPass.SOLID)) 
 		{
-            //TODO: use matrices.modelView() and matrices.projection() instead of
-            // SodiumAccessor.mcModelViewMatrix,
-            // SodiumAccessor.mcProjectionMatrix,
             ClientApi.INSTANCE.renderLods(accessor.levelWrapper,
                     accessor.mcModelViewMatrix,
                     accessor.mcProjectionMatrix,
