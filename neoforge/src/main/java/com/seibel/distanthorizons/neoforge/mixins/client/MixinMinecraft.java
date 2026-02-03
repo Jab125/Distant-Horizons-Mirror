@@ -25,6 +25,7 @@ public class MixinMinecraft
 	private void buildInitialScreens(Runnable runnable)
 	{
 		DhUpdateScreenBase.tryShowUpdateScreenAndRunAutoUpdateStartup(runnable);
+		runnable.run();
 	}
 	#endif
 	
