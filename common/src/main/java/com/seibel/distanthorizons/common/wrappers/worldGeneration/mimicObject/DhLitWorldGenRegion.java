@@ -388,8 +388,10 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 		if (chunkStatus != ChunkStatus.EMPTY 
 			&& chunkStatus != debugTriggeredForStatus)
 		{
-			LOGGER.info("WorldGen requiring [" + chunkStatus + "]"
-					+ " is outside the expected range. Returning EMPTY chunk.");
+			// logger disabled since this doesn't seem to significantly harm anything
+			// and it causes more confusion to end users when they see it in the log
+			//LOGGER.info("WorldGen requiring [" + chunkStatus + "]"
+			//		+ " is outside the expected range. Returning EMPTY chunk.");
 			debugTriggeredForStatus = chunkStatus;
 		}
 		
