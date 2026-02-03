@@ -27,7 +27,6 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.AnnotationUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.IConfigGui;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
@@ -124,9 +123,9 @@ public class ClassicConfigGUI
 	
 	/** if you want to get this config gui's screen call this */
 	public static Screen getScreen(Screen parent, String category)
-	{ return new ConfigScreen(parent, category); }
+	{ return new DhConfigScreen(parent, category); }
 	
-	private static class ConfigScreen extends DhScreen
+	private static class DhConfigScreen extends DhScreen
 	{
 		private static final ILangWrapper LANG_WRAPPER = SingletonInjector.INSTANCE.get(ILangWrapper.class);
 		
@@ -146,7 +145,7 @@ public class ClassicConfigGUI
 		// constructor //
 		//=============//
 		
-		protected ConfigScreen(Screen parent, String category)
+		protected DhConfigScreen(Screen parent, String category)
 		{
 			super(Translatable(
 					LANG_WRAPPER.langExists(ModInfo.ID + ".config" + (category.isEmpty() ? "." + category : "") + ".title") ?
@@ -758,7 +757,7 @@ public class ClassicConfigGUI
 			}
 			
 			
-			ButtonEntry button = ButtonEntry.BUTTON_BY_WIDGET.get(hoveredWidget);
+			DhButtonEntry button = DhButtonEntry.BUTTON_BY_WIDGET.get(hoveredWidget);
 			
 			
 			// A quick fix for tooltips on linked entries
@@ -824,7 +823,7 @@ public class ClassicConfigGUI
 	// helper classes //
 	//================//
 	
-	public static class ConfigListWidget extends ContainerObjectSelectionList<ButtonEntry>
+	public static class ConfigListWidget extends ContainerObjectSelectionList<DhButtonEntry>
 	{
 		Font textRenderer;
 		
@@ -840,15 +839,15 @@ public class ClassicConfigGUI
 			this.textRenderer = minecraftClient.font;
 		}
 		
-		public void addButton(ConfigScreen gui, AbstractConfigBase dhConfigType, AbstractWidget button, AbstractWidget resetButton, AbstractWidget indexButton, Component text)
-		{ this.addEntry(new ButtonEntry(gui, dhConfigType, button, text, resetButton, indexButton)); }
+		public void addButton(DhConfigScreen gui, AbstractConfigBase dhConfigType, AbstractWidget button, AbstractWidget resetButton, AbstractWidget indexButton, Component text)
+		{ this.addEntry(new DhButtonEntry(gui, dhConfigType, button, text, resetButton, indexButton)); }
 		
 		@Override
 		public int getRowWidth() { return 10_000; }
 		
 		public AbstractWidget getHoveredButton(double mouseX, double mouseY)
 		{
-			for (ButtonEntry buttonEntry : this.children())
+			for (DhButtonEntry buttonEntry : this.children())
 			{
 				AbstractWidget button = buttonEntry.button;
 				if (button != null 
@@ -879,13 +878,13 @@ public class ClassicConfigGUI
 	}
 	
 	
-	public static class ButtonEntry extends ContainerObjectSelectionList.Entry<ButtonEntry>
+	public static class DhButtonEntry extends ContainerObjectSelectionList.Entry<DhButtonEntry>
 	{
 		private static final Font textRenderer = Minecraft.getInstance().font;
 		
 		private final AbstractWidget button;
 		
-		private final ConfigScreen gui;
+		private final DhConfigScreen gui;
 		private final AbstractConfigBase dhConfigType;
 		
 		private final AbstractWidget resetButton;
@@ -897,12 +896,12 @@ public class ClassicConfigGUI
 		private final EConfigCommentTextPosition textPosition;
 		
 		public static final Map<AbstractWidget, Component> TEXT_BY_WIDGET = new HashMap<>();
-		/// TODO we should just use a wrapper or something
-		public static final Map<AbstractWidget, ButtonEntry> BUTTON_BY_WIDGET = new HashMap<>();
+		public static final Map<AbstractWidget, DhButtonEntry> BUTTON_BY_WIDGET = new HashMap<>();
 		
 		
 		
-		public ButtonEntry(ConfigScreen gui, AbstractConfigBase dhConfigType, 
+		public DhButtonEntry(
+			DhConfigScreen gui, AbstractConfigBase dhConfigType, 
 				AbstractWidget button, Component text, AbstractWidget resetButton, AbstractWidget indexButton)
 		{
 			TEXT_BY_WIDGET.put(button, text);
