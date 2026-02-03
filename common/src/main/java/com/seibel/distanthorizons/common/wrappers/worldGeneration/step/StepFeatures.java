@@ -37,7 +37,10 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 #endif
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.ConcurrentModificationException;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 
 
 public final class StepFeatures extends AbstractWorldGenStep
@@ -47,6 +50,8 @@ public final class StepFeatures extends AbstractWorldGenStep
 	public static final ChunkStatus STATUS = ChunkStatus.FEATURES;
 	
 	private final BatchGenerationEnvironment environment;
+	
+	public static final Set<String> LOGGED_ERRORS = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 	
 	
 	
@@ -94,15 +99,21 @@ public final class StepFeatures extends AbstractWorldGenStep
 				
 				Heightmap.primeHeightmaps(chunk, STATUS.heightmapsAfter());
 			}
-			catch (ConcurrentModificationException e) // ReportedException
+			catch (ConcurrentModificationException e)
 			{
-				// TODO
+				String message = "Concurrency issue when generating features for chunk at pos ["+chunkWrapper.getChunkPos()+"], error: ["+e.getMessage()+"], this message will only be logged once. This issue cannot be resolved from DH's end.";
+				if (LOGGED_ERRORS.add(message))
+				{
+					LOGGER.warn(message, e);
+				}
 			}
 			catch (Exception e)
 			{
-				LOGGER.warn("Unexpected issue when generating features for chunk at pos ["+chunkWrapper.getChunkPos()+"], error: ["+e.getMessage()+"].", e);
-				// FIXME: Features concurrent modification issue. Something about cocobeans might just
-				//  error out. For now just retry.
+				String message = "Unexpected issue when generating features for chunk at pos ["+chunkWrapper.getChunkPos()+"], error: ["+e.getMessage()+"].";
+				if (LOGGED_ERRORS.add(message))
+				{
+					LOGGER.warn(message, e);
+				}
 			}
 		}
 	}
