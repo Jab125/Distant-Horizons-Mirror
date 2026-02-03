@@ -955,10 +955,16 @@ public class ClassicConfigGUI
 		{
 			try
 			{
+				// setting the "y" variable is necessary so each child item
+				// renders at the correct height,
+				// if not set they will render off-screen.
 				#if MC_VER < MC_1_21_9
+				// Y value passed in from method args
 				#else
-				int y = this.getY(); /// TODO why is the Y value being set during render?
+				int y = this.getY();
 				#endif
+				
+				
 				
 				if (this.button != null)
 				{
