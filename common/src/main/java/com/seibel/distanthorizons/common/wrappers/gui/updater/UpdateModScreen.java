@@ -184,9 +184,7 @@ public class UpdateModScreen extends DhScreen
 		// background blur is already being rendered, rendering again causes the game to crash
 		#endif
 		
-		// TODO: add the tooltips for the buttons
 		super.render(matrices, mouseX, mouseY, delta); // Render the buttons
-		// TODO: Add tooltips
 		
 		// Render the text's
 		this.DhDrawCenteredString(matrices, this.font, 

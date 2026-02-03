@@ -101,7 +101,7 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	 * IE rendering.
 	 */
 	@Nullable
-	public static IClientLevelWrapper getWrapperIfDifferent(@Nullable IClientLevelWrapper levelWrapper, @NotNull ClientLevel level) // TODO handle null level
+	public static IClientLevelWrapper getWrapperIfDifferent(@Nullable IClientLevelWrapper levelWrapper, @NotNull ClientLevel level)
 	{
 		if (KEYED_CLIENT_LEVEL_MANAGER.isEnabled() && KEYED_CLIENT_LEVEL_MANAGER.getServerKeyedLevel() != levelWrapper)
 		{
