@@ -171,8 +171,8 @@ public class TestGenericWorldGenerator implements IDhApiWorldGenerator
 				
 				// sky lighting can be ignored. DH will auto light the LODs after they've been submitted
 				// block lighting however will need to be generated here
-				dataPoints.add(DhApiTerrainDataPoint.create((byte)0, 0, 0, 0, maxHeight, block, biome));
-				dataPoints.add(DhApiTerrainDataPoint.create((byte)0, 0, 0, maxHeight, 256, airBlock, biome));
+				dataPoints.add(DhApiTerrainDataPoint.create((byte)0, 0, 15, 0, maxHeight, block, biome));
+				dataPoints.add(DhApiTerrainDataPoint.create((byte)0, 0, 15, maxHeight, 256, airBlock, biome));
 				
 				pooledFullDataSource.setApiDataPointColumn(x, z, dataPoints);
 			}
