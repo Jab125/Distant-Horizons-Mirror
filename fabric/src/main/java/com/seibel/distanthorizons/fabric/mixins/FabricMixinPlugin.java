@@ -12,7 +12,6 @@ import java.util.Set;
  * @author coolGi
  * @author cortex
  */
-// TODO: Move to common if possible
 public class FabricMixinPlugin implements IMixinConfigPlugin
 {
 	
