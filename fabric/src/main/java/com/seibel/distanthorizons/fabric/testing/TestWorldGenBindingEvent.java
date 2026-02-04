@@ -24,7 +24,7 @@ public class TestWorldGenBindingEvent extends DhApiLevelLoadEvent
 			ServerLevel level = (ServerLevel) event.value.levelWrapper.getWrappedMcObject();
 			
 			// override the core DH world generator for this level
-			//IDhApiWorldGenerator exampleWorldGen = new TestChunkWorldGenerator(level); // TODO biomes are broken for some reason
+			//IDhApiWorldGenerator exampleWorldGen = new TestChunkWorldGenerator(level);
 			IDhApiWorldGenerator exampleWorldGen = new TestGenericWorldGenerator(event.value.levelWrapper);
 			DhApi.worldGenOverrides.registerWorldGeneratorOverride(event.value.levelWrapper, exampleWorldGen);
 		}

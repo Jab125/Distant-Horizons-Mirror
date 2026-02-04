@@ -11,6 +11,7 @@ import com.seibel.distanthorizons.api.objects.data.DhApiChunk;
 import com.seibel.distanthorizons.api.objects.data.DhApiTerrainDataPoint;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.QuartPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
@@ -83,7 +84,7 @@ public class TestChunkWorldGenerator extends AbstractDhApiChunkWorldGenerator
 				for (int y = minBuildHeight; y < maxBuildHeight; y++)
 				{
 					block = DhApi.Delayed.wrapperFactory.getBlockStateWrapper(new Object[]{chunk.getBlockState(new BlockPos(x, y, z))}, this.levelWrapper);
-					biome = DhApi.Delayed.wrapperFactory.getBiomeWrapper(new Object[]{chunk.getNoiseBiome(x, y, z)}, this.levelWrapper);
+					biome = DhApi.Delayed.wrapperFactory.getBiomeWrapper(new Object[]{chunk.getNoiseBiome(QuartPos.fromBlock(x), QuartPos.fromBlock(y), QuartPos.fromBlock(z))}, this.levelWrapper);
 					dataPoints.add(DhApiTerrainDataPoint.create((byte) 0, 0, 15, y, y + 1, block, biome));
 				}
 				
