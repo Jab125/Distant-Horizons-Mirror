@@ -10,10 +10,15 @@ import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.objects.data.DhApiChunk;
 import com.seibel.distanthorizons.api.objects.data.DhApiTerrainDataPoint;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.QuartPos;
+
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
+
+#if MC_VER >= MC_1_18_2
+import net.minecraft.core.BlockPos;
+import net.minecraft.core.QuartPos;
+#endif
+
 
 import java.util.ArrayList;
 

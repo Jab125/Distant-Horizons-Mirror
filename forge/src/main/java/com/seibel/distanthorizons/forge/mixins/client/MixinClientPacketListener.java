@@ -11,8 +11,6 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(ClientPacketListener.class)
 public class MixinClientPacketListener
 {
-	// TODO update fabric version as well
-	
 	@Inject(method = "handleLogin", at = @At("RETURN"))
 	void onHandleLoginEnd(CallbackInfo ci) { ClientApi.INSTANCE.onClientOnlyConnected(); }
 	
@@ -21,9 +19,6 @@ public class MixinClientPacketListener
 	#else
 	@Inject(method = "close", at = @At("HEAD"))
 	#endif
-	void onCleanupStart(CallbackInfo ci)
-	{
-		ClientApi.INSTANCE.onClientOnlyDisconnected();
-	}
+	void onCleanupStart(CallbackInfo ci) { ClientApi.INSTANCE.onClientOnlyDisconnected(); }
 	
 }

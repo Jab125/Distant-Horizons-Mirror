@@ -76,11 +76,6 @@ public class MixinLevelRenderer
 	@Unique
 	private static float previousPartialTicks = 0;
 	
-	// TODO: Is there any reason why this is here? Can it be deleted?
-	public MixinLevelRenderer()
-	{
-		throw new NullPointerException("Null cannot be cast to non-null type.");
-	}
 	
 	#if MC_VER < MC_1_17_1
 	@Inject(at = @At("RETURN"), method = "renderSky(Lcom/mojang/blaze3d/vertex/PoseStack;F)V")

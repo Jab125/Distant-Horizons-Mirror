@@ -28,7 +28,7 @@ import org.spongepowered.asm.mixin.Mixin;
  *
  * @see MixinUtilBackgroundThread
  */
-@Mixin(net.minecraft.Util.class) // TODO we should allow version specific mixins so we don't have to create dummy mixins that exist for all MC versions
+@Mixin(net.minecraft.Util.class)
 public class MixinTracingExecutor
 {
 	

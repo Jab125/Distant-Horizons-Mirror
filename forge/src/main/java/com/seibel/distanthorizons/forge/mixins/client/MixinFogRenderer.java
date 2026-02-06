@@ -41,8 +41,6 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.FogType;
 #endif
 
-
-
 @Mixin(FogRenderer.class)
 public class MixinFogRenderer
 {
