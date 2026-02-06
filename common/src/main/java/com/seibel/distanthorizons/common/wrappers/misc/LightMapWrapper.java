@@ -27,7 +27,10 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL32;
 
+#if MC_VER < MC_1_21_3
 import java.nio.ByteBuffer;
+#else
+#endif
 
 public class LightMapWrapper implements ILightMapWrapper
 {
@@ -41,14 +44,18 @@ public class LightMapWrapper implements ILightMapWrapper
 	//==============//
 	// constructors //
 	//==============//
+	//region
 	
 	public LightMapWrapper() { }
+	
+	//endregion
 	
 	
 	
 	//==================//
 	// lightmap syncing //
 	//==================//
+	//region
 	
 	public void uploadLightmap(NativeImage image)
 	{
@@ -86,27 +93,34 @@ public class LightMapWrapper implements ILightMapWrapper
 		#endif
 	}
 	
-	public void setLightmapId(int minecraftLightmapTetxureId)
+	public void setLightmapId(int minecraftLightmapTextureId)
 	{
 		// just use the MC texture ID
-		this.textureId = minecraftLightmapTetxureId;
+		this.textureId = minecraftLightmapTextureId;
 	}
+	
+	//endregion
 	
 	
 	
 	//==============//
 	// lightmap use //
 	//==============//
+	//region
 	
 	@Override
 	public void bind()
 	{
-		GLMC.glActiveTexture(GL32.GL_TEXTURE0);
+		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + ILightMapWrapper.BOUND_INDEX);
 		GLMC.glBindTexture(this.textureId);
 	}
 	
 	@Override
 	public void unbind() { GLMC.glBindTexture(0); }
+	
+	//endregion
+	
+	
 	
 }
 
