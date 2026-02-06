@@ -53,7 +53,7 @@ public class DhUpdateScreenBase
 				if (pipelines != null
 					&& pipelines.size() > 0)
 				{
-					versionId = pipelines.getFirst().get("sha");
+					versionId = pipelines.get(0).get("sha");
 				}
 				else
 				{
