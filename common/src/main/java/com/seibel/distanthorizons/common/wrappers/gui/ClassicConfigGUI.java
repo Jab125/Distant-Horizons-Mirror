@@ -573,7 +573,7 @@ public class ClassicConfigGUI
 							optionFieldPosX, optionFieldPosZ,
 							ConfigScreenConfigs.OPTION_FIELD_WIDTH - 4, ConfigScreenConfigs.CATEGORY_BUTTON_HEIGHT,
 							Translatable(""));
-					widget.setMaxLength(ConfigScreenConfigs.OPTION_FIELD_WIDTH);
+					widget.setMaxLength(3_000_000); // hopefully 3 million characters should be enough for any normal use-case, lol
 					widget.insertText(String.valueOf(configEntry.get()));
 					
 					Predicate<String> processor = configGuiInfo.tooltipFunction.apply(widget, this.doneButton);
