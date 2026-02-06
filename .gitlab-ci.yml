@@ -3,7 +3,6 @@
 image: eclipse-temurin:21
 
 # all stages need to be defined here
-# TODO: Make stages depend on what is in versionProperties
 stages:
   - build
   - api
