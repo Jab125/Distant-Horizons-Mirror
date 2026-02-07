@@ -204,15 +204,6 @@ subprojects { p ->
                 developmentForge.extendsFrom coreProjects
             if (findProject(":neoforge"))
                 developmentNeoForge.extendsFrom coreProjects
-
-            // TODO remove unused fabricLike
-            if (findProject(":fabricLike") && p != project(":fabricLike")) {
-                // Shadow fabricLike
-                fabricLike
-                shadowFabricLike
-                compileClasspath.extendsFrom fabricLike
-                runtimeClasspath.extendsFrom fabricLike
-            }
         }
     }
 
@@ -318,12 +309,6 @@ subprojects { p ->
             // Common
             common(project(":common")) { transitive false }
             shadowCommon(project(":common")) { transitive false }
-
-            // FabricLike
-            if (findProject(":fabricLike") && p != project(":fabricLike")) {
-                fabricLike(project(path: ":fabricLike")) { transitive false }
-                shadowFabricLike(project(path: ":fabricLike")) { transitive false }
-            }
         }
     }
 
@@ -333,11 +318,6 @@ subprojects { p ->
         if (isMinecraftSubProject && p != project(":common")) {
             configurations.push(project.configurations.shadowCommon) // Shadow the common subproject
             relocate "com.seibel.distanthorizons.common", "loaderCommon.${p.name}.com.seibel.distanthorizons.common" // Move the loader files to a different location
-        
-            if (findProject(":fabricLike") && p != project(":fabricLike")) {
-                configurations.push(project.configurations.shadowFabricLike) // Shadow the fabricLike subproject
-                relocate "com.seibel.distanthorizons.fabriclike", "loaderCommon.${p.name}.com.seibel.distanthorizons.fabriclike" // Move the loader files to a different location
-            }
         }
         def librariesLocation = "DistantHorizons.libraries"
 
@@ -394,9 +374,6 @@ subprojects { p ->
         // NightConfig (includes Toml & Json)
         relocate "com.electronwill.nightconfig", "${librariesLocation}.electronwill.nightconfig"
 
-        // SVG (not needed atm)
-//        relocate "com.kitfox.svg", "${librariesLocation}.kitfox.svg"
-        
         // Netty
         // Don't relocate, it causes problems with using MC's FriendlyByteBufs
 //        relocate "io.netty", "${librariesLocation}.netty"
@@ -408,10 +385,10 @@ subprojects { p ->
 
 
     // Put stuff from gradle.properties into the mod info
+    // Note: these resources are only included in the mod jars, the core and API jars don't include these files
     processResources {
         def resourceTargets = [ // Location of where to inject the properties
                                 // Holds info like git commit
-                                // TODO: For some reason this script doesnt work with the core project
                                 "build_info.json",
 
                                 // Properties for each of the loaders
@@ -421,7 +398,7 @@ subprojects { p ->
                                 "META-INF/neoforge.mods.toml",
 
                                 // The mixins for each of the loaders
-                                "DistantHorizons."+ p.name +".fabricLike.mixins.json"
+                                //"DistantHorizons."+ p.name +".fabricLike.mixins.json"
         ]
         def intoTargets = ["$buildDir/resources/main/"] // Location of the built resources folder
 
@@ -505,13 +482,8 @@ subprojects { p ->
 
 
         // ==================== Delete un-needed files ====================
-        exclude "DistantHorizons.fabricLike.mixins.json" // This isnt required atm, but we will be using it later
-
-//        exclude "*.distanthorizons.accesswidener"
-////        include "${accessWidenerVersion}.distanthorizons.accesswidener"
-
         // Jank solution to remove all unused accesswideners
-        // The line above would work..., except that (neo)forge (well, mainly architectury) requires the original accesswidener file, meaning we require this jank solution to keep it
+        // (neo)forge (well, mainly architectury) requires the original accesswidener file, meaning we require this jank solution to keep it
         exclude { file ->
             if (file.name.contains(".distanthorizons.accesswidener") && file.name != "${accessWidenerVersion}.distanthorizons.accesswidener") {
                 return true
@@ -699,14 +671,6 @@ allprojects { p ->
         from project(":common").file("src/main/resources/${accessWidenerVersion}.distanthorizons.accesswidener")
         into(file(p.file("build/resources/main")))
         rename "${accessWidenerVersion}.distanthorizons.accesswidener", "distanthorizons.accesswidener"
-
-
-        // Move the fabricLike mixin to its different places for each subproject
-        if (findProject(":fabricLike")) {
-            from project(":fabricLike").file("src/main/resources/DistantHorizons.fabricLike.mixins.json")
-            into(file(p.file("build/resources/main")))
-            rename "DistantHorizons.fabricLike.mixins.json", "DistantHorizons." + p.name + ".fabricLike.mixins.json"
-        }
     }
 
     task copyCoreResources(type: Copy) {
