@@ -302,6 +302,10 @@ public class ClassicConfigGUI
 				{
 					setupTextMenuOption(configEntry, Double::parseDouble, DECIMAL_ONLY_REGEX, false);
 				}
+				else if (configValueClass == Float.class)
+				{
+					setupTextMenuOption(configEntry, Float::parseFloat, DECIMAL_ONLY_REGEX, false);
+				}
 				else if (configValueClass == String.class || configValueClass == List.class)
 				{
 					// For string or list
@@ -317,6 +321,10 @@ public class ClassicConfigGUI
 					ConfigEntry<Enum<?>> enumConfigEntry = (ConfigEntry<Enum<?>>) configEntry;
 					Class<? extends Enum<?>> configEnumClass = (Class<? extends Enum<?>>) configValueClass;
 					setupEnumMenuOption(enumConfigEntry, configEnumClass);
+				}
+				else
+				{
+					LOGGER.error("No definition for config with type: ["+configValueClass.getName()+"], for config: ["+configMenuOption.name+"].");
 				}
 			}
 			
