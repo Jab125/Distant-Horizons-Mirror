@@ -418,9 +418,6 @@ subprojects { p ->
         quilt_contributors.reverse()
         //println quilt_contributors.join(", ")
 
-        // TODO: Find something we can use so we can basically re-map only when the jar is shadowed and relocated
-//        println p.tasks.findByName('shadowJar')
-
         
         // These "hasProperty"'s are so that they can be passed through the cli (ie in the CI)
         try {
@@ -626,7 +623,6 @@ allprojects { p ->
                 includeGroup "forge-mod"
             }
         }
-        // TODO: If neoforged is ever needed, should we use that, or call it a forge mod?
     }
 
     // Adds some dependencies that are in vanilla but not in core
