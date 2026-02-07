@@ -3,21 +3,12 @@ package com.seibel.distanthorizons.common.wrappers.gui;
 import com.seibel.distanthorizons.core.config.ConfigHandler;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;
-import com.seibel.distanthorizons.core.config.gui.JavaScreenHandlerScreen;
 import net.minecraft.client.gui.screens.Screen;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
 public class GetConfigScreen
 {
 	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
-	
-	public static EType useScreen = EType.Classic;
-	
-	public enum EType
-	{
-		Classic,
-		JavaSwing;
-	}
 	
 	public static Screen getScreen(Screen parent)
 	{
@@ -39,16 +30,7 @@ public class GetConfigScreen
 			}
 		}
 		
-		
-		switch (useScreen)
-		{
-			case Classic:
-				return ClassicConfigGUI.getScreen(parent, "client");
-			case JavaSwing:
-				return MinecraftScreen.getScreen(parent, new JavaScreenHandlerScreen(new JavaScreenHandlerScreen.ExampleScreen()), ModInfo.ID + ".title");
-			default:
-				throw new IllegalArgumentException("No config screen implementation defined for ["+useScreen+"].");
-		}
+		return ClassicConfigGUI.getScreen(parent, "client");
 	}
 	
 }
