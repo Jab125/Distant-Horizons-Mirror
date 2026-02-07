@@ -228,7 +228,7 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, event.getLevelRenderer().level);
 		#endif
 		
-		ClientApi.INSTANCE.renderFadeTransparent();
+		ClientApi.INSTANCE.renderFadeOpaque();
 	}
 	
 	
@@ -267,7 +267,7 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 		}
 		
 		
-		ClientApi.INSTANCE.renderFadeOpaque();
+		ClientApi.INSTANCE.renderFadeTransparent();
 	}
 	
 	#endif

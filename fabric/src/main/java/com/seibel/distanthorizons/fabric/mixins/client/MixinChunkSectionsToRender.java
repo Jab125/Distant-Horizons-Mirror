@@ -65,12 +65,12 @@ public class MixinChunkSectionsToRender
 		
 		if (chunkSectionLayerGroup == ChunkSectionLayerGroup.TRANSLUCENT)
 		{
-			ClientApi.INSTANCE.renderFadeTransparent();
+			ClientApi.INSTANCE.renderFadeOpaque();
 			ClientApi.INSTANCE.renderDeferredLodsForShaders();
 		}
 		else if (chunkSectionLayerGroup == ChunkSectionLayerGroup.TRIPWIRE)
 		{
-			ClientApi.INSTANCE.renderFadeOpaque();
+			ClientApi.INSTANCE.renderFadeTransparent();
 		}
 	}
 	
