@@ -87,14 +87,18 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
 	protected ClientLevelWrapper(ClientLevel level) { this.level = level; }
+	
+	//endregion
 	
 	
 	
 	//==================//
 	// instance methods //
 	//==================//
+	//region
 	
 	/** 
 	 * can be used when speed is important and the same level is likely to be passed in,
@@ -201,11 +205,14 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		}
 	}
 	
+	//endregion
+	
 	
 	
 	//====================//
 	// base level methods //
 	//====================//
+	//region
 	
 	@Override
 	public int getBlockColor(DhBlockPos blockPos, IBiomeWrapper biome, FullDataSourceV2 fullDataSource, IBlockStateWrapper blockWrapper)
@@ -220,7 +227,6 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		
 		return blockColorCache.getColor((BiomeWrapper) biome, fullDataSource, blockPos);
 	}
-	
 	
 	@Override
 	public int getDirtBlockColor()
@@ -245,24 +251,43 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	@Override 
 	public void clearBlockColorCache() { this.blockColorCacheByBlockState.clear(); }
 	
+	private IDimensionTypeWrapper dimensionTypeWrapper = null;
 	@Override
 	public IDimensionTypeWrapper getDimensionType()
 	{
+		// cached since dimensionType() is a dictionary lookup that allocates objects
+		// and this call is used in a high traffic location
+		if (this.dimensionTypeWrapper != null)
+		{
+			return this.dimensionTypeWrapper;
+		}
+		
 		#if MC_VER <= MC_1_21_10
-		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType());
+		this.dimensionTypeWrapper = DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType());
 		#else
-		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType(), this.getDimensionName());
+		this.dimensionTypeWrapper = DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType(), this.getDimensionName());
 		#endif
+		return this.dimensionTypeWrapper;
 	}
 	
+	private String dimensionName = null;
 	@Override
 	public String getDimensionName()
 	{
+		// cached since toString() allocates a new string each time
+		// and this call is used in a high traffic location
+		if (this.dimensionName != null)
+		{
+			return this.dimensionName;
+		}
+		
+		
 		#if MC_VER <= MC_1_21_10
-		return this.level.dimension().location().toString();
+		this.dimensionName = this.level.dimension().location().toString();
 		#else
-		return this.level.dimension().identifier().toString();
+		this.dimensionName = this.level.dimension().identifier().toString();
 		#endif
+		return this.dimensionName;
 	}
 	
 	@Override
@@ -276,25 +301,72 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	
 	public ClientLevel getLevel() { return this.level; }
 	
+	private Boolean dimHasCeiling = null;
 	@Override
-	public boolean hasCeiling() { return this.level.dimensionType().hasCeiling(); }
+	public boolean hasCeiling() 
+	{
+		// cached since dimensionType() is a dictionary lookup that allocates objects
+		// and this call is used in a high traffic location
+		if (this.dimHasCeiling != null)
+		{
+			return this.dimHasCeiling;
+		}
+		
+		
+		this.dimHasCeiling = this.level.dimensionType().hasCeiling();
+		return this.dimHasCeiling;
+	}
 	
+	private Boolean dimHasSkyLight = null;
 	@Override
-	public boolean hasSkyLight() { return this.level.dimensionType().hasSkyLight(); }
+	public boolean hasSkyLight() 
+	{
+		// cached since dimensionType() is a dictionary lookup that allocates objects
+		// and this call is used in a high traffic location
+		if (this.dimHasSkyLight != null)
+		{
+			return this.dimHasSkyLight;
+		}
+		
+		this.dimHasSkyLight = this.level.dimensionType().hasSkyLight();
+		return this.dimHasSkyLight;
+	}
 	
+	private Integer dimMaxHeight = null;
 	@Override
-	public int getMaxHeight() { return this.level.getHeight(); }
+	public int getMaxHeight() 
+	{
+		// cached since getHeight() is a dictionary lookup that allocates objects
+		// and this call is used in a high traffic location
+		if (this.dimMaxHeight != null)
+		{
+			return this.dimMaxHeight;
+		}
+		
+		this.dimMaxHeight = this.level.getHeight();
+		return this.dimMaxHeight;
+	}
 	
+	private Integer dimMinHeight = null;
 	@Override
 	public int getMinHeight()
 	{
+		// cached since getMinY() is a dictionary lookup that allocates objects
+		// and this call is used in a high traffic location
+		if (this.dimMinHeight != null)
+		{
+			return this.dimMinHeight;
+		}
+		
+		
         #if MC_VER < MC_1_17_1
-        return 0;
+        this.dimMinHeight = 0;
 		#elif MC_VER < MC_1_21_3
-		return this.level.getMinBuildHeight();
+		this.dimMinHeight = this.level.getMinBuildHeight();
         #else
-		return this.level.getMinY();
+		this.dimMinHeight = this.level.getMinY();
         #endif
+		return this.dimMinHeight;
 	}
 	
 	@Override
@@ -318,12 +390,14 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		return this.dhLevel.getSaveStructure().getSaveFolder(this);
 	}
 	
+	//endregion
 	
 	
 	
 	//===================//
 	// generic rendering //
 	//===================//
+	//region
 	
 	@Override
 	public void setDhLevel(IDhLevel dhLevel) { this.dhLevel = dhLevel; }
@@ -410,11 +484,14 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		#endif
 	}
 	
+	//endregion
+	
 	
 	
 	//================//
 	// base overrides //
 	//================//
+	//region
 	
 	@Override
 	public String toString()
@@ -426,5 +503,9 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		
 		return "Wrapped{" + this.level.toString() + "@" + this.getDhIdentifier() + "}";
 	}
+	
+	//endregion
+	
+	
 	
 }

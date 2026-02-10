@@ -28,6 +28,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
+import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
@@ -43,6 +44,7 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 #if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
@@ -100,8 +102,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		"netherite_block"
 	);
 	
-	public static HashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
-	public static HashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
+	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
+	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
 	
 	/** keep track of broken blocks so we don't log every time */
 	#if MC_VER <= MC_1_21_10
@@ -136,6 +138,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	//==============//
 	// constructors //
 	//==============//
+	//region
 	
 	public static BlockStateWrapper fromBlockState(BlockState blockState, ILevelWrapper levelWrapper)
 	{
@@ -177,7 +180,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		}
 	}
 	
-	private BlockStateWrapper(BlockState blockState, ILevelWrapper levelWrapper)
+	private BlockStateWrapper(@Nullable BlockState blockState, ILevelWrapper levelWrapper)
 	{
 		this.blockState = blockState;
 		this.serialString = this.serialize(levelWrapper);
@@ -299,17 +302,20 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		//LOGGER.trace("Created BlockStateWrapper ["+this.serialString+"] for ["+blockState+"] with material ID ["+this.EDhApiBlockMaterialId+"]");
 	}
 	
+	//endregion
+	
 	
 	
 	//====================//
 	// LodBuilder methods //
 	//====================//
+	//region
 	
 	/** 
 	 * Requires a {@link ILevelWrapper} since {@link BlockStateWrapper#deserialize(String,ILevelWrapper)} also requires one. 
 	 * This way the method won't accidentally be called before the deserialization can be completed.
 	 */
-	public static HashSet<IBlockStateWrapper> getRendererIgnoredBlocks(ILevelWrapper levelWrapper)
+	public static ObjectOpenHashSet<IBlockStateWrapper> getRendererIgnoredBlocks(ILevelWrapper levelWrapper)
 	{
 		// use the cached version if possible
 		if (rendererIgnoredBlocks != null)
@@ -317,7 +323,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			return rendererIgnoredBlocks;
 		}
 		
-		HashSet<String> baseIgnoredBlock = new HashSet<>();
+		ObjectOpenHashSet<String> baseIgnoredBlock = new ObjectOpenHashSet<>();
 		baseIgnoredBlock.add(AIR_STRING);
 		rendererIgnoredBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderBlockCsv, baseIgnoredBlock, levelWrapper);
 		return rendererIgnoredBlocks;
@@ -326,7 +332,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	 * Requires a {@link ILevelWrapper} since {@link BlockStateWrapper#deserialize(String,ILevelWrapper)} also requires one. 
 	 * This way the method won't accidentally be called before the deserialization can be completed.
 	 */
-	public static HashSet<IBlockStateWrapper> getRendererIgnoredCaveBlocks(ILevelWrapper levelWrapper)
+	public static ObjectOpenHashSet<IBlockStateWrapper> getRendererIgnoredCaveBlocks(ILevelWrapper levelWrapper)
 	{
 		// use the cached version if possible
 		if (rendererIgnoredCaveBlocks != null)
@@ -334,7 +340,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			return rendererIgnoredCaveBlocks;
 		}
 		
-		HashSet<String> baseIgnoredBlock = new HashSet<>();
+		ObjectOpenHashSet<String> baseIgnoredBlock = new ObjectOpenHashSet<>();
 		baseIgnoredBlock.add(AIR_STRING);
 		rendererIgnoredCaveBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderCaveBlockCsv, baseIgnoredBlock, levelWrapper);
 		return rendererIgnoredCaveBlocks;
@@ -343,14 +349,19 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public static void clearRendererIgnoredBlocks() { rendererIgnoredBlocks = null; }
 	public static void clearRendererIgnoredCaveBlocks() { rendererIgnoredCaveBlocks = null; }
 	
+	//endregion
 	
 	
+	
+	//=====================//
 	// lod builder helpers //
+	//=====================//
+	//region
 	
-	private static HashSet<IBlockStateWrapper> getAllBlockWrappers(ConfigEntry<String> config, HashSet<String> baseResourceLocations, ILevelWrapper levelWrapper)
+	private static ObjectOpenHashSet<IBlockStateWrapper> getAllBlockWrappers(ConfigEntry<String> config, ObjectOpenHashSet<String> baseResourceLocations, ILevelWrapper levelWrapper)
 	{
 		// get the base blocks 
-		HashSet<String> blockStringList = new HashSet<>();
+		ObjectOpenHashSet<String> blockStringList = new ObjectOpenHashSet<>();
 		if (baseResourceLocations != null)
 		{
 			blockStringList.addAll(baseResourceLocations);	
@@ -365,10 +376,10 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		return getAllBlockWrappers(blockStringList, levelWrapper);
 	}
-	private static HashSet<IBlockStateWrapper> getAllBlockWrappers(HashSet<String> blockResourceLocationSet, ILevelWrapper levelWrapper)
+	private static ObjectOpenHashSet<IBlockStateWrapper> getAllBlockWrappers(ObjectOpenHashSet<String> blockResourceLocationSet, ILevelWrapper levelWrapper)
 	{
 		// deserialize each of the given resource locations
-		HashSet<IBlockStateWrapper> blockStateWrappers = new HashSet<>();
+		ObjectOpenHashSet<IBlockStateWrapper> blockStateWrappers = new ObjectOpenHashSet<>();
 		for (String blockResourceLocation : blockResourceLocationSet)
 		{
 			try
@@ -417,11 +428,14 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		return blockStateWrappers;
 	}
 	
+	//endregion
+	
 	
 	
 	//=================//
 	// wrapper methods //
 	//=================//
+	//region
 	
 	@Override
 	public int getOpacity() { return this.opacity; }
@@ -529,25 +543,37 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public boolean isAir() { return this.isAir(this.blockState); }
 	public boolean isAir(BlockState blockState) { return blockState == null || blockState.isAir(); }
 	
+	private Boolean blockIsSolid = null;
 	@Override
 	public boolean isSolid()
 	{
-		if (this.isAir())
+		if (this.isAir() 
+			|| this.blockState == null) // == null isn't necessary since its handled in isAir() but is here to prevent intellij from complaining
 		{
 			return false;
 		}
 		
+		// cached since getCollisionShape() is a dictionary lookup that allocates objects
+		// and this call is used in a high traffic location
+		if (this.blockIsSolid != null)
+		{
+			return this.blockIsSolid;
+		}
+		
+		
         #if MC_VER < MC_1_20_1
-		return this.blockState.getMaterial().isSolid();
+		this.blockIsSolid = this.blockState.getMaterial().isSolid();
         #else
-		return !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
+		this.blockIsSolid = !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
         #endif
+		return this.blockIsSolid;
 	}
 	
 	@Override
 	public boolean isLiquid()
 	{
-		if (this.isAir())
+		if (this.isAir()
+			|| this.blockState == null) // == null isn't necessary since its handled in isAir() but is here to prevent intellij from complaining
 		{
 			return false;
 		}
@@ -579,11 +605,14 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	@Override
 	public String toString() { return this.getSerialString(); }
 	
+	//endregion
+	
 	
 	
 	//=======================//
 	// serialization methods //
 	//=======================//
+	//region
 	
 	private String serialize(ILevelWrapper levelWrapper)
 	{
@@ -811,11 +840,14 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		return stringBuilder.toString();
 	}
 	
+	//endregion
+	
 	
 	
 	//==============//
 	// Iris methods //
 	//==============//
+	//region
 	
 	private EDhApiBlockMaterial calculateEDhApiBlockMaterialId() 
 	{
@@ -919,5 +951,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			return EDhApiBlockMaterial.UNKNOWN;
 		}
 	}
+	
+	//endregion
+	
 	
 }
