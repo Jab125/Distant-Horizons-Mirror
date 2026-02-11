@@ -41,6 +41,7 @@ import net.minecraft.world.level.levelgen.Heightmap;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 
 #if MC_VER >= MC_1_17_1
 import net.minecraft.core.QuartPos;
@@ -80,6 +81,8 @@ public class ChunkWrapper implements IChunkWrapper
 	/** can be used for interactions with the underlying chunk where creating new BlockPos objects could cause issues for the garbage collector. */
 	private static final ThreadLocal<BlockPos.MutableBlockPos> MUTABLE_BLOCK_POS_REF = ThreadLocal.withInitial(() -> new BlockPos.MutableBlockPos());
 	private static final ThreadLocal<MutableBlockPosWrapper> MUTABLE_BLOCK_POS_WRAPPER_REF = ThreadLocal.withInitial(() -> new MutableBlockPosWrapper());
+	
+	public static final Set<String> LOGGED_BLOCK_GET_ERRORS = Collections.newSetFromMap(new ConcurrentHashMap<String, Boolean>());
 	
 	private static boolean heightmapThreadWarningLogged = false;
 	
@@ -250,6 +253,7 @@ public class ChunkWrapper implements IChunkWrapper
 		if (heightmapThreadWarningLogged 
 			&& !DhApi.isDhThread())
 		{
+			heightmapThreadWarningLogged = true;
 			LOGGER.warn("ChunkWrapper Height maps created on non-DH thread ["+Thread.currentThread().getName()+"]. This may cause stuttering.");
 		}
 		
@@ -371,7 +375,19 @@ public class ChunkWrapper implements IChunkWrapper
 		blockPos.setY(relY);
 		blockPos.setZ(relZ);
 		
-		return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(blockPos), this.wrappedLevel);
+		try
+		{
+			return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(blockPos), this.wrappedLevel);
+		}
+		catch (Exception e)
+		{
+			if (LOGGED_BLOCK_GET_ERRORS.add(e.getMessage()))
+			{
+				LOGGER.warn("Failed to get block from chunk ["+this.chunkPos+"] at relative block pos ["+relX+","+relY+","+relZ+"], air will be used instead. This error message will only be logged once. error: ["+e.getMessage()+"].", e);
+			}
+			
+			return BlockStateWrapper.AIR;
+		}
 	}
 	
 	@Override
@@ -383,8 +399,20 @@ public class ChunkWrapper implements IChunkWrapper
 		pos.setX(relX);
 		pos.setY(relY);
 		pos.setZ(relZ);
-		
-		return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(pos), this.wrappedLevel, guess);
+	
+		try
+		{
+			return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(pos), this.wrappedLevel, guess);
+		}
+			catch (Exception e)
+		{
+			if (LOGGED_BLOCK_GET_ERRORS.add(e.getMessage()))
+			{
+				LOGGER.warn("Failed to get block from chunk ["+this.chunkPos+"] at relative block pos ["+relX+","+relY+","+relZ+"], air will be used instead. This error message will only be logged once. error: ["+e.getMessage()+"].", e);
+			}
+			
+			return BlockStateWrapper.AIR;
+		}
 	}
 	
 	/**
