@@ -897,7 +897,10 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		{
 			return EDhApiBlockMaterial.METAL;
 		}
-		else if (serialString.contains("grass_block"))
+		else if (
+			serialString.contains("grass_block")
+			|| serialString.contains("grass_slab")
+			) 
 		{
 			return EDhApiBlockMaterial.GRASS;
 		}
