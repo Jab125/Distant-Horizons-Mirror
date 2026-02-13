@@ -259,6 +259,8 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	
 	public void disableVanillaClouds()
 	{
+		LOGGER.info("Disabling vanilla clouds... This is done to prevent vanilla clouds from rendering on top of Distant Horizons LODs.");
+		
 		#if MC_VER <= MC_1_18_2
 		MINECRAFT.options.renderClouds = CloudStatus.OFF;
 		#else
@@ -268,6 +270,8 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	
 	public void disableVanillaChunkFadeIn()
 	{
+		LOGGER.info("Disabling vanilla chunk fade in... This is done to prevent vanilla chunks from flashing on the Distant Horizons boarder when moving (which is distracting).");
+		
 		#if MC_VER <= MC_1_21_10
 		// chunk fade in was added MC 1.21.11
 		#else
@@ -277,19 +281,27 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	
 	public void disableFabulousTransparency()
 	{
+		String reasoning = "This is done to fix vanilla chunks (specifically water blocks) not fading into Distant Horizons LODs when DH's 'Vanilla Fade' option is enabled.";
+		
 		#if MC_VER <= MC_1_18_2
+		LOGGER.info("Disabling fabulous graphics... "+reasoning);
+		
 		GraphicsStatus oldGraphicsStatus = MINECRAFT.options.graphicsMode;
 		if (oldGraphicsStatus == GraphicsStatus.FABULOUS)
 		{
 			MINECRAFT.options.graphicsMode = GraphicsStatus.FANCY;
 		}
 		#elif MC_VER <= MC_1_21_10
+		LOGGER.info("Disabling fabulous graphics... "+reasoning);
+		
 		GraphicsStatus oldGraphicsStatus = MINECRAFT.options.graphicsMode().get();
 		if (oldGraphicsStatus == GraphicsStatus.FABULOUS)
 		{
 			MINECRAFT.options.graphicsMode().set(GraphicsStatus.FANCY);
 		}
 		#else
+		LOGGER.info("Disabling improved transparency... "+reasoning);
+			
 		MINECRAFT.options.improvedTransparency().set(false);
 		#endif
 	}
