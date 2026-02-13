@@ -25,6 +25,7 @@ import com.mojang.blaze3d.platform.GlStateManager;
 import com.mojang.blaze3d.opengl.GlStateManager;
 #endif
 
+import com.seibel.distanthorizons.core.jar.EPlatform;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 
@@ -189,6 +190,16 @@ public class MinecraftGLWrapper implements IMinecraftGLWrapper
 	public void glDeleteBuffers(int buffer)
 	{
 		GL32.glDeleteBuffers(buffer);
+		
+		// attempt to fix a bug with Mac where de-allocated buffers
+		// are still being used, causing a SIGSEGV native crash
+		// and/or corrupting native memory
+		if (EPlatform.get() == EPlatform.MACOS)
+		{
+			// force the delete buffer (and any other in-flight) GL
+			// commands to finish before continuing
+			GL32.glFinish();
+		}
 		
 		// MC's implementation has a bug where it will throw:
 		// GL_INVALID_OPERATION in glBufferData(immutable)
