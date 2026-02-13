@@ -56,6 +56,11 @@ import net.minecraft.network.chat.TextComponent;
 import net.minecraft.util.profiling.Profiler;
 #endif
 
+#if MC_VER <= MC_1_21_10
+import net.minecraft.client.GraphicsStatus;
+#else
+#endif
+
 /**
  * A singleton that wraps the Minecraft object.
  *
@@ -267,6 +272,25 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		// chunk fade in was added MC 1.21.11
 		#else
 		MINECRAFT.options.chunkSectionFadeInTime().set(0.0);
+		#endif
+	}
+	
+	public void disableFabulousTransparency()
+	{
+		#if MC_VER <= MC_1_18_2
+		GraphicsStatus oldGraphicsStatus = MINECRAFT.options.graphicsMode;
+		if (oldGraphicsStatus == GraphicsStatus.FABULOUS)
+		{
+			MINECRAFT.options.graphicsMode = GraphicsStatus.FANCY;
+		}
+		#elif MC_VER <= MC_1_21_10
+		GraphicsStatus oldGraphicsStatus = MINECRAFT.options.graphicsMode().get();
+		if (oldGraphicsStatus == GraphicsStatus.FABULOUS)
+		{
+			MINECRAFT.options.graphicsMode().set(GraphicsStatus.FANCY);
+		}
+		#else
+		MINECRAFT.options.improvedTransparency().set(false);
 		#endif
 	}
 	
