@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.forge.mixins.client;
 
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -78,6 +79,12 @@ public class MixinFogRenderer
 			RenderSystem.setShaderFogStart(A_REALLY_REALLY_BIG_VALUE);
 			RenderSystem.setShaderFogEnd(A_EVEN_LARGER_VALUE);
 			#endif
+			
+			ClientApi.RENDER_STATE.vanillaFogEnabled = false;
+		}
+		else
+		{
+			ClientApi.RENDER_STATE.vanillaFogEnabled = true;
 		}
 	}
 	

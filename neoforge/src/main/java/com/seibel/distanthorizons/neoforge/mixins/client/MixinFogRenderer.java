@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.neoforge.mixins.client;
 
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -114,6 +115,12 @@ public class MixinFogRenderer
 			callback.setReturnValue(FogParameters.NO_FOG);
 			#else
 			#endif
+			
+			ClientApi.RENDER_STATE.vanillaFogEnabled = false;
+		}
+		else
+		{
+			ClientApi.RENDER_STATE.vanillaFogEnabled = true;
 		}
 		
 	}
@@ -142,6 +149,12 @@ public class MixinFogRenderer
 			
 			instance.renderDistanceStart = A_REALLY_REALLY_BIG_VALUE;
 			instance.renderDistanceEnd = A_EVEN_LARGER_VALUE;
+			
+			ClientApi.RENDER_STATE.vanillaFogEnabled = false;
+		}
+		else
+		{
+			ClientApi.RENDER_STATE.vanillaFogEnabled = true;
 		}
 		
 		// Always call the original with the modified or original value
