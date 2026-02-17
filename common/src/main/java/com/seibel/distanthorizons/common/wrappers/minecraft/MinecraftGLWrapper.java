@@ -30,6 +30,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import org.lwjgl.opengl.GL15;
 import org.lwjgl.opengl.GL32;
 
 
@@ -183,7 +184,7 @@ public class MinecraftGLWrapper implements IMinecraftGLWrapper
 	/** @see GL32#glGenBuffers() */
 	@Override
 	public int glGenBuffers()
-	{ return GlStateManager._glGenBuffers(); }
+	{ return GL32.glGenBuffers(); }
 	
 	/** @see GL32#glDeleteBuffers(int)  */
 	@Override
@@ -199,6 +200,11 @@ public class MinecraftGLWrapper implements IMinecraftGLWrapper
 			// force the delete buffer (and any other in-flight) GL
 			// commands to finish before continuing
 			GL32.glFinish();
+			
+			// James hates this idea.
+			// He kinda hopes it doesn't help,
+			// but maybe metal's API just doesn't finish correctly so we need to wait a moment longer before continuing.
+			try { Thread.sleep(1); } catch (InterruptedException ignore) { }
 		}
 		
 		// MC's implementation has a bug where it will throw:
