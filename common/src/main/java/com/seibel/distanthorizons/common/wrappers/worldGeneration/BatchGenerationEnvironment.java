@@ -29,6 +29,8 @@ import com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandl
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.*;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
+import com.seibel.distanthorizons.core.api.internal.chunkUpdating.ChunkUpdateQueueManager;
+import com.seibel.distanthorizons.core.api.internal.chunkUpdating.WorldChunkUpdateManager;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.config.Config;
@@ -590,7 +592,11 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				
 				// usually ignoring the chunk's position is unnecessary,
 				// but this improves performance if a chunk update event does sneak through 
-				SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.addPosToIgnore(chunkWrapper.getChunkPos());
+				ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.dhServerLevel.getServerLevelWrapper());
+				if (updateManager != null)
+				{
+					updateManager.addPosToIgnore(chunkWrapper.getChunkPos());
+				}
 				
 			});
 			
@@ -716,7 +722,19 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				this.chunkSaveIgnoreTimer.schedule(new TimerTask()
 				{
 					@Override
-					public void run() { SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.removePosToIgnore(chunkWrapper.getChunkPos()); }
+					public void run() 
+					{
+						ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(BatchGenerationEnvironment.this.dhServerLevel.getServerLevelWrapper());
+						if (updateManager != null)
+						{
+							updateManager.addPosToIgnore(chunkWrapper.getChunkPos());
+						}
+						else
+						{
+							// shouldn't happen, but just in case
+							LOGGER.warn("Unable to find chunk update manager for server level ["+BatchGenerationEnvironment.this.dhServerLevel+"], chunk updates may fail.");
+						}
+					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
 			}
 		}

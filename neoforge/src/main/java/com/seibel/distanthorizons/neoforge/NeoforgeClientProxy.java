@@ -119,7 +119,10 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		if (MC.clientConnectedToDedicatedServer())
 		{
-			if (SharedApi.isChunkAtBlockPosAlreadyUpdating(event.getPos().getX(), event.getPos().getZ()))
+			LevelAccessor level = event.getLevel();
+			ILevelWrapper wrappedLevel = ProxyUtil.getLevelWrapper(level);
+			
+			if (SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, event.getPos().getX(), event.getPos().getZ()))
 			{
 				return;
 			}
@@ -132,9 +135,8 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 				{
 					//LOGGER.trace("interact or block place event at blockPos: " + event.getPos());
 					
-					LevelAccessor level = event.getLevel();
 					ChunkAccess chunk = level.getChunk(event.getPos());
-					this.onBlockChangeEvent(level, chunk);
+					SharedApi.INSTANCE.applyChunkUpdate(new ChunkWrapper(chunk, wrappedLevel), wrappedLevel);
 				});
 			}
 		}
@@ -144,7 +146,10 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		if (MC.clientConnectedToDedicatedServer())
 		{
-			if (SharedApi.isChunkAtBlockPosAlreadyUpdating(event.getPos().getX(), event.getPos().getZ()))
+			LevelAccessor level = event.getLevel();
+			ILevelWrapper wrappedLevel = ProxyUtil.getLevelWrapper(level);
+			
+			if (SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, event.getPos().getX(), event.getPos().getZ()))
 			{
 				return;
 			}
@@ -157,17 +162,11 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 				{
 					//LOGGER.trace("break or block attack at blockPos: " + event.getPos());
 					
-					LevelAccessor level = event.getLevel();
 					ChunkAccess chunk = level.getChunk(event.getPos());
-					this.onBlockChangeEvent(level, chunk);
+					SharedApi.INSTANCE.applyChunkUpdate(new ChunkWrapper(chunk, wrappedLevel), wrappedLevel);
 				});
 			}
 		}
-	}
-	private void onBlockChangeEvent(LevelAccessor level, ChunkAccess chunk)
-	{
-		ILevelWrapper wrappedLevel = ProxyUtil.getLevelWrapper(level);
-		SharedApi.INSTANCE.chunkBlockChangedEvent(new ChunkWrapper(chunk, wrappedLevel), wrappedLevel);
 	}
 	
 	

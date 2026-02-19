@@ -5,10 +5,13 @@ import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
+import com.seibel.distanthorizons.core.api.internal.chunkUpdating.ChunkUpdateQueueManager;
+import com.seibel.distanthorizons.core.api.internal.chunkUpdating.WorldChunkUpdateManager;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.generation.DhLightingEngine;
+import com.seibel.distanthorizons.core.level.DhServerLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -190,7 +193,7 @@ public class InternalServerGenerator
 			while (chunkPosIterator.hasNext())
 			{
 				ChunkPos chunkPos = chunkPosIterator.next();
-				this.releaseChunkFromServer(this.params.mcServerLevel, chunkPos);
+				this.releaseChunkFromServer(this.params.mcServerLevel, this.params.dhServerLevel, chunkPos);
 			}
 		}
 	}
@@ -234,7 +237,11 @@ public class InternalServerGenerator
 			ServerLevel level = this.params.mcServerLevel;
 			
 			// ignore chunk update events for this position
-			SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+			ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.params.dhServerLevel.getServerLevelWrapper());
+			if (updateManager != null)
+			{
+				updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+			}
 			
 			#if MC_VER < MC_1_21_5
 			int chunkLevel = 33; // 33 is equivalent to FULL Chunk
@@ -270,7 +277,7 @@ public class InternalServerGenerator
 	 * mitigates out of memory issues in the vanilla chunk system. <br>
 	 * See: https://github.com/pop4959/Chunky/pull/383
 	 */
-	private void releaseChunkFromServer(ServerLevel level, ChunkPos chunkPos)
+	private void releaseChunkFromServer(ServerLevel level, IDhServerLevel dhLevel, ChunkPos chunkPos)
 	{
 		level.getChunkSource().chunkMap.mainThreadExecutor.execute(() ->
 		{
@@ -295,7 +302,19 @@ public class InternalServerGenerator
 				this.chunkSaveIgnoreTimer.schedule(new TimerTask()
 				{
 					@Override
-					public void run() { SharedApi.CHUNK_UPDATE_QUEUE_MANAGER.removePosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z)); }
+					public void run() 
+					{
+						ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(dhLevel.getServerLevelWrapper());
+						if (updateManager != null)
+						{
+							updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+						}
+						else
+						{
+							// shouldn't happen, but just in case
+							LOGGER.warn("Unable to find chunk update manager for server level ["+dhLevel+"], chunk updates may fail.");
+						}
+					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
 				
 			}

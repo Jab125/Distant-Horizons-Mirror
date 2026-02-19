@@ -4,6 +4,7 @@ import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
@@ -13,8 +14,10 @@ public class MixinChunkMapCommon
 	
 	public static void onChunkSave(ServerLevel level, ChunkAccess chunk, CallbackInfoReturnable<Boolean> ci)
 	{
+		IServerLevelWrapper levelWrapper = ServerLevelWrapper.getWrapper(level);
+		
 		// is this position already being updated?
-		if (SharedApi.isChunkAtChunkPosAlreadyUpdating(chunk.getPos().x, chunk.getPos().z))
+		if (SharedApi.isChunkAtChunkPosAlreadyUpdating(levelWrapper, chunk.getPos().x, chunk.getPos().z))
 		{
 			return;
 		}
@@ -73,8 +76,8 @@ public class MixinChunkMapCommon
 		
 		// submit the update event
 		ServerApi.INSTANCE.serverChunkSaveEvent(
-				new ChunkWrapper(chunk, ServerLevelWrapper.getWrapper(level)),
-				ServerLevelWrapper.getWrapper(level)
+			new ChunkWrapper(chunk, levelWrapper),
+			levelWrapper
 		);
 	}
 	

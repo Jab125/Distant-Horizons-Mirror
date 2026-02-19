@@ -132,7 +132,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 					executor.execute(() ->
 					{
 						IClientLevelWrapper wrappedLevel = ClientLevelWrapper.getWrapper(level);
-						SharedApi.INSTANCE.chunkLoadEvent(new ChunkWrapper(chunk, wrappedLevel), wrappedLevel);
+						SharedApi.INSTANCE.applyChunkUpdate(new ChunkWrapper(chunk, wrappedLevel), wrappedLevel);
 					});
 				}
 			}
@@ -145,7 +145,9 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 			// if we have access to the server, use the chunk save event instead 
 			if (MC.clientConnectedToDedicatedServer())
 			{
-				if (SharedApi.isChunkAtBlockPosAlreadyUpdating(blockPos.getX(), blockPos.getZ()))
+				IClientLevelWrapper wrappedLevel = ClientLevelWrapper.getWrapper((ClientLevel) level);
+				
+				if (SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, blockPos.getX(), blockPos.getZ()))
 				{
 					// executor to prevent locking up the render/event thread
 					AbstractExecutorService executor = ThreadPoolUtil.getFileHandlerExecutor();
@@ -158,8 +160,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 							{
 								//LOGGER.trace("attack block at blockPos: " + blockPos);
 								
-								IClientLevelWrapper wrappedLevel = ClientLevelWrapper.getWrapper((ClientLevel) level);
-								SharedApi.INSTANCE.chunkBlockChangedEvent(
+								SharedApi.INSTANCE.applyChunkUpdate(
 										new ChunkWrapper(chunk, wrappedLevel),
 										wrappedLevel
 								);
@@ -183,7 +184,9 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 				if (hitResult.getType() == HitResult.Type.BLOCK
 						&& !hitResult.isInside())
 				{
-					if (SharedApi.isChunkAtBlockPosAlreadyUpdating(hitResult.getBlockPos().getX(), hitResult.getBlockPos().getZ()))
+					IClientLevelWrapper wrappedLevel = ClientLevelWrapper.getWrapper((ClientLevel) level);
+					
+					if (SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, hitResult.getBlockPos().getX(), hitResult.getBlockPos().getZ()))
 					{
 						// executor to prevent locking up the render/event thread
 						AbstractExecutorService executor = ThreadPoolUtil.getFileHandlerExecutor();
@@ -196,8 +199,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 								{
 									//LOGGER.trace("use block at blockPos: " + hitResult.getBlockPos());
 									
-									IClientLevelWrapper wrappedLevel = ClientLevelWrapper.getWrapper((ClientLevel) level);
-									SharedApi.INSTANCE.chunkBlockChangedEvent(
+									SharedApi.INSTANCE.applyChunkUpdate(
 											new ChunkWrapper(chunk, wrappedLevel),
 											wrappedLevel
 									);
