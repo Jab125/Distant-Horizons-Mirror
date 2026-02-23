@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.common.wrappers;
 
+import com.seibel.distanthorizons.common.renderTest.McTestRenderer;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;
@@ -36,6 +37,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
 
 /**
  * Binds all necessary dependencies, so we
@@ -68,6 +70,11 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IMinecraftRenderWrapper.class, MinecraftRenderWrapper.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMinecraftGLWrapper.class, MinecraftGLWrapper.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IConfigGui.class, ClassicConfigGUI.CONFIG_CORE_INTERFACE);
+	}
+	
+	public static void createRenderBindings()
+	{
+		SingletonInjector.INSTANCE.bind(IMcTestRenderer.class, McTestRenderer.INSTANCE);
 	}
 	
 }

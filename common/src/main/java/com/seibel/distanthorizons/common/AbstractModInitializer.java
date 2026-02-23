@@ -18,6 +18,7 @@ import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.jar.ModJarInfo;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
@@ -66,6 +67,7 @@ public abstract class AbstractModInitializer
 	
 	public void onInitializeClient()
 	{
+		GLProxy.queueRunningOnRenderThread(() -> { DependencySetup.createRenderBindings(); });
 		DependencySetup.createClientBindings();
 		this.createInitialClientBindings();
 		

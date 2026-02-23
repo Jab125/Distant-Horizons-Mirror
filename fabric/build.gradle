@@ -23,7 +23,7 @@ loom {
                     "-XX:+UseZGC",
                     "-XX:+ZGenerational"
             )
-            programArgs("--username", "Dev")
+            programArgs("--username", "Dev", "--renderDebugLabels")
         }
         server {
             server()
