@@ -94,6 +94,8 @@ public class McTestRenderer implements IMcTestRenderer
 	private VertexFormatElement posForm;
 	private VertexFormatElement colForm;
 	
+	private GpuBuffer vboGpuBuffer;
+	
 	
 	//=============//
 	// constructor //
@@ -115,6 +117,9 @@ public class McTestRenderer implements IMcTestRenderer
 		this.init = true;
 		
 		
+		
+		GpuDevice gpuDevice = RenderSystem.getDevice();
+		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
 		this.vertexFormat = VertexFormat.builder()
@@ -147,6 +152,39 @@ public class McTestRenderer implements IMcTestRenderer
 		}
 		this.pipeline = pipelineBuilder.build();
 		
+		
+		// upload vertex data
+		{
+			// vertices for the OpenGL/Vulkan Triangle
+			float[] vertices = new float[]
+				{
+					// PosX,Y,    ColorR,G,B,A
+					-0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 1.0f,
+					0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 1.0f,
+					0.0f,  0.5f,   0.0f, 0.0f, 1.0f, 1.0f,
+				};
+			
+			
+			Supplier<String> labelSupplier = () -> "distantHorizons:McTestRenderer";
+			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
+			int size = vertices.length * Float.BYTES;
+			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
+			
+			{
+				int offset = 0;
+				int length = vertices.length * Float.BYTES;
+				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, offset, length);
+				
+				ByteBuffer byteBuffer = ByteBuffer.allocateDirect(vertices.length * Float.BYTES);
+				// Fill buffer with vertices.
+				byteBuffer.order(ByteOrder.nativeOrder());
+				byteBuffer.asFloatBuffer().put(vertices);
+				byteBuffer.rewind();
+				
+				commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
+			}
+		}
+		
 	}
 	
 	//endregion
@@ -168,38 +206,6 @@ public class McTestRenderer implements IMcTestRenderer
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
-		// upload vertex data
-		GpuBuffer vboGpuBuffer;
-		{
-			// vertices for the OpenGL/Vulkan Triangle
-			float[] vertices = new float[]
-				{
-					// PosX,Y,    ColorR,G,B,A
-					-0.5f, -0.5f,   255.0f, 000.0f, 000.0f, 255.0f,
-					0.5f, -0.5f,   000.0f, 255.0f, 000.0f, 255.0f,
-					0.0f,  0.5f,   000.0f, 000.0f, 255.0f, 255.0f,
-				};
-			
-			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McTestRenderer";
-			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-			int size = vertices.length * Float.BYTES;
-			vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
-			
-			{
-				int offset = 0;
-				int length = vertices.length * Float.BYTES;
-				GpuBufferSlice bufferSlice = new GpuBufferSlice(vboGpuBuffer, offset, length);
-				
-				ByteBuffer byteBuffer = ByteBuffer.allocateDirect(vertices.length * Float.BYTES);
-				// Fill buffer with vertices.
-				byteBuffer.order(ByteOrder.nativeOrder());
-				byteBuffer.asFloatBuffer().put(vertices);
-				byteBuffer.rewind();
-				
-				commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
-			}
-		}
 		
 		// create a render pass
 		{
@@ -272,9 +278,6 @@ public class McTestRenderer implements IMcTestRenderer
 					renderPass.draw(indexStart, indexCount);
 				}
 			}
-			
-			// can only be closed after rendering is done
-			vboGpuBuffer.close();
 		}
 		
 		// clear depth texture
