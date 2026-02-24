@@ -21,71 +21,45 @@ package com.seibel.distanthorizons.common.renderTest;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
-import com.mojang.blaze3d.opengl.*;
-import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.CompiledRenderPipeline;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
-import com.mojang.blaze3d.platform.LogicOp;
 import com.mojang.blaze3d.platform.PolygonMode;
-import com.mojang.blaze3d.shaders.ShaderSource;
-import com.mojang.blaze3d.shaders.ShaderType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
-import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormatElement;
-import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.glObject.buffer.GLVertexBuffer;
-import com.seibel.distanthorizons.core.render.glObject.shader.Shader;
-import com.seibel.distanthorizons.core.render.glObject.shader.ShaderProgram;
-import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.AbstractVertexAttribute;
-import com.seibel.distanthorizons.core.render.glObject.vertexAttribute.VertexPointer;
-import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFadeRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.ShaderDefines;
-import net.minecraft.client.renderer.ShaderManager;
 import net.minecraft.resources.Identifier;
-import net.minecraft.server.packs.resources.Resource;
-import net.minecraft.server.packs.resources.ResourceManager;
-import net.minecraft.util.StringUtil;
-import org.jspecify.annotations.Nullable;
-import org.lwjgl.opengl.GL32;
-import org.lwjgl.opengl.GL43;
 
-import java.io.*;
-import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.List;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
-
-import static com.ibm.icu.impl.ValidIdentifiers.Datatype.x;
 
 /**
  * Renders a UV colored quad
  * to the center of the screen to confirm DH's
  * apply shader is running correctly
  */
-public class McTestRenderer implements IMcTestRenderer
+public class McFadeRenderer implements IMcFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
-	public static final McTestRenderer INSTANCE = new McTestRenderer();
+	public static final McFadeRenderer INSTANCE = new McFadeRenderer();
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -99,7 +73,7 @@ public class McTestRenderer implements IMcTestRenderer
 	//=============//
 	//region
 	
-	private McTestRenderer() 
+	private McFadeRenderer() 
 	{
 		
 	}
@@ -120,15 +94,7 @@ public class McTestRenderer implements IMcTestRenderer
 		
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhVertexFormat.SCREEN_POS)
-			.add("vColor", DhVertexFormat.RGBA_COLOR)
 			.build();
-		
-		//int breakpointOne = 0;
-		// needs to manually be set if the VertexFormatElement isn't registered
-		//this.vertexFormat.getOffsetsByElement()[this.posForm.id()] = 0;
-		//this.vertexFormat.getOffsetsByElement()[this.colForm.id()] = Float.BYTES * 2;
-		//
-		//int breakpointTwo = 0;
 		
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
@@ -141,27 +107,28 @@ public class McTestRenderer implements IMcTestRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/frag"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/frag"));
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLES);
+			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
 		}
 		this.pipeline = pipelineBuilder.build();
 		
 		
 		// upload vertex data
 		{
-			// vertices for the OpenGL/Vulkan Triangle
+			// vertices for a full-screen quad
 			float[] vertices = new float[]
 				{
-					// PosX,Y,    ColorR,G,B,A
-					-0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 1.0f,
-					0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 1.0f,
-					0.0f,  0.5f,   0.0f, 0.0f, 1.0f, 1.0f,
+					// PosX,Y,
+					-1f, -1f,
+					 1f, -1f,
+					 1f,  1f,
+					-1f,  1f,
 				};
 			
 			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McTestRenderer";
+			Supplier<String> labelSupplier = () -> "distantHorizons:McFadeRenderer";
 			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
 			int size = vertices.length * Float.BYTES;
 			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
@@ -204,83 +171,58 @@ public class McTestRenderer implements IMcTestRenderer
 		
 		
 		// create a render pass
+		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McFadeRenderer";
+		GpuTextureView colorTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
+		GpuTextureView depthTexture = null;//gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
+		
+		try (RenderPass renderPass = commandEncoder.createRenderPass(
+			debugLabelSupplier,
+			colorTexture,
+			optionalClearColorAsInt,
+			depthTexture, optionalDepthValueAsDouble))
 		{
-			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McTestRenderer";
-			GpuTextureView colorTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
-			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-			GpuTextureView depthTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
-			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
+			//renderPass.pushDebugGroup();
+			//renderPass.popDebugGroup();
 			
-			try (RenderPass renderPass = commandEncoder.createRenderPass(
-				debugLabelSupplier,
-				colorTexture,
-				optionalClearColorAsInt,
-				depthTexture, optionalDepthValueAsDouble))
+			
+			// render pass setup
 			{
-				//renderPass.pushDebugGroup();
-				//renderPass.popDebugGroup();
-				
-				
-				// render pass setup
+				// bind MC depth texture
 				{
-					// set uniform
-					if (false)
-					{
-						Supplier<String> labelSupplier = () -> "";
-						int usage = 0;
-						int size = 0;
-						GpuBuffer gpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
-						
-						renderPass.setUniform("name", gpuBuffer);
-					}
+					IMinecraftRenderWrapper mcRender = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
+					int id = mcRender.getDepthTextureId();
 					
-					// bind depth texture
-					if (false)
-					{
-						GpuTexture bindDepthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
-						
-						GpuTextureView textureView = gpuDevice.createTextureView(bindDepthTexture);
-						GpuSampler gpuSampler = gpuDevice.createSampler(
-							AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-							FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-							0, // maxAnisotropy 
-							OptionalDouble.empty() // maxLod
-						);
-						renderPass.bindTexture("depth", textureView, gpuSampler);
-					}
+					GpuTexture bindDepthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
 					
-					// index buffer
-					if (false)
-					{
-						GpuBuffer buffer = null;
-						renderPass.setIndexBuffer(buffer, VertexFormat.IndexType.INT);
-					}
-					
-					// bind VBO
-					{
-						renderPass.setVertexBuffer(0, vboGpuBuffer); // vertex buffer can only be "0" lol
-					}
-					
-					// set pipeline
-					{
-						renderPass.setPipeline(this.pipeline);
-					}
+					GpuTextureView textureView = gpuDevice.createTextureView(bindDepthTexture);
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uDhDepthTexture", textureView, gpuSampler);
 				}
 				
-				// draw render pass
+				// bind VBO
 				{
-					int indexStart = 0;
-					int indexCount = 3;
-					renderPass.draw(indexStart, indexCount);
+					renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
+				}
+				
+				// set pipeline
+				{
+					renderPass.setPipeline(this.pipeline);
 				}
 			}
-		}
-		
-		// clear depth texture
-		{
-			//GpuTexture depthTex = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
-			//double newDepth = 0;
-			//commandEncoder.clearDepthTexture(depthTex, newDepth);
+			
+			// draw render pass
+			{
+				int indexStart = 0;
+				int indexCount = 4;
+				renderPass.draw(indexStart, indexCount);
+			}
 		}
 	}
 	
