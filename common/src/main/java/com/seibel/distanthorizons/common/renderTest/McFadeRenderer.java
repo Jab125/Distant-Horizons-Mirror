@@ -194,9 +194,6 @@ public class McFadeRenderer implements IMcFadeRenderer
 			{
 				// bind MC depth texture
 				{
-					IMinecraftRenderWrapper mcRender = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-					int id = mcRender.getDepthTextureId();
-					
 					GpuTexture bindDepthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
 					
 					GpuTextureView textureView = gpuDevice.createTextureView(bindDepthTexture);
