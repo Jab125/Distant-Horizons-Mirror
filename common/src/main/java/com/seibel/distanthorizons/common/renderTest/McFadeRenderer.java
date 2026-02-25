@@ -68,6 +68,7 @@ public class McFadeRenderer implements IMcFadeRenderer
 	private GpuBuffer vboGpuBuffer;
 	
 	
+	
 	//=============//
 	// constructor //
 	//=============//
@@ -109,6 +110,8 @@ public class McFadeRenderer implements IMcFadeRenderer
 			
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vert"));
 			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/frag"));
+			
+			pipelineBuilder.withSampler("uDhDepthTexture");
 			
 			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
 		}
