@@ -48,9 +48,7 @@ import java.util.OptionalInt;
 import java.util.function.Supplier;
 
 /**
- * Renders a UV colored quad
- * to the center of the screen to confirm DH's
- * apply shader is running correctly
+ * Renders a TODO
  */
 public class McFadeRenderer implements IMcFadeRenderer
 {
