@@ -21,23 +21,29 @@ package com.seibel.distanthorizons.common.renderTest;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.buffers.Std140Builder;
+import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
+import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
+import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.RenderUtil;
+import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFadeRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
@@ -63,7 +69,11 @@ public class McFadeRenderer implements IMcFadeRenderer
 	private RenderPipeline pipeline;
 	private boolean init = false;
 	
+	private GpuBuffer fragUniformBuffer;
+	
 	private GpuBuffer vboGpuBuffer;
+	
+	public GpuTexture fadeColorTexture;
 	
 	
 	
@@ -74,7 +84,9 @@ public class McFadeRenderer implements IMcFadeRenderer
 	
 	private McFadeRenderer() 
 	{
-		
+		this.vertexFormat = VertexFormat.builder()
+			.add("vPosition", DhVertexFormat.SCREEN_POS)
+			.build();
 	}
 	
 	private void tryInit()
@@ -91,10 +103,6 @@ public class McFadeRenderer implements IMcFadeRenderer
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SCREEN_POS)
-			.build();
-		
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
@@ -107,9 +115,15 @@ public class McFadeRenderer implements IMcFadeRenderer
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
 			
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/frag"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vanilla_fade"));
+			
+			pipelineBuilder.withSampler("uMcDepthTexture");
+			pipelineBuilder.withSampler("uCombinedMcDhColorTexture");
 			
 			pipelineBuilder.withSampler("uDhDepthTexture");
+			pipelineBuilder.withSampler("uDhColorTexture");
+			
+			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
 			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
 		}
@@ -160,10 +174,17 @@ public class McFadeRenderer implements IMcFadeRenderer
 	//========//
 	//region
 	
-	public void render()
+	@Override
+	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
 	{
 		this.tryInit();
 		
+		
+		if (McLodRenderer.INSTANCE.dhDepthTexture == null
+			|| McLodRenderer.INSTANCE.dhColorTexture == null)
+		{
+			return;	
+		}
 		
 		
 		GpuDevice gpuDevice = RenderSystem.getDevice();
@@ -171,11 +192,103 @@ public class McFadeRenderer implements IMcFadeRenderer
 		
 		
 		
+		// textures
+		if (this.fadeColorTexture == null
+			|| this.fadeColorTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
+			|| this.fadeColorTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
+		{
+			if (this.fadeColorTexture != null)
+			{
+				this.fadeColorTexture.close();
+			}
+			
+			// TODO USAGE_TEXTURE_BINDING = 4
+			int usage = 4 | 8 | 32 | 128;
+			this.fadeColorTexture = gpuDevice.createTexture("FadeColorTexture",
+				usage,
+				TextureFormat.RGBA8,
+				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
+				1, 1
+			);
+		}
+		
+		
+		{
+			int uniformBufferSize = new Std140SizeCalculator()
+				.putInt() // uOnlyRenderLods
+				.putFloat() // uStartFadeBlockDistance
+				.putFloat() // uEndFadeBlockDistance
+				.putFloat() // uMaxLevelHeight
+				.putMat4f() // uDhInvMvmProj
+				.putMat4f() // uMcInvMvmProj
+				.get();
+			
+			
+			// create data //
+			
+			float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
+			// this added value prevents the near clip plane and discard circle from touching, which looks bad
+			dhNearClipDistance += 16f;
+			
+			// measured in blocks
+			// these multipliers in James' tests should provide a fairly smooth transition
+			// without having underdraw issues
+			float fadeStartDistance = dhNearClipDistance * 1.5f;
+			float fadeEndDistance = dhNearClipDistance * 1.9f;
+			
+			
+			Mat4f inverseMcModelViewProjectionMatrix = new Mat4f(mcProjectionMatrix);
+			inverseMcModelViewProjectionMatrix.multiply(mcModelViewMatrix);
+			inverseMcModelViewProjectionMatrix.invert();
+			Mat4f inverseMcMvmProjMatrix = inverseMcModelViewProjectionMatrix;
+			
+			
+			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(mcProjectionMatrix);
+			Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(mcModelViewMatrix);
+			
+			Mat4f inverseDhModelViewProjectionMatrix = new Mat4f(dhProjectionMatrix);
+			inverseDhModelViewProjectionMatrix.multiply(dhModelViewMatrix);
+			inverseDhModelViewProjectionMatrix.invert();
+			Mat4f inverseDhMvmProjMatrix = inverseDhModelViewProjectionMatrix;
+			
+			
+			
+			// upload data //
+			
+			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
+			buffer.order(ByteOrder.LITTLE_ENDIAN);
+			buffer = Std140Builder.intoBuffer(buffer)
+				.putInt(Config.Client.Advanced.Debugging.lodOnlyMode.get() ? 1 : 0) // uOnlyRenderLods
+				.putFloat(fadeStartDistance) // uStartFadeBlockDistance
+				.putFloat(fadeEndDistance) // uEndFadeBlockDistance
+				.putFloat(level.getMaxHeight()) // uMaxLevelHeight
+				.putMat4f(inverseDhMvmProjMatrix.createJomlMatrix()) // uDhInvMvmProj
+				.putMat4f(inverseMcMvmProjMatrix.createJomlMatrix()) // uMcInvMvmProj
+				.get()
+			;
+			
+			this.fragUniformBuffer = UniformHandler.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
+			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
+			
+			commandEncoder.writeToBuffer(bufferSlice, buffer);
+		}
+		
+		
+		this.renderFadeToTexture();
+		McCopyRenderer.INSTANCE.render(this.fadeColorTexture, Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+		
+	}
+	
+	private void renderFadeToTexture()
+	{
+		GpuDevice gpuDevice = RenderSystem.getDevice();
+		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
+		
 		// create a render pass
 		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McFadeRenderer";
-		GpuTextureView colorTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+		GpuTextureView colorTexture = gpuDevice.createTextureView(this.fadeColorTexture);
 		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-		GpuTextureView depthTexture = null;//gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+		GpuTextureView depthTexture = null;
 		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 		
 		try (RenderPass renderPass = commandEncoder.createRenderPass(
@@ -192,9 +305,32 @@ public class McFadeRenderer implements IMcFadeRenderer
 			{
 				// bind MC depth texture
 				{
-					GpuTexture bindDepthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
-					
-					GpuTextureView textureView = gpuDevice.createTextureView(bindDepthTexture);
+					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uMcDepthTexture", textureView, gpuSampler);
+				}
+				
+				// bind MC color texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uCombinedMcDhColorTexture", textureView, gpuSampler);
+				}
+				
+				
+				// bind DH depth texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
 					GpuSampler gpuSampler = gpuDevice.createSampler(
 						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
 						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
@@ -204,15 +340,27 @@ public class McFadeRenderer implements IMcFadeRenderer
 					renderPass.bindTexture("uDhDepthTexture", textureView, gpuSampler);
 				}
 				
-				// bind VBO
+				// bind DH color texture
 				{
-					renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
+					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uDhColorTexture", textureView, gpuSampler);
 				}
 				
+				
+				
+				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
+				
+				// bind VBO
+				renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
+				
 				// set pipeline
-				{
-					renderPass.setPipeline(this.pipeline);
-				}
+				renderPass.setPipeline(this.pipeline);
 			}
 			
 			// draw render pass
@@ -223,6 +371,7 @@ public class McFadeRenderer implements IMcFadeRenderer
 			}
 		}
 	}
+	
 	
 	//endregion
 	

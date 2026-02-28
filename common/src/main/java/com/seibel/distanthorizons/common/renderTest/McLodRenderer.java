@@ -16,7 +16,6 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
 import com.seibel.distanthorizons.core.config.Config;
@@ -26,6 +25,7 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.glObject.GLEnums;
 import com.seibel.distanthorizons.core.render.glObject.buffer.QuadElementBuffer;
+import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
@@ -40,11 +40,8 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.nio.FloatBuffer;
-import java.nio.IntBuffer;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 /**
@@ -69,7 +66,8 @@ public class McLodRenderer implements IMcLodRenderer
 	private GpuBuffer fragUniformBuffer;
 	private GpuBuffer vertUniformBuffer;
 	
-	private GpuTexture depthTexture;
+	public GpuTexture dhDepthTexture;
+	public GpuTexture dhColorTexture;
 	
 	
 	
@@ -99,11 +97,6 @@ public class McLodRenderer implements IMcLodRenderer
 			return;
 		}
 		this.init = true; // todo only set when succeeded (in case of exception)
-		
-		
-		
-		//GLMC.glBlendFunc(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA);
-		//GLMC.glBlendFuncSeparate(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA, GL32.GL_ONE, GL32.GL_ZERO);
 		
 		
 		
@@ -145,22 +138,6 @@ public class McLodRenderer implements IMcLodRenderer
 		
 		
 		
-	}
-	
-	private static GpuBuffer createUniformBuffer(String uniformName, int size, GpuBuffer vboGpuBuffer)
-	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		
-		// create VBO if needed
-		if (vboGpuBuffer == null 
-			|| vboGpuBuffer.size() < size)
-		{
-			// GpuBuffer.USAGE_UNIFORM = 128
-			int usage = 8 | 32 | 128; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-			vboGpuBuffer = gpuDevice.createBuffer(() -> uniformName, usage, size);
-		}
-		
-		return vboGpuBuffer;
 	}
 	
 	//endregion
@@ -239,7 +216,7 @@ public class McLodRenderer implements IMcLodRenderer
 				.putMat4f(combinedMatrix.createJomlMatrix()) // uCombinedMatrix
 				.get();
 			
-			this.vertUniformBuffer = createUniformBuffer("vertUniformBlock", uniformBufferSize, this.vertUniformBuffer);
+			this.vertUniformBuffer = UniformHandler.createBuffer("vertUniformBlock", uniformBufferSize, this.vertUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertUniformBuffer, 0, uniformBufferSize);
 			
 			commandEncoder.writeToBuffer(bufferSlice, buffer);
@@ -283,7 +260,7 @@ public class McLodRenderer implements IMcLodRenderer
 				.get()
 			;
 			
-			this.fragUniformBuffer = createUniformBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
+			this.fragUniformBuffer = UniformHandler.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
 			
 			commandEncoder.writeToBuffer(bufferSlice, buffer);
@@ -313,20 +290,28 @@ public class McLodRenderer implements IMcLodRenderer
 			}
 		}
 		
-		// depth texture
-		if (this.depthTexture == null
-			|| this.depthTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
-			|| this.depthTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
+		// textures
+		if (this.dhDepthTexture == null
+			|| this.dhDepthTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
+			|| this.dhDepthTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
 		{
-			if (this.depthTexture != null)
+			if (this.dhDepthTexture != null)
 			{
-				this.depthTexture.close();
+				this.dhDepthTexture.close();
+				this.dhColorTexture.close();
 			}
 			
-			int usage = 8 | 32 | 128;
-			this.depthTexture = gpuDevice.createTexture("DhDepthTexture",
+			// TODO USAGE_TEXTURE_BINDING = 4
+			int usage = 4 | 8 | 32 | 128;
+			this.dhDepthTexture = gpuDevice.createTexture("DhDepthTexture",
 				usage,
 				TextureFormat.DEPTH32,
+				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
+				1, 1
+			);
+			this.dhColorTexture = gpuDevice.createTexture("DhColorTexture",
+				usage,
+				TextureFormat.RGBA8,
 				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
 				1, 1
 			);
@@ -341,8 +326,8 @@ public class McLodRenderer implements IMcLodRenderer
 		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 		
 		try (
-			GpuTextureView colorTextureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
-			GpuTextureView depthTextureView = gpuDevice.createTextureView(this.depthTexture);
+			GpuTextureView colorTextureView = gpuDevice.createTextureView(this.dhColorTexture);
+			GpuTextureView depthTextureView = gpuDevice.createTextureView(this.dhDepthTexture);
 			RenderPass renderPass = commandEncoder.createRenderPass(
 			debugLabelSupplier,
 			colorTextureView,
@@ -360,30 +345,6 @@ public class McLodRenderer implements IMcLodRenderer
 			renderPass.setUniform("vertUniformBlock", this.vertUniformBuffer);
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			
-			
-			//boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
-			//if (renderWireframe)
-			//{
-			//	GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
-			//	GLMC.disableFaceCulling();
-			//}
-			//else
-			//{
-			//	GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
-			//	GLMC.enableFaceCulling();
-			//}
-			//
-			//if (!opaquePass)
-			//{
-			//	GLMC.enableBlend();
-			//	GLMC.enableDepthTest();
-			//	GL32.glBlendEquation(GL32.GL_FUNC_ADD);
-			//	GLMC.glBlendFuncSeparate(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA, GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
-			//}
-			//else
-			//{
-			//	GLMC.disableBlend();
-			//}
 			
 			
 			profiler.popPush("set pipeline");
@@ -431,14 +392,30 @@ public class McLodRenderer implements IMcLodRenderer
 		profiler.pop();
 	}
 	
+	@Override
+	public void applyToMcTexture() { McApplyRenderer.INSTANCE.render(); }
+	
+	@Override
 	public void clearDepth()
 	{
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 
-		if (this.depthTexture != null)
+		if (this.dhDepthTexture != null)
 		{
-			commandEncoder.clearDepthTexture(this.depthTexture, 1.0f);
+			commandEncoder.clearDepthTexture(this.dhDepthTexture, 1.0f);
+		}
+	}
+	
+	@Override
+	public void clearColor()
+	{
+		GpuDevice gpuDevice = RenderSystem.getDevice();
+		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
+		
+		if (this.dhColorTexture != null)
+		{
+			commandEncoder.clearColorTexture(this.dhColorTexture, ColorUtil.argbToInt(1, 1, 1, 1));
 		}
 	}
 	
