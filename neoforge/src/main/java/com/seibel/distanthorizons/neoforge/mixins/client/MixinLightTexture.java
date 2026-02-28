@@ -86,8 +86,9 @@ public class MixinLightTexture
 		GlTexture glTexture = (GlTexture) this.texture;
 		renderWrapper.setLightmapId(glTexture.glId(), clientLevel);
 		#else
-		int id = NeoforgeTextureUnwrapper.getGlTextureIdFromGpuTexture(this.texture);
-		renderWrapper.setLightmapId(id, clientLevel);
+		//int id = NeoforgeTextureUnwrapper.getGlTextureIdFromGpuTexture(this.texture);
+		//renderWrapper.setLightmapId(id, clientLevel);
+		renderWrapper.setLightmapGpuTexture(this.texture, clientLevel);
 		#endif
 	}
 	

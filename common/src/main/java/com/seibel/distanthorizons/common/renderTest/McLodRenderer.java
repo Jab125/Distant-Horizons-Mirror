@@ -18,6 +18,7 @@ import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
+import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -25,6 +26,7 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.glObject.GLEnums;
 import com.seibel.distanthorizons.core.render.glObject.buffer.QuadElementBuffer;
+import com.seibel.distanthorizons.core.render.renderer.RenderParams;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -80,8 +82,7 @@ public class McLodRenderer implements IMcLodRenderer
 	{
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhVertexFormat.SHORT_POS)
-			.add("paddingOne", DhVertexFormat.BYTE_PAD)
-			.add("light", DhVertexFormat.LIGHT)
+			.add("meta", DhVertexFormat.META)
 			.add("vColor", DhVertexFormat.RGBA_UBYTE_COLOR)
 			.add("irisMaterial", DhVertexFormat.IRIS_MATERIAL)
 			.add("irisNormal", DhVertexFormat.IRIS_NORMAL)
@@ -116,7 +117,7 @@ public class McLodRenderer implements IMcLodRenderer
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/vert"));
 			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/frag"));
 			
-			//pipelineBuilder.withSampler("uLightMap"); // TODO
+			pipelineBuilder.withSampler("uLightMap");
 			
 			pipelineBuilder.withUniform("vertUniformBlock", UniformType.UNIFORM_BUFFER);
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
@@ -154,7 +155,7 @@ public class McLodRenderer implements IMcLodRenderer
 	
 	@Override
 	public void render(
-		DhApiRenderParam renderEventParam, 
+		RenderParams renderEventParam, 
 		boolean opaquePass,
 		DhApiVec3f modelOffset, 
 		IVertexBufferWrapper[] bufferList,
@@ -338,8 +339,19 @@ public class McLodRenderer implements IMcLodRenderer
 			//renderPass.popDebugGroup();
 			
 			
-			//renderPass.bindTexture("uLightMap", );
-			
+			// bind MC color texture
+			{
+				LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+				
+				GpuTextureView textureView = gpuDevice.createTextureView(lightMapWrapper.gpuTexture);
+				GpuSampler gpuSampler = gpuDevice.createSampler(
+					AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+					FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+					1, // maxAnisotropy 
+					OptionalDouble.empty() // maxLod
+				);
+				renderPass.bindTexture("uLightMap", textureView, gpuSampler);
+			}
 			
 			
 			renderPass.setUniform("vertUniformBlock", this.vertUniformBuffer);

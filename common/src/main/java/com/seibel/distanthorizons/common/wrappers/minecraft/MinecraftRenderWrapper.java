@@ -25,6 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.api.enums.config.EDhApiLodShading;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
@@ -487,6 +488,16 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 
 		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
 		wrapper.setLightmapId(tetxureId);
+	}
+	public void setLightmapGpuTexture(GpuTexture gpuTexture, IClientLevelWrapper level)
+	{
+		// Using ClientLevelWrapper as the key would be better, but we don't have a consistent way to create the same
+		// object for the same MC level and/or the same hash,
+		// so this will have to do for now
+		IDimensionTypeWrapper dimensionType = level.getDimensionType();
+
+		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
+		wrapper.setLightmapGpuTexture(gpuTexture);
 	}
 	
 	@Override

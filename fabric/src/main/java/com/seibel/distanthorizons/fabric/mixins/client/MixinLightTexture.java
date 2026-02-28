@@ -94,8 +94,9 @@ public class MixinLightTexture
 		#elif MC_VER < MC_1_21_5
 		this.renderWrapper.setLightmapId(this.target.getColorTextureId(), clientLevel);
 		#else
-		GlTexture glTexture = (GlTexture) this.texture;
-		this.renderWrapper.setLightmapId(glTexture.glId(), clientLevel);
+		//GlTexture glTexture = (GlTexture) this.texture;
+		//this.renderWrapper.setLightmapId(glTexture.glId(), clientLevel);
+		this.renderWrapper.setLightmapGpuTexture(this.texture, clientLevel);
 		#endif
 	}
 	

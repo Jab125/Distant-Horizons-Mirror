@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.wrappers.misc;
 
 import com.mojang.blaze3d.platform.NativeImage;
+import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
@@ -38,6 +39,7 @@ public class LightMapWrapper implements ILightMapWrapper
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private int textureId = 0;
+	public GpuTexture gpuTexture = null;
 	
 	
 	
@@ -97,6 +99,12 @@ public class LightMapWrapper implements ILightMapWrapper
 	{
 		// just use the MC texture ID
 		this.textureId = minecraftLightmapTextureId;
+	}
+	
+	public void setLightmapGpuTexture(GpuTexture gpuTexture)
+	{
+		// just use the MC texture ID
+		this.gpuTexture = gpuTexture;
 	}
 	
 	//endregion
