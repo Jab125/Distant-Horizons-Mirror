@@ -102,7 +102,7 @@ public class McFadeRenderer implements IMcFadeRenderer
 			pipelineBuilder.withDepthWrite(false);
 			pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
 			pipelineBuilder.withColorWrite(true);
-			//builder.withBlend(BlendFunction.OVERLAY);
+			pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
 			

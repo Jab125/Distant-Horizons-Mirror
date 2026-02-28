@@ -15,6 +15,7 @@ public class VertexBufferWrapper implements IVertexBufferWrapper
 	
 	public GpuBuffer vboGpuBuffer = null;
 	public int vertexCount = -1;
+	public int indexCount = -1;
 	public boolean uploaded = false;
 	
 	
@@ -32,6 +33,7 @@ public class VertexBufferWrapper implements IVertexBufferWrapper
 	public void upload(ByteBuffer buffer, int vertexCount)
 	{
 		this.vertexCount = vertexCount;
+		this.indexCount = (int)(vertexCount * 1.5); // TODO why multiply by 1.5?
 		this.uploaded = true;
 		
 		
@@ -52,8 +54,10 @@ public class VertexBufferWrapper implements IVertexBufferWrapper
 	@Override
 	public void close()
 	{
-		if (vboGpuBuffer != null)
+		if (this.vboGpuBuffer != null)
+		{
 			this.vboGpuBuffer.close();
+		}
 	}
 	
 	
