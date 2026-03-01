@@ -16,7 +16,6 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
@@ -35,7 +34,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRen
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcLodRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWrapper;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.system.MemoryUtil;
@@ -81,7 +79,7 @@ public class McLodRenderer implements IMcLodRenderer
 	private McLodRenderer()
 	{
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SHORT_POS)
+			.add("vPosition", DhVertexFormat.SHORT_XYZ_POS)
 			.add("meta", DhVertexFormat.META)
 			.add("vColor", DhVertexFormat.RGBA_UBYTE_COLOR)
 			.add("irisMaterial", DhVertexFormat.IRIS_MATERIAL)
@@ -339,7 +337,7 @@ public class McLodRenderer implements IMcLodRenderer
 			//renderPass.popDebugGroup();
 			
 			
-			// bind MC color texture
+			// bind MC Lightmap
 			{
 				LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
 				
