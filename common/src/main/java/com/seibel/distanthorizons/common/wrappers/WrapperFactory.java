@@ -24,6 +24,8 @@ import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.interfaces.factories.IDhApiWrapperFactory;
+import com.seibel.distanthorizons.common.renderTest.McGenericObjectRenderer;
+import com.seibel.distanthorizons.common.renderTest.McInstancedVboContainer;
 import com.seibel.distanthorizons.common.renderTest.VertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
@@ -33,10 +35,12 @@ import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
+import com.seibel.distanthorizons.core.render.renderer.generic.IInstancedVboContainer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcGenericRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
@@ -358,9 +362,24 @@ public class WrapperFactory implements IWrapperFactory
 	}
 	
 	
+	@Override
 	public IVertexBufferWrapper createVboWrapper()
 	{
 		return new VertexBufferWrapper();
 	}
+	
+	@Override
+	public IInstancedVboContainer createInstancedVboContainer()
+	{
+		return new McInstancedVboContainer();
+	}
+	
+	@Override
+	public IMcGenericRenderer createGenericRenderer()
+	{
+		return new McGenericObjectRenderer();
+	}
+	
+	
 	
 }

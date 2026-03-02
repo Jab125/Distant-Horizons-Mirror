@@ -195,48 +195,11 @@ public class McTestRenderer implements IMcTestRenderer
 				
 				// render pass setup
 				{
-					// set uniform
-					if (false)
-					{
-						Supplier<String> labelSupplier = () -> "";
-						int usage = 0;
-						int size = 0;
-						GpuBuffer gpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
-						
-						renderPass.setUniform("name", gpuBuffer);
-					}
-					
-					// bind depth texture
-					if (false)
-					{
-						GpuTexture bindDepthTexture = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
-						
-						GpuTextureView textureView = gpuDevice.createTextureView(bindDepthTexture);
-						GpuSampler gpuSampler = gpuDevice.createSampler(
-							AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-							FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-							0, // maxAnisotropy 
-							OptionalDouble.empty() // maxLod
-						);
-						renderPass.bindTexture("depth", textureView, gpuSampler);
-					}
-					
-					// index buffer
-					if (false)
-					{
-						GpuBuffer buffer = null;
-						renderPass.setIndexBuffer(buffer, VertexFormat.IndexType.INT);
-					}
-					
 					// bind VBO
-					{
-						renderPass.setVertexBuffer(0, vboGpuBuffer); // vertex buffer can only be "0" lol
-					}
+					renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
 					
 					// set pipeline
-					{
-						renderPass.setPipeline(this.pipeline);
-					}
+					renderPass.setPipeline(this.pipeline);
 				}
 				
 				// draw render pass
