@@ -19,10 +19,7 @@
 
 package com.seibel.distanthorizons.common.wrappers;
 
-import com.seibel.distanthorizons.common.renderTest.McFadeRenderer;
-import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
-import com.seibel.distanthorizons.common.renderTest.McSsaoRenderer;
-import com.seibel.distanthorizons.common.renderTest.McTestRenderer;
+import com.seibel.distanthorizons.common.renderTest.*;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;
@@ -40,10 +37,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFadeRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcLodRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcSsaoRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.*;
 
 /**
  * Binds all necessary dependencies, so we
@@ -84,6 +78,7 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IMcFadeRenderer.class, McFadeRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcLodRenderer.class, McLodRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, McSsaoRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, McFogRenderer.INSTANCE);
 	}
 	
 }
