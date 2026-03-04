@@ -33,14 +33,17 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcSsaoRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcVanillaFadeRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
 import java.nio.ByteBuffer;
@@ -52,14 +55,14 @@ import java.util.function.Supplier;
 /**
  * Renders a TODO
  */
-public class McSsaoRenderer implements IMcSsaoRenderer
+public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
-	public static final McSsaoRenderer INSTANCE = new McSsaoRenderer();
+	public static final McVanillaFadeRenderer INSTANCE = new McVanillaFadeRenderer();
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -69,7 +72,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	public GpuTexture ssaoColorTexture;
+	public GpuTexture fadeColorTexture;
 	
 	
 	
@@ -78,7 +81,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	//=============//
 	//region
 	
-	private McSsaoRenderer() 
+	private McVanillaFadeRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhVertexFormat.SCREEN_POS)
@@ -110,13 +113,14 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/quad_apply"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/ao"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vanilla_fade"));
 			
 			pipelineBuilder.withSampler("uMcDepthTexture");
 			pipelineBuilder.withSampler("uCombinedMcDhColorTexture");
 			
 			pipelineBuilder.withSampler("uDhDepthTexture");
+			pipelineBuilder.withSampler("uDhColorTexture");
 			
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
@@ -170,7 +174,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	//region
 	
 	@Override
-	public void render(DhApiMat4f dhProjectionMatrix)
+	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
 	{
 		this.tryInit();
 		
@@ -188,18 +192,18 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		
 		
 		// textures
-		if (this.ssaoColorTexture == null
-			|| this.ssaoColorTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
-			|| this.ssaoColorTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
+		if (this.fadeColorTexture == null
+			|| this.fadeColorTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
+			|| this.fadeColorTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
 		{
-			if (this.ssaoColorTexture != null)
+			if (this.fadeColorTexture != null)
 			{
-				this.ssaoColorTexture.close();
+				this.fadeColorTexture.close();
 			}
 			
 			// TODO USAGE_TEXTURE_BINDING = 4
 			int usage = 4 | 8 | 32 | 128;
-			this.ssaoColorTexture = gpuDevice.createTexture("SsaoColorTexture",
+			this.fadeColorTexture = gpuDevice.createTexture("FadeColorTexture",
 				usage,
 				TextureFormat.RGBA8,
 				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
@@ -210,24 +214,42 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		
 		{
 			int uniformBufferSize = new Std140SizeCalculator()
-				.putInt() // uSampleCount\
-				
-				.putFloat() // uRadius
-				.putFloat() // uStrength
-				.putFloat() // uMinLight
-				.putFloat() // uBias
-				.putFloat() // uFadeDistanceInBlocks
-				
-				.putMat4f() // uInvProj
-				.putMat4f() // uProj
+				.putInt() // uOnlyRenderLods
+				.putFloat() // uStartFadeBlockDistance
+				.putFloat() // uEndFadeBlockDistance
+				.putFloat() // uMaxLevelHeight
+				.putMat4f() // uDhInvMvmProj
+				.putMat4f() // uMcInvMvmProj
 				.get();
 			
 			
 			// create data //
 			
-			Mat4f projMatrix = new Mat4f(dhProjectionMatrix);
-			Mat4f invertedProjMatrix = new Mat4f(dhProjectionMatrix);
-			invertedProjMatrix.invert();
+			float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
+			// this added value prevents the near clip plane and discard circle from touching, which looks bad
+			dhNearClipDistance += 16f;
+			
+			// measured in blocks
+			// these multipliers in James' tests should provide a fairly smooth transition
+			// without having underdraw issues
+			float fadeStartDistance = dhNearClipDistance * 1.5f;
+			float fadeEndDistance = dhNearClipDistance * 1.9f;
+			
+			
+			Mat4f inverseMcModelViewProjectionMatrix = new Mat4f(mcProjectionMatrix);
+			inverseMcModelViewProjectionMatrix.multiply(mcModelViewMatrix);
+			inverseMcModelViewProjectionMatrix.invert();
+			Mat4f inverseMcMvmProjMatrix = inverseMcModelViewProjectionMatrix;
+			
+			
+			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(mcProjectionMatrix);
+			Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(mcModelViewMatrix);
+			
+			Mat4f inverseDhModelViewProjectionMatrix = new Mat4f(dhProjectionMatrix);
+			inverseDhModelViewProjectionMatrix.multiply(dhModelViewMatrix);
+			inverseDhModelViewProjectionMatrix.invert();
+			Mat4f inverseDhMvmProjMatrix = inverseDhModelViewProjectionMatrix;
+			
 			
 			
 			// upload data //
@@ -235,16 +257,12 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
 			buffer.order(ByteOrder.LITTLE_ENDIAN);
 			buffer = Std140Builder.intoBuffer(buffer)
-				.putInt(6) // uSampleCount
-				
-				.putFloat(4.0f) // uRadius
-				.putFloat(0.2f) // uStrength
-				.putFloat(0.25f) // uMinLight
-				.putFloat(0.02f) // uBias
-				.putFloat(1_600.0f) // uFadeDistanceInBlocks
-				
-				.putMat4f(invertedProjMatrix.createJomlMatrix())
-				.putMat4f(projMatrix.createJomlMatrix())
+				.putInt(Config.Client.Advanced.Debugging.lodOnlyMode.get() ? 1 : 0) // uOnlyRenderLods
+				.putFloat(fadeStartDistance) // uStartFadeBlockDistance
+				.putFloat(fadeEndDistance) // uEndFadeBlockDistance
+				.putFloat(level.getMaxHeight()) // uMaxLevelHeight
+				.putMat4f(inverseDhMvmProjMatrix.createJomlMatrix()) // uDhInvMvmProj
+				.putMat4f(inverseMcMvmProjMatrix.createJomlMatrix()) // uMcInvMvmProj
 				.get()
 			;
 			
@@ -255,19 +273,19 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		}
 		
 		
-		this.renderSsaoToTexture();
-		McSsaoApplyRenderer.INSTANCE.render();
+		this.renderFadeToTexture();
+		McCopyRenderer.INSTANCE.render(this.fadeColorTexture, Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 		
 	}
 	
-	private void renderSsaoToTexture()
+	private void renderFadeToTexture()
 	{
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		// create a render pass
-		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McSsaoRenderer";
-		GpuTextureView colorTexture = gpuDevice.createTextureView(this.ssaoColorTexture);
+		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McFadeRenderer";
+		GpuTextureView colorTexture = gpuDevice.createTextureView(this.fadeColorTexture);
 		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
 		GpuTextureView depthTexture = null;
 		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
@@ -284,6 +302,31 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			
 			// render pass setup
 			{
+				// bind MC depth texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uMcDepthTexture", textureView, gpuSampler);
+				}
+				
+				// bind MC color texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uCombinedMcDhColorTexture", textureView, gpuSampler);
+				}
+				
+				
 				// bind DH depth texture
 				{
 					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
@@ -295,6 +338,19 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 					);
 					renderPass.bindTexture("uDhDepthTexture", textureView, gpuSampler);
 				}
+				
+				// bind DH color texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uDhColorTexture", textureView, gpuSampler);
+				}
+				
 				
 				
 				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);

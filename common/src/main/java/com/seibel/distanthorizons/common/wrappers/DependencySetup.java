@@ -75,10 +75,11 @@ public class DependencySetup
 	public static void createRenderBindings()
 	{
 		SingletonInjector.INSTANCE.bind(IMcTestRenderer.class, McTestRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcFadeRenderer.class, McFadeRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcVanillaFadeRenderer.class, McVanillaFadeRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcLodRenderer.class, McLodRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, McSsaoRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, McFogRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcFarFadeRenderer.class, McFarFadeRenderer.INSTANCE);
 	}
 	
 }

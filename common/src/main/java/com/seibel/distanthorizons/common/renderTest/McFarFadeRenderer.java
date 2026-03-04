@@ -33,7 +33,6 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -42,7 +41,8 @@ import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFadeRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFarFadeRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcVanillaFadeRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -56,14 +56,14 @@ import java.util.function.Supplier;
 /**
  * Renders a TODO
  */
-public class McFadeRenderer implements IMcFadeRenderer
+public class McFarFadeRenderer implements IMcFarFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
-	public static final McFadeRenderer INSTANCE = new McFadeRenderer();
+	public static final McFarFadeRenderer INSTANCE = new McFarFadeRenderer();
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -82,7 +82,7 @@ public class McFadeRenderer implements IMcFadeRenderer
 	//=============//
 	//region
 	
-	private McFadeRenderer() 
+	private McFarFadeRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhVertexFormat.SCREEN_POS)
@@ -112,13 +112,12 @@ public class McFadeRenderer implements IMcFadeRenderer
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
+			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:far_fade"));
 			
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vanilla_fade"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/dh_fade"));
 			
-			pipelineBuilder.withSampler("uMcDepthTexture");
-			pipelineBuilder.withSampler("uCombinedMcDhColorTexture");
+			pipelineBuilder.withSampler("uMcColorTexture");
 			
 			pipelineBuilder.withSampler("uDhDepthTexture");
 			pipelineBuilder.withSampler("uDhColorTexture");
@@ -174,8 +173,8 @@ public class McFadeRenderer implements IMcFadeRenderer
 	//========//
 	//region
 	
-	@Override
-	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
+	@Override // TODO can probably just be DH mvm/proj matricies
+	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix)
 	{
 		this.tryInit();
 		
@@ -215,32 +214,17 @@ public class McFadeRenderer implements IMcFadeRenderer
 		
 		{
 			int uniformBufferSize = new Std140SizeCalculator()
-				.putInt() // uOnlyRenderLods
 				.putFloat() // uStartFadeBlockDistance
 				.putFloat() // uEndFadeBlockDistance
-				.putFloat() // uMaxLevelHeight
 				.putMat4f() // uDhInvMvmProj
-				.putMat4f() // uMcInvMvmProj
 				.get();
 			
 			
 			// create data //
 			
-			float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
-			// this added value prevents the near clip plane and discard circle from touching, which looks bad
-			dhNearClipDistance += 16f;
-			
-			// measured in blocks
-			// these multipliers in James' tests should provide a fairly smooth transition
-			// without having underdraw issues
-			float fadeStartDistance = dhNearClipDistance * 1.5f;
-			float fadeEndDistance = dhNearClipDistance * 1.9f;
-			
-			
-			Mat4f inverseMcModelViewProjectionMatrix = new Mat4f(mcProjectionMatrix);
-			inverseMcModelViewProjectionMatrix.multiply(mcModelViewMatrix);
-			inverseMcModelViewProjectionMatrix.invert();
-			Mat4f inverseMcMvmProjMatrix = inverseMcModelViewProjectionMatrix;
+			float dhFarClipDistance = RenderUtil.getFarClipPlaneDistanceInBlocks();
+			float fadeStartDistance = dhFarClipDistance * 0.5f;
+			float fadeEndDistance = dhFarClipDistance * 0.9f;
 			
 			
 			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(mcProjectionMatrix);
@@ -258,12 +242,9 @@ public class McFadeRenderer implements IMcFadeRenderer
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
 			buffer.order(ByteOrder.LITTLE_ENDIAN);
 			buffer = Std140Builder.intoBuffer(buffer)
-				.putInt(Config.Client.Advanced.Debugging.lodOnlyMode.get() ? 1 : 0) // uOnlyRenderLods
 				.putFloat(fadeStartDistance) // uStartFadeBlockDistance
 				.putFloat(fadeEndDistance) // uEndFadeBlockDistance
-				.putFloat(level.getMaxHeight()) // uMaxLevelHeight
 				.putMat4f(inverseDhMvmProjMatrix.createJomlMatrix()) // uDhInvMvmProj
-				.putMat4f(inverseMcMvmProjMatrix.createJomlMatrix()) // uMcInvMvmProj
 				.get()
 			;
 			
@@ -275,7 +256,7 @@ public class McFadeRenderer implements IMcFadeRenderer
 		
 		
 		this.renderFadeToTexture();
-		McCopyRenderer.INSTANCE.render(this.fadeColorTexture, Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+		McCopyRenderer.INSTANCE.render(this.fadeColorTexture, McLodRenderer.INSTANCE.dhColorTexture);
 		
 	}
 	
@@ -303,18 +284,6 @@ public class McFadeRenderer implements IMcFadeRenderer
 			
 			// render pass setup
 			{
-				// bind MC depth texture
-				{
-					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
-					GpuSampler gpuSampler = gpuDevice.createSampler(
-						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-						1, // maxAnisotropy 
-						OptionalDouble.empty() // maxLod
-					);
-					renderPass.bindTexture("uMcDepthTexture", textureView, gpuSampler);
-				}
-				
 				// bind MC color texture
 				{
 					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
@@ -324,7 +293,7 @@ public class McFadeRenderer implements IMcFadeRenderer
 						1, // maxAnisotropy 
 						OptionalDouble.empty() // maxLod
 					);
-					renderPass.bindTexture("uCombinedMcDhColorTexture", textureView, gpuSampler);
+					renderPass.bindTexture("uMcColorTexture", textureView, gpuSampler);
 				}
 				
 				
