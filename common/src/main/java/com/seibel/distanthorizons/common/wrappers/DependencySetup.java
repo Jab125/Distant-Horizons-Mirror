@@ -80,6 +80,7 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, McSsaoRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, McFogRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFarFadeRenderer.class, McFarFadeRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcDebugRenderer.class, McDebugObjectRenderer.INSTANCE);
 	}
 	
 }
