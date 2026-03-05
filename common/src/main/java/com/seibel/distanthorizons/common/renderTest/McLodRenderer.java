@@ -16,19 +16,20 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.render.glObject.GLEnums;
 import com.seibel.distanthorizons.core.render.glObject.buffer.QuadElementBuffer;
 import com.seibel.distanthorizons.core.render.renderer.RenderParams;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
+import com.seibel.distanthorizons.core.util.objects.SortedArraySet;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
@@ -64,10 +65,17 @@ public class McLodRenderer implements IMcLodRenderer
 	private GpuBuffer indexBuffer;
 	
 	private GpuBuffer fragUniformBuffer;
-	private GpuBuffer vertUniformBuffer;
+	private GpuBuffer vertSharedUniformBuffer;
 	
 	public GpuTexture dhDepthTexture;
+	public GpuTextureView dhDepthTextureView;
+	
 	public GpuTexture dhColorTexture;
+	public GpuTextureView dhColorTextureView;
+	
+	private GpuTexture mcLightTexture;
+	private GpuTextureView mcLightTextureView;
+	private GpuSampler mcLightGpuSampler;
 	
 	
 	
@@ -117,7 +125,8 @@ public class McLodRenderer implements IMcLodRenderer
 			
 			pipelineBuilder.withSampler("uLightMap");
 			
-			pipelineBuilder.withUniform("vertUniformBlock", UniformType.UNIFORM_BUFFER);
+			pipelineBuilder.withUniform("vertUniqueUniformBlock", UniformType.UNIFORM_BUFFER);
+			pipelineBuilder.withUniform("vertSharedUniformBlock", UniformType.UNIFORM_BUFFER);
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
 			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLES);
@@ -134,9 +143,6 @@ public class McLodRenderer implements IMcLodRenderer
 			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
 			this.transparentPipeline = pipelineBuilder.build();
 		}
-		
-		
-		
 	}
 	
 	//endregion
@@ -155,8 +161,7 @@ public class McLodRenderer implements IMcLodRenderer
 	public void render(
 		RenderParams renderEventParam, 
 		boolean opaquePass,
-		DhApiVec3f modelOffset, 
-		IVertexBufferWrapper[] bufferList,
+		SortedArraySet<LodBufferContainer> bufferContainers,
 		IProfilerWrapper profiler)
 	{
 		this.tryInit();
@@ -168,10 +173,20 @@ public class McLodRenderer implements IMcLodRenderer
 		
 		
 		
-		profiler.push("set vert uniforms");
+		profiler.push("vert unique uniforms");
 		{
 			// create data //
 			
+			for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
+			{
+				LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
+				bufferContainer.uniforms.createBufferData(renderEventParam, bufferContainer);
+				bufferContainer.uniforms.upload();
+			}
+		}
+		
+		profiler.popPush("vert share uniforms");
+		{
 			Mat4f combinedMatrix = new Mat4f(renderEventParam.dhProjectionMatrix);
 			combinedMatrix.multiply(renderEventParam.dhModelViewMatrix);
 			
@@ -196,32 +211,26 @@ public class McLodRenderer implements IMcLodRenderer
 				.putFloat() // uMircoOffset
 				.putFloat() // uEarthRadius
 				
-				.putVec3() // uModelOffset
-				
 				.putMat4f() // uCombinedMatrix
 				.get();
 			
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
 			buffer.order(ByteOrder.LITTLE_ENDIAN);
-			buffer = Std140Builder.intoBuffer(buffer)
+			Std140Builder.intoBuffer(buffer)
 				.putInt(0) // uIsWhiteWorld
 				
-				.putFloat((float)renderEventParam.worldYOffset) // uWorldYOffset
+				.putFloat((float) renderEventParam.worldYOffset) // uWorldYOffset
 				.putFloat(0.01f) // uMircoOffset // 0.01 block offset
 				.putFloat(earthCurveRatio) // uEarthRadius
-				
-				.putVec3(modelOffset.x, modelOffset.y, modelOffset.z) // uModelOffset
 				
 				.putMat4f(combinedMatrix.createJomlMatrix()) // uCombinedMatrix
 				.get();
 			
-			this.vertUniformBuffer = UniformHandler.createBuffer("vertUniformBlock", uniformBufferSize, this.vertUniformBuffer);
-			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertUniformBuffer, 0, uniformBufferSize);
+			this.vertSharedUniformBuffer = UniformHandler.createBuffer("vertSharedUniformBlock", uniformBufferSize, this.vertSharedUniformBuffer);
+			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertSharedUniformBuffer, 0, uniformBufferSize);
 			
 			commandEncoder.writeToBuffer(bufferSlice, buffer);
-			
 		}
-		
 		
 		profiler.popPush("set frag uniforms");
 		{
@@ -297,7 +306,10 @@ public class McLodRenderer implements IMcLodRenderer
 			if (this.dhDepthTexture != null)
 			{
 				this.dhDepthTexture.close();
+				this.dhDepthTextureView.close();
+				
 				this.dhColorTexture.close();
+				this.dhDepthTextureView.close();
 			}
 			
 			// TODO USAGE_TEXTURE_BINDING = 4
@@ -308,96 +320,123 @@ public class McLodRenderer implements IMcLodRenderer
 				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
 				1, 1
 			);
+			this.dhDepthTextureView = gpuDevice.createTextureView(this.dhDepthTexture);
+			
 			this.dhColorTexture = gpuDevice.createTexture("DhColorTexture",
 				usage,
 				TextureFormat.RGBA8,
 				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
 				1, 1
 			);
+			this.dhColorTextureView = gpuDevice.createTextureView(this.dhColorTexture);
 		}
 		
 		
-		profiler.popPush("create render pass");
-		
-		// create a render pass
-		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McLodRenderer";
-		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
-		
-		try (
-			GpuTextureView colorTextureView = gpuDevice.createTextureView(this.dhColorTexture);
-			GpuTextureView depthTextureView = gpuDevice.createTextureView(this.dhDepthTexture);
-			RenderPass renderPass = commandEncoder.createRenderPass(
-			debugLabelSupplier,
-			colorTextureView,
-			optionalClearColorAsInt,
-			depthTextureView, optionalDepthValueAsDouble))
+		LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+		if (this.mcLightTexture != lightMapWrapper.gpuTexture)
 		{
-			//renderPass.pushDebugGroup();
-			//renderPass.popDebugGroup();
-			
-			
-			// bind MC Lightmap
+			this.mcLightTexture = lightMapWrapper.gpuTexture;
+			if (this.mcLightTextureView != null)
 			{
-				LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-				
-				GpuTextureView textureView = gpuDevice.createTextureView(lightMapWrapper.gpuTexture);
-				GpuSampler gpuSampler = gpuDevice.createSampler(
-					AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-					FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-					1, // maxAnisotropy 
-					OptionalDouble.empty() // maxLod
-				);
-				renderPass.bindTexture("uLightMap", textureView, gpuSampler);
+				this.mcLightTextureView.close();
 			}
 			
 			
-			renderPass.setUniform("vertUniformBlock", this.vertUniformBuffer);
-			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
+			this.mcLightTextureView = gpuDevice.createTextureView(this.mcLightTexture);
+			this.mcLightGpuSampler = gpuDevice.createSampler(
+				AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+				FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+				1, // maxAnisotropy 
+				OptionalDouble.empty() // maxLod
+			);
+		}
+		
+		
+		{
+			profiler.popPush("setup");
 			
+			// create a render pass
+			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McLodRenderer";
+			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
+			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 			
-			
-			profiler.popPush("set pipeline");
-			
-			renderPass.setPipeline(opaquePass ? this.opaquePipeline : this.transparentPipeline);
-			renderPass.setIndexBuffer(this.indexBuffer, VertexFormat.IndexType.INT);
-			
-			// render pass setup
-			for (int i = 0; i < bufferList.length; i++)
+			try(RenderPass renderPass = commandEncoder.createRenderPass(
+				debugLabelSupplier,
+				this.dhColorTextureView,
+				optionalClearColorAsInt,
+				this.dhDepthTextureView, optionalDepthValueAsDouble)
+				)
 			{
-				VertexBufferWrapper bufferWrapper = (VertexBufferWrapper)bufferList[i];
-				if (!bufferWrapper.uploaded
-					|| bufferWrapper.vertexCount == 0)
+				//renderPass.pushDebugGroup();
+				//renderPass.popDebugGroup();
+				
+				// bind MC Lightmap
+				renderPass.bindTexture("uLightMap", this.mcLightTextureView, this.mcLightGpuSampler);
+				
+				// set pipeline
+				renderPass.setPipeline(opaquePass ? this.opaquePipeline : this.transparentPipeline);
+				renderPass.setIndexBuffer(this.indexBuffer, VertexFormat.IndexType.INT);
+				
+				// shared uniforms
+				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
+				renderPass.setUniform("vertSharedUniformBlock", this.vertSharedUniformBuffer);
+				
+				
+				
+				
+				for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
 				{
-					continue;
-				}
-				
-				profiler.popPush("set VBO");
-				
-				renderPass.setVertexBuffer(0, bufferWrapper.vboGpuBuffer); // vertex buffer can only be "0" lol
-				
-				profiler.popPush("render");
-				
-				try
-				{
-					renderPass.drawIndexed(
-						/*indexStart*/ 0,
-						/*firstIndex*/0,
-						/*indexCount*/bufferWrapper.indexCount,
-						/*instanceCount*/1);
-				}
-				catch (IllegalStateException e)
-				{
-					if (!e.getMessage().contains("Vertex buffer at slot 0 has been closed"))
+					profiler.popPush("binding");
+					
+					LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
+					LodContainerUniformBufferWrapper uniformWrapper = (LodContainerUniformBufferWrapper)bufferContainer.uniforms;
+					
+					boolean columnBuilderDebugEnabled = Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugEnable.get();
+					if (columnBuilderDebugEnabled)
 					{
-						throw new RuntimeException(e);
+						if (DhSectionPos.getDetailLevel(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugDetailLevel.get()
+							&& DhSectionPos.getX(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugXPos.get()
+							&& DhSectionPos.getZ(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugZPos.get())
+						{
+							int breakpoint = 0;
+						}
+						else
+						{
+							continue;
+						}
+					}
+					
+					renderPass.setUniform("vertUniqueUniformBlock", uniformWrapper.gpuBuffer);
+					
+					
+					
+					profiler.popPush("rendering");
+					
+					// render each buffer
+					IVertexBufferWrapper[] bufferWrapperList = opaquePass ? bufferContainer.vbos : bufferContainer.vbosTransparent;
+					for (int i = 0; i < bufferWrapperList.length; i++)
+					{
+						VertexBufferWrapper bufferWrapper = (VertexBufferWrapper) bufferWrapperList[i];
+						if (!bufferWrapper.uploaded
+							|| bufferWrapper.vertexCount == 0)
+						{
+							continue;
+						}
+						
+						//ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
+						
+						renderPass.setVertexBuffer(0, bufferWrapper.vboGpuBuffer); // vertex buffer can only be "0" lol
+						
+						renderPass.drawIndexed(
+							/*indexStart*/ 0,
+							/*firstIndex*/0,
+							/*indexCount*/bufferWrapper.indexCount,
+							/*instanceCount*/1);
 					}
 				}
 				
 			}
 		}
-		
-		
 		
 		profiler.pop();
 	}

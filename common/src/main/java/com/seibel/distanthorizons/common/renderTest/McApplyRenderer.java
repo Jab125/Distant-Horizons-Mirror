@@ -24,7 +24,6 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
-import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -36,7 +35,6 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
@@ -63,6 +61,14 @@ public class McApplyRenderer
 	private boolean init = false;
 	
 	private GpuBuffer vboGpuBuffer;
+	
+	private GpuTextureView dhColorTextureView;
+	private GpuSampler dhColorTextureSampler;
+	
+	private GpuTextureView dhDepthTextureView;
+	private GpuSampler dhDepthTextureSampler;
+	
+	private GpuTextureView mcColorTextureView;
 	
 	
 	//=============//
@@ -179,18 +185,45 @@ public class McApplyRenderer
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
+		{
+			GpuTexture mcColorTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
+			if (this.mcColorTextureView == null
+				|| this.mcColorTextureView.texture() != mcColorTexture)
+			{
+				this.mcColorTextureView = gpuDevice.createTextureView(mcColorTexture);
+			}
+			
+			
+			if (this.dhColorTextureSampler == null)
+			{
+				this.dhColorTextureSampler = gpuDevice.createSampler(
+					AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+					FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+					1, // maxAnisotropy 
+					OptionalDouble.empty() // maxLod
+				);
+				
+				this.dhDepthTextureSampler = gpuDevice.createSampler(
+					AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+					FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+					1, // maxAnisotropy 
+					OptionalDouble.empty() // maxLod
+				);
+			}
+			
+		}
+		
 		
 		// create a render pass
 		{
 			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McApplyRenderer";
-			GpuTextureView colorTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
 			GpuTextureView depthTexture = null;
 			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 			
 			try (RenderPass renderPass = commandEncoder.createRenderPass(
 				debugLabelSupplier,
-				colorTexture,
+				this.mcColorTextureView,
 				optionalClearColorAsInt,
 				depthTexture, optionalDepthValueAsDouble))
 			{
@@ -200,29 +233,8 @@ public class McApplyRenderer
 				
 				// render pass setup
 				{
-					// bind color texture
-					{
-						GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
-						GpuSampler gpuSampler = gpuDevice.createSampler(
-							AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-							FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-							1, // maxAnisotropy 
-							OptionalDouble.empty() // maxLod
-						);
-						renderPass.bindTexture("uDhColorTexture", textureView, gpuSampler);
-					}
-					
-					// bind depth texture
-					{
-						GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
-						GpuSampler gpuSampler = gpuDevice.createSampler(
-							AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-							FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-							1, // maxAnisotropy 
-							OptionalDouble.empty() // maxLod
-						);
-						renderPass.bindTexture("uDhDepthTexture", textureView, gpuSampler);
-					}
+					renderPass.bindTexture("uDhDepthTexture", McLodRenderer.INSTANCE.dhDepthTextureView, this.dhColorTextureSampler);
+					renderPass.bindTexture("uDhColorTexture", McLodRenderer.INSTANCE.dhColorTextureView, this.dhDepthTextureSampler);
 					
 					// bind VBO
 					renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol

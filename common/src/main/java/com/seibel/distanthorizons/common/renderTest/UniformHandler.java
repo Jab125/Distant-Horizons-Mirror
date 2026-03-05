@@ -4,6 +4,7 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 
+@Deprecated // TODO use Uniform Wrapper instead
 public class UniformHandler
 {
 	
