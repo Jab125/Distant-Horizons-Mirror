@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.renderTest;
+package com.seibel.distanthorizons.common.renderTest.postProcessing;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -36,12 +36,13 @@ import com.mojang.blaze3d.textures.FilterMode;
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.mojang.blaze3d.textures.GpuTextureView;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
 import java.nio.ByteBuffer;
@@ -53,14 +54,14 @@ import java.util.function.Supplier;
 /**
  * TODO ???
  */
-public class McSsaoApplyRenderer
+public class McFogApplyRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
-	public static final McSsaoApplyRenderer INSTANCE = new McSsaoApplyRenderer();
+	public static final McFogApplyRenderer INSTANCE = new McFogApplyRenderer();
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -74,7 +75,7 @@ public class McSsaoApplyRenderer
 	//=============//
 	//region
 	
-	private McSsaoApplyRenderer() 
+	private McFogApplyRenderer() 
 	{
 		
 	}
@@ -104,14 +105,14 @@ public class McSsaoApplyRenderer
 			pipelineBuilder.withDepthWrite(false);
 			pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
 			pipelineBuilder.withColorWrite(true);
-			pipelineBuilder.withBlend(new BlendFunction(SourceFactor.ZERO, DestFactor.SRC_ALPHA, SourceFactor.ZERO, DestFactor.ONE));
+			pipelineBuilder.withBlend(new BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA));
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:ssao_apply_render"));
+			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:fog_apply_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/quad_apply"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/apply"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/quad_apply"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/apply"));
 			
-			pipelineBuilder.withSampler("uSsaoColorTexture");
+			pipelineBuilder.withSampler("uColorTexture");
 			pipelineBuilder.withSampler("uDhDepthTexture");
 			
 			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
@@ -132,7 +133,7 @@ public class McSsaoApplyRenderer
 				};
 			
 			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McApplyRenderer";
+			Supplier<String> labelSupplier = () -> "distantHorizons:McFogApplyRenderer";
 			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
 			int size = vertices.length * Float.BYTES;
 			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
@@ -186,7 +187,7 @@ public class McSsaoApplyRenderer
 		
 		// create a render pass
 		{
-			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McApplySsaoRenderer";
+			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McApplyFogRenderer";
 			GpuTextureView colorTexture = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
 			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
 			GpuTextureView depthTexture = null;
@@ -204,16 +205,16 @@ public class McSsaoApplyRenderer
 				
 				// render pass setup
 				{
-					// bind SSAO color texture
+					// bind fog color texture
 					{
-						GpuTextureView textureView = gpuDevice.createTextureView(McSsaoRenderer.INSTANCE.ssaoColorTexture);
+						GpuTextureView textureView = gpuDevice.createTextureView(McFogRenderer.INSTANCE.fogColorTexture);
 						GpuSampler gpuSampler = gpuDevice.createSampler(
 							AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
 							FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
 							1, // maxAnisotropy 
 							OptionalDouble.empty() // maxLod
 						);
-						renderPass.bindTexture("uSsaoColorTexture", textureView, gpuSampler);
+						renderPass.bindTexture("uColorTexture", textureView, gpuSampler);
 					}
 					
 					// bind DH LOD depth texture

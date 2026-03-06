@@ -24,10 +24,10 @@ import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.interfaces.factories.IDhApiWrapperFactory;
-import com.seibel.distanthorizons.common.renderTest.LodContainerUniformBufferWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.LodContainerUniformBufferWrapper;
 import com.seibel.distanthorizons.common.renderTest.McGenericObjectRenderer;
-import com.seibel.distanthorizons.common.renderTest.McInstancedVboContainer;
-import com.seibel.distanthorizons.common.renderTest.VertexBufferWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.McInstancedVboContainer;
+import com.seibel.distanthorizons.common.renderTest.helpers.VertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
@@ -43,7 +43,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrappe
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.ILodContainerUniformBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcGenericRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IUniformBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
@@ -55,13 +54,11 @@ import net.minecraft.core.Holder;
 #endif
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
-import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 
 import java.io.IOException;
-import java.util.HashSet;
 
 /**
  * This handles creating abstract wrapper objects.

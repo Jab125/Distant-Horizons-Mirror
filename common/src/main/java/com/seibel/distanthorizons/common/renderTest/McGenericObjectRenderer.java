@@ -43,6 +43,9 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeG
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3d;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
+import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.renderTest.helpers.McInstancedVboContainer;
+import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;

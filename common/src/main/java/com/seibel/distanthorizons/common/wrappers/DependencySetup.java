@@ -20,6 +20,11 @@
 package com.seibel.distanthorizons.common.wrappers;
 
 import com.seibel.distanthorizons.common.renderTest.*;
+import com.seibel.distanthorizons.common.renderTest.postProcessing.McFarFadeRenderer;
+import com.seibel.distanthorizons.common.renderTest.postProcessing.McFogRenderer;
+import com.seibel.distanthorizons.common.renderTest.postProcessing.McSsaoRenderer;
+import com.seibel.distanthorizons.common.renderTest.postProcessing.McVanillaFadeRenderer;
+import com.seibel.distanthorizons.common.renderTest.test.McTestRenderer;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;

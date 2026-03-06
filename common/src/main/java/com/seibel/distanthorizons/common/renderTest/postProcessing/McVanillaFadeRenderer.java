@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.renderTest;
+package com.seibel.distanthorizons.common.renderTest.postProcessing;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -33,24 +33,23 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.api.enums.rendering.EDhApiFogColorMode;
-import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogDirection;
-import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogMixMode;
-import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
+import com.seibel.distanthorizons.common.renderTest.apply.McCopyRenderer;
+import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.util.LodUtil;
+import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFogRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcSsaoRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcVanillaFadeRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
-import java.awt.*;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.OptionalDouble;
@@ -60,15 +59,14 @@ import java.util.function.Supplier;
 /**
  * Renders a TODO
  */
-public class McFogRenderer implements IMcFogRenderer
+public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
-	private static final IMinecraftClientWrapper MC = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
-	public static final McFogRenderer INSTANCE = new McFogRenderer();
+	public static final McVanillaFadeRenderer INSTANCE = new McVanillaFadeRenderer();
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -78,7 +76,7 @@ public class McFogRenderer implements IMcFogRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	public GpuTexture fogColorTexture;
+	public GpuTexture fadeColorTexture;
 	
 	
 	
@@ -87,7 +85,7 @@ public class McFogRenderer implements IMcFogRenderer
 	//=============//
 	//region
 	
-	private McFogRenderer() 
+	private McVanillaFadeRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhVertexFormat.SCREEN_POS)
@@ -117,15 +115,16 @@ public class McFogRenderer implements IMcFogRenderer
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:fog_render"));
+			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/quad_apply"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/fog"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vanilla_fade"));
 			
 			pipelineBuilder.withSampler("uMcDepthTexture");
 			pipelineBuilder.withSampler("uCombinedMcDhColorTexture");
 			
 			pipelineBuilder.withSampler("uDhDepthTexture");
+			pipelineBuilder.withSampler("uDhColorTexture");
 			
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
@@ -147,7 +146,7 @@ public class McFogRenderer implements IMcFogRenderer
 				};
 			
 			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McFogRenderer";
+			Supplier<String> labelSupplier = () -> "distantHorizons:McFadeRenderer";
 			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
 			int size = vertices.length * Float.BYTES;
 			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
@@ -179,7 +178,7 @@ public class McFogRenderer implements IMcFogRenderer
 	//region
 	
 	@Override
-	public void render(DhApiMat4f modelViewProjectionMatrix, float partialTicks)
+	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
 	{
 		this.tryInit();
 		
@@ -197,18 +196,18 @@ public class McFogRenderer implements IMcFogRenderer
 		
 		
 		// textures
-		if (this.fogColorTexture == null
-			|| this.fogColorTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
-			|| this.fogColorTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
+		if (this.fadeColorTexture == null
+			|| this.fadeColorTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
+			|| this.fadeColorTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
 		{
-			if (this.fogColorTexture != null)
+			if (this.fadeColorTexture != null)
 			{
-				this.fogColorTexture.close();
+				this.fadeColorTexture.close();
 			}
 			
 			// TODO USAGE_TEXTURE_BINDING = 4
 			int usage = 4 | 8 | 32 | 128;
-			this.fogColorTexture = gpuDevice.createTexture("FogColorTexture",
+			this.fadeColorTexture = gpuDevice.createTexture("FadeColorTexture",
 				usage,
 				TextureFormat.RGBA8,
 				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
@@ -219,89 +218,42 @@ public class McFogRenderer implements IMcFogRenderer
 		
 		{
 			int uniformBufferSize = new Std140SizeCalculator()
-				
-				// fog uniforms
-				.putVec4() // uFogColor
-				.putFloat() //uFogScale
-				.putFloat() //uFogVerticalScale
-				// only used for debugging
-				.putInt() //uFogDebugMode  // 1 = render everything with fog color // 7 = use debug rendering
-				.putInt() //uFogFalloffType
-				
-				// fog config
-				.putFloat() // uFarFogStart
-				.putFloat() // uFarFogLength
-				.putFloat() // uFarFogMin
-				.putFloat() // uFarFogRange 
-				.putFloat() // uFarFogDensity
-				
-				// height fog config
-				.putFloat() // uHeightFogStart
-				.putFloat() // uHeightFogLength
-				.putFloat() // uHeightFogMin
-				.putFloat() // uHeightFogRange
-				.putFloat() // uHeightFogDensity
-				
-				// ??
-				.putInt() // uHeightFogEnabled
-				.putInt() // uHeightFogFalloffType
-				.putInt() // uHeightBasedOnCamera
-				.putFloat() // uHeightFogBaseHeight
-				.putInt() // uHeightFogAppliesUp
-				.putInt() // uHeightFogAppliesDown
-				.putInt() // uUseSphericalFog
-				.putInt() // uHeightFogMixingMode
-				.putFloat() // uCameraBlockYPos
-				
-				.putMat4f() // uInvMvmProj
-				
+				.putInt() // uOnlyRenderLods
+				.putFloat() // uStartFadeBlockDistance
+				.putFloat() // uEndFadeBlockDistance
+				.putFloat() // uMaxLevelHeight
+				.putMat4f() // uDhInvMvmProj
+				.putMat4f() // uMcInvMvmProj
 				.get();
 			
 			
 			// create data //
 			
+			float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
+			// this added value prevents the near clip plane and discard circle from touching, which looks bad
+			dhNearClipDistance += 16f;
 			
-			int lodDrawDistance = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistanceRadius.get() * LodUtil.CHUNK_WIDTH;
-			
-			
-			Mat4f inverseMvmProjMatrix = new Mat4f(modelViewProjectionMatrix);
-			inverseMvmProjMatrix.invert();
-			
-			if (modelViewProjectionMatrix == null)
-			{
-				return;
-			}
+			// measured in blocks
+			// these multipliers in James' tests should provide a fairly smooth transition
+			// without having underdraw issues
+			float fadeStartDistance = dhNearClipDistance * 1.5f;
+			float fadeEndDistance = dhNearClipDistance * 1.9f;
 			
 			
-			Color fogColor = this.getFogColor(partialTicks);
-			
-			// fog config
-			float farFogStart = Config.Client.Advanced.Graphics.Fog.farFogStart.get();
-			float farFogEnd = Config.Client.Advanced.Graphics.Fog.farFogEnd.get();
-			float farFogMin = Config.Client.Advanced.Graphics.Fog.farFogMin.get();
-			float farFogMax = Config.Client.Advanced.Graphics.Fog.farFogMax.get();
-			float farFogDensity = Config.Client.Advanced.Graphics.Fog.farFogDensity.get();
-			
-			// override fog if underwater
-			if (MC_RENDER.isFogStateSpecial())
-			{
-				// hide everything behind fog
-				farFogStart = 0.0f;
-				farFogEnd = 0.0f;
-			}
+			Mat4f inverseMcModelViewProjectionMatrix = new Mat4f(mcProjectionMatrix);
+			inverseMcModelViewProjectionMatrix.multiply(mcModelViewMatrix);
+			inverseMcModelViewProjectionMatrix.invert();
+			Mat4f inverseMcMvmProjMatrix = inverseMcModelViewProjectionMatrix;
 			
 			
-			// height config
-			EDhApiHeightFogMixMode heightFogMixingMode = Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogMixMode.get();
-			boolean heightFogEnabled = heightFogMixingMode != EDhApiHeightFogMixMode.SPHERICAL && heightFogMixingMode != EDhApiHeightFogMixMode.CYLINDRICAL;
-			boolean useSphericalFog = heightFogMixingMode == EDhApiHeightFogMixMode.SPHERICAL;
-			EDhApiHeightFogDirection heightFogCameraDirection = Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogDirection.get();
+			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(mcProjectionMatrix);
+			Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(mcModelViewMatrix);
 			
-			float heightFogStart = Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogStart.get();
-			float heightFogEnd = Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogEnd.get();
-			float heightFogMin = Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogMin.get();
-			float heightFogMax = Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogMax.get();
-			float heightFogDensity = Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogDensity.get();
+			Mat4f inverseDhModelViewProjectionMatrix = new Mat4f(dhProjectionMatrix);
+			inverseDhModelViewProjectionMatrix.multiply(dhModelViewMatrix);
+			inverseDhModelViewProjectionMatrix.invert();
+			Mat4f inverseDhMvmProjMatrix = inverseDhModelViewProjectionMatrix;
+			
 			
 			
 			// upload data //
@@ -309,46 +261,12 @@ public class McFogRenderer implements IMcFogRenderer
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
 			buffer.order(ByteOrder.LITTLE_ENDIAN);
 			buffer = Std140Builder.intoBuffer(buffer)
-				
-				// fog uniforms
-				.putVec4(
-					fogColor.getRed() / 255.0f, 
-					fogColor.getGreen() / 255.0f, 
-					fogColor.getBlue() / 255.0f, 
-					fogColor.getAlpha() / 255.0f) // uFogColor
-				.putFloat(1.f / lodDrawDistance) //uFogScale
-				.putFloat(1.f / MC.getWrappedClientLevel().getMaxHeight()) //uFogVerticalScale
-				// only used for debugging
-				.putInt(0) //uFogDebugMode  // 1 = render everything with fog color // 7 = use debug rendering
-				.putInt(Config.Client.Advanced.Graphics.Fog.farFogFalloff.get().value) //uFogFalloffType
-				
-				// fog config
-				.putFloat(farFogStart) // uFarFogStart
-				.putFloat(farFogEnd - farFogStart) // uFarFogLength
-				.putFloat(farFogMin) // uFarFogMin
-				.putFloat(farFogMax - farFogMin) // uFarFogRange 
-				.putFloat(farFogDensity) // uFarFogDensity
-				
-				// height fog config
-				.putFloat(heightFogStart) // uHeightFogStart
-				.putFloat(heightFogEnd - heightFogStart) // uHeightFogLength
-				.putFloat(heightFogMin) // uHeightFogMin
-				.putFloat(heightFogMax - heightFogMin) // uHeightFogRange
-				.putFloat(heightFogDensity) // uHeightFogDensity
-				
-				// ??
-				.putInt(heightFogEnabled ? 1 : 0) // uHeightFogEnabled
-				.putInt(Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogFalloff.get().value) // uHeightFogFalloffType
-				.putInt(heightFogCameraDirection.basedOnCamera ? 1 : 0) // uHeightBasedOnCamera
-				.putFloat(Config.Client.Advanced.Graphics.Fog.HeightFog.heightFogBaseHeight.get()) // uHeightFogBaseHeight
-				.putInt(heightFogCameraDirection.fogAppliesUp ? 1 : 0) // uHeightFogAppliesUp
-				.putInt(heightFogCameraDirection.fogAppliesDown ? 1 : 0) // uHeightFogAppliesDown
-				.putInt(useSphericalFog ? 1 : 0) // uUseSphericalFog
-				.putInt(heightFogMixingMode.value) // uHeightFogMixingMode
-				.putFloat((float)MC_RENDER.getCameraExactPosition().y) // uCameraBlockYPos
-				
-				.putMat4f(inverseMvmProjMatrix.createJomlMatrix()) // uInvMvmProj
-				
+				.putInt(Config.Client.Advanced.Debugging.lodOnlyMode.get() ? 1 : 0) // uOnlyRenderLods
+				.putFloat(fadeStartDistance) // uStartFadeBlockDistance
+				.putFloat(fadeEndDistance) // uEndFadeBlockDistance
+				.putFloat(level.getMaxHeight()) // uMaxLevelHeight
+				.putMat4f(inverseDhMvmProjMatrix.createJomlMatrix()) // uDhInvMvmProj
+				.putMat4f(inverseMcMvmProjMatrix.createJomlMatrix()) // uMcInvMvmProj
 				.get()
 			;
 			
@@ -359,35 +277,19 @@ public class McFogRenderer implements IMcFogRenderer
 		}
 		
 		
-		this.renderFogToTexture();
-		McFogApplyRenderer.INSTANCE.render();
+		this.renderFadeToTexture();
+		McCopyRenderer.INSTANCE.render(this.fadeColorTexture, Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 		
 	}
 	
-	private Color getFogColor(float partialTicks)
-	{
-		Color fogColor;
-		
-		if (Config.Client.Advanced.Graphics.Fog.colorMode.get() == EDhApiFogColorMode.USE_SKY_COLOR)
-		{
-			fogColor = MC_RENDER.getSkyColor();
-		}
-		else
-		{
-			fogColor = MC_RENDER.getFogColor(partialTicks);
-		}
-		
-		return fogColor;
-	}
-	
-	private void renderFogToTexture()
+	private void renderFadeToTexture()
 	{
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		// create a render pass
-		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McFogRenderer";
-		GpuTextureView colorTexture = gpuDevice.createTextureView(this.fogColorTexture);
+		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McFadeRenderer";
+		GpuTextureView colorTexture = gpuDevice.createTextureView(this.fadeColorTexture);
 		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
 		GpuTextureView depthTexture = null;
 		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
@@ -404,6 +306,31 @@ public class McFogRenderer implements IMcFogRenderer
 			
 			// render pass setup
 			{
+				// bind MC depth texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uMcDepthTexture", textureView, gpuSampler);
+				}
+				
+				// bind MC color texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uCombinedMcDhColorTexture", textureView, gpuSampler);
+				}
+				
+				
 				// bind DH depth texture
 				{
 					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
@@ -415,6 +342,19 @@ public class McFogRenderer implements IMcFogRenderer
 					);
 					renderPass.bindTexture("uDhDepthTexture", textureView, gpuSampler);
 				}
+				
+				// bind DH color texture
+				{
+					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
+					GpuSampler gpuSampler = gpuDevice.createSampler(
+						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
+						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+						1, // maxAnisotropy 
+						OptionalDouble.empty() // maxLod
+					);
+					renderPass.bindTexture("uDhColorTexture", textureView, gpuSampler);
+				}
+				
 				
 				
 				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);

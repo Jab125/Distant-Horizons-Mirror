@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.renderTest;
+package com.seibel.distanthorizons.common.renderTest.test;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -30,11 +30,13 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
@@ -45,16 +47,18 @@ import java.util.OptionalInt;
 import java.util.function.Supplier;
 
 /**
- * TODO ???
+ * Renders a UV colored quad
+ * to the center of the screen to confirm DH's
+ * apply shader is running correctly
  */
-public class McApplyRenderer
+public class McTestRenderer implements IMcTestRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
-	public static final McApplyRenderer INSTANCE = new McApplyRenderer();
+	public static final McTestRenderer INSTANCE = new McTestRenderer();
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -62,21 +66,13 @@ public class McApplyRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	private GpuTextureView dhColorTextureView;
-	private GpuSampler dhColorTextureSampler;
-	
-	private GpuTextureView dhDepthTextureView;
-	private GpuSampler dhDepthTextureSampler;
-	
-	private GpuTextureView mcColorTextureView;
-	
 	
 	//=============//
 	// constructor //
 	//=============//
 	//region
 	
-	private McApplyRenderer() 
+	private McTestRenderer() 
 	{
 		
 	}
@@ -97,7 +93,15 @@ public class McApplyRenderer
 		
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhVertexFormat.SCREEN_POS)
+			.add("vColor", DhVertexFormat.RGBA_FLOAT_COLOR)
 			.build();
+		
+		//int breakpointOne = 0;
+		// needs to manually be set if the VertexFormatElement isn't registered
+		//this.vertexFormat.getOffsetsByElement()[this.posForm.id()] = 0;
+		//this.vertexFormat.getOffsetsByElement()[this.colForm.id()] = Float.BYTES * 2;
+		//
+		//int breakpointTwo = 0;
 		
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
@@ -108,33 +112,29 @@ public class McApplyRenderer
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:apply_render"));
+			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "apply/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "apply/frag"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/frag"));
 			
-			pipelineBuilder.withSampler("uDhColorTexture");
-			pipelineBuilder.withSampler("uDhDepthTexture");
-			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
+			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLES);
 		}
 		this.pipeline = pipelineBuilder.build();
 		
 		
 		// upload vertex data
 		{
-			// vertices for a full-screen quad
+			// vertices for the OpenGL/Vulkan Triangle
 			float[] vertices = new float[]
 				{
-					// PosX,Y,
-					-1f, -1f,
-					1f, -1f,
-					1f,  1f,
-					-1f,  1f,
+					// PosX,Y,    ColorR,G,B,A
+					-0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 1.0f,
+					0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 1.0f,
+					0.0f,  0.5f,   0.0f, 0.0f, 1.0f, 1.0f,
 				};
 			
 			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McApplyRenderer";
+			Supplier<String> labelSupplier = () -> "distantHorizons:McTestRenderer";
 			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
 			int size = vertices.length * Float.BYTES;
 			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
@@ -170,60 +170,23 @@ public class McApplyRenderer
 		this.tryInit();
 		
 		
-		if (McLodRenderer.INSTANCE.dhColorTexture == null)
-		{
-			return;	
-		}
-		
-		if (McLodRenderer.INSTANCE.dhDepthTexture == null)
-		{
-			return;
-		}
-		
 		
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
-		{
-			GpuTexture mcColorTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
-			if (this.mcColorTextureView == null
-				|| this.mcColorTextureView.texture() != mcColorTexture)
-			{
-				this.mcColorTextureView = gpuDevice.createTextureView(mcColorTexture);
-			}
-			
-			
-			if (this.dhColorTextureSampler == null)
-			{
-				this.dhColorTextureSampler = gpuDevice.createSampler(
-					AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-					FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-					1, // maxAnisotropy 
-					OptionalDouble.empty() // maxLod
-				);
-				
-				this.dhDepthTextureSampler = gpuDevice.createSampler(
-					AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-					FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-					1, // maxAnisotropy 
-					OptionalDouble.empty() // maxLod
-				);
-			}
-			
-		}
-		
 		
 		// create a render pass
 		{
-			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McApplyRenderer";
+			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McTestRenderer";
+			GpuTextureView colorTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-			GpuTextureView depthTexture = null;
+			GpuTextureView depthTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
 			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 			
 			try (RenderPass renderPass = commandEncoder.createRenderPass(
 				debugLabelSupplier,
-				this.mcColorTextureView,
+				colorTexture,
 				optionalClearColorAsInt,
 				depthTexture, optionalDepthValueAsDouble))
 			{
@@ -233,9 +196,6 @@ public class McApplyRenderer
 				
 				// render pass setup
 				{
-					renderPass.bindTexture("uDhDepthTexture", McLodRenderer.INSTANCE.dhDepthTextureView, this.dhColorTextureSampler);
-					renderPass.bindTexture("uDhColorTexture", McLodRenderer.INSTANCE.dhColorTextureView, this.dhDepthTextureSampler);
-					
 					// bind VBO
 					renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
 					
@@ -246,10 +206,17 @@ public class McApplyRenderer
 				// draw render pass
 				{
 					int indexStart = 0;
-					int indexCount = 4;
+					int indexCount = 3;
 					renderPass.draw(indexStart, indexCount);
 				}
 			}
+		}
+		
+		// clear depth texture
+		{
+			//GpuTexture depthTex = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
+			//double newDepth = 0;
+			//commandEncoder.clearDepthTexture(depthTex, newDepth);
 		}
 	}
 	

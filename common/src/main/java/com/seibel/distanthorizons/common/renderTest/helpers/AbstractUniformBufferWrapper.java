@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.renderTest;
+package com.seibel.distanthorizons.common.renderTest.helpers;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -9,7 +9,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.IUniformBufferWr
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.function.Supplier;
 
 public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrapper
 {
