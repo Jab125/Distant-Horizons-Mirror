@@ -31,11 +31,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -47,24 +44,23 @@ import java.util.OptionalInt;
 import java.util.function.Supplier;
 
 /**
- * Renders a UV colored quad
+ * Renders the OpenGL/Vulkan triangle
  * to the center of the screen to confirm DH's
  * apply shader is running correctly
  */
-public class McTestRenderer implements IMcTestRenderer
+public class DhTestRenderer implements IMcTestRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
+	public static final DhTestRenderer INSTANCE = new DhTestRenderer();
 	
-	public static final McTestRenderer INSTANCE = new McTestRenderer();
-	
-	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
 	private boolean init = false;
 	
+	private GpuTextureView mcColorTextureView;
+	
 	private GpuBuffer vboGpuBuffer;
+	
 	
 	
 	//=============//
@@ -72,10 +68,7 @@ public class McTestRenderer implements IMcTestRenderer
 	//=============//
 	//region
 	
-	private McTestRenderer() 
-	{
-		
-	}
+	private DhTestRenderer() { }
 	
 	private void tryInit()
 	{
@@ -91,7 +84,7 @@ public class McTestRenderer implements IMcTestRenderer
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
-		this.vertexFormat = VertexFormat.builder()
+		VertexFormat vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhVertexFormat.SCREEN_POS)
 			.add("vColor", DhVertexFormat.RGBA_FLOAT_COLOR)
 			.build();
@@ -117,43 +110,51 @@ public class McTestRenderer implements IMcTestRenderer
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/vert"));
 			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/frag"));
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLES);
+			pipelineBuilder.withVertexFormat(vertexFormat, VertexFormat.Mode.TRIANGLES);
 		}
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		// upload vertex data
-		{
-			// vertices for the OpenGL/Vulkan Triangle
-			float[] vertices = new float[]
-				{
-					// PosX,Y,    ColorR,G,B,A
-					-0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 1.0f,
-					0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 1.0f,
-					0.0f,  0.5f,   0.0f, 0.0f, 1.0f, 1.0f,
-				};
-			
-			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McTestRenderer";
-			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-			int size = vertices.length * Float.BYTES;
-			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
-			
-			{
-				int offset = 0;
-				int length = vertices.length * Float.BYTES;
-				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, offset, length);
-				
-				ByteBuffer byteBuffer = ByteBuffer.allocateDirect(vertices.length * Float.BYTES);
-				// Fill buffer with vertices.
-				byteBuffer.order(ByteOrder.nativeOrder());
-				byteBuffer.asFloatBuffer().put(vertices);
-				byteBuffer.rewind();
-				
-				commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
-			}
-		}
+		this.mcColorTextureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 		
+		
+		this.uploadVertexData();
+	}
+	private void uploadVertexData()
+	{
+		GpuDevice gpuDevice = RenderSystem.getDevice();
+		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
+		
+		
+		// vertices for the OpenGL/Vulkan Triangle
+		float[] vertices = new float[]
+			{
+				// PosX,Y,    ColorR,G,B,A
+				-0.5f, -0.5f,   1.0f, 0.0f, 0.0f, 1.0f,
+				0.5f, -0.5f,   0.0f, 1.0f, 0.0f, 1.0f,
+				0.0f,  0.5f,   0.0f, 0.0f, 1.0f, 1.0f,
+			};
+		
+		
+		Supplier<String> labelSupplier = () -> "distantHorizons:DhTestRenderer";
+		// TODO
+		int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
+		int size = vertices.length * Float.BYTES;
+		this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
+		
+		{
+			int offset = 0;
+			int length = vertices.length * Float.BYTES;
+			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, offset, length);
+			
+			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(vertices.length * Float.BYTES);
+			// Fill buffer with vertices.
+			byteBuffer.order(ByteOrder.nativeOrder());
+			byteBuffer.asFloatBuffer().put(vertices);
+			byteBuffer.rewind();
+			
+			commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
+		}
 	}
 	
 	//endregion
@@ -178,45 +179,20 @@ public class McTestRenderer implements IMcTestRenderer
 		
 		// create a render pass
 		{
-			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McTestRenderer";
-			GpuTextureView colorTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-			GpuTextureView depthTexture = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+			GpuTextureView mcDepthTextureView = null;
 			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 			
 			try (RenderPass renderPass = commandEncoder.createRenderPass(
-				debugLabelSupplier,
-				colorTexture,
+				() -> "distantHorizons:DhTestRenderer",
+				this.mcColorTextureView,
 				optionalClearColorAsInt,
-				depthTexture, optionalDepthValueAsDouble))
+				mcDepthTextureView, optionalDepthValueAsDouble))
 			{
-				//renderPass.pushDebugGroup();
-				//renderPass.popDebugGroup();
-				
-				
-				// render pass setup
-				{
-					// bind VBO
-					renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
-					
-					// set pipeline
-					renderPass.setPipeline(this.pipeline);
-				}
-				
-				// draw render pass
-				{
-					int indexStart = 0;
-					int indexCount = 3;
-					renderPass.draw(indexStart, indexCount);
-				}
+				renderPass.setVertexBuffer(0, this.vboGpuBuffer);
+				renderPass.setPipeline(this.pipeline);	
+				renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 3);
 			}
-		}
-		
-		// clear depth texture
-		{
-			//GpuTexture depthTex = Minecraft.getInstance().getMainRenderTarget().getDepthTexture();
-			//double newDepth = 0;
-			//commandEncoder.clearDepthTexture(depthTex, newDepth);
 		}
 	}
 	

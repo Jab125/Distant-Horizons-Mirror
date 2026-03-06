@@ -24,7 +24,7 @@ import com.seibel.distanthorizons.common.renderTest.postProcessing.McFarFadeRend
 import com.seibel.distanthorizons.common.renderTest.postProcessing.McFogRenderer;
 import com.seibel.distanthorizons.common.renderTest.postProcessing.McSsaoRenderer;
 import com.seibel.distanthorizons.common.renderTest.postProcessing.McVanillaFadeRenderer;
-import com.seibel.distanthorizons.common.renderTest.test.McTestRenderer;
+import com.seibel.distanthorizons.common.renderTest.test.DhTestRenderer;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;
@@ -79,7 +79,7 @@ public class DependencySetup
 	
 	public static void createRenderBindings()
 	{
-		SingletonInjector.INSTANCE.bind(IMcTestRenderer.class, McTestRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcTestRenderer.class, DhTestRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcVanillaFadeRenderer.class, McVanillaFadeRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcLodRenderer.class, McLodRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, McSsaoRenderer.INSTANCE);
