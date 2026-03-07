@@ -23,9 +23,12 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.PolygonMode;
+import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
@@ -37,6 +40,7 @@ import com.seibel.distanthorizons.api.enums.rendering.EDhApiFogColorMode;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogDirection;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogMixMode;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.renderTest.apply.DhApplyRenderer;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
 import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
@@ -72,6 +76,9 @@ public class McFogRenderer implements IMcFogRenderer
 	
 	public static final McFogRenderer INSTANCE = new McFogRenderer();
 	
+	
+	private DhApplyRenderer applyRenderer;
+	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
 	private boolean init = false;
@@ -104,6 +111,14 @@ public class McFogRenderer implements IMcFogRenderer
 		}
 		this.init = true;
 		
+		
+		
+		
+		this.applyRenderer = new DhApplyRenderer(
+			"fog_apply_to_dh",
+			new BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA),
+			"apply/vert", "apply/frag"
+		);
 		
 		
 		GpuDevice gpuDevice = RenderSystem.getDevice();
@@ -362,7 +377,7 @@ public class McFogRenderer implements IMcFogRenderer
 		
 		
 		this.renderFogToTexture();
-		McFogApplyRenderer.INSTANCE.render();
+		this.applyRenderer.render(this.fogColorTexture, McLodRenderer.INSTANCE.dhDepthTexture, McLodRenderer.INSTANCE.dhColorTexture);
 		
 	}
 	

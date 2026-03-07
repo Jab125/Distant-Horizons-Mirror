@@ -23,9 +23,12 @@ import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
+import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
+import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.PolygonMode;
+import com.mojang.blaze3d.platform.SourceFactor;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
@@ -34,6 +37,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.renderTest.apply.DhApplyRenderer;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
 import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
@@ -63,6 +67,9 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
 	public static final McSsaoRenderer INSTANCE = new McSsaoRenderer();
+	
+	
+	private DhApplyRenderer applyRenderer;
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -97,6 +104,11 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		this.init = true;
 		
 		
+		this.applyRenderer = new DhApplyRenderer(
+			"ssao_apply_to_dh",
+			new BlendFunction(SourceFactor.ZERO, DestFactor.SRC_ALPHA, SourceFactor.ZERO, DestFactor.ONE),
+			"apply/vert", "ssao/apply"
+		);
 		
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
@@ -111,7 +123,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
+			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:ssao_render"));
 			
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/quad_apply"));
 			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/ao"));
@@ -259,7 +271,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		
 		
 		this.renderSsaoToTexture();
-		McSsaoApplyRenderer.INSTANCE.render();
+		this.applyRenderer.render(this.ssaoColorTexture, McLodRenderer.INSTANCE.dhDepthTexture, McLodRenderer.INSTANCE.dhColorTexture);
 		
 	}
 	

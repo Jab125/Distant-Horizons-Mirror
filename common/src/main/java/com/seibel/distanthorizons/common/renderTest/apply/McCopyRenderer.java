@@ -63,15 +63,13 @@ public class McCopyRenderer
 	private GpuBuffer vboGpuBuffer;
 	
 	
+	
 	//=============//
 	// constructor //
 	//=============//
 	//region
 	
-	private McCopyRenderer() 
-	{
-		
-	}
+	private McCopyRenderer() { }
 	
 	private void tryInit()
 	{

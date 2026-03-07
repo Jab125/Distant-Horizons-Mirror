@@ -16,7 +16,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.renderTest.apply.McApplyRenderer;
+import com.seibel.distanthorizons.common.renderTest.apply.DhApplyRenderer;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.LodContainerUniformBufferWrapper;
 import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
@@ -40,6 +40,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRen
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcLodRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWrapper;
+import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.system.MemoryUtil;
@@ -61,6 +62,9 @@ public class McLodRenderer implements IMcLodRenderer
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
 	public static final McLodRenderer INSTANCE = new McLodRenderer();
+	
+	
+	private DhApplyRenderer applyRenderer;
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline opaquePipeline;
@@ -111,6 +115,11 @@ public class McLodRenderer implements IMcLodRenderer
 		this.init = true; // todo only set when succeeded (in case of exception)
 		
 		
+		this.applyRenderer = new DhApplyRenderer(
+			"dh_apply_to_mc",
+			null,
+			"apply/vert", "apply/frag"
+		);
 		
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
@@ -447,7 +456,13 @@ public class McLodRenderer implements IMcLodRenderer
 	}
 	
 	@Override
-	public void applyToMcTexture() { McApplyRenderer.INSTANCE.render(); }
+	public void applyToMcTexture() 
+	{
+		//McApplyRenderer.INSTANCE.render();
+		
+		GpuTexture mcColorTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
+		this.applyRenderer.render(this.dhColorTexture, this.dhDepthTexture, mcColorTexture);
+	}
 	
 	@Override
 	public void clearDepth()
