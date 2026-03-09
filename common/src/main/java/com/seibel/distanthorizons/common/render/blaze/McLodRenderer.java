@@ -21,6 +21,7 @@ import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.LodContainerUniformBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.VertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;

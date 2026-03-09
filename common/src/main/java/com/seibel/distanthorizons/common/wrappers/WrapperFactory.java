@@ -25,7 +25,7 @@ import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiW
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.interfaces.factories.IDhApiWrapperFactory;
 import com.seibel.distanthorizons.common.render.blaze.McGenericObjectRenderer;
-import com.seibel.distanthorizons.common.render.blaze.helpers.LodContainerUniformBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.LodContainerUniformBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.VertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
