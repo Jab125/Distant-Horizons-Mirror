@@ -45,6 +45,7 @@ import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.McInstancedVboContainer;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
 import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -87,7 +88,9 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
+	
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	private static final DhApiRenderableBoxGroupShading DEFAULT_SHADING = DhApiRenderableBoxGroupShading.getUnshaded();
 	
@@ -108,10 +111,8 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 	private RenderPipeline opaquePipeline;
 	private RenderPipeline transparentPipeline;
 	
-	//private GpuBuffer boxVertexBuffer;
-	//private GpuBuffer boxIndexBuffer;
-	
 	private GpuBuffer vertUniformBuffer;
+	
 	
 	
 	//=============//
@@ -136,7 +137,6 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 			.build();
 		
 		this.createPipelines();
-		//this.createBuffers();
 		
 		if (RENDER_DEBUG_OBJECTS)
 		{
@@ -145,10 +145,6 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 	}
 	private void createPipelines()
 	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(true);
@@ -353,8 +349,8 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		
 		//#endregion
 		
-		if (McLodRenderer.INSTANCE.dhColorTexture == null
-			|| McLodRenderer.INSTANCE.dhDepthTexture == null)
+		if (McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
+			|| McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
 		{
 			return;
 		}
@@ -365,9 +361,6 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		// rendering //
 		//===========//
 		//#region
-		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		Collection<RenderableBoxGroup> boxList = this.boxGroupById.values();
 		for (RenderableBoxGroup boxGroup : boxList)
@@ -493,7 +486,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 				this.vertUniformBuffer = UniformHandler.createBuffer("vertUniformBlock", uniformBufferSize, this.vertUniformBuffer);
 				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertUniformBuffer, 0, uniformBufferSize);
 				
-				commandEncoder.writeToBuffer(bufferSlice, buffer);
+				COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 			}
 			
 			
@@ -505,17 +498,12 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 			profiler.push(boxGroup.getResourceLocationNamespace());
 			profiler.push(boxGroup.getResourceLocationPath());
 			
-			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McTestRenderer";
-			GpuTextureView colorTexture = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
-			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-			GpuTextureView depthTexture = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
-			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
-			
-			try (RenderPass renderPass = commandEncoder.createRenderPass(
-				debugLabelSupplier,
-				colorTexture,
-				optionalClearColorAsInt,
-				depthTexture, optionalDepthValueAsDouble))
+			try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+				this::getName,
+				McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
+				/*optionalClearColorAsInt*/ OptionalInt.empty(),
+				McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+				/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 			{
 				this.renderBoxGroupInstanced(renderPass, renderEventParam, boxGroup, camPos, profiler);
 			}
@@ -543,6 +531,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		
 		//endregion
 	}
+	private String getName() { return "distantHorizons:McTestRenderer"; }
 	
 	//endregion
 	
@@ -562,24 +551,11 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		
 		profiler.push("vertex setup");
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		
 		McInstancedVboContainer container = (McInstancedVboContainer) boxGroup.instancedVbos;
 		
-		
-		// bind MC Lightmap
-		{
-			LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-			
-			GpuTextureView textureView = gpuDevice.createTextureView(lightMapWrapper.gpuTexture);
-			GpuSampler gpuSampler = gpuDevice.createSampler(
-				AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-				FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-				1, // maxAnisotropy 
-				OptionalDouble.empty() // maxLod
-			);
-			renderPass.bindTexture("uLightMap", textureView, gpuSampler);
-		}
+		LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+		McTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
+		renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
 		
 		
 		

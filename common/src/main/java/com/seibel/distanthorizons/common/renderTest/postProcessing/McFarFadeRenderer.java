@@ -36,6 +36,8 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.apply.McCopyRenderer;
 import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
 import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -64,6 +66,9 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
+	
 	public static final McFarFadeRenderer INSTANCE = new McFarFadeRenderer();
 	
 	private VertexFormat vertexFormat;
@@ -74,7 +79,8 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	public GpuTexture fadeColorTexture;
+	public final McTextureWrapper dhFadeColorTextureWrapper = McTextureWrapper.createColor("DhFadeColorTexture");
+	public final McTextureViewWrapper mcColorTextureViewWrapper = new McTextureViewWrapper();
 	
 	
 	
@@ -180,38 +186,17 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 		this.tryInit();
 		
 		
-		if (McLodRenderer.INSTANCE.dhDepthTexture == null
-			|| McLodRenderer.INSTANCE.dhColorTexture == null)
+		if (McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
 		
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
 		
 		// textures
-		if (this.fadeColorTexture == null
-			|| this.fadeColorTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
-			|| this.fadeColorTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
-		{
-			if (this.fadeColorTexture != null)
-			{
-				this.fadeColorTexture.close();
-			}
-			
-			// TODO USAGE_TEXTURE_BINDING = 4
-			int usage = 4 | 8 | 32 | 128;
-			this.fadeColorTexture = gpuDevice.createTexture("FadeColorTexture",
-				usage,
-				TextureFormat.RGBA8,
-				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
-				1, 1
-			);
-		}
-		
+		this.dhFadeColorTextureWrapper.trySetup();
+		this.mcColorTextureViewWrapper.trySetup(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 		
 		{
 			int uniformBufferSize = new Std140SizeCalculator()
@@ -252,12 +237,12 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 			this.fragUniformBuffer = UniformHandler.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
 			
-			commandEncoder.writeToBuffer(bufferSlice, buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
 		
 		
 		this.renderFadeToTexture();
-		McCopyRenderer.INSTANCE.render(this.fadeColorTexture, McLodRenderer.INSTANCE.dhColorTexture);
+		McCopyRenderer.INSTANCE.render(this.dhFadeColorTextureWrapper, McLodRenderer.INSTANCE.dhColorTextureWrapper);
 		
 	}
 	
@@ -266,81 +251,29 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 		GpuDevice gpuDevice = RenderSystem.getDevice();
 		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
-		// create a render pass
-		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McFadeRenderer";
-		GpuTextureView colorTexture = gpuDevice.createTextureView(this.fadeColorTexture);
-		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-		GpuTextureView depthTexture = null;
-		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
-		
 		try (RenderPass renderPass = commandEncoder.createRenderPass(
-			debugLabelSupplier,
-			colorTexture,
-			optionalClearColorAsInt,
-			depthTexture, optionalDepthValueAsDouble))
+			this::getName,
+			this.dhFadeColorTextureWrapper.textureView, 
+			/*optionalClearColorAsInt*/ OptionalInt.empty(),
+			/*depthTexture*/ null, 
+			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			//renderPass.pushDebugGroup();
-			//renderPass.popDebugGroup();
+			// MC texture
+			renderPass.bindTexture("uMcColorTexture", this.mcColorTextureViewWrapper.textureView, this.mcColorTextureViewWrapper.textureSampler);
 			
+			// DH textures
+			renderPass.bindTexture("uDhDepthTexture", McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhColorTexture", McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, McLodRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
 			
-			// render pass setup
-			{
-				// bind MC color texture
-				{
-					GpuTextureView textureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
-					GpuSampler gpuSampler = gpuDevice.createSampler(
-						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-						1, // maxAnisotropy 
-						OptionalDouble.empty() // maxLod
-					);
-					renderPass.bindTexture("uMcColorTexture", textureView, gpuSampler);
-				}
-				
-				
-				// bind DH depth texture
-				{
-					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
-					GpuSampler gpuSampler = gpuDevice.createSampler(
-						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-						1, // maxAnisotropy 
-						OptionalDouble.empty() // maxLod
-					);
-					renderPass.bindTexture("uDhDepthTexture", textureView, gpuSampler);
-				}
-				
-				// bind DH color texture
-				{
-					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
-					GpuSampler gpuSampler = gpuDevice.createSampler(
-						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-						1, // maxAnisotropy 
-						OptionalDouble.empty() // maxLod
-					);
-					renderPass.bindTexture("uDhColorTexture", textureView, gpuSampler);
-				}
-				
-				
-				
-				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
-				
-				// bind VBO
-				renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
-				
-				// set pipeline
-				renderPass.setPipeline(this.pipeline);
-			}
+			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			
-			// draw render pass
-			{
-				int indexStart = 0;
-				int indexCount = 4;
-				renderPass.draw(indexStart, indexCount);
-			}
+			renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
+			renderPass.setPipeline(this.pipeline);
+			
+			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 4);
 		}
 	}
+	private String getName() { return "distantHorizons:McFadeRenderer"; }
 	
 	
 	//endregion

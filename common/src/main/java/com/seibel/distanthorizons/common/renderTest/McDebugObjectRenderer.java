@@ -64,6 +64,9 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
+	
 	public static McDebugObjectRenderer INSTANCE = new McDebugObjectRenderer();
 	
 	
@@ -250,8 +253,8 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 	{
 		this.init();
 		
-		if (McLodRenderer.INSTANCE.dhColorTexture == null
-			|| McLodRenderer.INSTANCE.dhDepthTexture == null)
+		if (McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
+			|| McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
 		{
 			return;
 		}
@@ -270,8 +273,6 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 		//===========//
 		//#region
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		// validation //
 		
 		
@@ -318,25 +319,18 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 			this.uniformBuffer = UniformHandler.createBuffer("uniformBlock", uniformBufferSize, this.uniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.uniformBuffer, 0, uniformBufferSize);
 			
-			commandEncoder.writeToBuffer(bufferSlice, buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
-		
 		
 		
 		
 		// render //
 		
-		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McDebugRenderer";
-		GpuTextureView colorTexture = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhColorTexture);
-		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-		GpuTextureView depthTexture = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
-		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
-		
-		try (RenderPass renderPass = commandEncoder.createRenderPass(
-			debugLabelSupplier,
-			colorTexture,
-			optionalClearColorAsInt,
-			depthTexture, optionalDepthValueAsDouble))
+		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+			this::getName,
+			McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
+			/*optionalClearColorAsInt*/ OptionalInt.empty(),
+			McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, /*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
 			// Bind instance data //
 			renderPass.setUniform("uniformBlock", this.uniformBuffer);
@@ -356,6 +350,7 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 		//#endregion
 		
 	}
+	private String getName() { return "distantHorizons:McDebugRenderer"; }
 	
 	//endregion
 	

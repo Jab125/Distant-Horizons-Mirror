@@ -32,6 +32,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.resources.Identifier;
@@ -65,13 +67,10 @@ public class DhApplyRenderer
 	private final String vertexShaderPath;
 	private final String fragmentShaderPath;
 	
-	private GpuTextureView sourceColorTextureView;
-	private GpuSampler sourceColorSampler;
+	private final McTextureViewWrapper sourceColorTextureViewWrapper = new McTextureViewWrapper();
+	private final McTextureViewWrapper sourceDepthTextureViewWrapper = new McTextureViewWrapper();
 	
-	private GpuTextureView sourceDepthTextureView;
-	private GpuSampler sourceDepthSampler;
-	
-	private GpuTextureView destinationColorTextureView;
+	private final McTextureViewWrapper destinationColorTextureViewWrapper = new McTextureViewWrapper();
 	
 	
 	
@@ -100,7 +99,12 @@ public class DhApplyRenderer
 	{
 		this.createPipeline();
 		this.uploadVertexData();
-		this.createTextureViews(sourceColorTexture, sourceDepthTexture, destinationColorTexture);
+		
+		this.sourceColorTextureViewWrapper.trySetup(sourceColorTexture);
+		this.sourceDepthTextureViewWrapper.trySetup(sourceDepthTexture);
+		
+		this.destinationColorTextureViewWrapper.trySetup(destinationColorTexture);
+		
 	}
 	private void createPipeline()
 	{
@@ -175,60 +179,6 @@ public class DhApplyRenderer
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, byteBuffer);
 		}
 	}
-	private void createTextureViews(
-		GpuTexture sourceColorTexture,
-		GpuTexture sourceDepthTexture,
-		GpuTexture destinationColorTexture)
-	{
-		
-		// source color
-		if (this.sourceColorTextureView == null
-			|| this.sourceColorTextureView.texture() != sourceColorTexture)
-		{
-			if (this.sourceColorTextureView != null)
-			{
-				this.sourceColorTextureView.close();
-			}
-			
-			this.sourceColorTextureView = GPU_DEVICE.createTextureView(sourceColorTexture);
-			this.sourceColorSampler = GPU_DEVICE.createSampler(
-				AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-				FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-				1, // maxAnisotropy 
-				OptionalDouble.empty() // maxLod
-			);
-		}
-		
-		// source depth
-		if (this.sourceDepthTextureView == null
-			|| this.sourceDepthTextureView.texture() != sourceDepthTexture)
-		{
-			if (this.sourceDepthTextureView != null)
-			{
-				this.sourceDepthTextureView.close();
-			}
-			
-			this.sourceDepthTextureView = GPU_DEVICE.createTextureView(sourceDepthTexture);
-			this.sourceDepthSampler = GPU_DEVICE.createSampler(
-				AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-				FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-				1, // maxAnisotropy 
-				OptionalDouble.empty() // maxLod
-			);
-		}
-		
-		// destination color
-		if (this.destinationColorTextureView == null
-			|| this.destinationColorTextureView.texture() != destinationColorTexture)
-		{
-			if (this.destinationColorTextureView != null)
-			{
-				this.destinationColorTextureView.close();
-			}
-			
-			this.destinationColorTextureView = GPU_DEVICE.createTextureView(destinationColorTexture);
-		}
-	}
 	
 	//endregion
 	
@@ -247,12 +197,14 @@ public class DhApplyRenderer
 		this.tryInit(sourceColorTexture, sourceDepthTexture, destinationColorTexture);
 		
 		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-				this::getIdentifierName,
-				this.destinationColorTextureView, /*optionalClearColorAsInt*/ OptionalInt.empty(),
-				/*depthTexture*/ null, /*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
+			this::getIdentifierName,
+			this.destinationColorTextureViewWrapper.textureView,
+			/*optionalClearColorAsInt*/ OptionalInt.empty(),
+			/*depthTexture*/ null,
+			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			renderPass.bindTexture("uSourceColorTexture", this.sourceColorTextureView, this.sourceColorSampler);
-			renderPass.bindTexture("uSourceDepthTexture", this.sourceDepthTextureView, this.sourceDepthSampler);
+			renderPass.bindTexture("uSourceColorTexture", this.sourceColorTextureViewWrapper.textureView, this.sourceColorTextureViewWrapper.textureSampler);
+			renderPass.bindTexture("uSourceDepthTexture", this.sourceDepthTextureViewWrapper.textureView, this.sourceDepthTextureViewWrapper.textureSampler);
 			
 			renderPass.setVertexBuffer(0, this.vboGpuBuffer);
 			renderPass.setPipeline(this.pipeline);

@@ -17,10 +17,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.apply.DhApplyRenderer;
-import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.renderTest.helpers.LodContainerUniformBufferWrapper;
-import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
-import com.seibel.distanthorizons.common.renderTest.helpers.VertexBufferWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.*;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
@@ -35,7 +32,6 @@ import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.objects.SortedArraySet;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcLodRenderer;
@@ -59,7 +55,9 @@ public class McLodRenderer implements IMcLodRenderer
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
+	
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	public static final McLodRenderer INSTANCE = new McLodRenderer();
 	
@@ -76,15 +74,8 @@ public class McLodRenderer implements IMcLodRenderer
 	private GpuBuffer fragUniformBuffer;
 	private GpuBuffer vertSharedUniformBuffer;
 	
-	public GpuTexture dhDepthTexture;
-	public GpuTextureView dhDepthTextureView;
-	
-	public GpuTexture dhColorTexture;
-	public GpuTextureView dhColorTextureView;
-	
-	private GpuTexture mcLightTexture;
-	private GpuTextureView mcLightTextureView;
-	private GpuSampler mcLightGpuSampler;
+	public final McTextureWrapper dhDepthTextureWrapper = McTextureWrapper.createDepth("DhDepthTexture");
+	public final McTextureWrapper dhColorTextureWrapper = McTextureWrapper.createColor("DhColorTexture");
 	
 	
 	
@@ -120,9 +111,6 @@ public class McLodRenderer implements IMcLodRenderer
 			null,
 			"apply/vert", "apply/frag"
 		);
-		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
@@ -181,12 +169,6 @@ public class McLodRenderer implements IMcLodRenderer
 		this.tryInit();
 		
 		
-		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
-		
 		profiler.push("vert unique uniforms");
 		{
 			// create data //
@@ -243,7 +225,7 @@ public class McLodRenderer implements IMcLodRenderer
 			this.vertSharedUniformBuffer = UniformHandler.createBuffer("vertSharedUniformBlock", uniformBufferSize, this.vertSharedUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertSharedUniformBuffer, 0, uniformBufferSize);
 			
-			commandEncoder.writeToBuffer(bufferSlice, buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
 		
 		profiler.popPush("set frag uniforms");
@@ -285,7 +267,7 @@ public class McLodRenderer implements IMcLodRenderer
 			this.fragUniformBuffer = UniformHandler.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
 			
-			commandEncoder.writeToBuffer(bufferSlice, buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
 		
 		// create index buffer
@@ -303,89 +285,47 @@ public class McLodRenderer implements IMcLodRenderer
 					// GpuBuffer.USAGE_UNIFORM = 128
 					// GpuBuffer.USAGE_INDEX = 64
 					int usage = 8 | 32 | 64 | 128; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-					this.indexBuffer = gpuDevice.createBuffer(() -> "DH Index Buffer", usage, buffer.capacity());
+					this.indexBuffer = GPU_DEVICE.createBuffer(() -> "DH Index Buffer", usage, buffer.capacity());
 				}
 				
 				int offset = 0;
 				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexBuffer, offset, buffer.capacity());
-				commandEncoder.writeToBuffer(bufferSlice, buffer);
+				COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 			}
 		}
 		
 		// textures
-		if (this.dhDepthTexture == null
-			|| this.dhDepthTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
-			|| this.dhDepthTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
-		{
-			if (this.dhDepthTexture != null)
-			{
-				this.dhDepthTexture.close();
-				this.dhDepthTextureView.close();
-				
-				this.dhColorTexture.close();
-				this.dhDepthTextureView.close();
-			}
-			
-			// TODO USAGE_TEXTURE_BINDING = 4
-			int usage = 4 | 8 | 32 | 128;
-			this.dhDepthTexture = gpuDevice.createTexture("DhDepthTexture",
-				usage,
-				TextureFormat.DEPTH32,
-				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
-				1, 1
-			);
-			this.dhDepthTextureView = gpuDevice.createTextureView(this.dhDepthTexture);
-			
-			this.dhColorTexture = gpuDevice.createTexture("DhColorTexture",
-				usage,
-				TextureFormat.RGBA8,
-				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
-				1, 1
-			);
-			this.dhColorTextureView = gpuDevice.createTextureView(this.dhColorTexture);
-		}
+		this.dhDepthTextureWrapper.trySetup();
+		this.dhColorTextureWrapper.trySetup();
+		
+		//LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+		//this.mcLightTextureViewWrapper.trySetup(lightMapWrapper.gpuTexture);
 		
 		
-		LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-		if (this.mcLightTexture != lightMapWrapper.gpuTexture)
-		{
-			this.mcLightTexture = lightMapWrapper.gpuTexture;
-			if (this.mcLightTextureView != null)
-			{
-				this.mcLightTextureView.close();
-			}
-			
-			
-			this.mcLightTextureView = gpuDevice.createTextureView(this.mcLightTexture);
-			this.mcLightGpuSampler = gpuDevice.createSampler(
-				AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-				FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-				1, // maxAnisotropy 
-				OptionalDouble.empty() // maxLod
-			);
-		}
+		//LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+		//McTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
+		//renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
 		
 		
 		{
 			profiler.popPush("setup");
 			
 			// create a render pass
-			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McLodRenderer";
 			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
 			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 			
-			try(RenderPass renderPass = commandEncoder.createRenderPass(
-				debugLabelSupplier,
-				this.dhColorTextureView,
+			try(RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+				this::getName,
+				this.dhColorTextureWrapper.textureView,
 				optionalClearColorAsInt,
-				this.dhDepthTextureView, optionalDepthValueAsDouble)
+				this.dhDepthTextureWrapper.textureView, optionalDepthValueAsDouble)
 				)
 			{
-				//renderPass.pushDebugGroup();
-				//renderPass.popDebugGroup();
-				
 				// bind MC Lightmap
-				renderPass.bindTexture("uLightMap", this.mcLightTextureView, this.mcLightGpuSampler);
+				//renderPass.bindTexture("uLightMap", this.mcLightTextureViewWrapper.textureView, this.mcLightTextureViewWrapper.textureSampler);
+				LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+				McTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
+				renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
 				
 				// set pipeline
 				renderPass.setPipeline(opaquePass ? this.opaquePipeline : this.transparentPipeline);
@@ -394,7 +334,6 @@ public class McLodRenderer implements IMcLodRenderer
 				// shared uniforms
 				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 				renderPass.setUniform("vertSharedUniformBlock", this.vertSharedUniformBuffer);
-				
 				
 				
 				
@@ -454,39 +393,19 @@ public class McLodRenderer implements IMcLodRenderer
 		
 		profiler.pop();
 	}
+	private String getName() { return "distantHorizons:McLodRenderer"; }
 	
 	@Override
 	public void applyToMcTexture() 
 	{
-		//McApplyRenderer.INSTANCE.render();
-		
 		GpuTexture mcColorTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
-		this.applyRenderer.render(this.dhColorTexture, this.dhDepthTexture, mcColorTexture);
+		this.applyRenderer.render(this.dhColorTextureWrapper.texture, this.dhDepthTextureWrapper.texture, mcColorTexture);
 	}
 	
 	@Override
-	public void clearDepth()
-	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-
-		if (this.dhDepthTexture != null)
-		{
-			commandEncoder.clearDepthTexture(this.dhDepthTexture, 1.0f);
-		}
-	}
-	
+	public void clearDepth() { this.dhDepthTextureWrapper.clearDepth(1.0f); }
 	@Override
-	public void clearColor()
-	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		if (this.dhColorTexture != null)
-		{
-			commandEncoder.clearColorTexture(this.dhColorTexture, ColorUtil.argbToInt(1, 1, 1, 1));
-		}
-	}
+	public void clearColor() { this.dhColorTextureWrapper.clearColor(ColorUtil.argbToInt(1, 1, 1, 1)); }
 	
 	//endregion
 	

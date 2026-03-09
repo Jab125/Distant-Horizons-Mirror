@@ -50,7 +50,10 @@ import java.util.function.Supplier;
  */
 public class DhTestRenderer implements IMcTestRenderer
 {
-	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
+	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	public static final DhTestRenderer INSTANCE = new DhTestRenderer();
 	
@@ -78,10 +81,6 @@ public class DhTestRenderer implements IMcTestRenderer
 		}
 		this.init = true;
 		
-		
-		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
@@ -115,7 +114,7 @@ public class DhTestRenderer implements IMcTestRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		this.mcColorTextureView = gpuDevice.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+		this.mcColorTextureView = GPU_DEVICE.createTextureView(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 		
 		
 		this.uploadVertexData();
@@ -170,31 +169,19 @@ public class DhTestRenderer implements IMcTestRenderer
 	{
 		this.tryInit();
 		
-		
-		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
-		
-		// create a render pass
+		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+			this::getName,
+			this.mcColorTextureView,
+			/*optionalClearColorAsInt*/ OptionalInt.empty(),
+			/*mcDepthTextureView*/ null, 
+			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-			GpuTextureView mcDepthTextureView = null;
-			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
-			
-			try (RenderPass renderPass = commandEncoder.createRenderPass(
-				() -> "distantHorizons:DhTestRenderer",
-				this.mcColorTextureView,
-				optionalClearColorAsInt,
-				mcDepthTextureView, optionalDepthValueAsDouble))
-			{
-				renderPass.setVertexBuffer(0, this.vboGpuBuffer);
-				renderPass.setPipeline(this.pipeline);	
-				renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 3);
-			}
+			renderPass.setVertexBuffer(0, this.vboGpuBuffer);
+			renderPass.setPipeline(this.pipeline);
+			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 3);
 		}
 	}
+	private String getName() { return "distantHorizons:DhTestRenderer"; }
 	
 	//endregion
 	

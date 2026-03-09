@@ -5,6 +5,8 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IUniformBufferWrapper;
 
 import java.nio.ByteBuffer;
@@ -12,6 +14,9 @@ import java.nio.ByteOrder;
 
 public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrapper
 {
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	
+	
 	private final String name;
 	
 	private ByteBuffer buffer = null;
@@ -62,7 +67,14 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 		
 		int byteSize = (this.buffer.limit() - this.buffer.position());
 		GpuBufferSlice bufferSlice = new GpuBufferSlice(this.gpuBuffer, /*offset*/0, byteSize);
-		commandEncoder.writeToBuffer(bufferSlice, this.buffer);
+		if (!bufferSlice.buffer().isClosed())
+		{
+			commandEncoder.writeToBuffer(bufferSlice, this.buffer);
+		}
+		else
+		{
+			LOGGER.warn("Uploading to buffer ["+this.name+"] failed due to already being closed");
+		}
 	}
 	private String getName() { return this.name; }
 	

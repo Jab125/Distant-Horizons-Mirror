@@ -40,6 +40,8 @@ import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.renderTest.apply.DhApplyRenderer;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
 import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -64,7 +66,9 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
+	
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	public static final McSsaoRenderer INSTANCE = new McSsaoRenderer();
 	
@@ -79,7 +83,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	public GpuTexture ssaoColorTexture;
+	public McTextureWrapper ssaoColorTextureWrapper = McTextureWrapper.createColor("DhSsaoTexture");
 	
 	
 	
@@ -127,9 +131,6 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/quad_apply"));
 			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/ao"));
-			
-			pipelineBuilder.withSampler("uMcDepthTexture");
-			pipelineBuilder.withSampler("uCombinedMcDhColorTexture");
 			
 			pipelineBuilder.withSampler("uDhDepthTexture");
 			
@@ -190,38 +191,16 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		this.tryInit();
 		
 		
-		if (McLodRenderer.INSTANCE.dhDepthTexture == null
-			|| McLodRenderer.INSTANCE.dhColorTexture == null)
+		if (McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
 		
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
 		
 		// textures
-		if (this.ssaoColorTexture == null
-			|| this.ssaoColorTexture.getWidth(0) != MC_RENDER.getTargetFramebufferViewportWidth()
-			|| this.ssaoColorTexture.getHeight(0) != MC_RENDER.getTargetFramebufferViewportHeight())
-		{
-			if (this.ssaoColorTexture != null)
-			{
-				this.ssaoColorTexture.close();
-			}
-			
-			// TODO USAGE_TEXTURE_BINDING = 4
-			int usage = 4 | 8 | 32 | 128;
-			this.ssaoColorTexture = gpuDevice.createTexture("SsaoColorTexture",
-				usage,
-				TextureFormat.RGBA8,
-				MC_RENDER.getTargetFramebufferViewportWidth(), MC_RENDER.getTargetFramebufferViewportHeight(),
-				1, 1
-			);
-		}
-		
+		this.ssaoColorTextureWrapper.trySetup();
 		
 		{
 			int uniformBufferSize = new Std140SizeCalculator()
@@ -266,69 +245,35 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			this.fragUniformBuffer = UniformHandler.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
 			
-			commandEncoder.writeToBuffer(bufferSlice, buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
 		
 		
 		this.renderSsaoToTexture();
-		this.applyRenderer.render(this.ssaoColorTexture, McLodRenderer.INSTANCE.dhDepthTexture, McLodRenderer.INSTANCE.dhColorTexture);
+		this.applyRenderer.render(this.ssaoColorTextureWrapper.texture, McLodRenderer.INSTANCE.dhDepthTextureWrapper.texture, McLodRenderer.INSTANCE.dhColorTextureWrapper.texture);
 		
 	}
 	
 	private void renderSsaoToTexture()
 	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		// create a render pass
-		Supplier<String> debugLabelSupplier = () -> "distantHorizons:McSsaoRenderer";
-		GpuTextureView colorTexture = gpuDevice.createTextureView(this.ssaoColorTexture);
-		OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-		GpuTextureView depthTexture = null;
-		OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
-		
-		try (RenderPass renderPass = commandEncoder.createRenderPass(
-			debugLabelSupplier,
-			colorTexture,
-			optionalClearColorAsInt,
-			depthTexture, optionalDepthValueAsDouble))
+		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+			this::getName,
+			this.ssaoColorTextureWrapper.textureView,
+			/*optionalClearColorAsInt*/ OptionalInt.empty(),
+			/*depthTexture*/ null,
+			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			//renderPass.pushDebugGroup();
-			//renderPass.popDebugGroup();
+			renderPass.bindTexture("uDhDepthTexture", McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
 			
+			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			
-			// render pass setup
-			{
-				// bind DH depth texture
-				{
-					GpuTextureView textureView = gpuDevice.createTextureView(McLodRenderer.INSTANCE.dhDepthTexture);
-					GpuSampler gpuSampler = gpuDevice.createSampler(
-						AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-						FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-						1, // maxAnisotropy 
-						OptionalDouble.empty() // maxLod
-					);
-					renderPass.bindTexture("uDhDepthTexture", textureView, gpuSampler);
-				}
-				
-				
-				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
-				
-				// bind VBO
-				renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
-				
-				// set pipeline
-				renderPass.setPipeline(this.pipeline);
-			}
+			renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
 			
-			// draw render pass
-			{
-				int indexStart = 0;
-				int indexCount = 4;
-				renderPass.draw(indexStart, indexCount);
-			}
+			renderPass.setPipeline(this.pipeline);
+			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 4);
 		}
 	}
+	private String getName() { return "distantHorizons:McSsaoRenderer"; }
 	
 	
 	//endregion

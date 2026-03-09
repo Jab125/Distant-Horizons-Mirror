@@ -31,6 +31,8 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -49,10 +51,10 @@ import java.util.function.Supplier;
  */
 public class McCopyRenderer
 {
-	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
+	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	public static final McCopyRenderer INSTANCE = new McCopyRenderer();
 	
@@ -154,65 +156,47 @@ public class McCopyRenderer
 	//========//
 	//region
 	
-	public void render(GpuTexture sourceTexture, GpuTexture destinationTexture)
+	public void render(
+		McTextureWrapper sourceColorTextureWrapper,
+		McTextureViewWrapper destinationColorTextureWrapper)
+	{
+		this.render(
+			sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,
+			destinationColorTextureWrapper.textureView);
+	}
+	public void render(
+		McTextureWrapper sourceColorTextureWrapper,
+		McTextureWrapper destinationColorTextureWrapper)
+	{
+		this.render(
+			sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,
+			destinationColorTextureWrapper.textureView);
+	}
+	
+	private void render(
+		GpuTextureView sourceTextureView,
+		GpuSampler sourceTextureSampler,
+		GpuTextureView destinationTextureView)
 	{
 		this.tryInit();
 		
-		
-		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
-		
-		// create a render pass
+		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+			this::getName,
+			destinationTextureView,
+			/*optionalClearColorAsInt*/ OptionalInt.empty(),
+			/*depthTexture*/ null,
+			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			Supplier<String> debugLabelSupplier = () -> "distantHorizons:McCopyRenderer";
-			GpuTextureView colorTexture = gpuDevice.createTextureView(destinationTexture);
-			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-			GpuTextureView depthTexture = null;
-			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
+			renderPass.bindTexture("uCopyTexture", sourceTextureView, sourceTextureSampler);
 			
-			try (RenderPass renderPass = commandEncoder.createRenderPass(
-				debugLabelSupplier,
-				colorTexture,
-				optionalClearColorAsInt,
-				depthTexture, optionalDepthValueAsDouble))
-			{
-				//renderPass.pushDebugGroup();
-				//renderPass.popDebugGroup();
-				
-				
-				// render pass setup
-				{
-					// bind color texture
-					{
-						GpuTextureView textureView = gpuDevice.createTextureView(sourceTexture);
-						GpuSampler gpuSampler = gpuDevice.createSampler(
-							AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-							FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
-							1, // maxAnisotropy 
-							OptionalDouble.empty() // maxLod
-						);
-						renderPass.bindTexture("uCopyTexture", textureView, gpuSampler);
-					}
-					
-					// bind VBO
-					renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
-					
-					// set pipeline
-					renderPass.setPipeline(this.pipeline);
-				}
-				
-				// draw render pass
-				{
-					int indexStart = 0;
-					int indexCount = 4;
-					renderPass.draw(indexStart, indexCount);
-				}
-			}
+			renderPass.setVertexBuffer(0, this.vboGpuBuffer); // vertex buffer can only be "0" lol
+			
+			renderPass.setPipeline(this.pipeline);
+			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 4);
 		}
 	}
+	
+	private String getName() { return "distantHorizons:McCopyRenderer"; }
 	
 	//endregion
 	
