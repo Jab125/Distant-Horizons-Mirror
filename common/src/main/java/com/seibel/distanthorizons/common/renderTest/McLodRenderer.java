@@ -211,7 +211,7 @@ public class McLodRenderer implements IMcLodRenderer
 				.get();
 			
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
-			buffer.order(ByteOrder.LITTLE_ENDIAN);
+			buffer.order(ByteOrder.nativeOrder());
 			Std140Builder.intoBuffer(buffer)
 				.putInt(0) // uIsWhiteWorld
 				
@@ -253,7 +253,7 @@ public class McLodRenderer implements IMcLodRenderer
 			// upload data //
 			
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
-			buffer.order(ByteOrder.LITTLE_ENDIAN);
+			buffer.order(ByteOrder.nativeOrder());
 			buffer = Std140Builder.intoBuffer(buffer)
 				.putFloat(dhNearClipDistance) // uClipDistance
 				.putFloat(Config.Client.Advanced.Graphics.NoiseTexture.noiseIntensity.get()) // uNoiseIntensity

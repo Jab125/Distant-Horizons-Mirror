@@ -33,6 +33,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
 import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.PostProcessHelper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -112,38 +113,7 @@ public class McCopyRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		// upload vertex data
-		{
-			// vertices for a full-screen quad
-			float[] vertices = new float[]
-				{
-					// PosX,Y,
-					-1f, -1f,
-					1f, -1f,
-					1f,  1f,
-					-1f,  1f,
-				};
-			
-			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McCopyRenderer";
-			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-			int size = vertices.length * Float.BYTES;
-			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
-			
-			{
-				int offset = 0;
-				int length = vertices.length * Float.BYTES;
-				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, offset, length);
-				
-				ByteBuffer byteBuffer = ByteBuffer.allocateDirect(vertices.length * Float.BYTES);
-				// Fill buffer with vertices.
-				byteBuffer.order(ByteOrder.nativeOrder());
-				byteBuffer.asFloatBuffer().put(vertices);
-				byteBuffer.rewind();
-				
-				commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
-			}
-		}
+		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData("McCopyRenderer");
 		
 	}
 	

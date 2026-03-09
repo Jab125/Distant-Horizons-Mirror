@@ -197,11 +197,11 @@ public class McInstancedVboContainer implements IInstancedVboContainer
 			
 			int vertexBufferSize = this.vertexBufferSize();
 			this.vertexBuffer = ByteBuffer.allocateDirect(vertexBufferSize);
-			this.vertexBuffer.order(ByteOrder.LITTLE_ENDIAN);
+			this.vertexBuffer.order(ByteOrder.nativeOrder());
 			
 			int indexBufferSize = this.indexBufferSize();
 			this.indexBuffer = ByteBuffer.allocateDirect(indexBufferSize);
-			this.indexBuffer.order(ByteOrder.LITTLE_ENDIAN);
+			this.indexBuffer.order(ByteOrder.nativeOrder());
 		}
 		this.vertexBuffer.position(0);
 		this.indexBuffer.position(0);

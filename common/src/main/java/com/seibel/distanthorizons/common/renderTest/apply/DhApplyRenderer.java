@@ -34,6 +34,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
 import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
 import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
+import com.seibel.distanthorizons.common.renderTest.helpers.PostProcessHelper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.resources.Identifier;
@@ -59,6 +60,7 @@ public class DhApplyRenderer
 	
 	protected GpuBuffer vboGpuBuffer;
 	
+	protected final String name;
 	protected final String identifierName;
 	public String getIdentifierName() { return this.identifierName; }
 	
@@ -85,7 +87,8 @@ public class DhApplyRenderer
 		String vertexShaderPath, String fragmentShaderPath
 		)
 	{
-		this.identifierName = "distanthorizons:"+name;
+		this.name = name;
+		this.identifierName = "distanthorizons:"+this.name;
 		this.blendFunction = blendFunction;
 		
 		this.vertexShaderPath = vertexShaderPath;
@@ -98,7 +101,7 @@ public class DhApplyRenderer
 		GpuTexture destinationColorTexture)
 	{
 		this.createPipeline();
-		this.uploadVertexData();
+		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData(this.name);
 		
 		this.sourceColorTextureViewWrapper.trySetup(sourceColorTexture);
 		this.sourceDepthTextureViewWrapper.trySetup(sourceDepthTexture);
@@ -147,38 +150,7 @@ public class DhApplyRenderer
 		}
 		this.pipeline = pipelineBuilder.build();
 	}
-	private void uploadVertexData()
-	{
-		// vertices for a full-screen quad
-		float[] vertices = new float[]
-			{
-				// PosX,Y,
-				-1f, -1f,
-				1f, -1f,
-				1f,  1f,
-				-1f,  1f,
-			};
-		
-		
-		Supplier<String> labelSupplier = () -> "distantHorizons:"+this.identifierName;
-		int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-		int size = vertices.length * Float.BYTES;
-		this.vboGpuBuffer = GPU_DEVICE.createBuffer(labelSupplier, usage, size);
-		
-		{
-			int offset = 0;
-			int length = vertices.length * Float.BYTES;
-			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, offset, length);
-			
-			ByteBuffer byteBuffer = ByteBuffer.allocateDirect(vertices.length * Float.BYTES);
-			// Fill buffer with vertices.
-			byteBuffer.order(ByteOrder.nativeOrder());
-			byteBuffer.asFloatBuffer().put(vertices);
-			byteBuffer.rewind();
-			
-			COMMAND_ENCODER.writeToBuffer(bufferSlice, byteBuffer);
-		}
-	}
+	
 	
 	//endregion
 	

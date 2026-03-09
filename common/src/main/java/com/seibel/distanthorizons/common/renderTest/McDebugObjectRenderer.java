@@ -207,7 +207,7 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 		// box vertex indexes
 		{
 			ByteBuffer buffer = ByteBuffer.allocateDirect(BOX_OUTLINE_INDICES.length * Integer.BYTES);
-			buffer.order(ByteOrder.LITTLE_ENDIAN);
+			buffer.order(ByteOrder.nativeOrder());
 			buffer.asIntBuffer().put(BOX_OUTLINE_INDICES);
 			buffer.rewind();
 			
@@ -305,7 +305,7 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 			// upload data //
 			
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
-			buffer.order(ByteOrder.LITTLE_ENDIAN);
+			buffer.order(ByteOrder.nativeOrder());
 			buffer = Std140Builder.intoBuffer(buffer)
 				.putMat4f(transformMatrix.createJomlMatrix()) // uTransform
 				.putVec4(

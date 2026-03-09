@@ -446,7 +446,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 				// upload data //
 				
 				ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
-				buffer.order(ByteOrder.LITTLE_ENDIAN);
+				buffer.order(ByteOrder.nativeOrder());
 				buffer = Std140Builder.intoBuffer(buffer)
 					.putIVec3(
 						LodUtil.getChunkPosFromDouble(boxGroup.getOriginBlockPos().x),

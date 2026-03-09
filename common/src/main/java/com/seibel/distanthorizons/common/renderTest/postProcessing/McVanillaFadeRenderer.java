@@ -35,10 +35,7 @@ import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
 import com.seibel.distanthorizons.common.renderTest.apply.McCopyRenderer;
-import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
-import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
-import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
+import com.seibel.distanthorizons.common.renderTest.helpers.*;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -139,39 +136,7 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		// upload vertex data
-		{
-			// vertices for a full-screen quad
-			float[] vertices = new float[]
-				{
-					// PosX,Y,
-					-1f, -1f,
-					 1f, -1f,
-					 1f,  1f,
-					-1f,  1f,
-				};
-			
-			
-			Supplier<String> labelSupplier = () -> "distantHorizons:McFadeRenderer";
-			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-			int size = vertices.length * Float.BYTES;
-			this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
-			
-			{
-				int offset = 0;
-				int length = vertices.length * Float.BYTES;
-				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, offset, length);
-				
-				ByteBuffer byteBuffer = ByteBuffer.allocateDirect(vertices.length * Float.BYTES);
-				// Fill buffer with vertices.
-				byteBuffer.order(ByteOrder.nativeOrder());
-				byteBuffer.asFloatBuffer().put(vertices);
-				byteBuffer.rewind();
-				
-				commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
-			}
-		}
-		
+		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData("McFadeRenderer");
 	}
 	
 	//endregion
@@ -245,7 +210,7 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 			// upload data //
 			
 			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
-			buffer.order(ByteOrder.LITTLE_ENDIAN);
+			buffer.order(ByteOrder.nativeOrder());
 			buffer = Std140Builder.intoBuffer(buffer)
 				.putInt(Config.Client.Advanced.Debugging.lodOnlyMode.get() ? 1 : 0) // uOnlyRenderLods
 				.putFloat(fadeStartDistance) // uStartFadeBlockDistance

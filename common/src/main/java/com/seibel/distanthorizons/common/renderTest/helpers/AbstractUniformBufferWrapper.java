@@ -40,7 +40,7 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 			|| this.buffer.capacity() != size)
 		{
 			this.buffer = ByteBuffer.allocateDirect(size);
-			this.buffer.order(ByteOrder.LITTLE_ENDIAN);
+			this.buffer.order(ByteOrder.nativeOrder());
 			
 			// GpuBuffer.USAGE_UNIFORM = 128
 			// GpuBuffer.USAGE_INDEX = 64
