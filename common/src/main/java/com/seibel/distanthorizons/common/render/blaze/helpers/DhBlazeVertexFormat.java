@@ -6,7 +6,7 @@ import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuad
 /**
  * @see LodQuadBuilder
  */
-public class DhVertexFormat
+public class DhBlazeVertexFormat
 {
 	public static final VertexFormatElement SCREEN_POS = VertexFormatElement.register(/*id*/7, /*index*/0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.POSITION, /*count*/ 2);
 	public static final VertexFormatElement RGBA_FLOAT_COLOR = VertexFormatElement.register(/*id*/8, /*index*/0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.COLOR, /*count*/ 4);

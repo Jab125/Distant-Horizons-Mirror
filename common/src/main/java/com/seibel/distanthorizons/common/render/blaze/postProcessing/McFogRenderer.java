@@ -41,9 +41,9 @@ import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogMixMode;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureWrapper;
-import com.seibel.distanthorizons.common.render.blaze.helpers.PostProcessHelper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeTextureWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -88,7 +88,7 @@ public class McFogRenderer implements IMcFogRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	public McTextureWrapper fogColorTextureWrapper = McTextureWrapper.createColor("DhFogColorTexture");
+	public BlazeTextureWrapper fogColorTextureWrapper = BlazeTextureWrapper.createColor("DhFogColorTexture");
 	
 	
 	
@@ -100,7 +100,7 @@ public class McFogRenderer implements IMcFogRenderer
 	private McFogRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SCREEN_POS)
+			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
 			.build();
 	}
 	
@@ -149,7 +149,7 @@ public class McFogRenderer implements IMcFogRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData("McFogRenderer");
+		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData("McFogRenderer");
 	}
 	
 	//endregion

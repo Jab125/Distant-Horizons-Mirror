@@ -74,8 +74,8 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	public final McTextureWrapper dhFadeColorTextureWrapper = McTextureWrapper.createColor("DhFadeColorTexture");
-	public final McTextureViewWrapper mcColorTextureViewWrapper = new McTextureViewWrapper();
+	public final BlazeTextureWrapper dhFadeColorTextureWrapper = BlazeTextureWrapper.createColor("DhFadeColorTexture");
+	public final BlazeTextureViewWrapper mcColorTextureViewWrapper = new BlazeTextureViewWrapper();
 	
 	
 	
@@ -87,7 +87,7 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	private McFarFadeRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SCREEN_POS)
+			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
 			.build();
 	}
 	
@@ -131,7 +131,7 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData("McFadeRenderer");
+		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData("McFadeRenderer");
 	}
 	
 	//endregion

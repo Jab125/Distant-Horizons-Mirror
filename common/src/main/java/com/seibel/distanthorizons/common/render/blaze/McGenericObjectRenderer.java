@@ -42,9 +42,9 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeG
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3d;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McInstancedVboContainer;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -54,7 +54,6 @@ import com.seibel.distanthorizons.core.logging.f3.F3Screen;
 import com.seibel.distanthorizons.core.render.renderer.RenderParams;
 import com.seibel.distanthorizons.core.render.renderer.generic.GenericRenderObjectFactory;
 import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
-import com.seibel.distanthorizons.core.render.renderer.generic.NativeGlGenericObjectVertexContainer;
 import com.seibel.distanthorizons.core.render.renderer.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -129,9 +128,9 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		this.init = true;
 		
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.FLOAT_XYZ_POS)
-			.add("aColor", DhVertexFormat.RGBA_UBYTE_COLOR)
-			.add("aMaterial", DhVertexFormat.IRIS_MATERIAL)
+			.add("vPosition", DhBlazeVertexFormat.FLOAT_XYZ_POS)
+			.add("aColor", DhBlazeVertexFormat.RGBA_UBYTE_COLOR)
+			.add("aMaterial", DhBlazeVertexFormat.IRIS_MATERIAL)
 			.build();
 		
 		this.createPipelines();
@@ -549,10 +548,10 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		
 		profiler.push("vertex setup");
 		
-		McInstancedVboContainer container = (McInstancedVboContainer) boxGroup.instancedVbos;
+		BlazeGenericObjectVertexContainer container = (BlazeGenericObjectVertexContainer) boxGroup.instancedVbos;
 		
 		LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-		McTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
+		BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
 		renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
 		
 		

@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * 
  * @see RenderableBoxGroup
  */
-public class McInstancedVboContainer implements IGenericObjectVertexBufferContainer
+public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBufferContainer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -290,7 +290,7 @@ public class McInstancedVboContainer implements IGenericObjectVertexBufferContai
 		this.indexBuffer.flip();
 		
 		
-		this.state = McInstancedVboContainer.EState.READY_TO_UPLOAD;
+		this.state = BlazeGenericObjectVertexContainer.EState.READY_TO_UPLOAD;
 	}
 	
 	private int vertexBufferSize()

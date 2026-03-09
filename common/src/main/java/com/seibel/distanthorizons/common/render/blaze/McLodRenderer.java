@@ -73,8 +73,8 @@ public class McLodRenderer implements IMcLodRenderer
 	private GpuBuffer fragUniformBuffer;
 	private GpuBuffer vertSharedUniformBuffer;
 	
-	public final McTextureWrapper dhDepthTextureWrapper = McTextureWrapper.createDepth("DhDepthTexture");
-	public final McTextureWrapper dhColorTextureWrapper = McTextureWrapper.createColor("DhColorTexture");
+	public final BlazeTextureWrapper dhDepthTextureWrapper = BlazeTextureWrapper.createDepth("DhDepthTexture");
+	public final BlazeTextureWrapper dhColorTextureWrapper = BlazeTextureWrapper.createColor("DhColorTexture");
 	
 	
 	
@@ -86,13 +86,13 @@ public class McLodRenderer implements IMcLodRenderer
 	private McLodRenderer()
 	{
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SHORT_XYZ_POS)
-			.add("meta", DhVertexFormat.META)
-			.add("vColor", DhVertexFormat.RGBA_UBYTE_COLOR)
-			.add("irisMaterial", DhVertexFormat.IRIS_MATERIAL)
-			.add("irisNormal", DhVertexFormat.IRIS_NORMAL)
-			.add("paddingTwo", DhVertexFormat.BYTE_PAD)
-			.add("paddingThree", DhVertexFormat.BYTE_PAD) // padding is to make sure the format is a multiple of 4
+			.add("vPosition", DhBlazeVertexFormat.SHORT_XYZ_POS)
+			.add("meta", DhBlazeVertexFormat.META)
+			.add("vColor", DhBlazeVertexFormat.RGBA_UBYTE_COLOR)
+			.add("irisMaterial", DhBlazeVertexFormat.IRIS_MATERIAL)
+			.add("irisNormal", DhBlazeVertexFormat.IRIS_NORMAL)
+			.add("paddingTwo", DhBlazeVertexFormat.BYTE_PAD)
+			.add("paddingThree", DhBlazeVertexFormat.BYTE_PAD) // padding is to make sure the format is a multiple of 4
 			.build();
 	}
 	
@@ -323,7 +323,7 @@ public class McLodRenderer implements IMcLodRenderer
 				// bind MC Lightmap
 				//renderPass.bindTexture("uLightMap", this.mcLightTextureViewWrapper.textureView, this.mcLightTextureViewWrapper.textureSampler);
 				LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-				McTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
+				BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
 				renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
 				
 				// set pipeline

@@ -26,7 +26,7 @@ import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.interfaces.factories.IDhApiWrapperFactory;
 import com.seibel.distanthorizons.common.render.blaze.McGenericObjectRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.LodContainerUniformBufferWrapper;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McInstancedVboContainer;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.VertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
@@ -36,7 +36,6 @@ import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
-import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
@@ -369,7 +368,7 @@ public class WrapperFactory implements IWrapperFactory
 	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new LodContainerUniformBufferWrapper(); }
 	
 	@Override
-	public IGenericObjectVertexBufferContainer createInstancedVboContainer() { return new McInstancedVboContainer(); }
+	public IGenericObjectVertexBufferContainer createInstancedVboContainer() { return new BlazeGenericObjectVertexContainer(); }
 	
 	@Override
 	public IMcGenericRenderer createGenericRenderer() { return new McGenericObjectRenderer(); }

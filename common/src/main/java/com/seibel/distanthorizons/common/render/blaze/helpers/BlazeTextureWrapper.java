@@ -12,7 +12,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRen
 
 import java.util.OptionalDouble;
 
-public class McTextureWrapper
+public class BlazeTextureWrapper
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -31,10 +31,10 @@ public class McTextureWrapper
 	
 	
 	
-	public static McTextureWrapper createDepth(String name) { return new McTextureWrapper(name, TextureFormat.DEPTH32); }
-	public static McTextureWrapper createColor(String name) { return new McTextureWrapper(name, TextureFormat.RGBA8); }
+	public static BlazeTextureWrapper createDepth(String name) { return new BlazeTextureWrapper(name, TextureFormat.DEPTH32); }
+	public static BlazeTextureWrapper createColor(String name) { return new BlazeTextureWrapper(name, TextureFormat.RGBA8); }
 	
-	private McTextureWrapper(String name, TextureFormat textureFormat)
+	private BlazeTextureWrapper(String name, TextureFormat textureFormat)
 	{
 		this.name = name;
 		this.textureFormat = textureFormat;

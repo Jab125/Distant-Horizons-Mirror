@@ -38,9 +38,9 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureWrapper;
-import com.seibel.distanthorizons.common.render.blaze.helpers.PostProcessHelper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeTextureWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -82,7 +82,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	
 	private GpuBuffer vboGpuBuffer;
 	
-	public McTextureWrapper ssaoColorTextureWrapper = McTextureWrapper.createColor("DhSsaoTexture");
+	public BlazeTextureWrapper ssaoColorTextureWrapper = BlazeTextureWrapper.createColor("DhSsaoTexture");
 	
 	
 	
@@ -94,7 +94,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	private McSsaoRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SCREEN_POS)
+			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
 			.build();
 	}
 	
@@ -141,7 +141,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData("McSsao");
+		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData("McSsao");
 	}
 	
 	//endregion

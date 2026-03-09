@@ -9,7 +9,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 
 import java.util.OptionalDouble;
 
-public class McTextureViewWrapper
+public class BlazeTextureViewWrapper
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	

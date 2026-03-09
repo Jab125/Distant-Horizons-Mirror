@@ -32,7 +32,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -57,7 +57,7 @@ import java.util.function.Supplier;
 /**
  * TODO
  */
-public class McDebugObjectRenderer implements IMcDebugRenderer
+public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -66,7 +66,7 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static McDebugObjectRenderer INSTANCE = new McDebugObjectRenderer();
+	public static BlazeDebugWireframeRenderer INSTANCE = new BlazeDebugWireframeRenderer();
 	
 	
 	
@@ -125,7 +125,7 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 	//=============//
 	//region
 	
-	public McDebugObjectRenderer() { }
+	public BlazeDebugWireframeRenderer() { }
 	
 	public void init()
 	{
@@ -136,7 +136,7 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 		this.init = true;
 		
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.FLOAT_XYZ_POS)
+			.add("vPosition", DhBlazeVertexFormat.FLOAT_XYZ_POS)
 			.build();
 		
 		this.createPipelines();

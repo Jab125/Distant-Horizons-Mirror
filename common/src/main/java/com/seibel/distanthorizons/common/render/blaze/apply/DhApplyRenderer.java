@@ -20,7 +20,6 @@
 package com.seibel.distanthorizons.common.render.blaze.apply;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
-import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
@@ -32,21 +31,18 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureViewWrapper;
-import com.seibel.distanthorizons.common.render.blaze.helpers.PostProcessHelper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazePostProcessUtil;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
-import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 import java.util.Arrays;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.function.Supplier;
 
 /**
  * TODO ???
@@ -71,10 +67,10 @@ public class DhApplyRenderer
 	private final String vertexShaderPath;
 	private final String fragmentShaderPath;
 	
-	private final McTextureViewWrapper sourceColorTextureViewWrapper = new McTextureViewWrapper();
-	private final McTextureViewWrapper sourceDepthTextureViewWrapper = new McTextureViewWrapper();
+	private final BlazeTextureViewWrapper sourceColorTextureViewWrapper = new BlazeTextureViewWrapper();
+	private final BlazeTextureViewWrapper sourceDepthTextureViewWrapper = new BlazeTextureViewWrapper();
 	
-	private final McTextureViewWrapper destinationColorTextureViewWrapper = new McTextureViewWrapper();
+	private final BlazeTextureViewWrapper destinationColorTextureViewWrapper = new BlazeTextureViewWrapper();
 	
 	/** 
 	 * Can be set for special application shaders that need 
@@ -129,7 +125,7 @@ public class DhApplyRenderer
 		GpuTexture destinationColorTexture)
 	{
 		this.createPipeline();
-		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData(this.name);
+		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData(this.name);
 		
 		this.sourceColorTextureViewWrapper.trySetup(sourceColorTexture);
 		this.sourceDepthTextureViewWrapper.trySetup(sourceDepthTexture);
@@ -145,7 +141,7 @@ public class DhApplyRenderer
 		}
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SCREEN_POS)
+			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
 			.build();
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();

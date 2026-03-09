@@ -29,10 +29,10 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureViewWrapper;
-import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureWrapper;
-import com.seibel.distanthorizons.common.render.blaze.helpers.PostProcessHelper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeTextureWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.BlazePostProcessUtil;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.resources.Identifier;
@@ -82,7 +82,7 @@ public class McCopyRenderer
 		
 		
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SCREEN_POS)
+			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
 			.build();
 		
 		
@@ -106,7 +106,7 @@ public class McCopyRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		this.vboGpuBuffer = PostProcessHelper.createAndUploadScreenVertexData("McCopyRenderer");
+		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData("McCopyRenderer");
 		
 	}
 	
@@ -120,16 +120,16 @@ public class McCopyRenderer
 	//region
 	
 	public void render(
-		McTextureWrapper sourceColorTextureWrapper,
-		McTextureViewWrapper destinationColorTextureWrapper)
+		BlazeTextureWrapper sourceColorTextureWrapper,
+		BlazeTextureViewWrapper destinationColorTextureWrapper)
 	{
 		this.render(
 			sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,
 			destinationColorTextureWrapper.textureView);
 	}
 	public void render(
-		McTextureWrapper sourceColorTextureWrapper,
-		McTextureWrapper destinationColorTextureWrapper)
+		BlazeTextureWrapper sourceColorTextureWrapper,
+		BlazeTextureWrapper destinationColorTextureWrapper)
 	{
 		this.render(
 			sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,

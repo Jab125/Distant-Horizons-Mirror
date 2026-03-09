@@ -10,7 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.function.Supplier;
 
-public class PostProcessHelper
+public class BlazePostProcessUtil
 {
 	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();

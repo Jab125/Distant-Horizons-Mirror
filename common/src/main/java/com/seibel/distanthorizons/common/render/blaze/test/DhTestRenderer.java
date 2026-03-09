@@ -30,7 +30,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
@@ -84,8 +84,8 @@ public class DhTestRenderer implements IMcTestRenderer
 		
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhVertexFormat.SCREEN_POS)
-			.add("vColor", DhVertexFormat.RGBA_FLOAT_COLOR)
+			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
+			.add("vColor", DhBlazeVertexFormat.RGBA_FLOAT_COLOR)
 			.build();
 		
 		//int breakpointOne = 0;

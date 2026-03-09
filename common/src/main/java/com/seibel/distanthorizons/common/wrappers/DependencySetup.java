@@ -19,7 +19,7 @@
 
 package com.seibel.distanthorizons.common.wrappers;
 
-import com.seibel.distanthorizons.common.render.blaze.McDebugObjectRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDebugWireframeRenderer;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.McFarFadeRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.McFogRenderer;
@@ -86,7 +86,7 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, McSsaoRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, McFogRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFarFadeRenderer.class, McFarFadeRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcDebugRenderer.class, McDebugObjectRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcDebugRenderer.class, BlazeDebugWireframeRenderer.INSTANCE);
 	}
 	
 }
