@@ -107,11 +107,6 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 		
 		
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
-		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);

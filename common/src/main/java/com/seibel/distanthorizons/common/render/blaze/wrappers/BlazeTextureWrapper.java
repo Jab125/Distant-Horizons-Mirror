@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.render.blaze.wrappers;
 
+import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -29,7 +30,14 @@ public class BlazeTextureWrapper
 	public GpuTextureView textureView = null;
 	public GpuSampler textureSampler = null;
 	
+	private int width = -1;
+	private int height = -1;
 	
+	
+	//=============//
+	// constructor //
+	//=============//
+	//region
 	
 	public static BlazeTextureWrapper createDepth(String name) { return new BlazeTextureWrapper(name, TextureFormat.DEPTH32); }
 	public static BlazeTextureWrapper createColor(String name) { return new BlazeTextureWrapper(name, TextureFormat.RGBA8); }
@@ -40,9 +48,30 @@ public class BlazeTextureWrapper
 		this.textureFormat = textureFormat;
 	}
 	
+	//endregion
 	
+	
+	
+	//=========//
+	// getters //
+	//=========//
+	//region
 	
 	public boolean isEmpty() { return this.texture == null; }
+	
+	/** @return -1 if the texture is null */
+	public int getWidth() { return this.width; }
+	/** @return -1 if the texture is null */
+	public int getHeight() { return this.height; }
+	
+	//endregion
+	
+	
+	
+	//=======//
+	// setup //
+	//=======//
+	//region
 	
 	public void trySetup()
 	{
@@ -52,14 +81,11 @@ public class BlazeTextureWrapper
 	private void tryCreateTexture()
 	{
 		int viewWidth = MC_RENDER.getTargetFramebufferViewportWidth();
-		int textureWidth = (this.texture != null) ? this.texture.getWidth(0) : -1;
-		
 		int viewHeight = MC_RENDER.getTargetFramebufferViewportHeight();
-		int textureHeight = (this.texture != null) ? this.texture.getHeight(0) : -1;
 		
 		if (this.texture == null
-			|| textureWidth != viewWidth
-			|| textureHeight != viewHeight)
+			|| this.width != viewWidth
+			|| this.height != viewHeight)
 		{
 			if (this.texture != null)
 			{
@@ -67,8 +93,13 @@ public class BlazeTextureWrapper
 				this.textureView.close();
 			}
 			
-			// TODO USAGE_TEXTURE_BINDING = 4
-			int usage = 4 | 8 | 32 | 128;
+			this.width = viewWidth;
+			this.height = viewHeight;
+			
+			int usage = GpuBuffer.USAGE_HINT_CLIENT_STORAGE 
+				| GpuBuffer.USAGE_COPY_DST 
+				| GpuBuffer.USAGE_VERTEX 
+				| GpuBuffer.USAGE_UNIFORM;
 			this.texture = GPU_DEVICE.createTexture(this.name,
 				usage,
 				this.textureFormat,
@@ -91,6 +122,10 @@ public class BlazeTextureWrapper
 		}
 	}
 	
+	//endregion
+	
+	
+	
 	
 	/** @see ColorUtil#argbToInt */
 	public void clearColor(int clearArgbColor) 
@@ -100,6 +135,7 @@ public class BlazeTextureWrapper
 			COMMAND_ENCODER.clearColorTexture(this.texture, clearArgbColor);
 		}
 	}
+	
 	public void clearDepth(float depth) 
 	{
 		if (this.texture != null)

@@ -6,7 +6,6 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.glObject.GLEnums;
@@ -14,14 +13,11 @@ import com.seibel.distanthorizons.core.render.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.render.renderer.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.ColorUtil;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.List;
-import java.util.function.Supplier;
 
 /**
  * For use by {@link RenderableBoxGroup} 
@@ -32,48 +28,8 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	
-	/** A box from 0,0,0 to 1,1,1 */
-	private static final float[] BOX_VERTICES = {
-		//region
-		// Pos x y z
-		
-		// min X, vertical face
-		0, 0, 0,
-		1, 0, 0,
-		1, 1, 0,
-		0, 1, 0,
-		// max X, vertical face
-		0, 1, 1,
-		1, 1, 1,
-		1, 0, 1,
-		0, 0, 1,
-		
-		// min Z, vertical face
-		0, 0, 1,
-		0, 0, 0,
-		0, 1, 0,
-		0, 1, 1,
-		// max Z, vertical face
-		1, 0, 1,
-		1, 1, 1,
-		1, 1, 0,
-		1, 0, 0,
-		
-		// min Y, horizontal face
-		0, 0, 1,
-		1, 0, 1,
-		1, 0, 0,
-		0, 0, 0,
-		// max Y, horizontal face
-		0, 1, 1,
-		1, 1, 1,
-		1, 1, 0,
-		0, 1, 0,
-		//endregion
-	};
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	private static final int[] BOX_INDICES = {
 		//region
@@ -100,69 +56,11 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 		//endregion
 	};
 	
-	public static final int[][][] DIRECTION_VERTEX_IBO_QUAD = new int[][][]
-		///region
-		{
-			// X,Z //
-			{ // UP
-				{1, 0}, // 0
-				{1, 1}, // 1
-				{0, 1}, // 2
-				{0, 0}, // 3
-			},
-			{ // DOWN
-				{0, 0}, // 0
-				{0, 1}, // 1
-				{1, 1}, // 2
-				{1, 0}, // 3
-			},
-			
-			// X,Y //
-			{ // NORTH
-				{0, 0}, // 0
-				{0, 1}, // 1
-				{1, 1}, // 2
-				
-				{1, 0}, // 3
-			},
-			{ // SOUTH
-				{1, 0}, // 0
-				{1, 1}, // 1
-				{0, 1}, // 2
-				
-				{0, 0}, // 3
-			},
-			
-			// Z,Y //
-			{ // WEST
-				{0, 0}, // 0
-				{1, 0}, // 1
-				{1, 1}, // 2
-				
-				{0, 1}, // 3
-			},
-			{ // EAST
-				{0, 1}, // 0
-				{1, 1}, // 1
-				{1, 0}, // 2
-				
-				{0, 0}, // 3
-			},
-		};
-	///endregion
-	
-	
-	
 	
 	
 	public GpuBuffer vboGpuBuffer;
 	public GpuBuffer indexGpuBuffer;
 	
-	//public int[] chunkPosData = new int[0];
-	//public float[] subChunkPosData = new float[0];
-	////public float[] scalingData = new float[0];
-	//public float[] colorData = new float[0];
-	//public int[] materialData = new int[0];
 	private ByteBuffer vertexBuffer = ByteBuffer.allocateDirect(0);
 	private ByteBuffer indexBuffer = ByteBuffer.allocateDirect(0);
 	
@@ -208,10 +106,6 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 		
 		
 		
-		//QuadElementBuffer.buildBuffer(quadCount, this.indexBuffer, GL32.GL_UNSIGNED_INT);
-		
-		
-		
 		for (int boxIndex = 0; boxIndex < boxCount; boxIndex++)
 		{
 			// index
@@ -227,7 +121,8 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 			// vertex
 			DhApiRenderableBox box = uploadBoxList.get(boxIndex);
 			
-			final double[] boxVertices = {
+			final double[] boxVertices = 
+			{
 				//region
 				// Pos x y z
 				
@@ -308,31 +203,23 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 		int quadCount = this.uploadedBoxCount * 36;
 		int byteSize = quadCount * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6;
 		return byteSize;
-		
-		//int faceCount = this.uploadedBoxCount * 6;
-		//int vertexCount = faceCount * 6;
-		//int byteSize = vertexCount * Integer.BYTES;
-		//return byteSize;
 	}
 	
 	public void uploadDataToGpu()
 	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
 		// vertex
 		{
 			int totalVertexByteSize = this.vertexBufferSize();
 			if (this.vboGpuBuffer == null
 				|| this.vboGpuBuffer.size() < totalVertexByteSize)
 			{
-				Supplier<String> labelSupplier = () -> "distantHorizons:GenericContainerVertex";
-				int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-				this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, totalVertexByteSize);
+				int usage = GpuBuffer.USAGE_COPY_DST 
+					| GpuBuffer.USAGE_VERTEX;
+				this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, totalVertexByteSize);
 			}
 			
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, /*offset*/0, totalVertexByteSize);
-			commandEncoder.writeToBuffer(bufferSlice, this.vertexBuffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, this.vertexBuffer);
 		}
 		
 		// index
@@ -341,21 +228,22 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 			if (this.indexGpuBuffer == null
 				|| this.indexGpuBuffer.size() < totalVertexByteSize)
 			{
-				Supplier<String> labelSupplier = () -> "distantHorizons:GenericContainerIndex";
-				// GpuBuffer.USAGE_UNIFORM = 128
-				// GpuBuffer.USAGE_INDEX = 64
-				int usage = 8 | 32 | 64 | 128; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-				this.indexGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, totalVertexByteSize);
+				int usage = GpuBuffer.USAGE_COPY_DST 
+					| GpuBuffer.USAGE_VERTEX 
+					| GpuBuffer.USAGE_INDEX 
+					| GpuBuffer.USAGE_UNIFORM;
+				this.indexGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, totalVertexByteSize);
 			}
 			
 			int offset = 0;
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexGpuBuffer, offset, totalVertexByteSize);
 			
-			commandEncoder.writeToBuffer(bufferSlice, this.indexBuffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, this.indexBuffer);
 		}
 		
 		this.state = EState.RENDER;
 	}
+	private String getName() { return "distantHorizons:GenericContainerIndex"; }
 	
 	//endregion
 	
@@ -375,6 +263,7 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 			{
 				this.vboGpuBuffer.close();
 			}
+			
 			if (this.indexGpuBuffer != null)
 			{
 				this.indexGpuBuffer.close();

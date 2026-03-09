@@ -41,7 +41,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.function.Supplier;
 
 /**
  * Renders the OpenGL/Vulkan triangle
@@ -121,10 +120,6 @@ public class DhTestRenderer implements IMcTestRenderer
 	}
 	private void uploadVertexData()
 	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
 		// vertices for the OpenGL/Vulkan Triangle
 		float[] vertices = new float[]
 			{
@@ -135,11 +130,10 @@ public class DhTestRenderer implements IMcTestRenderer
 			};
 		
 		
-		Supplier<String> labelSupplier = () -> "distantHorizons:DhTestRenderer";
-		// TODO
-		int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
+		int usage = GpuBuffer.USAGE_COPY_DST
+			| GpuBuffer.USAGE_VERTEX;
 		int size = vertices.length * Float.BYTES;
-		this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
+		this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, size);
 		
 		{
 			int offset = 0;
@@ -152,7 +146,7 @@ public class DhTestRenderer implements IMcTestRenderer
 			byteBuffer.asFloatBuffer().put(vertices);
 			byteBuffer.rewind();
 			
-			commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, byteBuffer);
 		}
 	}
 	

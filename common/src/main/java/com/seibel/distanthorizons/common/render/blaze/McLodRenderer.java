@@ -21,7 +21,7 @@ import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureWrapper;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.LodContainerUniformBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.LodUniformBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.VertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
@@ -286,10 +286,11 @@ public class McLodRenderer implements IMcLodRenderer
 				if (this.indexBuffer == null
 					|| this.indexBuffer.size() < buffer.capacity())
 				{
-					// GpuBuffer.USAGE_UNIFORM = 128
-					// GpuBuffer.USAGE_INDEX = 64
-					int usage = 8 | 32 | 64 | 128; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-					this.indexBuffer = GPU_DEVICE.createBuffer(() -> "DH Index Buffer", usage, buffer.capacity());
+					int usage = GpuBuffer.USAGE_COPY_DST 
+						| GpuBuffer.USAGE_VERTEX 
+						| GpuBuffer.USAGE_INDEX 
+						| GpuBuffer.USAGE_UNIFORM;
+					this.indexBuffer = GPU_DEVICE.createBuffer(this::getIndexBufferName, usage, buffer.capacity());
 				}
 				
 				int offset = 0;
@@ -301,15 +302,6 @@ public class McLodRenderer implements IMcLodRenderer
 		// textures
 		this.dhDepthTextureWrapper.trySetup();
 		this.dhColorTextureWrapper.trySetup();
-		
-		//LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-		//this.mcLightTextureViewWrapper.trySetup(lightMapWrapper.gpuTexture);
-		
-		
-		//LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-		//McTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
-		//renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
-		
 		
 		{
 			profiler.popPush("setup");
@@ -346,7 +338,7 @@ public class McLodRenderer implements IMcLodRenderer
 					profiler.popPush("binding");
 					
 					LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
-					LodContainerUniformBufferWrapper uniformWrapper = (LodContainerUniformBufferWrapper)bufferContainer.uniforms;
+					LodUniformBufferWrapper uniformWrapper = (LodUniformBufferWrapper)bufferContainer.uniforms;
 					
 					boolean columnBuilderDebugEnabled = Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugEnable.get();
 					if (columnBuilderDebugEnabled)
@@ -400,6 +392,7 @@ public class McLodRenderer implements IMcLodRenderer
 		
 		profiler.pop();
 	}
+	private String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
 	private String getName() { return "distantHorizons:McLodRenderer"; }
 	
 	@Override

@@ -12,7 +12,10 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.ILodContainerUni
 
 import java.nio.ByteBuffer;
 
-public class LodContainerUniformBufferWrapper extends AbstractUniformBufferWrapper implements ILodContainerUniformBufferWrapper
+/**
+ * TODO ??
+ */
+public class LodUniformBufferWrapper extends AbstractUniformBufferWrapper implements ILodContainerUniformBufferWrapper
 {
 	
 	

@@ -54,6 +54,7 @@ import com.seibel.distanthorizons.core.logging.f3.F3Screen;
 import com.seibel.distanthorizons.core.render.renderer.RenderParams;
 import com.seibel.distanthorizons.core.render.renderer.generic.GenericRenderObjectFactory;
 import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.render.renderer.generic.NativeGlGenericObjectVertexContainer;
 import com.seibel.distanthorizons.core.render.renderer.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -528,7 +529,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		
 		//endregion
 	}
-	private String getName() { return "distantHorizons:McTestRenderer"; }
+	private String getName() { return "distantHorizons:McGenericObjectRenderer"; }
 	
 	//endregion
 	

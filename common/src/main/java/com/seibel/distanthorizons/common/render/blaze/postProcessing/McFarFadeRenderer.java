@@ -105,11 +105,6 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 		
 		
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
-		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
@@ -215,10 +210,7 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	
 	private void renderFadeToTexture()
 	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		try (RenderPass renderPass = commandEncoder.createRenderPass(
+		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
 			this::getName,
 			this.dhFadeColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),

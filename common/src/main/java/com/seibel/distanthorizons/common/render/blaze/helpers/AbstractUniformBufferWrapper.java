@@ -16,11 +16,24 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
+	
 	
 	private final String name;
 	
 	private ByteBuffer buffer = null;
 	public GpuBuffer gpuBuffer = null;
+	
+	
+	//=============//
+	// constructor //
+	//=============//
+	//region
+	
+	public AbstractUniformBufferWrapper() { this.name = this.getClass().getSimpleName(); }
+	
+	//endregion
 	
 	
 	
@@ -29,24 +42,19 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 	//========//
 	//region
 	
-	public AbstractUniformBufferWrapper() { this.name = this.getClass().getSimpleName(); }
-	public AbstractUniformBufferWrapper(String name) { this.name = name; }
-	
 	protected ByteBuffer getOrCreateBuffer(int size)
 	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		
 		if (this.buffer == null 
 			|| this.buffer.capacity() != size)
 		{
 			this.buffer = ByteBuffer.allocateDirect(size);
 			this.buffer.order(ByteOrder.nativeOrder());
 			
-			// GpuBuffer.USAGE_UNIFORM = 128
-			// GpuBuffer.USAGE_INDEX = 64
-			int usage = 8 | 32 | 128; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
+			int usage = GpuBuffer.USAGE_COPY_DST 
+				| GpuBuffer.USAGE_VERTEX 
+				| GpuBuffer.USAGE_UNIFORM;
 			int byteSize = (this.buffer.limit() - this.buffer.position());
-			this.gpuBuffer = gpuDevice.createBuffer(this::getName, usage, byteSize);
+			this.gpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, byteSize);
 		}
 		
 		return this.buffer;
@@ -62,14 +70,11 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 		
 		
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
 		int byteSize = (this.buffer.limit() - this.buffer.position());
 		GpuBufferSlice bufferSlice = new GpuBufferSlice(this.gpuBuffer, /*offset*/0, byteSize);
 		if (!bufferSlice.buffer().isClosed())
 		{
-			commandEncoder.writeToBuffer(bufferSlice, this.buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, this.buffer);
 		}
 		else
 		{
@@ -77,6 +82,15 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 		}
 	}
 	private String getName() { return this.name; }
+	
+	//endregion
+	
+	
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
 	
 	@Override
 	public void close()
@@ -87,8 +101,8 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 		}
 	}
 	
-	
-	
 	//endregion
+	
+	
 	
 }
