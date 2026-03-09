@@ -36,7 +36,8 @@ import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
-import com.seibel.distanthorizons.core.render.renderer.generic.IInstancedVboContainer;
+import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
@@ -363,12 +364,12 @@ public class WrapperFactory implements IWrapperFactory
 	
 	
 	@Override
-	public IVertexBufferWrapper createVboWrapper() { return new VertexBufferWrapper(); }
+	public IVertexBufferWrapper createVboWrapper(String name) { return new VertexBufferWrapper(name); }
 	@Override
 	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new LodContainerUniformBufferWrapper(); }
 	
 	@Override
-	public IInstancedVboContainer createInstancedVboContainer() { return new McInstancedVboContainer(); }
+	public IGenericObjectVertexBufferContainer createInstancedVboContainer() { return new McInstancedVboContainer(); }
 	
 	@Override
 	public IMcGenericRenderer createGenericRenderer() { return new McGenericObjectRenderer(); }

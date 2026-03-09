@@ -53,7 +53,8 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.logging.f3.F3Screen;
 import com.seibel.distanthorizons.core.render.renderer.RenderParams;
 import com.seibel.distanthorizons.core.render.renderer.generic.GenericRenderObjectFactory;
-import com.seibel.distanthorizons.core.render.renderer.generic.InstancedVboContainer;
+import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.render.renderer.generic.NativeGlGenericObjectVertexContainer;
 import com.seibel.distanthorizons.core.render.renderer.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -397,7 +398,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 				boxGroup.tryUpdateInstancedDataAsync();
 				
 				// skip groups that haven't been uploaded yet
-				if (boxGroup.instancedVbos.getState() != InstancedVboContainer.EState.RENDER)
+				if (boxGroup.instancedVbos.getState() != IGenericObjectVertexBufferContainer.EState.RENDER)
 				{
 					continue;
 				}

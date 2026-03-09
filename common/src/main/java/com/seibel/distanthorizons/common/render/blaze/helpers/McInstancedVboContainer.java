@@ -11,7 +11,7 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.glObject.GLEnums;
 import com.seibel.distanthorizons.core.render.glObject.GLProxy;
-import com.seibel.distanthorizons.core.render.renderer.generic.IInstancedVboContainer;
+import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.render.renderer.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
@@ -28,7 +28,7 @@ import java.util.function.Supplier;
  * 
  * @see RenderableBoxGroup
  */
-public class McInstancedVboContainer implements IInstancedVboContainer
+public class McInstancedVboContainer implements IGenericObjectVertexBufferContainer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -170,9 +170,9 @@ public class McInstancedVboContainer implements IInstancedVboContainer
 	
 	private EState state = EState.NEW;
 	@Override
-	public IInstancedVboContainer.EState getState() { return this.state; }
+	public IGenericObjectVertexBufferContainer.EState getState() { return this.state; }
 	@Override
-	public void setState(IInstancedVboContainer.EState state) { this.state = state; }
+	public void setState(IGenericObjectVertexBufferContainer.EState state) { this.state = state; }
 	
 	
 	

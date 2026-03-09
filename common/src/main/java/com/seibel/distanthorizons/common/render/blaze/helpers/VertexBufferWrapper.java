@@ -12,6 +12,12 @@ import java.util.function.Supplier;
 
 public class VertexBufferWrapper implements IVertexBufferWrapper
 {
+	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
+	
+	
+	public final String name;
+	public String getName() { return this.name; }
 	
 	public GpuBuffer vboGpuBuffer = null;
 	public int vertexCount = -1;
@@ -19,13 +25,20 @@ public class VertexBufferWrapper implements IVertexBufferWrapper
 	public boolean uploaded = false;
 	
 	
-	@Override
-	public int getVertexCount() { return this.vertexCount ;}
+	
+	//=============//
+	// constructor //
+	//=============//
+	//region
+	
+	public VertexBufferWrapper(String name) { this.name = name; }
+	
+	//endregion
 	
 	
 	
 	//========//
-	// render //
+	// upload //
 	//========//
 	//region
 	
@@ -37,19 +50,23 @@ public class VertexBufferWrapper implements IVertexBufferWrapper
 		this.uploaded = true;
 		
 		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		Supplier<String> labelSupplier = () -> "distantHorizons:McLodRenderer";
-		int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
+		int usage = GpuBuffer.USAGE_COPY_DST
+			| GpuBuffer.USAGE_VERTEX;
 		int byteSize = (buffer.limit() - buffer.position());
-		this.vboGpuBuffer = gpuDevice.createBuffer(labelSupplier, usage, byteSize);
+		this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, byteSize);
 		
-		{
-			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, /*offset*/0, byteSize);
-			commandEncoder.writeToBuffer(bufferSlice, buffer);
-		}
+		GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, /*offset*/0, byteSize);
+		COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 	}
+	
+	//endregion
+	
+	
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
 	
 	@Override
 	public void close()
@@ -60,8 +77,8 @@ public class VertexBufferWrapper implements IVertexBufferWrapper
 		}
 	}
 	
-	
-	
 	//endregion
+	
+	
 	
 }
