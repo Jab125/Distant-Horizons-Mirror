@@ -32,8 +32,8 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
+import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormat;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -120,6 +120,7 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 	private GpuBuffer uniformBuffer;
 	
 	
+	
 	//=============//
 	// constructor //
 	//=============//
@@ -145,10 +146,6 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 	}
 	private void createPipelines()
 	{
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
-		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
@@ -157,7 +154,7 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.WIREFRAME);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:debug_renderer"));
+			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:debug_wireframe_renderer"));
 			
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "debug/blaze/vert"));
 			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "debug/blaze/frag"));
@@ -177,29 +174,23 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 		boxVerticesBuffer.rewind();
 		MemoryUtil.memFree(boxVerticesBuffer);
 		
-		
-		GpuDevice gpuDevice = RenderSystem.getDevice();
-		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
-		
 		// upload vertex data
 		{
-			Supplier<String> labelSupplier = () -> "distantHorizons:McDebugRenderer";
-			int usage = 8 | 32; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
+			int usage = GpuBuffer.USAGE_COPY_DST 
+				| GpuBuffer.USAGE_VERTEX;
 			int size = BOX_VERTICES.length * Float.BYTES;
-			this.boxVertexBuffer = gpuDevice.createBuffer(labelSupplier, usage, size);
+			this.boxVertexBuffer = GPU_DEVICE.createBuffer(() -> "distantHorizons:McDebugWireframeBox", usage, size);
 			
 			{
-				int offset = 0;
 				int length = BOX_VERTICES.length * Float.BYTES;
-				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.boxVertexBuffer, offset, length);
+				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.boxVertexBuffer, /*offset*/ 0, length);
 				
 				ByteBuffer byteBuffer = ByteBuffer.allocateDirect(BOX_VERTICES.length * Float.BYTES);
-				// Fill buffer with vertices.
 				byteBuffer.order(ByteOrder.nativeOrder());
 				byteBuffer.asFloatBuffer().put(BOX_VERTICES);
 				byteBuffer.rewind();
 				
-				commandEncoder.writeToBuffer(bufferSlice, byteBuffer);
+				COMMAND_ENCODER.writeToBuffer(bufferSlice, byteBuffer);
 			}
 		}
 		
@@ -211,15 +202,15 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 			buffer.rewind();
 			
 			
-			// TODO
-			// GpuBuffer.USAGE_UNIFORM = 128
-			// GpuBuffer.USAGE_INDEX = 64
-			int usage = 8 | 32 | 64 | 128; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
-			this.boxIndexBuffer = gpuDevice.createBuffer(() -> "DH Debug Index Buffer", usage, buffer.capacity());
+			int usage = GpuBuffer.USAGE_COPY_DST 
+				| GpuBuffer.USAGE_VERTEX 
+				| GpuBuffer.USAGE_INDEX
+				| GpuBuffer.USAGE_UNIFORM;
+			this.boxIndexBuffer = GPU_DEVICE.createBuffer(() -> "DH Debug Index Buffer", usage, buffer.capacity());
 			
 			int offset = 0;
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.boxIndexBuffer, offset, buffer.capacity());
-			commandEncoder.writeToBuffer(bufferSlice, buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
 	}
 	
@@ -264,15 +255,6 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 			return;
 		}
 		
-		
-		
-		
-		//===========//
-		// rendering //
-		//===========//
-		//#region
-		
-		// validation //
 		
 		
 		// uniforms
@@ -329,13 +311,13 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 			this::getName,
 			McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
-			McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, /*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
+			McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
 			// Bind instance data //
 			renderPass.setUniform("uniformBlock", this.uniformBuffer);
 			
-			// set pipeline
-			renderPass.setPipeline(this.pipeline); // TODO
+			renderPass.setPipeline(this.pipeline);
 			renderPass.setIndexBuffer(this.boxIndexBuffer, VertexFormat.IndexType.INT);
 			
 			renderPass.setVertexBuffer(0, this.boxVertexBuffer);
@@ -346,8 +328,6 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 				/*indexCount*/BOX_OUTLINE_INDICES.length,
 				/*instanceCount*/1);
 		}
-		//#endregion
-		
 	}
 	private String getName() { return "distantHorizons:McDebugRenderer"; }
 	

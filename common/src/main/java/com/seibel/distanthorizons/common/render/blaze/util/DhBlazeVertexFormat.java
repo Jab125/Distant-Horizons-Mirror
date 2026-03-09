@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.render.blaze.helpers;
+package com.seibel.distanthorizons.common.render.blaze.util;
 
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
@@ -20,8 +20,7 @@ public class DhBlazeVertexFormat
 	public static final VertexFormatElement IRIS_NORMAL = VertexFormatElement.register(/*id*/14, /*index*/0, VertexFormatElement.Type.BYTE, VertexFormatElement.Usage.GENERIC, /*count*/ 1);
 	
 	public static final VertexFormatElement FLOAT_XYZ_POS = VertexFormatElement.register(/*id*/15, /*index*/0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.POSITION, /*count*/ 3);
-	public static final VertexFormatElement VEC3 = VertexFormatElement.register(/*id*/16, /*index*/0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.GENERIC, /*count*/ 3);
-	public static final VertexFormatElement IVEC3 = VertexFormatElement.register(/*id*/17, /*index*/0, VertexFormatElement.Type.INT, VertexFormatElement.Usage.GENERIC, /*count*/ 3);
+	
 	
 	
 }
