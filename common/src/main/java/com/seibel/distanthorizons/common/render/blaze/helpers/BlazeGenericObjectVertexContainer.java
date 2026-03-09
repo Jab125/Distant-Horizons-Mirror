@@ -8,10 +8,11 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.glObject.GLEnums;
-import com.seibel.distanthorizons.core.render.glObject.GLProxy;
-import com.seibel.distanthorizons.core.render.renderer.generic.IGenericObjectVertexBufferContainer;
-import com.seibel.distanthorizons.core.render.renderer.generic.RenderableBoxGroup;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLEnums;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLProxy;
+import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.common.render.nativeGl.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import org.lwjgl.opengl.GL32;
 
@@ -258,7 +259,7 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 	@Override
 	public void close()
 	{
-		GLProxy.queueRunningOnRenderThread(() -> 
+		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread(() -> 
 		{
 			if (this.vboGpuBuffer != null)
 			{
