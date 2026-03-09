@@ -16,6 +16,7 @@ public class UniformHandler
 		if (vboGpuBuffer == null
 			|| vboGpuBuffer.size() < size)
 		{
+			// TODO
 			// GpuBuffer.USAGE_UNIFORM = 128
 			int usage = 8 | 32 | 128; // is this just using OpenGL VBO flags?, if so I can't find it, supposedly GlDevice on Mojang's side
 			vboGpuBuffer = gpuDevice.createBuffer(() -> uniformName, usage, size);

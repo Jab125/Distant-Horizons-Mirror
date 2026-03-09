@@ -379,11 +379,14 @@ public class McLodRenderer implements IMcLodRenderer
 						
 						renderPass.setVertexBuffer(0, bufferWrapper.vboGpuBuffer); // vertex buffer can only be "0" lol
 						
-						renderPass.drawIndexed(
-							/*indexStart*/ 0,
-							/*firstIndex*/0,
-							/*indexCount*/bufferWrapper.indexCount,
-							/*instanceCount*/1);
+						if (!bufferWrapper.vboGpuBuffer.isClosed())
+						{
+							renderPass.drawIndexed(
+								/*indexStart*/ 0,
+								/*firstIndex*/0,
+								/*indexCount*/bufferWrapper.indexCount,
+								/*instanceCount*/1);
+						}
 					}
 				}
 				
