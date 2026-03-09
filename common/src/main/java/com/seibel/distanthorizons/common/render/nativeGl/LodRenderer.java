@@ -32,6 +32,7 @@ import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade.DhF
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
+import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -516,7 +517,7 @@ public class LodRenderer
 		this.lodRenderProgram = new DhTerrainShaderProgram();
 		
 		this.quadIBO = new QuadElementBuffer();
-		this.quadIBO.reserve(LodBufferContainer.MAX_QUADS_PER_BUFFER);
+		this.quadIBO.reserve(LodQuadBuilder.getMaxBufferByteSize());
 		
 		
 		// create or get the frame buffer

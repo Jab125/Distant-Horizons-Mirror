@@ -25,46 +25,30 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderP
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.AbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexPointer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.config.types.ConfigEntry;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
 import com.seibel.distanthorizons.core.render.RenderParams;
+import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
 import com.seibel.distanthorizons.core.util.math.Vec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcDebugRenderer;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL32;
 
-import java.awt.*;
-import java.lang.ref.WeakReference;
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
-import java.util.concurrent.PriorityBlockingQueue;
 
 /**
  * Handles rendering the wireframe particles 
  * that are used for seeing what the system's doing.
  */
-public class DebugRenderer
+public class DebugRenderer extends AbstractDebugWireframeRenderer
 {
 	public static DebugRenderer INSTANCE = new DebugRenderer();
 	
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
-	public static final DhLogger RATE_LIMITED_LOGGER = new DhLoggerBuilder()
-			.maxCountPerSecond(1)
-			.build();
 	
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	
 	
@@ -74,15 +58,6 @@ public class DebugRenderer
 	private GLElementBuffer outlineIndexBuffer;
 	private AbstractVertexAttribute va;
 	private boolean init = false;
-	
-	// used when rendering
-	private Mat4f dhMvmProjMatrixThisFrame;
-	private Vec3f camPosFloatThisFrame;
-	
-	
-	private final IMcDebugRenderer.RendererLists rendererLists = new IMcDebugRenderer.RendererLists();
-	private final PriorityBlockingQueue<IMcDebugRenderer.BoxParticle> particles = new PriorityBlockingQueue<>();
-	
 	
 	
 	
@@ -173,19 +148,14 @@ public class DebugRenderer
 	
 	
 	
-	
-	
 	//===========//
 	// rendering //
 	//===========//
 	//region
 	
-	public void render(RenderParams renderEventParam)
+	@Override
+	public void renderPass(RenderParams renderParams)
 	{
-		//this.dhMvmProjMatrixThisFrame = dhMvmProjMatrix; // TODO
-		Vec3d camPos = MC_RENDER.getCameraExactPosition();
-		this.camPosFloatThisFrame = new Vec3f((float) camPos.x, (float) camPos.y, (float) camPos.z);
-		
 		this.init();
 		
 		GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
@@ -194,85 +164,26 @@ public class DebugRenderer
 		this.basicShader.bind();
 		this.va.bind();
 		
-		
 		this.outlineIndexBuffer.bind();
-		//this.rendererLists.render(this); // TODO
 		
-		
-		// particle rendering		
-		IMcDebugRenderer.BoxParticle head = null;
-		while ((head = this.particles.poll()) != null && head.isDead())
-		{ /* remove dead particles */ }
-		if (head != null)
-		{
-			// re-add the popped off head
-			this.particles.add(head);
-		}
-		
-		IMcDebugRenderer renderer = SingletonInjector.INSTANCE.get(IMcDebugRenderer.class);
-		renderer.render(renderEventParam, this.particles);
-		
+		super.renderPass(renderParams);
 	}
 	
+	@Override
 	@Deprecated // TODO this should add all the boxes to a list so we can render them as a batch instead of individual draw calls
-	public void renderBox(IMcDebugRenderer.Box box)
+	public void render(Box box)
 	{
-		IMcDebugRenderer renderer = SingletonInjector.INSTANCE.get(IMcDebugRenderer.class);
-		renderer.render(box);
+		Mat4f boxTransform = Mat4f.createTranslateMatrix(box.minPos.x - this.camPosFloatThisFrame.x, box.minPos.y - this.camPosFloatThisFrame.y, box.minPos.z - this.camPosFloatThisFrame.z);
+		boxTransform.multiply(Mat4f.createScaleMatrix(box.maxPos.x - box.minPos.x, box.maxPos.y - box.minPos.y, box.maxPos.z - box.minPos.z));
+
+		Mat4f transformMatrix = this.dhMvmProjMatrixThisFrame.copy();
+		transformMatrix.multiply(boxTransform);
+		this.basicShader.setUniform(this.basicShader.getUniformLocation("uTransform"), transformMatrix);
+
+		this.basicShader.setUniform(this.basicShader.getUniformLocation("uColor"), box.color);
+
+		GL32.glDrawElements(GL32.GL_LINES, BOX_OUTLINE_INDICES.length, GL32.GL_UNSIGNED_INT, 0);
 	}
-	
-	//public void render(Mat4f dhMvmProjMatrix)
-	//{
-	//	this.dhMvmProjMatrixThisFrame = dhMvmProjMatrix;
-	//	Vec3d camPos = MC_RENDER.getCameraExactPosition();
-	//	this.camPosFloatThisFrame = new Vec3f((float) camPos.x, (float) camPos.y, (float) camPos.z);
-	//
-	//	this.init();
-	//
-	//	GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
-	//	GLMC.enableDepthTest();
-	//
-	//	this.basicShader.bind();
-	//	this.va.bind();
-	//
-	//
-	//	this.outlineIndexBuffer.bind();
-	//	this.rendererLists.render(this);
-	//
-	//
-	//	// particle rendering		
-	//	BoxParticle head = null;
-	//	while ((head = this.particles.poll()) != null && head.isDead())
-	//	{ /* remove dead particles */ }
-	//	if (head != null)
-	//	{
-	//		// re-add the popped off head
-	//		this.particles.add(head);
-	//	}
-	//
-	//
-	//	// box rendering
-	//	GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
-	//	for (BoxParticle particle : this.particles)
-	//	{
-	//		// a new box is created each time since the height will be different based on the time it's lived
-	//		this.renderBox(particle.createNewRenderBox());
-	//	}
-	//}
-	//
-	//public void renderBox(Box box)
-	//{
-	//	Mat4f boxTransform = Mat4f.createTranslateMatrix(box.minPos.x - this.camPosFloatThisFrame.x, box.minPos.y - this.camPosFloatThisFrame.y, box.minPos.z - this.camPosFloatThisFrame.z);
-	//	boxTransform.multiply(Mat4f.createScaleMatrix(box.maxPos.x - box.minPos.x, box.maxPos.y - box.minPos.y, box.maxPos.z - box.minPos.z));
-	//
-	//	Mat4f transformMatrix = this.dhMvmProjMatrixThisFrame.copy();
-	//	transformMatrix.multiply(boxTransform);
-	//	this.basicShader.setUniform(this.basicShader.getUniformLocation("uTransform"), transformMatrix);
-	//
-	//	this.basicShader.setUniform(this.basicShader.getUniformLocation("uColor"), box.color);
-	//
-	//	GL32.glDrawElements(GL32.GL_LINES, BOX_OUTLINE_INDICES.length, GL32.GL_UNSIGNED_INT, 0);
-	//}
 	
 	//endregion
 	

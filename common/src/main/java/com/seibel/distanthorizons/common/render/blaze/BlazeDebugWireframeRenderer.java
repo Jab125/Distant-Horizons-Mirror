@@ -38,13 +38,12 @@ import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUt
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.renderer.DebugRenderer;
-import com.seibel.distanthorizons.core.render.renderer.RenderParams;
+import com.seibel.distanthorizons.core.render.RenderParams;
+import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
 import com.seibel.distanthorizons.core.util.math.Vec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcDebugRenderer;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.system.MemoryUtil;
 
@@ -55,16 +54,14 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
- * TODO
+ * Handles rendering the wireframe particles 
+ * that are used for seeing what the system's doing.
  */
-public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
+public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	
-	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
-	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	public static BlazeDebugWireframeRenderer INSTANCE = new BlazeDebugWireframeRenderer();
 	
@@ -140,6 +137,10 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 	}
 	private void createPipelines()
 	{
+		VertexFormat vertexFormat = VertexFormat.builder()
+			.add("vPosition", DhBlazeVertexFormatUtil.FLOAT_XYZ_POS)
+			.build();
+		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
@@ -155,13 +156,17 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 			
 			pipelineBuilder.withUniform("uniformBlock", UniformType.UNIFORM_BUFFER);
 			
-			pipelineBuilder.withVertexFormat(BlazePostProcessUtil.createVertexFormat(), VertexFormat.Mode.DEBUG_LINES);
+			pipelineBuilder.withVertexFormat(vertexFormat, VertexFormat.Mode.DEBUG_LINES);
 		}
 		this.pipeline = pipelineBuilder.build();
 		
 	}
 	private void createBuffers()
 	{
+		GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+		CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
+		
+		
 		// box vertices 
 		ByteBuffer boxVerticesBuffer = MemoryUtil.memAlloc(BOX_VERTICES.length * Float.BYTES);
 		boxVerticesBuffer.asFloatBuffer().put(BOX_VERTICES);
@@ -217,23 +222,8 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 	//===========//
 	//region
 	
-	private Mat4f combinedMatrixThisFrame = new Mat4f();
-	
 	@Override
-	public void render(RenderParams renderParams, Collection<DebugRenderer.BoxParticle> boxCollection)
-	{
-		
-		this.combinedMatrixThisFrame = new Mat4f(renderParams.dhProjectionMatrix);
-		this.combinedMatrixThisFrame.multiply(renderParams.dhModelViewMatrix);
-		
-		for (DebugRenderer.BoxParticle box : boxCollection)
-		{
-			this.render(box.createNewRenderBox());
-		}
-	}
-	
-	@Override
-	public void render(DebugRenderer.Box box)
+	public void render(Box box)
 	{
 		this.init();
 		
@@ -248,6 +238,9 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 		{
 			return;
 		}
+		
+		GpuDevice GPU_DEVICE = RenderSystem.getDevice();
+		CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 		
 		
 		
@@ -273,7 +266,7 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 				box.maxPos.y - box.minPos.y,
 				box.maxPos.z - box.minPos.z));
 			
-			Mat4f transformMatrix = this.combinedMatrixThisFrame.copy();
+			Mat4f transformMatrix = this.dhMvmProjMatrixThisFrame.copy();
 			transformMatrix.multiply(boxTransform);
 			
 			

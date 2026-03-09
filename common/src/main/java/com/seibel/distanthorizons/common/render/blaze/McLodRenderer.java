@@ -26,6 +26,7 @@ import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVerte
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
+import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -282,8 +283,8 @@ public class McLodRenderer implements IMcLodRenderer
 		{
 			if (this.indexBuffer == null)
 			{
-				ByteBuffer buffer = MemoryUtil.memAlloc(LodBufferContainer.MAX_QUADS_PER_BUFFER * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6);
-				QuadElementBuffer.buildBuffer(LodBufferContainer.MAX_QUADS_PER_BUFFER, buffer, GL32.GL_UNSIGNED_INT);
+				ByteBuffer buffer = MemoryUtil.memAlloc(LodQuadBuilder.getMaxBufferByteSize() * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6);
+				QuadElementBuffer.buildBuffer(LodQuadBuilder.getMaxBufferByteSize(), buffer, GL32.GL_UNSIGNED_INT);
 				
 				
 				// create buffer if needed

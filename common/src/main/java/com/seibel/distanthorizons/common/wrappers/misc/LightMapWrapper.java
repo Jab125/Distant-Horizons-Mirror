@@ -22,9 +22,8 @@ package com.seibel.distanthorizons.common.wrappers.misc;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL32;
@@ -36,8 +35,14 @@ import java.nio.ByteBuffer;
 
 public class LightMapWrapper implements ILightMapWrapper
 {
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
+	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	
+	/**
+	 * which texture index IE 0,1,2... the lightmap will be bound to. <Br> 
+	 * Related to but different from {@link GL32#GL_TEXTURE0}.
+	 */
+	public static final int GL_BOUND_INDEX = 0;
 	
 	private int textureId = 0;
 	
@@ -124,7 +129,7 @@ public class LightMapWrapper implements ILightMapWrapper
 	@Override
 	public void bind()
 	{
-		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + ILightMapWrapper.BOUND_INDEX);
+		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + LightMapWrapper.GL_BOUND_INDEX);
 		GLMC.glBindTexture(this.textureId);
 	}
 	
