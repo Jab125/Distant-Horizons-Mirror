@@ -180,8 +180,7 @@ public class McLodRenderer implements IMcLodRenderer
 			for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
 			{
 				LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
-				bufferContainer.uniforms.createBufferData(renderEventParam, bufferContainer);
-				bufferContainer.uniforms.upload();
+				bufferContainer.uniformContainer.tryUpload();
 			}
 		}
 		
@@ -211,6 +210,7 @@ public class McLodRenderer implements IMcLodRenderer
 				.putFloat() // uMircoOffset
 				.putFloat() // uEarthRadius
 				
+				.putVec3() // uCameraPos
 				.putMat4f() // uCombinedMatrix
 				.get();
 			
@@ -223,6 +223,10 @@ public class McLodRenderer implements IMcLodRenderer
 				.putFloat(0.01f) // uMircoOffset // 0.01 block offset
 				.putFloat(earthCurveRatio) // uEarthRadius
 				
+				.putVec3(
+					(float)renderEventParam.exactCameraPosition.x,
+					(float)renderEventParam.exactCameraPosition.y,
+					(float)renderEventParam.exactCameraPosition.z) // uCameraPos
 				.putMat4f(combinedMatrix.createJomlMatrix()) // uCombinedMatrix
 				.get();
 			
@@ -337,7 +341,7 @@ public class McLodRenderer implements IMcLodRenderer
 					profiler.popPush("binding");
 					
 					LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
-					LodUniformBufferWrapper uniformWrapper = (LodUniformBufferWrapper)bufferContainer.uniforms;
+					LodUniformBufferWrapper uniformWrapper = (LodUniformBufferWrapper)bufferContainer.uniformContainer;
 					
 					boolean columnBuilderDebugEnabled = Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugEnable.get();
 					if (columnBuilderDebugEnabled)

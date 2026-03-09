@@ -14,9 +14,21 @@ import java.nio.ByteBuffer;
 /**
  * TODO ??
  */
-public class LodUniformBufferWrapper extends AbstractUniformBufferWrapper implements ILodContainerUniformBufferWrapper
+public class LodUniformBufferWrapper extends UniformBufferWrapper implements ILodContainerUniformBufferWrapper
 {
 	
+	private boolean uploaded = false;
+	
+	
+	
+	//=============//
+	// constructor //
+	//=============//
+	//region
+	
+	public LodUniformBufferWrapper() { super(LodUniformBufferWrapper.class.getName()); }
+	
+	//endregion
 	
 	
 	
@@ -25,18 +37,13 @@ public class LodUniformBufferWrapper extends AbstractUniformBufferWrapper implem
 	//========//
 	//region
 	
-	public void createBufferData(RenderParams renderEventParam, LodBufferContainer bufferContainer)
+	@Override
+	public void createUniformData(LodBufferContainer bufferContainer)
 	{
-		Vec3d camPos = renderEventParam.exactCameraPosition;
 		Vec3f modelOffset = new Vec3f(
-			(float) (bufferContainer.minCornerBlockPos.getX() - camPos.x),
-			(float) (bufferContainer.minCornerBlockPos.getY() - camPos.y),
-			(float) (bufferContainer.minCornerBlockPos.getZ() - camPos.z));
-		
-		
-		Mat4f combinedMatrix = new Mat4f(renderEventParam.dhProjectionMatrix);
-		combinedMatrix.multiply(renderEventParam.dhModelViewMatrix);
-		
+			(float) (bufferContainer.minCornerBlockPos.getX()),
+			(float) (bufferContainer.minCornerBlockPos.getY()),
+			(float) (bufferContainer.minCornerBlockPos.getZ()));
 		
 		// upload data //
 		
@@ -49,6 +56,19 @@ public class LodUniformBufferWrapper extends AbstractUniformBufferWrapper implem
 			.putVec3(modelOffset.x, modelOffset.y, modelOffset.z) // uModelOffset
 			.get();
 		
+	}
+	
+	@Override
+	public void tryUpload()
+	{
+		if (this.uploaded)
+		{
+			return;
+		}
+		
+		this.upload();
+		
+		this.uploaded = true;
 	}
 	
 	//endregion

@@ -5,6 +5,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.VertexBufferWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IUniformBufferWrapper;
@@ -12,7 +13,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.IUniformBufferWr
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 
-public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrapper
+public class UniformBufferWrapper implements IUniformBufferWrapper
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -22,7 +23,10 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 	
 	private final String name;
 	
-	private ByteBuffer buffer = null;
+	private int cpuBufferSize = 0;
+	private int gpuBufferSize = 0;
+	
+	private ByteBuffer cpuBuffer = null;
 	public GpuBuffer gpuBuffer = null;
 	
 	
@@ -32,7 +36,7 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 	//=============//
 	//region
 	
-	public AbstractUniformBufferWrapper() { this.name = this.getClass().getSimpleName(); }
+	public UniformBufferWrapper(String name) { this.name = name; }
 	
 	//endregion
 	
@@ -45,37 +49,49 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 	
 	protected ByteBuffer getOrCreateBuffer(int size)
 	{
-		if (this.buffer == null 
-			|| this.buffer.capacity() != size)
+		if (this.cpuBuffer == null 
+			|| this.cpuBufferSize != size)
 		{
-			this.buffer = ByteBuffer.allocateDirect(size);
-			this.buffer.order(ByteOrder.nativeOrder());
+			this.cpuBuffer = ByteBuffer.allocateDirect(size);
+			this.cpuBuffer.order(ByteOrder.nativeOrder());
 			
-			int usage = GpuBuffer.USAGE_COPY_DST 
-				| GpuBuffer.USAGE_VERTEX 
-				| GpuBuffer.USAGE_UNIFORM;
-			int byteSize = (this.buffer.limit() - this.buffer.position());
-			this.gpuBuffer = GPU_DEVICE.createBuffer(this::getBufferName, usage, byteSize);
+			this.cpuBufferSize = size;
 		}
 		
-		return this.buffer;
+		return this.cpuBuffer;
 	}
 	
 	@Override
 	public void upload() throws IllegalStateException
 	{
-		if (this.buffer == null)
+		if (this.cpuBuffer == null)
 		{
 			throw new IllegalStateException("Upload called before buffer was created");
 		}
 		
+		if (this.gpuBuffer == null
+			|| this.gpuBufferSize != this.cpuBufferSize)
+		{
+			if (this.gpuBuffer != null)
+			{
+				this.gpuBuffer.close();
+			}
+			
+			int usage = GpuBuffer.USAGE_COPY_DST
+				| GpuBuffer.USAGE_VERTEX
+				| GpuBuffer.USAGE_UNIFORM;
+			this.gpuBuffer = GPU_DEVICE.createBuffer(this::getBufferName, usage, this.cpuBufferSize);
+			
+			this.gpuBufferSize = this.cpuBufferSize;
+		}
 		
 		
-		int byteSize = (this.buffer.limit() - this.buffer.position());
+		
+		int byteSize = (this.cpuBuffer.limit() - this.cpuBuffer.position());
 		GpuBufferSlice bufferSlice = new GpuBufferSlice(this.gpuBuffer, /*offset*/0, byteSize);
 		if (!bufferSlice.buffer().isClosed())
 		{
-			COMMAND_ENCODER.writeToBuffer(bufferSlice, this.buffer);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, this.cpuBuffer);
 		}
 		else
 		{
