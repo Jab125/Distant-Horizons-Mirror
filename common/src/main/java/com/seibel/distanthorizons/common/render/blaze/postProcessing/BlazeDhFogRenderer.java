@@ -39,7 +39,7 @@ import com.seibel.distanthorizons.api.enums.rendering.EDhApiFogColorMode;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogDirection;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogMixMode;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
-import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
@@ -52,7 +52,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFogRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhFogRenderer;
 import net.minecraft.resources.Identifier;
 
 import java.awt.*;
@@ -64,7 +64,7 @@ import java.util.OptionalInt;
 /**
  * Renders fog onto the LODs.
  */
-public class BlazeDhFogRenderer implements IMcFogRenderer
+public class BlazeDhFogRenderer implements IDhFogRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -154,8 +154,8 @@ public class BlazeDhFogRenderer implements IMcFogRenderer
 		this.tryInit();
 		
 		
-		if (McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -308,7 +308,7 @@ public class BlazeDhFogRenderer implements IMcFogRenderer
 		
 		
 		this.renderFogToTexture();
-		this.applyRenderer.render(this.fogColorTextureWrapper.texture, McLodRenderer.INSTANCE.dhDepthTextureWrapper.texture, McLodRenderer.INSTANCE.dhColorTextureWrapper.texture);
+		this.applyRenderer.render(this.fogColorTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.texture);
 		
 	}
 	

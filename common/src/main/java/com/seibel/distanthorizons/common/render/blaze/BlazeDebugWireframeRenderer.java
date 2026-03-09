@@ -33,12 +33,10 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
-import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
@@ -49,7 +47,6 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
-import java.util.Collection;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
@@ -227,8 +224,8 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	{
 		this.init();
 		
-		if (McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
-			|| McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
+		if (BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
+			|| BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
 		{
 			return;
 		}
@@ -298,9 +295,9 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		
 		try (RenderPass renderPass = commandEncoder.createRenderPass(
 			this::getRenderPassName,
-			McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
+			BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
-			McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+			BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
 			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
 			// Bind instance data //

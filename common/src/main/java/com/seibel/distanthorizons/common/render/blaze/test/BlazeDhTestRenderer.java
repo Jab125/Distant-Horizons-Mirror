@@ -33,7 +33,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTestTriangleRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
@@ -47,7 +47,7 @@ import java.util.OptionalInt;
  * to the center of the screen to confirm DH's
  * apply shader is running correctly
  */
-public class BlazeDhTestRenderer implements IMcTestRenderer
+public class BlazeDhTestRenderer implements IDhTestTriangleRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	

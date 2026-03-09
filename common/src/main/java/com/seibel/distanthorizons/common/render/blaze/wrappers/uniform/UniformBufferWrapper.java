@@ -7,7 +7,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IUniformBufferWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IUniformBufferWrapper;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;

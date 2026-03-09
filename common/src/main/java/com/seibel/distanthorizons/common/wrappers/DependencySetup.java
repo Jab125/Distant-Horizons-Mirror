@@ -21,7 +21,7 @@ package com.seibel.distanthorizons.common.wrappers;
 
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderObjectFactory;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDebugWireframeRenderer;
-import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFarFadeRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFogRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhSsaoRenderer;
@@ -44,7 +44,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.*;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.*;
 
 /**
  * Binds all necessary dependencies, so we
@@ -83,12 +83,12 @@ public class DependencySetup
 	
 	public static void createRenderBindings()
 	{
-		SingletonInjector.INSTANCE.bind(IMcTestRenderer.class, BlazeDhTestRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcVanillaFadeRenderer.class, BlazeVanillaFadeRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcLodRenderer.class, McLodRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, BlazeDhSsaoRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, BlazeDhFogRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcFarFadeRenderer.class, BlazeDhFarFadeRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IDhTestTriangleRenderer.class, BlazeDhTestRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IDhVanillaFadeRenderer.class, BlazeVanillaFadeRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IDhTerrainRenderer.class, BlazeDhTerrainRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IDhSsaoRenderer.class, BlazeDhSsaoRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IDhFogRenderer.class, BlazeDhFogRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IDhFarFadeRenderer.class, BlazeDhFarFadeRenderer.INSTANCE);
 	}
 	
 }

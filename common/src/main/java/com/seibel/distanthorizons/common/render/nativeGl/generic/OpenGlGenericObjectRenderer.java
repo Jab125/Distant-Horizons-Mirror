@@ -45,7 +45,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRen
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.ISodiumAccessor;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcGenericRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhGenericRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import com.seibel.distanthorizons.coreapi.ModInfo;
@@ -65,12 +65,11 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see IDhApiCustomRenderRegister
  * @see DhApiRenderableBox
  */
-public class GenericObjectRenderer implements IMcGenericRenderer
+public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final ISodiumAccessor SODIUM = ModAccessorInjector.INSTANCE.get(ISodiumAccessor.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	
 	private static final DhApiRenderableBoxGroupShading DEFAULT_SHADING = DhApiRenderableBoxGroupShading.getUnshaded();
@@ -173,7 +172,7 @@ public class GenericObjectRenderer implements IMcGenericRenderer
 	//=============//
 	//region
 	
-	public GenericObjectRenderer() { }
+	public OpenGlGenericObjectRenderer() { }
 	
 	public void init()
 	{

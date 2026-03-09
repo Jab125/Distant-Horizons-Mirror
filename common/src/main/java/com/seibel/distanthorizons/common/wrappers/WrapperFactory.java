@@ -36,14 +36,14 @@ import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.ILodContainerUniformBufferWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcGenericRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.ILodContainerUniformBufferWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhGenericRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.IBatchGeneratorEnvironmentWrapper;
@@ -225,10 +225,10 @@ public class WrapperFactory implements IWrapperFactory
 	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new BlazeLodUniformBufferWrapper(); }
 	
 	@Override
-	public IGenericObjectVertexBufferContainer createInstancedVboContainer() { return new BlazeGenericObjectVertexContainer(); }
+	public IDhGenericObjectVertexBufferContainer createInstancedVboContainer() { return new BlazeGenericObjectVertexContainer(); }
 	
 	@Override
-	public IMcGenericRenderer createGenericRenderer() { return new BlazeDhGenericObjectRenderer(); }
+	public IDhGenericRenderer createGenericRenderer() { return new BlazeDhGenericObjectRenderer(); }
 	
 	//endregion
 	

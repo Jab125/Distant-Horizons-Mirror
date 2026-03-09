@@ -9,9 +9,8 @@ import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLEnums;
-import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLProxy;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.common.render.nativeGl.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import org.lwjgl.opengl.GL32;
@@ -25,7 +24,7 @@ import java.util.List;
  * 
  * @see RenderableBoxGroup
  */
-public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBufferContainer
+public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertexBufferContainer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -69,9 +68,9 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 	
 	private EState state = EState.NEW;
 	@Override
-	public IGenericObjectVertexBufferContainer.EState getState() { return this.state; }
+	public IDhGenericObjectVertexBufferContainer.EState getState() { return this.state; }
 	@Override
-	public void setState(IGenericObjectVertexBufferContainer.EState state) { this.state = state; }
+	public void setState(IDhGenericObjectVertexBufferContainer.EState state) { this.state = state; }
 	
 	
 	

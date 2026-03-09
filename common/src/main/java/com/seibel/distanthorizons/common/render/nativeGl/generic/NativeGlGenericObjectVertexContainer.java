@@ -2,12 +2,10 @@ package com.seibel.distanthorizons.common.render.nativeGl.generic;
 
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.LodUtil;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import org.lwjgl.opengl.GL32;
 
 import java.awt.*;
@@ -18,7 +16,7 @@ import java.util.List;
  * 
  * @see RenderableBoxGroup
  */
-public class NativeGlGenericObjectVertexContainer implements IGenericObjectVertexBufferContainer
+public class NativeGlGenericObjectVertexContainer implements IDhGenericObjectVertexBufferContainer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	

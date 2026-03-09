@@ -40,8 +40,8 @@ import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.objects.SortedArraySet;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcLodRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTerrainRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.opengl.GL32;
@@ -52,19 +52,15 @@ import java.nio.ByteOrder;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
-/**
- * Renders a TODO
- */
-public class McLodRenderer implements IMcLodRenderer
+/** Renders rendering DH's LOD terrain. */
+public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
-	
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static final McLodRenderer INSTANCE = new McLodRenderer();
+	public static final BlazeDhTerrainRenderer INSTANCE = new BlazeDhTerrainRenderer();
 	
 	
 	private BlazeDhApplyRenderer applyRenderer;
@@ -89,7 +85,7 @@ public class McLodRenderer implements IMcLodRenderer
 	//=============//
 	//region
 	
-	private McLodRenderer()
+	private BlazeDhTerrainRenderer()
 	{
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhBlazeVertexFormatUtil.SHORT_XYZ_POS)
@@ -307,6 +303,9 @@ public class McLodRenderer implements IMcLodRenderer
 		this.dhDepthTextureWrapper.tryCreateOrResize();
 		this.dhColorTextureWrapper.tryCreateOrResize();
 		
+		
+		
+		// render pass setup
 		{
 			profiler.popPush("setup");
 			

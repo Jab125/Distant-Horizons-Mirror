@@ -32,7 +32,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhCopyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
@@ -43,7 +43,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFarFadeRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhFarFadeRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
 
@@ -55,7 +55,7 @@ import java.util.OptionalInt;
 /**
  * Fades out DH's far clip plane
  */
-public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
+public class BlazeDhFarFadeRenderer implements IDhFarFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -136,8 +136,8 @@ public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 		this.tryInit();
 		
 		
-		if (McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -191,7 +191,7 @@ public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 		
 		
 		this.renderFadeToTexture();
-		BlazeDhCopyRenderer.INSTANCE.render(this.dhFadeColorTextureWrapper, McLodRenderer.INSTANCE.dhColorTextureWrapper);
+		BlazeDhCopyRenderer.INSTANCE.render(this.dhFadeColorTextureWrapper, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper);
 		
 	}
 	
@@ -208,8 +208,8 @@ public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 			renderPass.bindTexture("uMcColorTexture", this.mcColorTextureViewWrapper.textureView, this.mcColorTextureViewWrapper.textureSampler);
 			
 			// DH textures
-			renderPass.bindTexture("uDhDepthTexture", McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
-			renderPass.bindTexture("uDhColorTexture", McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, McLodRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhDepthTexture", BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhColorTexture", BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
 			
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			

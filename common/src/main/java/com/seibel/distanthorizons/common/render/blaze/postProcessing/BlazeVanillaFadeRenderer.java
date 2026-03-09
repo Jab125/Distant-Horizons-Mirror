@@ -32,7 +32,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhCopyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
@@ -45,7 +45,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcVanillaFadeRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhVanillaFadeRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -59,7 +59,7 @@ import java.util.OptionalInt;
  * Fades the vanilla chunks
  * into DH's LODs.
  */
-public class BlazeVanillaFadeRenderer implements IMcVanillaFadeRenderer
+public class BlazeVanillaFadeRenderer implements IDhVanillaFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -144,8 +144,8 @@ public class BlazeVanillaFadeRenderer implements IMcVanillaFadeRenderer
 	{
 		this.tryInit();
 		
-		if (McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -236,8 +236,8 @@ public class BlazeVanillaFadeRenderer implements IMcVanillaFadeRenderer
 			renderPass.bindTexture("uMcDepthTexture", this.mcDepthTextureWrapper.textureView, this.mcDepthTextureWrapper.textureSampler);
 			renderPass.bindTexture("uCombinedMcDhColorTexture", this.mcColorTextureWrapper.textureView, this.mcColorTextureWrapper.textureSampler);
 			
-			renderPass.bindTexture("uDhDepthTexture", McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
-			renderPass.bindTexture("uDhColorTexture", McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, McLodRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhDepthTexture", BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhColorTexture", BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
 			
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			

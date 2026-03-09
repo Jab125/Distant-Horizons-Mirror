@@ -31,7 +31,6 @@ import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.apply.Dh
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade.DhFadeRenderer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -51,8 +50,8 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrap
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.AbstractOptifineAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcGenericRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcTestRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhGenericRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTestTriangleRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import com.seibel.distanthorizons.core.util.math.Vec3f;
@@ -160,7 +159,7 @@ public class LodRenderer
 		}
 		
 		RenderBufferHandler renderBufferHandler = renderParams.renderBufferHandler;
-		IMcGenericRenderer genericRenderer = renderParams.genericRenderer;
+		IDhGenericRenderer genericRenderer = renderParams.genericRenderer;
 		ILightMapWrapper lightmap = renderParams.lightmap;
 		
 		
@@ -703,7 +702,7 @@ public class LodRenderer
 		{
 			// basic quad rendering
 			
-			IMcTestRenderer testRenderer = SingletonInjector.INSTANCE.get(IMcTestRenderer.class);
+			IDhTestTriangleRenderer testRenderer = SingletonInjector.INSTANCE.get(IDhTestTriangleRenderer.class);
 			testRenderer.render();
 			
 			//TestRenderer.INSTANCE.render();

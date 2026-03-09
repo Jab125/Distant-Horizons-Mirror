@@ -53,14 +53,14 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.logging.f3.F3Screen;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.common.render.nativeGl.generic.GenericRenderObjectFactory;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.common.render.nativeGl.generic.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcGenericRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhGenericRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.resources.Identifier;
@@ -80,7 +80,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see IDhApiCustomRenderRegister
  * @see DhApiRenderableBox
  */
-public class BlazeDhGenericObjectRenderer implements IMcGenericRenderer
+public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -346,8 +346,8 @@ public class BlazeDhGenericObjectRenderer implements IMcGenericRenderer
 		
 		//#endregion
 		
-		if (McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
-			|| McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
+		if (BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
+			|| BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
 		{
 			return;
 		}
@@ -397,7 +397,7 @@ public class BlazeDhGenericObjectRenderer implements IMcGenericRenderer
 				boxGroup.tryUpdateInstancedDataAsync();
 				
 				// skip groups that haven't been uploaded yet
-				if (boxGroup.vertexBufferContainer.getState() != IGenericObjectVertexBufferContainer.EState.RENDER)
+				if (boxGroup.vertexBufferContainer.getState() != IDhGenericObjectVertexBufferContainer.EState.RENDER)
 				{
 					continue;
 				}
@@ -497,9 +497,9 @@ public class BlazeDhGenericObjectRenderer implements IMcGenericRenderer
 			
 			try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
 				this::getRenderPassName,
-				McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
+				BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 				/*optionalClearColorAsInt*/ OptionalInt.empty(),
-				McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+				BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
 				/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 			{
 				this.renderBoxGroupInstanced(renderPass, renderEventParam, boxGroup, camPos, profiler);

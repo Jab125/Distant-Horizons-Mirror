@@ -14,7 +14,7 @@ import com.seibel.distanthorizons.core.util.threading.PriorityTaskPicker;
 import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IGenericObjectVertexBufferContainer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.Closeable;
@@ -67,9 +67,9 @@ public class RenderableBoxGroup
 	public Consumer<DhApiRenderParam> afterRenderFunc;
 	
 	// instance data
-	public IGenericObjectVertexBufferContainer vertexBufferContainer = WRAPPER_FACTORY.createInstancedVboContainer();
+	public IDhGenericObjectVertexBufferContainer vertexBufferContainer = WRAPPER_FACTORY.createInstancedVboContainer();
 	/** double buffering for thread safety and to prevent locking the render thread during update */
-	private IGenericObjectVertexBufferContainer altVertexBufferContainer = WRAPPER_FACTORY.createInstancedVboContainer();
+	private IDhGenericObjectVertexBufferContainer altVertexBufferContainer = WRAPPER_FACTORY.createInstancedVboContainer();
 	
 	
 	
@@ -200,7 +200,7 @@ public class RenderableBoxGroup
 			this.altVertexBufferContainer.uploadDataToGpu();
 			
 			// swap VBO references for rendering
-			IGenericObjectVertexBufferContainer temp = this.vertexBufferContainer;
+			IDhGenericObjectVertexBufferContainer temp = this.vertexBufferContainer;
 			this.vertexBufferContainer = this.altVertexBufferContainer;
 			this.altVertexBufferContainer = temp;
 			

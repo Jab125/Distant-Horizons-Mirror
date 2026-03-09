@@ -36,7 +36,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
-import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
@@ -47,7 +47,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcSsaoRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhSsaoRenderer;
 import net.minecraft.resources.Identifier;
 
 import java.nio.ByteBuffer;
@@ -56,7 +56,7 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /** Renders SSAO to the DH LODs. */
-public class BlazeDhSsaoRenderer implements IMcSsaoRenderer
+public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -145,8 +145,8 @@ public class BlazeDhSsaoRenderer implements IMcSsaoRenderer
 		this.tryInit();
 		
 		
-		if (McLodRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| McLodRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -244,7 +244,7 @@ public class BlazeDhSsaoRenderer implements IMcSsaoRenderer
 		this.renderSsaoToTexture();
 		
 		this.applyRenderer.setUniform("applyFragUniformBlock", this.applyFragUniformBuffer);
-		this.applyRenderer.render(this.ssaoColorTextureWrapper.texture, McLodRenderer.INSTANCE.dhDepthTextureWrapper.texture, McLodRenderer.INSTANCE.dhColorTextureWrapper.texture);
+		this.applyRenderer.render(this.ssaoColorTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.texture);
 		
 	}
 	
@@ -257,7 +257,7 @@ public class BlazeDhSsaoRenderer implements IMcSsaoRenderer
 			/*depthTexture*/ null,
 			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			renderPass.bindTexture("uDhDepthTexture", McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhDepthTexture", BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
 			
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			
