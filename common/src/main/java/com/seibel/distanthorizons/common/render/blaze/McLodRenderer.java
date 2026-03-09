@@ -30,9 +30,9 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.core.render.glObject.GLEnums;
-import com.seibel.distanthorizons.core.render.glObject.buffer.QuadElementBuffer;
-import com.seibel.distanthorizons.core.render.renderer.RenderParams;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLEnums;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.QuadElementBuffer;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -154,7 +154,7 @@ public class McLodRenderer implements IMcLodRenderer
 	//endregion
 	
 	@Override
-	public int getVertexSize() { return this.vertexFormat.getVertexSize(); }
+	public int getVertexByteSize() { return this.vertexFormat.getVertexSize(); }
 	
 	
 	
