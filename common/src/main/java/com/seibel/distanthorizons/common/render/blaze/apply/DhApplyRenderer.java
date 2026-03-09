@@ -45,7 +45,12 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
- * TODO ???
+ * Copies the given color texture
+ * where the depth (or another attribute) is valid.
+ * Often used to apply post processing effects or
+ * the DH texture to MC's color texture. <br><br>
+ * 
+ * @see McCopyRenderer
  */
 public class DhApplyRenderer
 {

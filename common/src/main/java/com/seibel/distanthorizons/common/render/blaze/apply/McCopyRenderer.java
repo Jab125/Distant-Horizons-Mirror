@@ -41,7 +41,9 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
- * TODO ???
+ * Blindly copies one texture into another.
+ *
+ * @see DhApplyRenderer
  */
 public class McCopyRenderer
 {
