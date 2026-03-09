@@ -151,8 +151,8 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:generic"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "generic/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "generic/frag"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "generic/blaze/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "generic/blaze/frag"));
 			
 			pipelineBuilder.withSampler("uLightMap");
 			

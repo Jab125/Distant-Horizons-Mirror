@@ -106,8 +106,8 @@ public class DhTestRenderer implements IMcTestRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:test_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/frag"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/blaze/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "test/blaze/frag"));
 			
 			pipelineBuilder.withVertexFormat(vertexFormat, VertexFormat.Mode.TRIANGLES);
 		}

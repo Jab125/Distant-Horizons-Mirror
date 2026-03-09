@@ -108,7 +108,7 @@ public class McLodRenderer implements IMcLodRenderer
 		this.applyRenderer = new DhApplyRenderer(
 			"dh_apply_to_mc",
 			null,
-			"apply/vert", "apply/frag"
+			"apply/blaze/vert", "apply/blaze/frag"
 		);
 		
 		
@@ -121,8 +121,8 @@ public class McLodRenderer implements IMcLodRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:lod_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/frag"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/blaze/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/blaze/frag"));
 			
 			pipelineBuilder.withSampler("uLightMap");
 			

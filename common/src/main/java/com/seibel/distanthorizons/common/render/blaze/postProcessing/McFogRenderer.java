@@ -118,7 +118,7 @@ public class McFogRenderer implements IMcFogRenderer
 		this.applyRenderer = new DhApplyRenderer(
 			"fog_apply_to_dh",
 			new BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA),
-			"apply/vert", "apply/frag"
+			"apply/blaze/vert", "apply/blaze/frag"
 		);
 		
 		
@@ -137,8 +137,8 @@ public class McFogRenderer implements IMcFogRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:fog_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/quad_apply"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/fog"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/blaze/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fog/blaze/frag"));
 			
 			pipelineBuilder.withSampler("uDhDepthTexture");
 			

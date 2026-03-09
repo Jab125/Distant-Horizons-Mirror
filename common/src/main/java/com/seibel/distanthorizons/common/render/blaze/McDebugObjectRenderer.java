@@ -159,8 +159,8 @@ public class McDebugObjectRenderer implements IMcDebugRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.WIREFRAME);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:debug_renderer"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "debug/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "debug/frag"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "debug/blaze/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "debug/blaze/frag"));
 			
 			pipelineBuilder.withUniform("uniformBlock", UniformType.UNIFORM_BUFFER);
 			

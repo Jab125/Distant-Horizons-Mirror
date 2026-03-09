@@ -118,8 +118,8 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:mc_vanilla_fade_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/vanilla_fade"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/blaze/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "fade/blaze/vanilla_fade"));
 			
 			pipelineBuilder.withSampler("uMcDepthTexture");
 			pipelineBuilder.withSampler("uCombinedMcDhColorTexture");

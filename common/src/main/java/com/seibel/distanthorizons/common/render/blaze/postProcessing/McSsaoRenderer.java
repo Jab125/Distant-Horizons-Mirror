@@ -110,7 +110,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		this.applyRenderer = new DhApplyRenderer(
 			"ssao_apply_to_dh",
 			new BlendFunction(SourceFactor.ZERO, DestFactor.SRC_ALPHA, SourceFactor.ZERO, DestFactor.ONE),
-			"apply/vert", "ssao/apply",
+			"apply/blaze/vert", "ssao/blaze/apply",
 			/*uniforms*/ new String[] { "applyFragUniformBlock" }
 		);
 		
@@ -129,8 +129,8 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:ssao_render"));
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/quad_apply"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/ao"));
+			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/blaze/vert"));
+			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "ssao/blaze/frag"));
 			
 			pipelineBuilder.withSampler("uDhDepthTexture");
 			
