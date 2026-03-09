@@ -239,8 +239,10 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 			return;
 		}
 		
-		GpuDevice GPU_DEVICE = RenderSystem.getDevice();
-		CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
+		// delayed getters since this class may be initialized before
+		// the GPU device has been set
+		GpuDevice gpuDevice = RenderSystem.getDevice();
+		CommandEncoder commandEncoder = gpuDevice.createCommandEncoder();
 		
 		
 		
@@ -287,14 +289,14 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 			this.uniformBuffer = UniformHandler.createBuffer("uniformBlock", uniformBufferSize, this.uniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.uniformBuffer, 0, uniformBufferSize);
 			
-			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
+			commandEncoder.writeToBuffer(bufferSlice, buffer);
 		}
 		
 		
 		
 		// render //
 		
-		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+		try (RenderPass renderPass = commandEncoder.createRenderPass(
 			this::getRenderPassName,
 			McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),

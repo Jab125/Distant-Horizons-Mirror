@@ -170,7 +170,6 @@ public class DebugRenderer extends AbstractDebugWireframeRenderer
 	}
 	
 	@Override
-	@Deprecated // TODO this should add all the boxes to a list so we can render them as a batch instead of individual draw calls
 	public void render(Box box)
 	{
 		Mat4f boxTransform = Mat4f.createTranslateMatrix(box.minPos.x - this.camPosFloatThisFrame.x, box.minPos.y - this.camPosFloatThisFrame.y, box.minPos.z - this.camPosFloatThisFrame.z);
