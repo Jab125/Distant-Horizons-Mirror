@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.renderTest.helpers;
+package com.seibel.distanthorizons.common.render.blaze.helpers;
 
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;

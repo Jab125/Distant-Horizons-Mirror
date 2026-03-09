@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.renderTest;
+package com.seibel.distanthorizons.common.render.blaze;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -32,7 +32,6 @@ import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiBlockMaterial;
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderRegister;
@@ -43,10 +42,10 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeG
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3d;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
-import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.renderTest.helpers.McInstancedVboContainer;
-import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
-import com.seibel.distanthorizons.common.renderTest.helpers.UniformHandler;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.McInstancedVboContainer;
+import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -59,7 +58,6 @@ import com.seibel.distanthorizons.core.render.renderer.generic.RenderableBoxGrou
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcGenericRenderer;
@@ -75,7 +73,6 @@ import java.util.Collection;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.function.Supplier;
 
 /**
  * Handles rendering generic groups of {@link DhApiRenderableBox}.

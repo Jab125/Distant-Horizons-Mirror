@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.renderTest.apply;
+package com.seibel.distanthorizons.common.render.blaze.apply;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -32,10 +32,9 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.renderTest.helpers.DhVertexFormat;
-import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
-import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
-import com.seibel.distanthorizons.common.renderTest.helpers.PostProcessHelper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.DhVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.PostProcessHelper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;

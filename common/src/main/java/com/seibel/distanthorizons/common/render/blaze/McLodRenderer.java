@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.renderTest;
+package com.seibel.distanthorizons.common.render.blaze;
 
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -16,8 +16,8 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.renderTest.apply.DhApplyRenderer;
-import com.seibel.distanthorizons.common.renderTest.helpers.*;
+import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
+import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
@@ -45,7 +45,6 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.function.Supplier;
 
 /**
  * Renders a TODO

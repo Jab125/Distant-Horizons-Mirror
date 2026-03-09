@@ -19,12 +19,13 @@
 
 package com.seibel.distanthorizons.common.wrappers;
 
-import com.seibel.distanthorizons.common.renderTest.*;
-import com.seibel.distanthorizons.common.renderTest.postProcessing.McFarFadeRenderer;
-import com.seibel.distanthorizons.common.renderTest.postProcessing.McFogRenderer;
-import com.seibel.distanthorizons.common.renderTest.postProcessing.McSsaoRenderer;
-import com.seibel.distanthorizons.common.renderTest.postProcessing.McVanillaFadeRenderer;
-import com.seibel.distanthorizons.common.renderTest.test.DhTestRenderer;
+import com.seibel.distanthorizons.common.render.blaze.McDebugObjectRenderer;
+import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.McFarFadeRenderer;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.McFogRenderer;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.McSsaoRenderer;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.McVanillaFadeRenderer;
+import com.seibel.distanthorizons.common.render.blaze.test.DhTestRenderer;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;

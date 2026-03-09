@@ -21,7 +21,7 @@ package com.seibel.distanthorizons.common.wrappers.misc;
 
 import com.mojang.blaze3d.platform.NativeImage;
 import com.mojang.blaze3d.textures.GpuTexture;
-import com.seibel.distanthorizons.common.renderTest.helpers.McTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.helpers.McTextureViewWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;

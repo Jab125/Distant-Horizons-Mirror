@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.renderTest.helpers;
+package com.seibel.distanthorizons.common.render.blaze.helpers;
 
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
