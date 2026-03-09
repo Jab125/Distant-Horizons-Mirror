@@ -23,9 +23,9 @@ import com.seibel.distanthorizons.common.render.blaze.BlazeDebugWireframeRendere
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFarFadeRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFogRenderer;
-import com.seibel.distanthorizons.common.render.blaze.postProcessing.McSsaoRenderer;
-import com.seibel.distanthorizons.common.render.blaze.postProcessing.McVanillaFadeRenderer;
-import com.seibel.distanthorizons.common.render.blaze.test.DhTestRenderer;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhSsaoRenderer;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeVanillaFadeRenderer;
+import com.seibel.distanthorizons.common.render.blaze.test.BlazeDhTestRenderer;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;
@@ -80,10 +80,10 @@ public class DependencySetup
 	
 	public static void createRenderBindings()
 	{
-		SingletonInjector.INSTANCE.bind(IMcTestRenderer.class, DhTestRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcVanillaFadeRenderer.class, McVanillaFadeRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcTestRenderer.class, BlazeDhTestRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcVanillaFadeRenderer.class, BlazeVanillaFadeRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcLodRenderer.class, McLodRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, McSsaoRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, BlazeDhSsaoRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, BlazeDhFogRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFarFadeRenderer.class, BlazeDhFarFadeRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcDebugRenderer.class, BlazeDebugWireframeRenderer.INSTANCE);

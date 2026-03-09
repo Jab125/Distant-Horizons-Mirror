@@ -40,8 +40,7 @@ import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogDirection;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogMixMode;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
-import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
+import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
@@ -78,7 +77,7 @@ public class BlazeDhFogRenderer implements IMcFogRenderer
 	public static final BlazeDhFogRenderer INSTANCE = new BlazeDhFogRenderer();
 	
 	
-	private DhApplyRenderer applyRenderer;
+	private BlazeDhApplyRenderer applyRenderer;
 	
 	private RenderPipeline pipeline;
 	private boolean init = false;
@@ -109,7 +108,7 @@ public class BlazeDhFogRenderer implements IMcFogRenderer
 		
 		
 		
-		this.applyRenderer = new DhApplyRenderer(
+		this.applyRenderer = new BlazeDhApplyRenderer(
 			"fog_apply_to_dh",
 			new BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA),
 			"apply/blaze/vert", "apply/blaze/frag"

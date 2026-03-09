@@ -3,18 +3,12 @@ package com.seibel.distanthorizons.common.render.blaze.wrappers.uniform;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
-import com.seibel.distanthorizons.core.render.renderer.RenderParams;
-import com.seibel.distanthorizons.core.util.math.Mat4f;
-import com.seibel.distanthorizons.core.util.math.Vec3d;
 import com.seibel.distanthorizons.core.util.math.Vec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.ILodContainerUniformBufferWrapper;
 
 import java.nio.ByteBuffer;
 
-/**
- * TODO ??
- */
-public class LodUniformBufferWrapper extends UniformBufferWrapper implements ILodContainerUniformBufferWrapper
+public class BlazeLodUniformBufferWrapper extends UniformBufferWrapper implements ILodContainerUniformBufferWrapper
 {
 	
 	private boolean uploaded = false;
@@ -26,7 +20,7 @@ public class LodUniformBufferWrapper extends UniformBufferWrapper implements ILo
 	//=============//
 	//region
 	
-	public LodUniformBufferWrapper() { super(LodUniformBufferWrapper.class.getName()); }
+	public BlazeLodUniformBufferWrapper() { super(BlazeLodUniformBufferWrapper.class.getName()); }
 	
 	//endregion
 	

@@ -16,13 +16,13 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
+import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.LodUniformBufferWrapper;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.VertexBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeLodUniformBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
@@ -66,7 +66,7 @@ public class McLodRenderer implements IMcLodRenderer
 	public static final McLodRenderer INSTANCE = new McLodRenderer();
 	
 	
-	private DhApplyRenderer applyRenderer;
+	private BlazeDhApplyRenderer applyRenderer;
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline opaquePipeline;
@@ -110,7 +110,7 @@ public class McLodRenderer implements IMcLodRenderer
 		this.init = true; // todo only set when succeeded (in case of exception)
 		
 		
-		this.applyRenderer = new DhApplyRenderer(
+		this.applyRenderer = new BlazeDhApplyRenderer(
 			"dh_apply_to_mc",
 			null,
 			"apply/blaze/vert", "apply/blaze/frag"
@@ -341,7 +341,7 @@ public class McLodRenderer implements IMcLodRenderer
 					profiler.popPush("binding");
 					
 					LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
-					LodUniformBufferWrapper uniformWrapper = (LodUniformBufferWrapper)bufferContainer.uniformContainer;
+					BlazeLodUniformBufferWrapper uniformWrapper = (BlazeLodUniformBufferWrapper)bufferContainer.uniformContainer;
 					
 					boolean columnBuilderDebugEnabled = Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugEnable.get();
 					if (columnBuilderDebugEnabled)
@@ -368,7 +368,7 @@ public class McLodRenderer implements IMcLodRenderer
 					IVertexBufferWrapper[] bufferWrapperList = opaquePass ? bufferContainer.vbos : bufferContainer.vbosTransparent;
 					for (int i = 0; i < bufferWrapperList.length; i++)
 					{
-						VertexBufferWrapper bufferWrapper = (VertexBufferWrapper) bufferWrapperList[i];
+						BlazeVertexBufferWrapper bufferWrapper = (BlazeVertexBufferWrapper) bufferWrapperList[i];
 						if (!bufferWrapper.uploaded
 							|| bufferWrapper.vertexCount == 0)
 						{

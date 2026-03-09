@@ -9,7 +9,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWra
 
 import java.nio.ByteBuffer;
 
-public class VertexBufferWrapper implements IVertexBufferWrapper
+public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 {
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
@@ -30,7 +30,7 @@ public class VertexBufferWrapper implements IVertexBufferWrapper
 	//=============//
 	//region
 	
-	public VertexBufferWrapper(String name) { this.name = name; }
+	public BlazeVertexBufferWrapper(String name) { this.name = name; }
 	
 	//endregion
 	

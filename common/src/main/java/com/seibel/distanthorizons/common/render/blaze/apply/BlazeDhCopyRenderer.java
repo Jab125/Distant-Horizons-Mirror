@@ -29,7 +29,6 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
@@ -43,16 +42,16 @@ import java.util.OptionalInt;
 /**
  * Blindly copies one texture into another.
  *
- * @see DhApplyRenderer
+ * @see BlazeDhApplyRenderer
  */
-public class McCopyRenderer
+public class BlazeDhCopyRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static final McCopyRenderer INSTANCE = new McCopyRenderer();
+	public static final BlazeDhCopyRenderer INSTANCE = new BlazeDhCopyRenderer();
 	
 	private RenderPipeline pipeline;
 	private boolean init = false;
@@ -66,7 +65,7 @@ public class McCopyRenderer
 	//=============//
 	//region
 	
-	private McCopyRenderer() { }
+	private BlazeDhCopyRenderer() { }
 	
 	private void tryInit()
 	{

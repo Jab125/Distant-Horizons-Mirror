@@ -37,8 +37,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
-import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
+import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
@@ -56,10 +55,8 @@ import java.nio.ByteOrder;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
-/**
- * Renders a TODO
- */
-public class McSsaoRenderer implements IMcSsaoRenderer
+/** Renders SSAO to the DH LODs. */
+public class BlazeDhSsaoRenderer implements IMcSsaoRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -68,10 +65,10 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static final McSsaoRenderer INSTANCE = new McSsaoRenderer();
+	public static final BlazeDhSsaoRenderer INSTANCE = new BlazeDhSsaoRenderer();
 	
 	
-	private DhApplyRenderer applyRenderer;
+	private BlazeDhApplyRenderer applyRenderer;
 	
 	private RenderPipeline pipeline;
 	private boolean init = false;
@@ -90,7 +87,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	//=============//
 	//region
 	
-	private McSsaoRenderer() { }
+	private BlazeDhSsaoRenderer() { }
 	
 	private void tryInit()
 	{
@@ -101,7 +98,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		this.init = true;
 		
 		
-		this.applyRenderer = new DhApplyRenderer(
+		this.applyRenderer = new BlazeDhApplyRenderer(
 			"ssao_apply_to_dh",
 			new BlendFunction(SourceFactor.ZERO, DestFactor.SRC_ALPHA, SourceFactor.ZERO, DestFactor.ONE),
 			"apply/blaze/vert", "ssao/blaze/apply",

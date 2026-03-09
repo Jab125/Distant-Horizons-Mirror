@@ -33,10 +33,9 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
-import com.seibel.distanthorizons.common.render.blaze.apply.McCopyRenderer;
+import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhCopyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.core.config.Config;
@@ -57,9 +56,10 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
- * Renders a TODO
+ * Fades the vanilla chunks
+ * into DH's LODs.
  */
-public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
+public class BlazeVanillaFadeRenderer implements IMcVanillaFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -68,7 +68,7 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static final McVanillaFadeRenderer INSTANCE = new McVanillaFadeRenderer();
+	public static final BlazeVanillaFadeRenderer INSTANCE = new BlazeVanillaFadeRenderer();
 	
 	private RenderPipeline pipeline;
 	private boolean init = false;
@@ -89,7 +89,7 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 	//=============//
 	//region
 	
-	private McVanillaFadeRenderer() { }
+	private BlazeVanillaFadeRenderer() { }
 	
 	private void tryInit()
 	{
@@ -220,7 +220,7 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 		
 		
 		this.renderFadeToTexture();
-		McCopyRenderer.INSTANCE.render(this.fadeColorTextureWrapper, this.mcColorTextureWrapper);
+		BlazeDhCopyRenderer.INSTANCE.render(this.fadeColorTextureWrapper, this.mcColorTextureWrapper);
 		
 	}
 	

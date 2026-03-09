@@ -33,10 +33,9 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
-import com.seibel.distanthorizons.common.render.blaze.apply.McCopyRenderer;
+import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhCopyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -192,7 +191,7 @@ public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 		
 		
 		this.renderFadeToTexture();
-		McCopyRenderer.INSTANCE.render(this.dhFadeColorTextureWrapper, McLodRenderer.INSTANCE.dhColorTextureWrapper);
+		BlazeDhCopyRenderer.INSTANCE.render(this.dhFadeColorTextureWrapper, McLodRenderer.INSTANCE.dhColorTextureWrapper);
 		
 	}
 	

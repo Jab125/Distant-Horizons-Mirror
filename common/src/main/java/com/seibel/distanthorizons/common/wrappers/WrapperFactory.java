@@ -24,10 +24,10 @@ import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.interfaces.factories.IDhApiWrapperFactory;
-import com.seibel.distanthorizons.common.render.blaze.McGenericObjectRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhGenericObjectRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.LodUniformBufferWrapper;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.VertexBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeLodUniformBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
@@ -220,15 +220,15 @@ public class WrapperFactory implements IWrapperFactory
 	
 	
 	@Override
-	public IVertexBufferWrapper createVboWrapper(String name) { return new VertexBufferWrapper(name); }
+	public IVertexBufferWrapper createVboWrapper(String name) { return new BlazeVertexBufferWrapper(name); }
 	@Override
-	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new LodUniformBufferWrapper(); }
+	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new BlazeLodUniformBufferWrapper(); }
 	
 	@Override
 	public IGenericObjectVertexBufferContainer createInstancedVboContainer() { return new BlazeGenericObjectVertexContainer(); }
 	
 	@Override
-	public IMcGenericRenderer createGenericRenderer() { return new McGenericObjectRenderer(); }
+	public IMcGenericRenderer createGenericRenderer() { return new BlazeDhGenericObjectRenderer(); }
 	
 	//endregion
 	

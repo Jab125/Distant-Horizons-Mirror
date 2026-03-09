@@ -50,9 +50,9 @@ import java.util.OptionalInt;
  * Often used to apply post processing effects or
  * the DH texture to MC's color texture. <br><br>
  * 
- * @see McCopyRenderer
+ * @see BlazeDhCopyRenderer
  */
-public class DhApplyRenderer
+public class BlazeDhApplyRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -93,7 +93,7 @@ public class DhApplyRenderer
 	// constructor //
 	//=============//
 	//region
-	public DhApplyRenderer(
+	public BlazeDhApplyRenderer(
 		String name,
 		@Nullable BlendFunction blendFunction,
 		String vertexShaderPath, String fragmentShaderPath
@@ -106,7 +106,7 @@ public class DhApplyRenderer
 			new String[0] // no extra uniforms
 		);
 	}
-	public DhApplyRenderer(
+	public BlazeDhApplyRenderer(
 		String name,
 		@Nullable BlendFunction blendFunction,
 		String vertexShaderPath, String fragmentShaderPath,

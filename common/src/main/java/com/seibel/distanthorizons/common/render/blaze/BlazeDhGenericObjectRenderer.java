@@ -80,7 +80,7 @@ import java.util.concurrent.ConcurrentHashMap;
  * @see IDhApiCustomRenderRegister
  * @see DhApiRenderableBox
  */
-public class McGenericObjectRenderer implements IMcGenericRenderer
+public class BlazeDhGenericObjectRenderer implements IMcGenericRenderer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -117,7 +117,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 	//=============//
 	//region
 	
-	public McGenericObjectRenderer() { }
+	public BlazeDhGenericObjectRenderer() { }
 	
 	public void init()
 	{
