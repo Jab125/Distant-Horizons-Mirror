@@ -65,7 +65,6 @@ public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 	
 	public static final BlazeDhFarFadeRenderer INSTANCE = new BlazeDhFarFadeRenderer();
 	
-	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
 	private boolean init = false;
 	
@@ -83,12 +82,7 @@ public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 	//=============//
 	//region
 	
-	private BlazeDhFarFadeRenderer() 
-	{
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
-			.build();
-	}
+	private BlazeDhFarFadeRenderer() { }
 	
 	private void tryInit()
 	{
@@ -120,7 +114,7 @@ public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 			
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
+			pipelineBuilder.withVertexFormat(BlazePostProcessUtil.createVertexFormat(), VertexFormat.Mode.TRIANGLE_FAN);
 		}
 		this.pipeline = pipelineBuilder.build();
 		

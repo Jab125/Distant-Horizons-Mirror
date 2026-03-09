@@ -70,7 +70,6 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 	
 	public static final McVanillaFadeRenderer INSTANCE = new McVanillaFadeRenderer();
 	
-	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
 	private boolean init = false;
 	
@@ -90,12 +89,7 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 	//=============//
 	//region
 	
-	private McVanillaFadeRenderer() 
-	{
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
-			.build();
-	}
+	private McVanillaFadeRenderer() { }
 	
 	private void tryInit()
 	{
@@ -128,7 +122,7 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 			
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
+			pipelineBuilder.withVertexFormat(BlazePostProcessUtil.createVertexFormat(), VertexFormat.Mode.TRIANGLE_FAN);
 		}
 		this.pipeline = pipelineBuilder.build();
 		

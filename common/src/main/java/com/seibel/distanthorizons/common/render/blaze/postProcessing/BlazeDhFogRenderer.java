@@ -63,9 +63,9 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
- * Renders a TODO
+ * Renders fog onto the LODs.
  */
-public class McFogRenderer implements IMcFogRenderer
+public class BlazeDhFogRenderer implements IMcFogRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
@@ -75,12 +75,11 @@ public class McFogRenderer implements IMcFogRenderer
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static final McFogRenderer INSTANCE = new McFogRenderer();
+	public static final BlazeDhFogRenderer INSTANCE = new BlazeDhFogRenderer();
 	
 	
 	private DhApplyRenderer applyRenderer;
 	
-	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
 	private boolean init = false;
 	
@@ -97,12 +96,7 @@ public class McFogRenderer implements IMcFogRenderer
 	//=============//
 	//region
 	
-	private McFogRenderer() 
-	{
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
-			.build();
-	}
+	private BlazeDhFogRenderer() { }
 	
 	private void tryInit()
 	{
@@ -121,7 +115,6 @@ public class McFogRenderer implements IMcFogRenderer
 			"apply/blaze/vert", "apply/blaze/frag"
 		);
 		
-		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
@@ -139,7 +132,7 @@ public class McFogRenderer implements IMcFogRenderer
 			
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
+			pipelineBuilder.withVertexFormat(BlazePostProcessUtil.createVertexFormat(), VertexFormat.Mode.TRIANGLE_FAN);
 		}
 		this.pipeline = pipelineBuilder.build();
 		

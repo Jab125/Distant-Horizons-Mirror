@@ -22,7 +22,7 @@ package com.seibel.distanthorizons.common.wrappers;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDebugWireframeRenderer;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFarFadeRenderer;
-import com.seibel.distanthorizons.common.render.blaze.postProcessing.McFogRenderer;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFogRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.McSsaoRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.McVanillaFadeRenderer;
 import com.seibel.distanthorizons.common.render.blaze.test.DhTestRenderer;
@@ -84,7 +84,7 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IMcVanillaFadeRenderer.class, McVanillaFadeRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcLodRenderer.class, McLodRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcSsaoRenderer.class, McSsaoRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, McFogRenderer.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IMcFogRenderer.class, BlazeDhFogRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcFarFadeRenderer.class, BlazeDhFarFadeRenderer.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMcDebugRenderer.class, BlazeDebugWireframeRenderer.INSTANCE);
 	}

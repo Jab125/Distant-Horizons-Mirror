@@ -54,7 +54,6 @@ public class McCopyRenderer
 	
 	public static final McCopyRenderer INSTANCE = new McCopyRenderer();
 	
-	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
 	private boolean init = false;
 	
@@ -79,11 +78,6 @@ public class McCopyRenderer
 		
 		
 		
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
-			.build();
-		
-		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
@@ -99,7 +93,7 @@ public class McCopyRenderer
 			
 			pipelineBuilder.withSampler("uCopyTexture");
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
+			pipelineBuilder.withVertexFormat(BlazePostProcessUtil.createVertexFormat(), VertexFormat.Mode.TRIANGLE_FAN);
 		}
 		this.pipeline = pipelineBuilder.build();
 		

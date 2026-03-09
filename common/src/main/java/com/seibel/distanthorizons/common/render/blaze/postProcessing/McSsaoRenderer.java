@@ -73,7 +73,6 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	
 	private DhApplyRenderer applyRenderer;
 	
-	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
 	private boolean init = false;
 	
@@ -91,12 +90,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	//=============//
 	//region
 	
-	private McSsaoRenderer() 
-	{
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
-			.build();
-	}
+	private McSsaoRenderer() { }
 	
 	private void tryInit()
 	{
@@ -131,7 +125,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLE_FAN);
+			pipelineBuilder.withVertexFormat(BlazePostProcessUtil.createVertexFormat(), VertexFormat.Mode.TRIANGLE_FAN);
 		}
 		this.pipeline = pipelineBuilder.build();
 		

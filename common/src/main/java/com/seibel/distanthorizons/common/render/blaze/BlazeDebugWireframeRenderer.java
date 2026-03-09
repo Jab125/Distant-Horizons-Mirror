@@ -33,6 +33,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
+import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -109,8 +110,6 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 	// rendering setup
 	private boolean init = false;
 	
-	private VertexFormat vertexFormat;
-	
 	private RenderPipeline pipeline;
 	
 	private GpuBuffer boxVertexBuffer;
@@ -135,10 +134,6 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 		}
 		this.init = true;
 		
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.FLOAT_XYZ_POS)
-			.build();
-		
 		this.createPipelines();
 		this.createBuffers();
 		
@@ -160,7 +155,7 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 			
 			pipelineBuilder.withUniform("uniformBlock", UniformType.UNIFORM_BUFFER);
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.DEBUG_LINES);
+			pipelineBuilder.withVertexFormat(BlazePostProcessUtil.createVertexFormat(), VertexFormat.Mode.DEBUG_LINES);
 		}
 		this.pipeline = pipelineBuilder.build();
 		

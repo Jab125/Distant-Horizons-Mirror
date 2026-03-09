@@ -5,6 +5,7 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.blaze3d.vertex.VertexFormat;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -57,6 +58,14 @@ public class BlazePostProcessUtil
 		}
 		
 		return vboGpuBuffer;
+	}
+	
+	public static VertexFormat createVertexFormat()
+	{
+		VertexFormat vertexFormat = VertexFormat.builder()
+			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
+			.build();
+		return vertexFormat;
 	}
 	
 	//endregion
