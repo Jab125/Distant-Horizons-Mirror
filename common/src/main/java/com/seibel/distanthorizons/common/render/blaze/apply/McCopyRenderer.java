@@ -29,7 +29,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
@@ -80,7 +80,7 @@ public class McCopyRenderer
 		
 		
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
+			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
 			.build();
 		
 		

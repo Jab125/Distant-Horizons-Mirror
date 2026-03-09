@@ -10,9 +10,7 @@ import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
 import java.util.function.Supplier;
 
-/**
- * Contains code that's used by all post-processing effects.
- */
+/** Contains code that's used by all post-processing effects. */
 public class BlazePostProcessUtil
 {
 	
@@ -29,6 +27,12 @@ public class BlazePostProcessUtil
 			-1f,  1f,
 		};
 	
+	
+	
+	//=========//
+	// methods //
+	//=========//
+	//region
 	
 	public static GpuBuffer createAndUploadScreenVertexData(String name)
 	{
@@ -54,6 +58,8 @@ public class BlazePostProcessUtil
 		
 		return vboGpuBuffer;
 	}
+	
+	//endregion
 	
 	
 	

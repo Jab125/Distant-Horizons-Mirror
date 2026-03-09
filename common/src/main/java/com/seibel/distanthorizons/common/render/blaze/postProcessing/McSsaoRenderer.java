@@ -38,7 +38,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
@@ -94,7 +94,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	private McSsaoRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormat.SCREEN_POS)
+			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
 			.build();
 	}
 	

@@ -18,7 +18,7 @@ import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.LodUniformBufferWrapper;
@@ -91,13 +91,13 @@ public class McLodRenderer implements IMcLodRenderer
 	private McLodRenderer()
 	{
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormat.SHORT_XYZ_POS)
-			.add("meta", DhBlazeVertexFormat.META)
-			.add("vColor", DhBlazeVertexFormat.RGBA_UBYTE_COLOR)
-			.add("irisMaterial", DhBlazeVertexFormat.IRIS_MATERIAL)
-			.add("irisNormal", DhBlazeVertexFormat.IRIS_NORMAL)
-			.add("paddingTwo", DhBlazeVertexFormat.BYTE_PAD)
-			.add("paddingThree", DhBlazeVertexFormat.BYTE_PAD) // padding is to make sure the format is a multiple of 4
+			.add("vPosition", DhBlazeVertexFormatUtil.SHORT_XYZ_POS)
+			.add("meta", DhBlazeVertexFormatUtil.META)
+			.add("vColor", DhBlazeVertexFormatUtil.RGBA_UBYTE_COLOR)
+			.add("irisMaterial", DhBlazeVertexFormatUtil.IRIS_MATERIAL)
+			.add("irisNormal", DhBlazeVertexFormatUtil.IRIS_NORMAL)
+			.add("paddingTwo", DhBlazeVertexFormatUtil.BYTE_PAD)
+			.add("paddingThree", DhBlazeVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
 			.build();
 	}
 	

@@ -33,7 +33,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -52,7 +52,6 @@ import java.nio.ByteOrder;
 import java.util.Collection;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
-import java.util.function.Supplier;
 
 /**
  * TODO
@@ -137,7 +136,7 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 		this.init = true;
 		
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormat.FLOAT_XYZ_POS)
+			.add("vPosition", DhBlazeVertexFormatUtil.FLOAT_XYZ_POS)
 			.build();
 		
 		this.createPipelines();
