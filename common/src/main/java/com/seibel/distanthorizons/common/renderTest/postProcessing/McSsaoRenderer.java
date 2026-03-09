@@ -43,6 +43,7 @@ import com.seibel.distanthorizons.common.renderTest.McLodRenderer;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -77,6 +78,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	private boolean init = false;
 	
 	private GpuBuffer fragUniformBuffer;
+	private GpuBuffer applyFragUniformBuffer;
 	
 	private GpuBuffer vboGpuBuffer;
 	
@@ -108,7 +110,8 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		this.applyRenderer = new DhApplyRenderer(
 			"ssao_apply_to_dh",
 			new BlendFunction(SourceFactor.ZERO, DestFactor.SRC_ALPHA, SourceFactor.ZERO, DestFactor.ONE),
-			"apply/vert", "ssao/apply"
+			"apply/vert", "ssao/apply",
+			/*uniforms*/ new String[] { "applyFragUniformBlock" }
 		);
 		
 		GpuDevice gpuDevice = RenderSystem.getDevice();
@@ -167,6 +170,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		// textures
 		this.ssaoColorTextureWrapper.trySetup();
 		
+		// frag uniforms
 		{
 			int uniformBufferSize = new Std140SizeCalculator()
 				.putInt() // uSampleCount\
@@ -213,8 +217,47 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
 		
+		// apply frag uniforms
+		{
+			int uniformBufferSize = new Std140SizeCalculator()
+				.putVec2() // uViewSize
+				.putInt() // uBlurRadius
+				.putFloat() // uNearClipPlane
+				.putFloat() // uFarClipPlane
+				.get();
+			
+			
+			// create data //
+			
+			float viewWidth = (float)MC_RENDER.getTargetFramebufferViewportWidth();
+			float viewHeight = (float)MC_RENDER.getTargetFramebufferViewportHeight();
+			
+			float nearClipPlane = RenderUtil.getNearClipPlaneInBlocks();
+			float farClipPlane = RenderUtil.getFarClipPlaneDistanceInBlocks();
+			
+			
+			// upload data //
+			
+			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
+			buffer.order(ByteOrder.nativeOrder());
+			buffer = Std140Builder.intoBuffer(buffer)
+				.putVec2(viewWidth, viewHeight) // uViewSize
+				.putInt(2) // uBlurRadius
+				.putFloat(nearClipPlane) // uNearClipPlane
+				.putFloat(farClipPlane) // uFarClipPlane
+				.get()
+			;
+			
+			this.applyFragUniformBuffer = UniformHandler.createBuffer("applyFragUniformBlock", uniformBufferSize, this.applyFragUniformBuffer);
+			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.applyFragUniformBuffer, 0, uniformBufferSize);
+			
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
+		}
+		
 		
 		this.renderSsaoToTexture();
+		
+		this.applyRenderer.setUniform("applyFragUniformBlock", this.applyFragUniformBuffer);
 		this.applyRenderer.render(this.ssaoColorTextureWrapper.texture, McLodRenderer.INSTANCE.dhDepthTextureWrapper.texture, McLodRenderer.INSTANCE.dhColorTextureWrapper.texture);
 		
 	}

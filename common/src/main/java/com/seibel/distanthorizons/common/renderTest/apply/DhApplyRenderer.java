@@ -25,6 +25,7 @@ import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
+import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
@@ -37,11 +38,13 @@ import com.seibel.distanthorizons.common.renderTest.helpers.McTextureWrapper;
 import com.seibel.distanthorizons.common.renderTest.helpers.PostProcessHelper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
+import java.util.Arrays;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
@@ -74,17 +77,40 @@ public class DhApplyRenderer
 	
 	private final McTextureViewWrapper destinationColorTextureViewWrapper = new McTextureViewWrapper();
 	
+	/** 
+	 * Can be set for special application shaders that need 
+	 * extra information. <br><br>
+	 * 
+	 * will be an empty array if unneeded 
+	 */
+	private final String[] uniformNames;
+	/** will be an empty array if unneeded */
+	private final GpuBuffer[] uniformBuffers;
+	
 	
 	
 	//=============//
 	// constructor //
 	//=============//
 	//region
-	
 	public DhApplyRenderer(
 		String name,
 		@Nullable BlendFunction blendFunction,
 		String vertexShaderPath, String fragmentShaderPath
+		)
+	{
+		this(
+			name,
+			blendFunction,
+			vertexShaderPath, fragmentShaderPath,
+			new String[0] // no extra uniforms
+		);
+	}
+	public DhApplyRenderer(
+		String name,
+		@Nullable BlendFunction blendFunction,
+		String vertexShaderPath, String fragmentShaderPath,
+		String[] uniformNames
 		)
 	{
 		this.name = name;
@@ -93,6 +119,9 @@ public class DhApplyRenderer
 		
 		this.vertexShaderPath = vertexShaderPath;
 		this.fragmentShaderPath = fragmentShaderPath;
+		
+		this.uniformNames = uniformNames;
+		this.uniformBuffers = new GpuBuffer[this.uniformNames.length];
 	}
 	
 	private void tryInit(
@@ -143,6 +172,12 @@ public class DhApplyRenderer
 			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", this.vertexShaderPath));
 			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", this.fragmentShaderPath));
 			
+			for (int i = 0; i < this.uniformNames.length; i++)
+			{
+				String uniformName = this.uniformNames[i];
+				pipelineBuilder.withUniform(uniformName, UniformType.UNIFORM_BUFFER);
+			}
+			
 			pipelineBuilder.withSampler("uSourceColorTexture");
 			pipelineBuilder.withSampler("uSourceDepthTexture");
 			
@@ -161,6 +196,21 @@ public class DhApplyRenderer
 	//========//
 	//region
 	
+	public void setUniform(String uniformName, GpuBuffer uniformBuffer)
+	{
+		// the uniform array should be short enough (less than 10 items)
+		// where a sequential search should be plenty fast
+		for (int i = 0; i < this.uniformNames.length; i++)
+		{
+			String nameAtIndex = this.uniformNames[i];
+			if (nameAtIndex.equals(uniformName))
+			{
+				this.uniformBuffers[i] = uniformBuffer;
+				break;
+			}
+		}
+	}
+	
 	public void render(
 		GpuTexture sourceColorTexture,
 		GpuTexture sourceDepthTexture,
@@ -178,10 +228,30 @@ public class DhApplyRenderer
 			renderPass.bindTexture("uSourceColorTexture", this.sourceColorTextureViewWrapper.textureView, this.sourceColorTextureViewWrapper.textureSampler);
 			renderPass.bindTexture("uSourceDepthTexture", this.sourceDepthTextureViewWrapper.textureView, this.sourceDepthTextureViewWrapper.textureSampler);
 			
+			for (int i = 0; i < this.uniformNames.length; i++)
+			{
+				String uniformName = this.uniformNames[i];
+				GpuBuffer uniformBuffer = this.uniformBuffers[i];
+				if (uniformBuffer == null)
+				{
+					throw new IllegalStateException("Missing uniform ["+uniformName+"], please set the uniform before rendering.");	
+				}
+				
+				renderPass.setUniform(uniformName, uniformBuffer);
+			}
+			
 			renderPass.setVertexBuffer(0, this.vboGpuBuffer);
 			renderPass.setPipeline(this.pipeline);
 			
 			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 4);
+		}
+		
+		
+		// clear the uniforms after rendering
+		// so we can check if they're missing during next frame's rendering
+		if (ModInfo.IS_DEV_BUILD)
+		{
+			Arrays.fill(this.uniformBuffers, null);
 		}
 	}
 	

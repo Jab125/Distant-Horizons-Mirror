@@ -84,7 +84,7 @@ public class McTextureWrapper
 		{
 			this.textureSampler = GPU_DEVICE.createSampler(
 				AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
-				FilterMode.NEAREST, FilterMode.NEAREST, // minFilter, magFilter
+				FilterMode.LINEAR, FilterMode.LINEAR, // minFilter, magFilter
 				1, // maxAnisotropy 
 				OptionalDouble.empty() // maxLod
 			);
