@@ -44,7 +44,7 @@ import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
 import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -397,7 +397,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 				boxGroup.tryUpdateInstancedDataAsync();
 				
 				// skip groups that haven't been uploaded yet
-				if (boxGroup.instancedVbos.getState() != IGenericObjectVertexBufferContainer.EState.RENDER)
+				if (boxGroup.vertexBufferContainer.getState() != IGenericObjectVertexBufferContainer.EState.RENDER)
 				{
 					continue;
 				}
@@ -548,7 +548,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		
 		profiler.push("vertex setup");
 		
-		BlazeGenericObjectVertexContainer container = (BlazeGenericObjectVertexContainer) boxGroup.instancedVbos;
+		BlazeGenericObjectVertexContainer container = (BlazeGenericObjectVertexContainer) boxGroup.vertexBufferContainer;
 		
 		LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
 		BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();

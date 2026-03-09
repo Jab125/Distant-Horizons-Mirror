@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.render.blaze.helpers;
+package com.seibel.distanthorizons.common.render.blaze.wrappers.uniform;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -24,6 +24,7 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 	
 	private ByteBuffer buffer = null;
 	public GpuBuffer gpuBuffer = null;
+	
 	
 	
 	//=============//

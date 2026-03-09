@@ -39,7 +39,7 @@ import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.blaze.McLodRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.DhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;

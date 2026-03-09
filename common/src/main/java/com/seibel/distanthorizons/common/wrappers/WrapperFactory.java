@@ -26,8 +26,8 @@ import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.interfaces.factories.IDhApiWrapperFactory;
 import com.seibel.distanthorizons.common.render.blaze.McGenericObjectRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.LodUniformBufferWrapper;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.VertexBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.LodUniformBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.VertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
@@ -72,6 +72,7 @@ public class WrapperFactory implements IWrapperFactory
 	//==============//
 	// core methods //
 	//==============//
+	//region
 	
 	@Override
 	public IBatchGeneratorEnvironmentWrapper createBatchGenerator(IDhLevel targetLevel)
@@ -218,10 +219,25 @@ public class WrapperFactory implements IWrapperFactory
 	}
 	
 	
+	@Override
+	public IVertexBufferWrapper createVboWrapper(String name) { return new VertexBufferWrapper(name); }
+	@Override
+	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new LodUniformBufferWrapper(); }
+	
+	@Override
+	public IGenericObjectVertexBufferContainer createInstancedVboContainer() { return new BlazeGenericObjectVertexContainer(); }
+	
+	@Override
+	public IMcGenericRenderer createGenericRenderer() { return new McGenericObjectRenderer(); }
+	
+	//endregion
+	
+	
 	
 	//=============//
 	// api methods //
 	//=============//
+	//region
 	
 	// documentation should be in the API interface
 	
@@ -320,12 +336,15 @@ public class WrapperFactory implements IWrapperFactory
 		return createWrapperErrorMessage("BlockState wrapper", expectedClassNames, objectArray);
 	}
 	
+	//endregion
+	
 	
 	
 	
 	//================//
 	// helper methods //
 	//================//
+	//region
 	
 	private static String createWrapperErrorMessage(String wrapperName, String[] expectedClassNames, Object[] objectArray)
 	{
@@ -361,17 +380,7 @@ public class WrapperFactory implements IWrapperFactory
 		return message.toString();
 	}
 	
-	
-	@Override
-	public IVertexBufferWrapper createVboWrapper(String name) { return new VertexBufferWrapper(name); }
-	@Override
-	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new LodUniformBufferWrapper(); }
-	
-	@Override
-	public IGenericObjectVertexBufferContainer createInstancedVboContainer() { return new BlazeGenericObjectVertexContainer(); }
-	
-	@Override
-	public IMcGenericRenderer createGenericRenderer() { return new McGenericObjectRenderer(); }
+	//endregion
 	
 	
 	

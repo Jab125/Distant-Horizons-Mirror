@@ -1,8 +1,7 @@
-package com.seibel.distanthorizons.common.render.blaze.wrappers;
+package com.seibel.distanthorizons.common.render.blaze.wrappers.uniform;
 
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
-import com.seibel.distanthorizons.common.render.blaze.helpers.AbstractUniformBufferWrapper;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.render.renderer.RenderParams;
 import com.seibel.distanthorizons.core.util.math.Mat4f;

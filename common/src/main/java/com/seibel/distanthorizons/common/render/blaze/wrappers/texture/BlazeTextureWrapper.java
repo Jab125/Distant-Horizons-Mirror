@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.render.blaze.wrappers;
+package com.seibel.distanthorizons.common.render.blaze.wrappers.texture;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.systems.CommandEncoder;
