@@ -339,7 +339,7 @@ public class McFogRenderer implements IMcFogRenderer
 	private void renderFogToTexture()
 	{
 		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-			this::getName,
+			this::getRenderPassName,
 			this.fogColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
 			/*depthTexture*/ null, 
@@ -355,7 +355,7 @@ public class McFogRenderer implements IMcFogRenderer
 			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 4);
 		}
 	}
-	private String getName() { return "distantHorizons:McFogRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:McFogRenderer"; }
 	
 	
 	//endregion

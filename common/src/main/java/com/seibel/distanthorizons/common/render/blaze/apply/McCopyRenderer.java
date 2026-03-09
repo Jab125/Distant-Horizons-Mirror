@@ -142,7 +142,7 @@ public class McCopyRenderer
 		this.tryInit();
 		
 		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-			this::getName,
+			this::getRenderPassName,
 			destinationTextureView,
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
 			/*depthTexture*/ null,
@@ -157,7 +157,7 @@ public class McCopyRenderer
 		}
 	}
 	
-	private String getName() { return "distantHorizons:McCopyRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:McCopyRenderer"; }
 	
 	//endregion
 	

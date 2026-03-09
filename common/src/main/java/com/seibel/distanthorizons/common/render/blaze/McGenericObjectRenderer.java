@@ -496,7 +496,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 			profiler.push(boxGroup.getResourceLocationPath());
 			
 			try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-				this::getName,
+				this::getRenderPassName,
 				McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 				/*optionalClearColorAsInt*/ OptionalInt.empty(),
 				McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
@@ -528,7 +528,7 @@ public class McGenericObjectRenderer implements IMcGenericRenderer
 		
 		//endregion
 	}
-	private String getName() { return "distantHorizons:McGenericObjectRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:McGenericObjectRenderer"; }
 	
 	//endregion
 	

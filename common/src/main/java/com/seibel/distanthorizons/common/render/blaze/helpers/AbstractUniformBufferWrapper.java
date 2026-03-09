@@ -54,7 +54,7 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 				| GpuBuffer.USAGE_VERTEX 
 				| GpuBuffer.USAGE_UNIFORM;
 			int byteSize = (this.buffer.limit() - this.buffer.position());
-			this.gpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, byteSize);
+			this.gpuBuffer = GPU_DEVICE.createBuffer(this::getBufferName, usage, byteSize);
 		}
 		
 		return this.buffer;
@@ -81,7 +81,7 @@ public abstract class AbstractUniformBufferWrapper implements IUniformBufferWrap
 			LOGGER.warn("Uploading to buffer ["+this.name+"] failed due to already being closed");
 		}
 	}
-	private String getName() { return this.name; }
+	private String getBufferName() { return this.name; }
 	
 	//endregion
 	

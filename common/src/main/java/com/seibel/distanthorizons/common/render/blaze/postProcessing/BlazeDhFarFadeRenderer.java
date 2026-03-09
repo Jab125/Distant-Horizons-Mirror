@@ -39,13 +39,11 @@ import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureWrapper;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.renderer.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcFarFadeRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -56,19 +54,16 @@ import java.util.OptionalDouble;
 import java.util.OptionalInt;
 
 /**
- * Renders a TODO
+ * Fades out DH's far clip plane
  */
-public class McFarFadeRenderer implements IMcFarFadeRenderer
+public class BlazeDhFarFadeRenderer implements IMcFarFadeRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
-	
-	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
 	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static final McFarFadeRenderer INSTANCE = new McFarFadeRenderer();
+	public static final BlazeDhFarFadeRenderer INSTANCE = new BlazeDhFarFadeRenderer();
 	
 	private VertexFormat vertexFormat;
 	private RenderPipeline pipeline;
@@ -88,7 +83,7 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	//=============//
 	//region
 	
-	private McFarFadeRenderer() 
+	private BlazeDhFarFadeRenderer() 
 	{
 		this.vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
@@ -142,8 +137,8 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	//========//
 	//region
 	
-	@Override // TODO can probably just be DH mvm/proj matricies
-	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix)
+	@Override
+	public void render(RenderParams renderParams)
 	{
 		this.tryInit();
 		
@@ -175,13 +170,12 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 			float fadeEndDistance = dhFarClipDistance * 0.9f;
 			
 			
-			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(mcProjectionMatrix);
-			Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(mcModelViewMatrix);
+			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(renderParams.mcProjectionMatrix);
+			Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(renderParams.mcModelViewMatrix);
 			
-			Mat4f inverseDhModelViewProjectionMatrix = new Mat4f(dhProjectionMatrix);
-			inverseDhModelViewProjectionMatrix.multiply(dhModelViewMatrix);
-			inverseDhModelViewProjectionMatrix.invert();
-			Mat4f inverseDhMvmProjMatrix = inverseDhModelViewProjectionMatrix;
+			Mat4f inverseDhMvmProjMatrix = new Mat4f(dhProjectionMatrix);
+			inverseDhMvmProjMatrix.multiply(dhModelViewMatrix);
+			inverseDhMvmProjMatrix.invert();
 			
 			
 			
@@ -211,7 +205,7 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 	private void renderFadeToTexture()
 	{
 		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-			this::getName,
+			this::getRenderPassName,
 			this.dhFadeColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
 			/*depthTexture*/ null, 
@@ -232,7 +226,7 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 4);
 		}
 	}
-	private String getName() { return "distantHorizons:McFadeRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:McFadeRenderer"; }
 	
 	
 	//endregion

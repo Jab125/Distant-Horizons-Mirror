@@ -133,7 +133,7 @@ public class DhTestRenderer implements IMcTestRenderer
 		int usage = GpuBuffer.USAGE_COPY_DST
 			| GpuBuffer.USAGE_VERTEX;
 		int size = vertices.length * Float.BYTES;
-		this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, size);
+		this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getRenderPassName, usage, size);
 		
 		{
 			int offset = 0;
@@ -164,7 +164,7 @@ public class DhTestRenderer implements IMcTestRenderer
 		this.tryInit();
 		
 		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-			this::getName,
+			this::getRenderPassName,
 			this.mcColorTextureView,
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
 			/*mcDepthTextureView*/ null, 
@@ -175,7 +175,7 @@ public class DhTestRenderer implements IMcTestRenderer
 			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 3);
 		}
 	}
-	private String getName() { return "distantHorizons:DhTestRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:DhTestRenderer"; }
 	
 	//endregion
 	

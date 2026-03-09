@@ -215,7 +215,7 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 			{
 				int usage = GpuBuffer.USAGE_COPY_DST 
 					| GpuBuffer.USAGE_VERTEX;
-				this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, totalVertexByteSize);
+				this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getVertexBufferName, usage, totalVertexByteSize);
 			}
 			
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, /*offset*/0, totalVertexByteSize);
@@ -232,7 +232,7 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 					| GpuBuffer.USAGE_VERTEX 
 					| GpuBuffer.USAGE_INDEX 
 					| GpuBuffer.USAGE_UNIFORM;
-				this.indexGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, totalVertexByteSize);
+				this.indexGpuBuffer = GPU_DEVICE.createBuffer(this::getIndexBufferName, usage, totalVertexByteSize);
 			}
 			
 			int offset = 0;
@@ -243,7 +243,8 @@ public class BlazeGenericObjectVertexContainer implements IGenericObjectVertexBu
 		
 		this.state = EState.RENDER;
 	}
-	private String getName() { return "distantHorizons:GenericContainerIndex"; }
+	private String getVertexBufferName() { return "distantHorizons:GenericVertexBuffer"; }
+	private String getIndexBufferName() { return "distantHorizons:GenericIndexBuffer"; }
 	
 	//endregion
 	

@@ -260,7 +260,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 	private void renderSsaoToTexture()
 	{
 		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-			this::getName,
+			this::getRenderPassName,
 			this.ssaoColorTextureWrapper.textureView,
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
 			/*depthTexture*/ null,
@@ -276,7 +276,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 			renderPass.draw(/*indexStart*/ 0, /*indexCount*/ 4);
 		}
 	}
-	private String getName() { return "distantHorizons:McSsaoRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:McSsaoRenderer"; }
 	
 	
 	//endregion

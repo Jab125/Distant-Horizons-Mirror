@@ -307,7 +307,7 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 		// render //
 		
 		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-			this::getName,
+			this::getRenderPassName,
 			McLodRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
 			McLodRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
@@ -328,7 +328,7 @@ public class BlazeDebugWireframeRenderer implements IMcDebugRenderer
 				/*instanceCount*/1);
 		}
 	}
-	private String getName() { return "distantHorizons:McDebugRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:McDebugRenderer"; }
 	
 	//endregion
 	

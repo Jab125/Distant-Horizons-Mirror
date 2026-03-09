@@ -282,7 +282,7 @@ public class McLodRenderer implements IMcLodRenderer
 				QuadElementBuffer.buildBuffer(LodBufferContainer.MAX_QUADS_PER_BUFFER, buffer, GL32.GL_UNSIGNED_INT);
 				
 				
-				// create VBO if needed
+				// create buffer if needed
 				if (this.indexBuffer == null
 					|| this.indexBuffer.size() < buffer.capacity())
 				{
@@ -293,8 +293,7 @@ public class McLodRenderer implements IMcLodRenderer
 					this.indexBuffer = GPU_DEVICE.createBuffer(this::getIndexBufferName, usage, buffer.capacity());
 				}
 				
-				int offset = 0;
-				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexBuffer, offset, buffer.capacity());
+				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexBuffer, /*offset*/ 0, buffer.capacity());
 				COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 			}
 		}
@@ -311,7 +310,7 @@ public class McLodRenderer implements IMcLodRenderer
 			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
 			
 			try(RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-				this::getName,
+				this::getRenderPassName,
 				this.dhColorTextureWrapper.textureView,
 				optionalClearColorAsInt,
 				this.dhDepthTextureWrapper.textureView, optionalDepthValueAsDouble)
@@ -393,7 +392,7 @@ public class McLodRenderer implements IMcLodRenderer
 		profiler.pop();
 	}
 	private String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
-	private String getName() { return "distantHorizons:McLodRenderer"; }
+	private String getRenderPassName() { return "distantHorizons:McLodRenderer"; }
 	
 	@Override
 	public void applyToMcTexture() 
