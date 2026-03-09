@@ -158,10 +158,10 @@ public class McVanillaFadeRenderer implements IMcVanillaFadeRenderer
 		
 		
 		// textures
-		this.fadeColorTextureWrapper.trySetup();
+		this.fadeColorTextureWrapper.tryCreateOrResize();
 		
-		this.mcDepthTextureWrapper.trySetup(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
-		this.mcColorTextureWrapper.trySetup(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+		this.mcDepthTextureWrapper.tryWrap(Minecraft.getInstance().getMainRenderTarget().getDepthTexture());
+		this.mcColorTextureWrapper.tryWrap(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 		
 		
 		{

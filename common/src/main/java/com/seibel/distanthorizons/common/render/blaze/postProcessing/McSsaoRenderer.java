@@ -163,7 +163,7 @@ public class McSsaoRenderer implements IMcSsaoRenderer
 		
 		
 		// textures
-		this.ssaoColorTextureWrapper.trySetup();
+		this.ssaoColorTextureWrapper.tryCreateOrResize();
 		
 		// frag uniforms
 		{

@@ -157,8 +157,8 @@ public class McFarFadeRenderer implements IMcFarFadeRenderer
 		
 		
 		// textures
-		this.dhFadeColorTextureWrapper.trySetup();
-		this.mcColorTextureViewWrapper.trySetup(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
+		this.dhFadeColorTextureWrapper.tryCreateOrResize();
+		this.mcColorTextureViewWrapper.tryWrap(Minecraft.getInstance().getMainRenderTarget().getColorTexture());
 		
 		{
 			int uniformBufferSize = new Std140SizeCalculator()

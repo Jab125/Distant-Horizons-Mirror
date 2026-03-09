@@ -17,13 +17,18 @@ public class BlazeTextureViewWrapper
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
 	
-	
 	public GpuTextureView textureView = null;
 	public GpuSampler textureSampler = null;
 	
 	
 	
-	public void trySetup(GpuTexture texture)
+	//=======//
+	// setup //
+	//=======//
+	//region
+	
+	/** does nothing if the texture is already wrapped */
+	public void tryWrap(GpuTexture texture)
 	{
 		this.tryRecreateTextureView(texture);
 		this.tryCreateSampler();
@@ -53,6 +58,8 @@ public class BlazeTextureViewWrapper
 			);
 		}
 	}
+	
+	//endregion
 	
 	
 	

@@ -132,10 +132,10 @@ public class DhApplyRenderer
 		this.createPipeline();
 		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData(this.name);
 		
-		this.sourceColorTextureViewWrapper.trySetup(sourceColorTexture);
-		this.sourceDepthTextureViewWrapper.trySetup(sourceDepthTexture);
+		this.sourceColorTextureViewWrapper.tryWrap(sourceColorTexture);
+		this.sourceDepthTextureViewWrapper.tryWrap(sourceDepthTexture);
 		
-		this.destinationColorTextureViewWrapper.trySetup(destinationColorTexture);
+		this.destinationColorTextureViewWrapper.tryWrap(destinationColorTexture);
 		
 	}
 	private void createPipeline()

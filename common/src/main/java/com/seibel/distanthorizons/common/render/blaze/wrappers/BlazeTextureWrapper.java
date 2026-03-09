@@ -34,9 +34,10 @@ public class BlazeTextureWrapper
 	private int height = -1;
 	
 	
-	//=============//
-	// constructor //
-	//=============//
+	
+	//==============//
+	// constructors //
+	//==============//
 	//region
 	
 	public static BlazeTextureWrapper createDepth(String name) { return new BlazeTextureWrapper(name, TextureFormat.DEPTH32); }
@@ -73,7 +74,8 @@ public class BlazeTextureWrapper
 	//=======//
 	//region
 	
-	public void trySetup()
+	/** does nothing if the texture is already created and the correct size */
+	public void tryCreateOrResize()
 	{
 		this.tryCreateTexture();
 		this.tryCreateSampler();
@@ -126,8 +128,15 @@ public class BlazeTextureWrapper
 	
 	
 	
+	//==========//
+	// clearing //
+	//==========//
+	//region
 	
-	/** @see ColorUtil#argbToInt */
+	/** 
+	 * Will throw an exception if not a color texture.
+	 * @see ColorUtil#argbToInt 
+	 */
 	public void clearColor(int clearArgbColor) 
 	{
 		if (this.texture != null)
@@ -136,6 +145,7 @@ public class BlazeTextureWrapper
 		}
 	}
 	
+	/** Will throw an exception if not a depth texture. */
 	public void clearDepth(float depth) 
 	{
 		if (this.texture != null)
@@ -143,6 +153,8 @@ public class BlazeTextureWrapper
 			COMMAND_ENCODER.clearDepthTexture(this.texture, depth);
 		}
 	}
+	
+	//endregion
 	
 	
 	

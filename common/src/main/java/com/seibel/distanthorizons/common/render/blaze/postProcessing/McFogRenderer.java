@@ -170,7 +170,7 @@ public class McFogRenderer implements IMcFogRenderer
 		
 		
 		
-		this.fogColorTextureWrapper.trySetup();
+		this.fogColorTextureWrapper.tryCreateOrResize();
 		
 		
 		{

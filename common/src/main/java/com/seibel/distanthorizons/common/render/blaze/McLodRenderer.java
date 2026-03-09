@@ -300,8 +300,8 @@ public class McLodRenderer implements IMcLodRenderer
 		}
 		
 		// textures
-		this.dhDepthTextureWrapper.trySetup();
-		this.dhColorTextureWrapper.trySetup();
+		this.dhDepthTextureWrapper.tryCreateOrResize();
+		this.dhColorTextureWrapper.tryCreateOrResize();
 		
 		{
 			profiler.popPush("setup");

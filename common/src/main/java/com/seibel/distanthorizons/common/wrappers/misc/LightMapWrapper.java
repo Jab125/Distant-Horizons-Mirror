@@ -107,7 +107,7 @@ public class LightMapWrapper implements ILightMapWrapper
 	public void setLightmapGpuTexture(GpuTexture gpuTexture)
 	{
 		this.gpuTexture = gpuTexture;
-		this.lightmapTextureWrapper.trySetup(this.gpuTexture);
+		this.lightmapTextureWrapper.tryWrap(this.gpuTexture);
 	}
 	
 	//endregion
