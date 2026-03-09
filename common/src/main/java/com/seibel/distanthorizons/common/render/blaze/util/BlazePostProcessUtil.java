@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.render.blaze.helpers;
+package com.seibel.distanthorizons.common.render.blaze.util;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;

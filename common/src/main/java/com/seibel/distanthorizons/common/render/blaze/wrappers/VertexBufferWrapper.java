@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.common.render.blaze.helpers;
+package com.seibel.distanthorizons.common.render.blaze.wrappers;
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
@@ -8,7 +8,6 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.IVertexBufferWrapper;
 
 import java.nio.ByteBuffer;
-import java.util.function.Supplier;
 
 public class VertexBufferWrapper implements IVertexBufferWrapper
 {

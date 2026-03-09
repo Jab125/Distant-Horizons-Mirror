@@ -44,7 +44,7 @@ import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
 import com.seibel.distanthorizons.common.render.blaze.helpers.DhBlazeVertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
-import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeTextureViewWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
