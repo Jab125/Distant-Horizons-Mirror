@@ -1,0 +1,281 @@
+/*
+ *    This file is part of the Distant Horizons mod
+ *    licensed under the GNU LGPL v3 License.
+ *
+ *    Copyright (C) 2020 James Seibel
+ *
+ *    This program is free software: you can redistribute it and/or modify
+ *    it under the terms of the GNU Lesser General Public License as published by
+ *    the Free Software Foundation, version 3.
+ *
+ *    This program is distributed in the hope that it will be useful,
+ *    but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *    GNU Lesser General Public License for more details.
+ *
+ *    You should have received a copy of the GNU Lesser General Public License
+ *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
+ */
+
+package com.seibel.distanthorizons.common.render.nativeGl;
+
+import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.GLElementBuffer;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.AbstractVertexAttribute;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexPointer;
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.config.types.ConfigEntry;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.pos.DhSectionPos;
+import com.seibel.distanthorizons.core.render.renderer.IDebugRenderable;
+import com.seibel.distanthorizons.core.render.RenderParams;
+import com.seibel.distanthorizons.core.util.math.Mat4f;
+import com.seibel.distanthorizons.core.util.math.Vec3d;
+import com.seibel.distanthorizons.core.util.math.Vec3f;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.IMcDebugRenderer;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.GL32;
+
+import java.awt.*;
+import java.lang.ref.WeakReference;
+import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.LinkedList;
+import java.util.concurrent.PriorityBlockingQueue;
+
+/**
+ * Handles rendering the wireframe particles 
+ * that are used for seeing what the system's doing.
+ */
+public class DebugRenderer
+{
+	public static DebugRenderer INSTANCE = new DebugRenderer();
+	
+	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	public static final DhLogger RATE_LIMITED_LOGGER = new DhLoggerBuilder()
+			.maxCountPerSecond(1)
+			.build();
+	
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
+	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
+	
+	
+	
+	// rendering setup
+	private ShaderProgram basicShader;
+	private GLElementBuffer outlineIndexBuffer;
+	private AbstractVertexAttribute va;
+	private boolean init = false;
+	
+	// used when rendering
+	private Mat4f dhMvmProjMatrixThisFrame;
+	private Vec3f camPosFloatThisFrame;
+	
+	
+	private final IMcDebugRenderer.RendererLists rendererLists = new IMcDebugRenderer.RendererLists();
+	private final PriorityBlockingQueue<IMcDebugRenderer.BoxParticle> particles = new PriorityBlockingQueue<>();
+	
+	
+	
+	
+	/** A box from 0,0,0 to 1,1,1 */
+	private static final float[] BOX_VERTICES = {
+		//region
+			// Pos x y z
+			0, 0, 0,
+			1, 0, 0,
+			1, 1, 0,
+			0, 1, 0,
+			0, 0, 1,
+			1, 0, 1,
+			1, 1, 1,
+			0, 1, 1,
+		//endregion
+	};
+
+	private static final int[] BOX_OUTLINE_INDICES = {
+		//region
+			0, 1,
+			1, 2,
+			2, 3,
+			3, 0,
+
+			4, 5,
+			5, 6,
+			6, 7,
+			7, 4,
+
+			0, 4,
+			1, 5,
+			2, 6,
+			3, 7,
+		//endregion
+	};
+	
+	
+	
+	//=============//
+	// constructor //
+	//=============//
+	//region
+	
+	private DebugRenderer() { }
+	
+	public void init()
+	{
+		if (this.init)
+		{
+			return;
+		}
+		this.init = true;
+
+		this.va = AbstractVertexAttribute.create();
+		this.va.bind();
+		// Pos
+		this.va.setVertexAttribute(0, 0, VertexPointer.addVec3Pointer(false));
+		this.va.completeAndCheck(Float.BYTES * 3);
+		this.basicShader = new ShaderProgram(
+			"shaders/debug/vert.vert",
+			"shaders/debug/frag.frag",
+			"vPosition"
+		);
+		this.createBuffer();
+	}
+
+	private void createBuffer()
+	{
+		// box vertices 
+		ByteBuffer boxVerticesBuffer = ByteBuffer.allocateDirect(BOX_VERTICES.length * Float.BYTES);
+		boxVerticesBuffer.order(ByteOrder.nativeOrder());
+		boxVerticesBuffer.asFloatBuffer().put(BOX_VERTICES);
+		boxVerticesBuffer.rewind();
+		
+		
+		// outline vertex indexes
+		ByteBuffer boxOutlineBuffer = ByteBuffer.allocateDirect(BOX_OUTLINE_INDICES.length * Integer.BYTES);
+		boxOutlineBuffer.order(ByteOrder.nativeOrder());
+		boxOutlineBuffer.asIntBuffer().put(BOX_OUTLINE_INDICES);
+		boxOutlineBuffer.rewind();
+		this.outlineIndexBuffer = new GLElementBuffer(false);
+		this.outlineIndexBuffer.uploadBuffer(boxOutlineBuffer, EDhApiGpuUploadMethod.DATA, BOX_OUTLINE_INDICES.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
+		
+	}
+	
+	//endregion
+	
+	
+	
+	
+	
+	//===========//
+	// rendering //
+	//===========//
+	//region
+	
+	public void render(RenderParams renderEventParam)
+	{
+		//this.dhMvmProjMatrixThisFrame = dhMvmProjMatrix; // TODO
+		Vec3d camPos = MC_RENDER.getCameraExactPosition();
+		this.camPosFloatThisFrame = new Vec3f((float) camPos.x, (float) camPos.y, (float) camPos.z);
+		
+		this.init();
+		
+		GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
+		GLMC.enableDepthTest();
+		
+		this.basicShader.bind();
+		this.va.bind();
+		
+		
+		this.outlineIndexBuffer.bind();
+		//this.rendererLists.render(this); // TODO
+		
+		
+		// particle rendering		
+		IMcDebugRenderer.BoxParticle head = null;
+		while ((head = this.particles.poll()) != null && head.isDead())
+		{ /* remove dead particles */ }
+		if (head != null)
+		{
+			// re-add the popped off head
+			this.particles.add(head);
+		}
+		
+		IMcDebugRenderer renderer = SingletonInjector.INSTANCE.get(IMcDebugRenderer.class);
+		renderer.render(renderEventParam, this.particles);
+		
+	}
+	
+	@Deprecated // TODO this should add all the boxes to a list so we can render them as a batch instead of individual draw calls
+	public void renderBox(IMcDebugRenderer.Box box)
+	{
+		IMcDebugRenderer renderer = SingletonInjector.INSTANCE.get(IMcDebugRenderer.class);
+		renderer.render(box);
+	}
+	
+	//public void render(Mat4f dhMvmProjMatrix)
+	//{
+	//	this.dhMvmProjMatrixThisFrame = dhMvmProjMatrix;
+	//	Vec3d camPos = MC_RENDER.getCameraExactPosition();
+	//	this.camPosFloatThisFrame = new Vec3f((float) camPos.x, (float) camPos.y, (float) camPos.z);
+	//
+	//	this.init();
+	//
+	//	GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
+	//	GLMC.enableDepthTest();
+	//
+	//	this.basicShader.bind();
+	//	this.va.bind();
+	//
+	//
+	//	this.outlineIndexBuffer.bind();
+	//	this.rendererLists.render(this);
+	//
+	//
+	//	// particle rendering		
+	//	BoxParticle head = null;
+	//	while ((head = this.particles.poll()) != null && head.isDead())
+	//	{ /* remove dead particles */ }
+	//	if (head != null)
+	//	{
+	//		// re-add the popped off head
+	//		this.particles.add(head);
+	//	}
+	//
+	//
+	//	// box rendering
+	//	GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
+	//	for (BoxParticle particle : this.particles)
+	//	{
+	//		// a new box is created each time since the height will be different based on the time it's lived
+	//		this.renderBox(particle.createNewRenderBox());
+	//	}
+	//}
+	//
+	//public void renderBox(Box box)
+	//{
+	//	Mat4f boxTransform = Mat4f.createTranslateMatrix(box.minPos.x - this.camPosFloatThisFrame.x, box.minPos.y - this.camPosFloatThisFrame.y, box.minPos.z - this.camPosFloatThisFrame.z);
+	//	boxTransform.multiply(Mat4f.createScaleMatrix(box.maxPos.x - box.minPos.x, box.maxPos.y - box.minPos.y, box.maxPos.z - box.minPos.z));
+	//
+	//	Mat4f transformMatrix = this.dhMvmProjMatrixThisFrame.copy();
+	//	transformMatrix.multiply(boxTransform);
+	//	this.basicShader.setUniform(this.basicShader.getUniformLocation("uTransform"), transformMatrix);
+	//
+	//	this.basicShader.setUniform(this.basicShader.getUniformLocation("uColor"), box.color);
+	//
+	//	GL32.glDrawElements(GL32.GL_LINES, BOX_OUTLINE_INDICES.length, GL32.GL_UNSIGNED_INT, 0);
+	//}
+	
+	//endregion
+	
+	
+	
+}
