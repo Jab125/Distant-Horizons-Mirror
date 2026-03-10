@@ -93,15 +93,6 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public static final String DIRT_RESOURCE_LOCATION_STRING = "minecraft:dirt";
 	public static final String WATER_RESOURCE_LOCATION_STRING = "minecraft:water";
 	
-	/** Used to handle older MC versions that don't have an simple way of getting the block's tags */
-	public static final List<String> OLD_BEACON_BASE_BLOCK_NAME_LIST = Arrays.asList(
-		"iron_block",
-		"gold_block",
-		"diamond_block",
-		"emerald_block",
-		"netherite_block"
-	);
-	
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
 	
@@ -194,11 +185,21 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		// beacon base blocks
 		#if MC_VER <= MC_1_18_2
+		
+		// Used to handle older MC versions that don't have an simple way of getting the block's tags
+		List<String> oldBeaconBaseBlockNameList = Arrays.asList(
+			"iron_block",
+			"gold_block",
+			"diamond_block",
+			"emerald_block",
+			"netherite_block"
+		);
+		
 		// Older MC versions are harder to get block tags, so just use a static list to determine beacon blocks
 		boolean isBeaconBaseBlock = false;
-		for (int i = 0; i < OLD_BEACON_BASE_BLOCK_NAME_LIST.size(); i++)
+		for (int i = 0; i < oldBeaconBaseBlockNameList.size(); i++)
 		{
-			String baseBlockName = OLD_BEACON_BASE_BLOCK_NAME_LIST.get(i);
+			String baseBlockName = oldBeaconBaseBlockNameList.get(i);
 			if (lowercaseSerial.contains(baseBlockName))
 			{
 				isBeaconBaseBlock = true;
