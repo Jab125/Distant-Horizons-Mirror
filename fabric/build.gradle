@@ -23,6 +23,7 @@ loom {
                     "-XX:+UseZGC",
                     "-XX:+ZGenerational"
             )
+            // "--renderDebugLabels" is a Mojang command to show render names in RenderDoc
             programArgs("--username", "Dev", "--renderDebugLabels")
         }
         server {
