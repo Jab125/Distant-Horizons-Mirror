@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze.wrappers.texture;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeTextureViewWrapper {}
+
+#else
+
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
@@ -64,3 +69,4 @@ public class BlazeTextureViewWrapper
 	
 	
 }
+#endif

@@ -25,13 +25,10 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import com.mojang.blaze3d.pipeline.RenderTarget;
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.api.enums.config.EDhApiLodShading;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
-import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -88,6 +85,7 @@ import com.mojang.blaze3d.opengl.GlTexture;
 #if MC_VER <= MC_1_21_10
 #else
 import net.minecraft.world.attribute.EnvironmentAttributes;
+import com.mojang.blaze3d.textures.GpuTexture;
 #endif
 
 /**
@@ -489,6 +487,9 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
 		wrapper.setLightmapId(tetxureId);
 	}
+	
+	#if MC_VER <= MC_1_21_10
+	#else
 	public void setLightmapGpuTexture(GpuTexture gpuTexture, IClientLevelWrapper level)
 	{
 		// Using ClientLevelWrapper as the key would be better, but we don't have a consistent way to create the same
@@ -499,6 +500,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
 		wrapper.setLightmapGpuTexture(gpuTexture);
 	}
+	#endif
 	
 	@Override
 	public float getShade(EDhDirection lodDirection)

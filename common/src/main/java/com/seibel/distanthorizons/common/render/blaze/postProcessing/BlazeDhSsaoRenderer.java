@@ -19,6 +19,11 @@
 
 package com.seibel.distanthorizons.common.render.blaze.postProcessing;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeDhSsaoRenderer {}
+
+#else
+	
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
@@ -275,3 +280,4 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 	
 	
 }
+#endif

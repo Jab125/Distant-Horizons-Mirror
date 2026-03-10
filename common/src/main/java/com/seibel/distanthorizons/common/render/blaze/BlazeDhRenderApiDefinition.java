@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeDhRenderApiDefinition {}
+
+#else
+
 import com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObjectVertexContainer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFarFadeRenderer;
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFogRenderer;
@@ -63,3 +68,4 @@ public class BlazeDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	
 	
 }
+#endif

@@ -19,6 +19,11 @@
 
 package com.seibel.distanthorizons.common.render.blaze.test;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeDhTestTriangleRenderer {}
+
+#else
+	
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
@@ -184,3 +189,4 @@ public class BlazeDhTestTriangleRenderer implements IDhTestTriangleRenderer
 	
 	
 }
+#endif

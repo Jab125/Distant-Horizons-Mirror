@@ -101,7 +101,11 @@ public class DependencySetup
 		}
 		else if (renderingApiEnum == EDhApiRenderApi.BLAZE_3D)
 		{
+			#if MC_VER <= MC_1_21_10
+			throw new IllegalStateException("["+renderingApiEnum+"] is not supported on this version of Minecraft.");
+			#else
 			renderDefinition = new BlazeDhRenderApiDefinition();
+			#endif
 		}
 		else
 		{

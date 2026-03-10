@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze.objects;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeGenericObjectVertexContainer {}
+
+#else
+	
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -277,3 +282,4 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	
 	
 }
+#endif

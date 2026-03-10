@@ -19,6 +19,11 @@
 
 package com.seibel.distanthorizons.common.render.blaze.apply;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeDhCopyRenderer {}
+
+#else
+
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.DepthTestFunction;
@@ -157,3 +162,4 @@ public class BlazeDhCopyRenderer
 	
 	
 }
+#endif

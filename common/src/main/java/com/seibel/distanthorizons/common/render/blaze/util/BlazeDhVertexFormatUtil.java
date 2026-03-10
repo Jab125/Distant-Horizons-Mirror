@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze.util;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeDhVertexFormatUtil {}
+
+#else
+	
 import com.mojang.blaze3d.vertex.VertexFormatElement;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderApi;
 import com.seibel.distanthorizons.core.config.Config;
@@ -97,3 +102,4 @@ public class BlazeDhVertexFormatUtil
 	
 	
 }
+#endif

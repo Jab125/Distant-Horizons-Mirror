@@ -20,7 +20,6 @@
 package com.seibel.distanthorizons.common.wrappers.misc;
 
 import com.mojang.blaze3d.platform.NativeImage;
-import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -31,6 +30,11 @@ import org.lwjgl.opengl.GL32;
 #if MC_VER < MC_1_21_3
 import java.nio.ByteBuffer;
 #else
+#endif
+
+#if MC_VER <= MC_1_21_10
+#else
+import com.mojang.blaze3d.textures.GpuTexture;
 #endif
 
 public class LightMapWrapper implements ILightMapWrapper
@@ -46,7 +50,11 @@ public class LightMapWrapper implements ILightMapWrapper
 	
 	private int textureId = 0;
 	
+	#if MC_VER <= MC_1_21_10
+	#else
 	private GpuTexture gpuTexture = null;
+	#endif
+	
 	private final BlazeTextureViewWrapper lightmapTextureWrapper = new BlazeTextureViewWrapper();
 	
 	
@@ -109,11 +117,14 @@ public class LightMapWrapper implements ILightMapWrapper
 		this.textureId = minecraftLightmapTextureId;
 	}
 	
+	#if MC_VER <= MC_1_21_10
+	#else
 	public void setLightmapGpuTexture(GpuTexture gpuTexture)
 	{
 		this.gpuTexture = gpuTexture;
 		this.lightmapTextureWrapper.tryWrap(this.gpuTexture);
 	}
+	#endif
 	
 	//endregion
 	

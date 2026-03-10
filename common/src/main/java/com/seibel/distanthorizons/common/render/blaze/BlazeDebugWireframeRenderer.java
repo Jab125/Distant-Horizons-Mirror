@@ -19,6 +19,11 @@
 
 package com.seibel.distanthorizons.common.render.blaze;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeDebugWireframeRenderer {}
+
+#else
+
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
@@ -322,3 +327,4 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	
 	
 }
+#endif

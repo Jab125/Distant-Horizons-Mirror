@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze.wrappers.buffer;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeVertexBufferWrapper {}
+
+#else
+
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -82,3 +87,4 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	
 	
 }
+#endif

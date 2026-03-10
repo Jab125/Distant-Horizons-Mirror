@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze.util;
 
+#if MC_VER <= MC_1_21_10
+public class BlazePostProcessUtil {}
+
+#else
+	
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -73,3 +78,4 @@ public class BlazePostProcessUtil
 	
 	
 }
+#endif

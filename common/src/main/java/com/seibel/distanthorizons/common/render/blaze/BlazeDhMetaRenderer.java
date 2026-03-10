@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeDhMetaRenderer {}
+
+#else
+
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
@@ -86,3 +91,4 @@ public class BlazeDhMetaRenderer implements IDhMetaRenderer
 	
 	
 }
+#endif

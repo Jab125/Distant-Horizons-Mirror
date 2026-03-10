@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.render.blaze.wrappers.uniform;
 
+#if MC_VER <= MC_1_21_10
+public class BlazeLodUniformBufferWrapper {}
+
+#else
+
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
@@ -68,3 +73,4 @@ public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper impl
 	//endregion
 	
 }
+#endif
