@@ -23,6 +23,7 @@ import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhSsaoRenderer;
 import org.lwjgl.opengl.GL32;
@@ -108,7 +109,8 @@ public class DhSSAORenderer implements IDhSsaoRenderer
 	//========//
 	//region
 	
-	public void render(DhApiMat4f dhProjectionMatrix)
+	@Override
+	public void render(RenderParams renderParams)
 	{
 		try(GLState state = new GLState())
 		{
@@ -125,11 +127,11 @@ public class DhSSAORenderer implements IDhSsaoRenderer
 			}
 			
 			SSAOShader.INSTANCE.frameBuffer = this.ssaoFramebuffer;
-			SSAOShader.INSTANCE.setProjectionMatrix(dhProjectionMatrix);
-			SSAOShader.INSTANCE.render(0.0f);
+			SSAOShader.INSTANCE.setProjectionMatrix(renderParams.dhProjectionMatrix);
+			SSAOShader.INSTANCE.render(renderParams);
 			
 			SSAOApplyShader.INSTANCE.ssaoTexture = this.ssaoTexture;
-			SSAOApplyShader.INSTANCE.render(0.0f);
+			SSAOApplyShader.INSTANCE.render(renderParams);
 		}
 	}
 	

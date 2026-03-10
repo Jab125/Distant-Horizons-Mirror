@@ -69,9 +69,6 @@ public class DhApplyShader extends AbstractShaderRenderer
 		
 	}
 	
-	@Override
-	protected void onApplyUniforms(float partialTicks) { }
-	
 	//endregion
 	
 	

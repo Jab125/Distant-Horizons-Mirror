@@ -43,6 +43,7 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -141,7 +142,7 @@ public class BlazeVanillaFadeRenderer implements IDhVanillaFadeRenderer
 	//region
 	
 	@Override
-	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
+	public void render(RenderParams renderParams)
 	{
 		this.tryInit();
 		
@@ -183,14 +184,14 @@ public class BlazeVanillaFadeRenderer implements IDhVanillaFadeRenderer
 			float fadeEndDistance = dhNearClipDistance * 1.9f;
 			
 			
-			Mat4f inverseMcModelViewProjectionMatrix = new Mat4f(mcProjectionMatrix);
-			inverseMcModelViewProjectionMatrix.multiply(mcModelViewMatrix);
+			Mat4f inverseMcModelViewProjectionMatrix = new Mat4f(renderParams.mcProjectionMatrix);
+			inverseMcModelViewProjectionMatrix.multiply(renderParams.mcModelViewMatrix);
 			inverseMcModelViewProjectionMatrix.invert();
 			Mat4f inverseMcMvmProjMatrix = inverseMcModelViewProjectionMatrix;
 			
 			
-			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(mcProjectionMatrix);
-			Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(mcModelViewMatrix);
+			Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(renderParams.mcProjectionMatrix);
+			Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(renderParams.mcModelViewMatrix);
 			
 			Mat4f inverseDhModelViewProjectionMatrix = new Mat4f(dhProjectionMatrix);
 			inverseDhModelViewProjectionMatrix.multiply(dhModelViewMatrix);
@@ -207,7 +208,7 @@ public class BlazeVanillaFadeRenderer implements IDhVanillaFadeRenderer
 				.putInt(Config.Client.Advanced.Debugging.lodOnlyMode.get() ? 1 : 0) // uOnlyRenderLods
 				.putFloat(fadeStartDistance) // uStartFadeBlockDistance
 				.putFloat(fadeEndDistance) // uEndFadeBlockDistance
-				.putFloat(level.getMaxHeight()) // uMaxLevelHeight
+				.putFloat(renderParams.clientLevelWrapper.getMaxHeight()) // uMaxLevelHeight
 				.putMat4f(inverseDhMvmProjMatrix.createJomlMatrix()) // uDhInvMvmProj
 				.putMat4f(inverseMcMvmProjMatrix.createJomlMatrix()) // uMcInvMvmProj
 				.get()

@@ -140,14 +140,14 @@ public class DhFarFadeRenderer implements IDhFarFadeRenderer
 			
 			DhFarFadeShader.INSTANCE.frameBuffer = this.fadeFramebuffer;
 			DhFarFadeShader.INSTANCE.setProjectionMatrix(renderParams.mcModelViewMatrix, renderParams.mcProjectionMatrix);
-			DhFarFadeShader.INSTANCE.render(0.0f);
+			DhFarFadeShader.INSTANCE.render(renderParams);
 			
 			//profiler.popPush("Fade Apply");
 			
 			DhFarFadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
 			DhFarFadeApplyShader.INSTANCE.readFramebuffer = DhFarFadeShader.INSTANCE.frameBuffer;
 			DhFarFadeApplyShader.INSTANCE.drawFramebuffer = OpenGlDhMetaRenderer.INSTANCE.getActiveFramebufferId();
-			DhFarFadeApplyShader.INSTANCE.render(0.0f);
+			DhFarFadeApplyShader.INSTANCE.render(renderParams);
 		}
 		catch (Exception e)
 		{

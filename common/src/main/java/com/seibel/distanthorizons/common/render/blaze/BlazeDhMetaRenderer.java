@@ -56,7 +56,7 @@ public class BlazeDhMetaRenderer implements IDhMetaRenderer
 	public void runRenderPassCleanup(RenderParams renderParams) {}
 	
 	@Override
-	public void applyToMcTexture()
+	public void applyToMcTexture(RenderParams renderParams)
 	{
 		GpuTexture mcColorTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
 		this.applyRenderer.render(this.dhColorTextureWrapper.texture, this.dhDepthTextureWrapper.texture, mcColorTexture);

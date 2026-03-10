@@ -29,6 +29,7 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.GLVerte
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.AbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexPointer;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTestTriangleRenderer;
@@ -122,7 +123,8 @@ public class GlTestTriangleRenderer implements IDhTestTriangleRenderer
 	//========//
 	//region
 	
-	public void render()
+	@Override
+	public void render(RenderParams renderParams)
 	{
 		this.init();
 		
@@ -134,7 +136,7 @@ public class GlTestTriangleRenderer implements IDhTestTriangleRenderer
 		
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 3);
 		
-		DhApplyShader.INSTANCE.render(0.0f);
+		DhApplyShader.INSTANCE.render(renderParams);
 	}
 	
 	//endregion

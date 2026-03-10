@@ -33,6 +33,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTestTriangleRenderer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.Identifier;
@@ -159,7 +160,8 @@ public class BlazeDhTestTriangleRenderer implements IDhTestTriangleRenderer
 	//========//
 	//region
 	
-	public void render()
+	@Override
+	public void render(RenderParams renderParams)
 	{
 		this.tryInit();
 		

@@ -25,6 +25,7 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderP
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import org.lwjgl.opengl.GL32;
 
 /**
@@ -75,7 +76,7 @@ public class FogApplyShader extends AbstractShaderRenderer
 	//=============//
 	
 	@Override
-	protected void onApplyUniforms(float partialTicks)
+	protected void onApplyUniforms(RenderParams renderParams)
 	{
 		GLMC.glActiveTexture(GL32.GL_TEXTURE0);
 		GLMC.glBindTexture(this.fogTexture);

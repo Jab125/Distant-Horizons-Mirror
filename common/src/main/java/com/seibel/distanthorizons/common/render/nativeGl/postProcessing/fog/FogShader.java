@@ -31,6 +31,7 @@ import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -50,7 +51,6 @@ public class FogShader extends AbstractShaderRenderer
 	
 	
 	public int frameBuffer;
-	
 	private Mat4f inverseMvmProjMatrix; 
 	
 	
@@ -58,6 +58,7 @@ public class FogShader extends AbstractShaderRenderer
 	//==========//
 	// Uniforms //
 	//==========//
+	//region
 	
 	public int uDepthMap;
 	/** Inverted Model View Projection matrix */
@@ -94,11 +95,14 @@ public class FogShader extends AbstractShaderRenderer
 	public int uHeightFogMixingMode;
 	public int uCameraBlockYPos;
 	
+	//endregion
+	
 	
 	
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
 	public FogShader() { }
 	
@@ -150,14 +154,17 @@ public class FogShader extends AbstractShaderRenderer
 			
 	}
 	
+	//endregion
+	
 	
 	
 	//=============//
 	// render prep //
 	//=============//
+	//region
 	
 	@Override
-	protected void onApplyUniforms(float partialTicks)
+	protected void onApplyUniforms(RenderParams renderParams)
 	{
 		int lodDrawDistance = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistanceRadius.get() * LodUtil.CHUNK_WIDTH;
 		
@@ -170,7 +177,7 @@ public class FogShader extends AbstractShaderRenderer
 		
 		
 		// Fog uniforms
-		this.shader.setUniform(this.uFogColor, this.getFogColor(partialTicks));
+		this.shader.setUniform(this.uFogColor, this.getFogColor(renderParams.partialTicks));
 		this.shader.setUniform(this.uFogScale, 1.f / lodDrawDistance);
 		this.shader.setUniform(this.uFogVerticalScale, 1.f / MC.getWrappedClientLevel().getMaxHeight());
 		// only used for debugging
@@ -252,11 +259,14 @@ public class FogShader extends AbstractShaderRenderer
 		this.inverseMvmProjMatrix.invert();
 	}
 	
+	//endregion
+	
 	
 	
 	//========//
 	// render //
 	//========//
+	//region
 	
 	@Override
 	protected void onRender()
@@ -285,5 +295,8 @@ public class FogShader extends AbstractShaderRenderer
 		
 		ScreenQuad.INSTANCE.render();
 	}
+	
+	//endregion
+	
 	
 }

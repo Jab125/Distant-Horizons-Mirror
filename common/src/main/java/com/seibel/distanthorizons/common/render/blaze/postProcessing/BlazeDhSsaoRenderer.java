@@ -45,6 +45,7 @@ import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -141,7 +142,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 	//region
 	
 	@Override
-	public void render(DhApiMat4f dhProjectionMatrix)
+	public void render(RenderParams renderParams)
 	{
 		this.tryInit();
 		
@@ -175,8 +176,8 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 			
 			// create data //
 			
-			Mat4f projMatrix = new Mat4f(dhProjectionMatrix);
-			Mat4f invertedProjMatrix = new Mat4f(dhProjectionMatrix);
+			Mat4f projMatrix = new Mat4f(renderParams.dhProjectionMatrix);
+			Mat4f invertedProjMatrix = new Mat4f(renderParams.dhProjectionMatrix);
 			invertedProjMatrix.invert();
 			
 			

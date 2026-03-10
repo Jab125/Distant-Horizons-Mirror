@@ -27,6 +27,7 @@ import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQu
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -96,7 +97,7 @@ public class DhFarFadeShader extends AbstractShaderRenderer
 	//=============//
 	
 	@Override
-	protected void onApplyUniforms(float partialTicks)
+	protected void onApplyUniforms(RenderParams renderParams)
 	{
 		this.shader.setUniform(this.uDhInvMvmProj, this.inverseDhMvmProjMatrix);
 		

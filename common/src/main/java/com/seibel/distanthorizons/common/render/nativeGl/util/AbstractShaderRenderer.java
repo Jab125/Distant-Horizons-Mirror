@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.nativeGl.util;
 
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import org.lwjgl.opengl.GL32;
 
@@ -30,9 +31,13 @@ public abstract class AbstractShaderRenderer
 	
 	
 	protected ShaderProgram shader;
-
 	protected boolean init = false;
 	
+	
+	//=======//
+	// setup //
+	//=======//
+	//region
 	
 	protected AbstractShaderRenderer() {}
 	
@@ -44,13 +49,36 @@ public abstract class AbstractShaderRenderer
 		this.onInit();
 	}
 	
-	public void render(float partialTicks)
+	//endregion
+	
+	
+	//==================//
+	// abstract methods //
+	//==================//
+	//region
+	
+	protected void onInit() {}
+	
+	protected void onApplyUniforms(RenderParams renderParams) {}
+	
+	protected void onRender() {}
+	
+	//endregion
+	
+	
+	
+	//===========//
+	// rendering //
+	//===========//
+	//region
+	
+	public void render(RenderParams renderParams)
 	{
 		this.init();
 		
 		this.shader.bind();
 		
-		this.onApplyUniforms(partialTicks);
+		this.onApplyUniforms(renderParams);
 		
 		int width = MC_RENDER.getTargetFramebufferViewportWidth();
 		int height = MC_RENDER.getTargetFramebufferViewportHeight();
@@ -61,6 +89,14 @@ public abstract class AbstractShaderRenderer
 		this.shader.unbind();
 	}
 	
+	//endregion
+	
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
+	
 	public void free()
 	{
 		if (this.shader != null)
@@ -69,9 +105,8 @@ public abstract class AbstractShaderRenderer
 		}
 	}
 	
-	protected void onInit() {}
+	// endregion
 	
-	protected void onApplyUniforms(float partialTicks) {}
 	
-	protected void onRender() {}
+	
 }

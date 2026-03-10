@@ -364,7 +364,7 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 	}
 	
 	@Override
-	public void applyToMcTexture() { DhApplyShader.INSTANCE.render(0.0f); }
+	public void applyToMcTexture(RenderParams renderParams) { DhApplyShader.INSTANCE.render(renderParams); }
 	
 	//endregion
 	

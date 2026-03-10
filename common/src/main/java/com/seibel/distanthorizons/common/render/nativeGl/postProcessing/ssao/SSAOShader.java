@@ -26,6 +26,7 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderP
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import org.lwjgl.opengl.GL32;
 
@@ -102,7 +103,7 @@ public class SSAOShader extends AbstractShaderRenderer
 	}
 	
 	@Override
-	protected void onApplyUniforms(float partialTicks)
+	protected void onApplyUniforms(RenderParams renderParams)
 	{
 		this.shader.setUniform(this.uProj, this.projection);
 		

@@ -49,6 +49,7 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -150,7 +151,7 @@ public class BlazeDhFogRenderer implements IDhFogRenderer
 	//region
 	
 	@Override
-	public void render(DhApiMat4f modelViewProjectionMatrix, float partialTicks)
+	public void render(RenderParams renderParams)
 	{
 		this.tryInit();
 		
@@ -213,16 +214,16 @@ public class BlazeDhFogRenderer implements IDhFogRenderer
 			int lodDrawDistance = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistanceRadius.get() * LodUtil.CHUNK_WIDTH;
 			
 			
-			Mat4f inverseMvmProjMatrix = new Mat4f(modelViewProjectionMatrix);
+			Mat4f inverseMvmProjMatrix = new Mat4f(renderParams.dhMvmProjMatrix);
 			inverseMvmProjMatrix.invert();
 			
-			if (modelViewProjectionMatrix == null)
+			if (renderParams.dhMvmProjMatrix == null)
 			{
 				return;
 			}
 			
 			
-			Color fogColor = this.getFogColor(partialTicks);
+			Color fogColor = this.getFogColor(renderParams.partialTicks);
 			
 			// fog config
 			float farFogStart = Config.Client.Advanced.Graphics.Fog.farFogStart.get();

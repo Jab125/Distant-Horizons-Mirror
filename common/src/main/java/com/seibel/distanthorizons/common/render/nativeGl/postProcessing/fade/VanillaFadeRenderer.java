@@ -19,18 +19,16 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
-import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.util.math.Mat4f;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhVanillaFadeRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL32;
 
@@ -124,7 +122,7 @@ public class VanillaFadeRenderer implements IDhVanillaFadeRenderer
 	//region
 	
 	@Override
-	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
+	public void render(RenderParams renderParams)
 	{
 		int depthTextureId = OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId();
 		if (depthTextureId == -1)
@@ -159,9 +157,9 @@ public class VanillaFadeRenderer implements IDhVanillaFadeRenderer
 			
 			
 			VanillaFadeShader.INSTANCE.frameBuffer = this.fadeFramebuffer;
-			VanillaFadeShader.INSTANCE.setProjectionMatrix(mcModelViewMatrix, mcProjectionMatrix);
-			VanillaFadeShader.INSTANCE.setLevelMaxHeight(level.getMaxHeight());
-			VanillaFadeShader.INSTANCE.render(0);
+			VanillaFadeShader.INSTANCE.setProjectionMatrix(renderParams.mcModelViewMatrix, renderParams.mcProjectionMatrix);
+			VanillaFadeShader.INSTANCE.setLevelMaxHeight(renderParams.clientLevelWrapper.getMaxHeight());
+			VanillaFadeShader.INSTANCE.render(renderParams);
 			
 			// Applying the fade texture is only needed if MC is drawing to their own frame buffer,
 			// otherwise we can directly render to their texture
@@ -172,7 +170,7 @@ public class VanillaFadeRenderer implements IDhVanillaFadeRenderer
 				DhFarFadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
 				DhFarFadeApplyShader.INSTANCE.readFramebuffer = DhFarFadeShader.INSTANCE.frameBuffer;
 				DhFarFadeApplyShader.INSTANCE.drawFramebuffer = MC_RENDER.getTargetFramebuffer();
-				DhFarFadeApplyShader.INSTANCE.render(0);
+				DhFarFadeApplyShader.INSTANCE.render(renderParams);
 			}
 			
 			profiler.pop(); 

@@ -23,6 +23,7 @@ import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhFogRenderer;
 import org.lwjgl.opengl.GL32;
@@ -108,7 +109,7 @@ public class DhFogRenderer implements IDhFogRenderer
 	//region
 	
 	@Override
-	public void render(DhApiMat4f modelViewProjectionMatrix, float partialTicks)
+	public void render(RenderParams renderParams)
 	{
 		// GLState needed in MC 1.16.5 probably due to MC not manually setting each GL state they need before the next rendering step
 		try (GLState state = new GLState())
@@ -126,11 +127,11 @@ public class DhFogRenderer implements IDhFogRenderer
 			}
 			
 			FogShader.INSTANCE.frameBuffer = this.fogFramebuffer;
-			FogShader.INSTANCE.setProjectionMatrix(modelViewProjectionMatrix);
-			FogShader.INSTANCE.render(partialTicks);
+			FogShader.INSTANCE.setProjectionMatrix(renderParams.dhMvmProjMatrix);
+			FogShader.INSTANCE.render(renderParams);
 			
 			FogApplyShader.INSTANCE.fogTexture = this.fogTexture;
-			FogApplyShader.INSTANCE.render(partialTicks);
+			FogApplyShader.INSTANCE.render(renderParams);
 		}
 	}
 	

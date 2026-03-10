@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
+import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
@@ -27,6 +28,7 @@ import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -111,7 +113,7 @@ public class VanillaFadeShader extends AbstractShaderRenderer
 	//region
 	
 	@Override
-	protected void onApplyUniforms(float partialTicks)
+	protected void onApplyUniforms(RenderParams renderParams)
 	{
 		this.shader.setUniform(this.uMcInvMvmProj, this.inverseMcMvmProjMatrix);
 		this.shader.setUniform(this.uDhInvMvmProj, this.inverseDhMvmProjMatrix);
@@ -135,7 +137,7 @@ public class VanillaFadeShader extends AbstractShaderRenderer
 		this.shader.setUniform(this.uOnlyRenderLods, Config.Client.Advanced.Debugging.lodOnlyMode.get());
 	}
 	
-	public void setProjectionMatrix(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix)
+	public void setProjectionMatrix(DhApiMat4f mcModelViewMatrix, DhApiMat4f mcProjectionMatrix)
 	{
 		Mat4f inverseMcModelViewProjectionMatrix = new Mat4f(mcProjectionMatrix);
 		inverseMcModelViewProjectionMatrix.multiply(mcModelViewMatrix);
