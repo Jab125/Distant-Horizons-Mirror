@@ -15,6 +15,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeBufferRenderEvent;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
 import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
@@ -32,10 +33,13 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.QuadEle
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
+import com.seibel.distanthorizons.core.util.math.Vec3d;
+import com.seibel.distanthorizons.core.util.math.Vec3f;
 import com.seibel.distanthorizons.core.util.objects.SortedArraySet;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTerrainRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import net.minecraft.resources.Identifier;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.system.MemoryUtil;
@@ -347,7 +351,15 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 							continue;
 						}
 						
-						//ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
+						// fire render event
+						{
+							Vec3d camPos = renderEventParam.exactCameraPosition;
+							Vec3f modelPos = new Vec3f(
+								(float) (bufferContainer.minCornerBlockPos.getX() - camPos.x),
+								(float) (bufferContainer.minCornerBlockPos.getY() - camPos.y),
+								(float) (bufferContainer.minCornerBlockPos.getZ() - camPos.z));
+							ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
+						}
 						
 						renderPass.setVertexBuffer(0, bufferWrapper.vboGpuBuffer); // vertex buffer can only be "0" lol
 						

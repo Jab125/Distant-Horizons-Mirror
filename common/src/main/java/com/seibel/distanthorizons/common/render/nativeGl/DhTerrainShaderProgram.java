@@ -323,7 +323,7 @@ public class DhTerrainShaderProgram extends ShaderProgram implements IDhApiShade
 			{
 				LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
 				
-				// set uniforms
+				// set uniforms and fire events
 				{
 					Vec3d camPos = renderEventParam.exactCameraPosition;
 					Vec3f modelPos = new Vec3f(
