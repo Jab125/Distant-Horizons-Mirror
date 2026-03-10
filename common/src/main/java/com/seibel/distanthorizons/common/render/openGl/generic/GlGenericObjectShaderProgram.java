@@ -17,10 +17,10 @@ import com.seibel.distanthorizons.core.util.math.Vec3f;
 
 public class GlGenericObjectShaderProgram extends GlShaderProgram implements IDhApiGenericObjectShaderProgram
 {
-	public static final String VERTEX_SHADER_INSTANCED_PATH = "shaders/genericObject/instanced/vert.vert";
-	public static final String VERTEX_SHADER_DIRECT_PATH = "shaders/genericObject/direct/vert.vert";
-	public static final String FRAGMENT_SHADER_INSTANCED_PATH = "shaders/genericObject/instanced/frag.frag";
-	public static final String FRAGMENT_SHADER_DIRECT_PATH = "shaders/genericObject/direct/frag.frag";
+	public static final String VERTEX_SHADER_INSTANCED_PATH = "assets/distanthorizons/shaders/generic/gl/instanced/vert.vert";
+	public static final String VERTEX_SHADER_DIRECT_PATH = "assets/distanthorizons/shaders/generic/gl/direct/vert.vert";
+	public static final String FRAGMENT_SHADER_INSTANCED_PATH = "assets/distanthorizons/shaders/generic/gl/instanced/frag.frag";
+	public static final String FRAGMENT_SHADER_DIRECT_PATH = "assets/distanthorizons/shaders/generic/gl/direct/frag.frag";
 	
 	public final GlAbstractVertexAttribute va;
 	

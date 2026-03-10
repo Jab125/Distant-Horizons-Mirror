@@ -77,8 +77,8 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 	public void onInit()
 	{
 		this.shader = new GlShaderProgram(
-			"shaders/quadApply.vert", 
-			"shaders/fade/vanillaFade.frag",
+			"assets/distanthorizons/shaders/shared/gl/quadApply.vert",
+			"assets/distanthorizons/shaders/fade/gl/vanillaFade.frag",
 			"vPosition"
 		);
 		

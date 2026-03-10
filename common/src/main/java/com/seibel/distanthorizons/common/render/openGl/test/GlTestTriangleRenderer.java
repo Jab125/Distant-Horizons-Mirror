@@ -94,8 +94,8 @@ public class GlTestTriangleRenderer implements IDhTestTriangleRenderer
 		this.va.setVertexAttribute(0, 1, GlVertexPointer.addVec4Pointer(false));
 		this.va.completeAndCheck(Float.BYTES * 6);
 		this.basicShader = new GlShaderProgram(
-			"shaders/test/vert.vert",
-			"shaders/test/frag.frag",
+			"assets/distanthorizons/shaders/test/gl/vert.vert",
+			"assets/distanthorizons/shaders/test/gl/frag.frag",
 			new String[]{"vPosition", "color"});
 		
 		this.createBuffer();

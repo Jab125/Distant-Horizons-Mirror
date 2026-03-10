@@ -59,8 +59,8 @@ public class GlDhFarFadeApplyShader extends GlAbstractShaderRenderer
 	public void onInit()
 	{
 		this.shader = new GlShaderProgram(
-			"shaders/quadApply.vert",
-			"shaders/fade/apply.frag",
+			"assets/distanthorizons/shaders/shared/gl/quadApply.vert",
+			"assets/distanthorizons/shaders/fade/gl/apply.frag",
 			"vPosition"
 		);
 		

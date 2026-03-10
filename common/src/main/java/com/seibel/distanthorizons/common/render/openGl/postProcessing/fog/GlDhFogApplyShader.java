@@ -57,8 +57,8 @@ public class GlDhFogApplyShader extends GlAbstractShaderRenderer
 	public void onInit()
 	{
 		this.shader = new GlShaderProgram(
-			"shaders/quadApply.vert",
-			"shaders/fog/apply.frag",
+			"assets/distanthorizons/shaders/shared/gl/quadApply.vert",
+			"assets/distanthorizons/shaders/fog/gl/apply.frag",
 			"vPosition"
 		);
 		

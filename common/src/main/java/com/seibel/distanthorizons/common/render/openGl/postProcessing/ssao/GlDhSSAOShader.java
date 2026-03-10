@@ -70,8 +70,8 @@ public class GlDhSSAOShader extends GlAbstractShaderRenderer
 	public void onInit()
 	{
 		this.shader = new GlShaderProgram(
-			"shaders/quadApply.vert",
-			"shaders/ssao/ao.frag",
+			"assets/distanthorizons/shaders/shared/gl/quadApply.vert",
+			"assets/distanthorizons/shaders/ssao/gl/ao.frag",
 			"vPosition"
 		);
 		

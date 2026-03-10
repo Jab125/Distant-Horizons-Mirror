@@ -114,8 +114,8 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		this.va.setVertexAttribute(0, 0, GlVertexPointer.addVec3Pointer(false));
 		this.va.completeAndCheck(Float.BYTES * 3);
 		this.basicShader = new GlShaderProgram(
-			"shaders/debug/vert.vert",
-			"shaders/debug/frag.frag",
+			"assets/distanthorizons/shaders/debug/gl/vert.vert",
+			"assets/distanthorizons/shaders/debug/gl/frag.frag",
 			"vPosition"
 		);
 		this.createBuffer();
