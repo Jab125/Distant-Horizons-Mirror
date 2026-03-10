@@ -126,15 +126,7 @@ public class LightMapWrapper implements ILightMapWrapper
 	
 	public BlazeTextureViewWrapper getTextureViewWrapper() { return this.lightmapTextureWrapper; }
 	
-	@Override
-	public void bind()
-	{
-		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + LightMapWrapper.GL_BOUND_INDEX);
-		GLMC.glBindTexture(this.textureId);
-	}
-	
-	@Override
-	public void unbind() { GLMC.glBindTexture(0); }
+	public int getOpenGlId() { return this.textureId; }
 	
 	//endregion
 	

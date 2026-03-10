@@ -11,6 +11,7 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.QuadEle
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.texture.*;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.apply.DhApplyShader;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
+import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -19,6 +20,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.AbstractOptifineAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhMetaRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
@@ -104,7 +106,7 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 		this.setGLState(renderParams, firstPass);
 		
 		DhTerrainShaderProgram.INSTANCE.quadIBO.bind();
-		renderParams.lightmap.bind();
+		this.bindLightmap(renderParams.lightmap);
 	}
 	private void setGLState(
 		DhApiRenderParam renderEventParam,
@@ -358,7 +360,7 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 		}
 		
 		
-		renderParams.lightmap.unbind();
+		this.unbindLightmap();
 		DhTerrainShaderProgram.INSTANCE.quadIBO.unbind();
 		this.shaderProgramForThisFrame.unbind();
 	}
@@ -446,6 +448,26 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 	
 	//endregion
 	
+	
+	//================//
+	// helper methods //
+	//================//
+	//region
+	
+	public void bindLightmap(ILightMapWrapper lightMapWrapper)
+	{
+		LightMapWrapper lightMap = (LightMapWrapper)lightMapWrapper;
+		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + LightMapWrapper.GL_BOUND_INDEX);
+		GLMC.glBindTexture(lightMap.getOpenGlId());
+	}
+	
+	public void unbindLightmap() 
+	{
+		// strange that we don't call "glActiveTexture" here but since it's working James isn't going to change it right now (2026-03-10) 
+		GLMC.glBindTexture(0); 
+	}
+	
+	//endregion
 	
 	
 }
