@@ -337,7 +337,7 @@ public abstract class AbstractModInitializer
 			if (renderApi == EDhApiRenderApi.AUTO)
 			{
 				IVersionConstants versionConstants = SingletonInjector.INSTANCE.get(IVersionConstants.class);
-				renderApi = versionConstants.getDefaultRenderer();
+				renderApi = versionConstants.getDefaultRenderingApi();
 			}
 			
 			// Iris only supports nataive OpenGL
