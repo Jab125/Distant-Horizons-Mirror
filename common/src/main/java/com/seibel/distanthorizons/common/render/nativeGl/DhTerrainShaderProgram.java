@@ -351,11 +351,14 @@ public class DhTerrainShaderProgram extends ShaderProgram implements IDhApiShade
 						continue;
 					}
 					
+					// 4 vertices per face, but 6 indices (IE 2 triangles) per face, aka need to multiply by 1.5
+					int indexCount = (int)(vbo.getVertexCount() * 1.5);
+					
 					vbo.bind();
 					OpenGlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame.bindVertexBuffer(vbo.getId());
 					GL32.glDrawElements(
 						GL32.GL_TRIANGLES,
-						(int)(vbo.getVertexCount() * 1.5),
+						indexCount,
 						this.quadIBO.getType(), 0);
 					vbo.unbind();
 				}

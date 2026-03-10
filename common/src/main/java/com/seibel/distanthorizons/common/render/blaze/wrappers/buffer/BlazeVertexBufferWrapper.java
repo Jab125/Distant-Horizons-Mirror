@@ -45,7 +45,8 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	public void upload(ByteBuffer buffer, int vertexCount)
 	{
 		this.vertexCount = vertexCount;
-		this.indexCount = (int)(vertexCount * 1.5); // TODO why multiply by 1.5?
+		// 4 vertices per face, but 6 indices (IE 2 triangles) per face, aka need to multiply by 1.5
+		this.indexCount = (int)(vertexCount * 1.5);
 		this.uploaded = true;
 		
 		
