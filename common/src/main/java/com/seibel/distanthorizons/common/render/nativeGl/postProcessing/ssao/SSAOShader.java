@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ssao;
 
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
@@ -133,7 +134,7 @@ public class SSAOShader extends AbstractShaderRenderer
 		GLMC.disableBlend();
 		
 		GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-		GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
+		GLMC.glBindTexture(OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
 		
 		ScreenQuad.INSTANCE.render();
 	}

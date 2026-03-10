@@ -32,6 +32,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhCopyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
@@ -144,8 +145,8 @@ public class BlazeVanillaFadeRenderer implements IDhVanillaFadeRenderer
 	{
 		this.tryInit();
 		
-		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -236,8 +237,8 @@ public class BlazeVanillaFadeRenderer implements IDhVanillaFadeRenderer
 			renderPass.bindTexture("uMcDepthTexture", this.mcDepthTextureWrapper.textureView, this.mcDepthTextureWrapper.textureSampler);
 			renderPass.bindTexture("uCombinedMcDhColorTexture", this.mcColorTextureWrapper.textureView, this.mcColorTextureWrapper.textureSampler);
 			
-			renderPass.bindTexture("uDhDepthTexture", BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
-			renderPass.bindTexture("uDhColorTexture", BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhDepthTexture", BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhColorTexture", BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView, BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
 			
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			

@@ -133,6 +133,8 @@ public class GlTestTriangleRenderer implements IDhTestTriangleRenderer
 		this.va.bindBufferToAllBindingPoints(this.vbo.getId());
 		
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 3);
+		
+		DhApplyShader.INSTANCE.render(0.0f);
 	}
 	
 	//endregion

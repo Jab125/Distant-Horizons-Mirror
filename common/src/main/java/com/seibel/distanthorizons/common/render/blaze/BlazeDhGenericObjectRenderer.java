@@ -346,8 +346,8 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 		
 		//#endregion
 		
-		if (BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
-			|| BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
+		if (BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
+			|| BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
 		{
 			return;
 		}
@@ -497,9 +497,9 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 			
 			try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
 				this::getRenderPassName,
-				BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
+				BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 				/*optionalClearColorAsInt*/ OptionalInt.empty(),
-				BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+				BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
 				/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 			{
 				this.renderBoxGroupInstanced(renderPass, renderEventParam, boxGroup, camPos, profiler);

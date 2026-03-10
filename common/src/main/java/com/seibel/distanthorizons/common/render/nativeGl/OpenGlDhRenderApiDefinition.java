@@ -21,7 +21,8 @@ public class OpenGlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	
 	public String getApiName() { return "OpenGL"; }
 	
-	@Override public IDhTerrainRenderer getTerrainRenderer() { return new DhTerrainShaderProgram(); } // TODO not implemented // TODO how to support Iris?
+	@Override public IDhMetaRenderer getMetaRenderer() { return OpenGlDhMetaRenderer.INSTANCE; }
+	@Override public IDhTerrainRenderer getTerrainRenderer() { return DhTerrainShaderProgram.INSTANCE; } // TODO how to support Iris?
 	@Override public IDhSsaoRenderer getSsaoRenderer() { return DhSSAORenderer.INSTANCE; }
 	@Override public IDhFogRenderer getFogRenderer() { return DhFogRenderer.INSTANCE; }
 	@Override public IDhFarFadeRenderer getFarFadeRenderer() { return DhFarFadeRenderer.INSTANCE; }

@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -125,7 +126,7 @@ public class VanillaFadeRenderer implements IDhVanillaFadeRenderer
 	@Override
 	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
 	{
-		int depthTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId();
+		int depthTextureId = OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId();
 		if (depthTextureId == -1)
 		{
 			// the renderer hasn't been set up yet

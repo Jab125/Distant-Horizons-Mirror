@@ -224,8 +224,8 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	{
 		this.init();
 		
-		if (BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
-			|| BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
+		if (BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
+			|| BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
 		{
 			return;
 		}
@@ -295,9 +295,9 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		
 		try (RenderPass renderPass = commandEncoder.createRenderPass(
 			this::getRenderPassName,
-			BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
+			BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
-			BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+			BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
 			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
 			// Bind instance data //

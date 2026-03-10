@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.apply;
 
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
@@ -117,11 +118,11 @@ public class DhApplyShader extends AbstractShaderRenderer
 			//GLMC.glBlendFunc(GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
 			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveColorTextureId());
+			GLMC.glBindTexture(OpenGlDhMetaRenderer.INSTANCE.getActiveColorTextureId());
 			GL32.glUniform1i(this.gDhColorTextureUniform, 0);
 			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE1);
-			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
+			GLMC.glBindTexture(OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
 			GL32.glUniform1i(this.gDepthMapUniform, 1);
 			
 			// Copy to MC's framebuffer
@@ -141,7 +142,7 @@ public class DhApplyShader extends AbstractShaderRenderer
 			return;
 		}
 		
-		int dhFrameBufferId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveFramebufferId();
+		int dhFrameBufferId = OpenGlDhMetaRenderer.INSTANCE.getActiveFramebufferId();
 		if (dhFrameBufferId == -1)
 		{
 			return;
@@ -165,11 +166,11 @@ public class DhApplyShader extends AbstractShaderRenderer
 			GLMC.disableBlend();
 			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveColorTextureId());
+			GLMC.glBindTexture(OpenGlDhMetaRenderer.INSTANCE.getActiveColorTextureId());
 			GL32.glUniform1i(this.gDhColorTextureUniform, 0);
 			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE1);
-			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
+			GLMC.glBindTexture(OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
 			GL32.glUniform1i(this.gDepthMapUniform, 1);
 			
 			

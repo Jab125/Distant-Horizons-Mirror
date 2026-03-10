@@ -8,6 +8,7 @@ import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeVanill
 import com.seibel.distanthorizons.common.render.blaze.test.BlazeDhTestTriangleRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVertexBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeLodUniformBufferWrapper;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
@@ -19,6 +20,7 @@ public class BlazeDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 {
 	public String getApiName() { return "Blaze3D"; }
 	
+	@Override public IDhMetaRenderer getMetaRenderer() { return BlazeDhMetaRenderer.INSTANCE; }
 	@Override public IDhTerrainRenderer getTerrainRenderer() { return BlazeDhTerrainRenderer.INSTANCE; }
 	@Override public IDhSsaoRenderer getSsaoRenderer() { return BlazeDhSsaoRenderer.INSTANCE; }
 	@Override public IDhFogRenderer getFogRenderer() { return BlazeDhFogRenderer.INSTANCE; }

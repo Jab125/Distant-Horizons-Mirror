@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -145,7 +146,7 @@ public class DhFarFadeRenderer implements IDhFarFadeRenderer
 			
 			DhFarFadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
 			DhFarFadeApplyShader.INSTANCE.readFramebuffer = DhFarFadeShader.INSTANCE.frameBuffer;
-			DhFarFadeApplyShader.INSTANCE.drawFramebuffer = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveFramebufferId();
+			DhFarFadeApplyShader.INSTANCE.drawFramebuffer = OpenGlDhMetaRenderer.INSTANCE.getActiveFramebufferId();
 			DhFarFadeApplyShader.INSTANCE.render(0.0f);
 		}
 		catch (Exception e)

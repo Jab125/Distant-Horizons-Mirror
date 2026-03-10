@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
@@ -128,8 +129,8 @@ public class DhFarFadeShader extends AbstractShaderRenderer
 	@Override
 	protected void onRender()
 	{
-		int depthTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId();
-		int colorTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveColorTextureId();
+		int depthTextureId = OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId();
+		int colorTextureId = OpenGlDhMetaRenderer.INSTANCE.getActiveColorTextureId();
 		
 		if (depthTextureId == -1
 			|| colorTextureId == -1)

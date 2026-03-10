@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ssao;
 
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
@@ -85,7 +86,7 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 	protected void onApplyUniforms(float partialTicks)
 	{
 		GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-		GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
+		GLMC.glBindTexture(OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
 		GL32.glUniform1i(this.gDepthMapUniform, 0);
 		
 		GLMC.glActiveTexture(GL32.GL_TEXTURE1);
@@ -134,7 +135,7 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 		
 		// apply the rendered SSAO to the LODs 
 		GLMC.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, SSAOShader.INSTANCE.frameBuffer);
-		GLMC.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveFramebufferId());
+		GLMC.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, OpenGlDhMetaRenderer.INSTANCE.getActiveFramebufferId());
 		
 		
 		ScreenQuad.INSTANCE.render();

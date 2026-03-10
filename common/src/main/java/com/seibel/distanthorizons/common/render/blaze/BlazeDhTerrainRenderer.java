@@ -63,8 +63,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	public static final BlazeDhTerrainRenderer INSTANCE = new BlazeDhTerrainRenderer();
 	
 	
-	private BlazeDhApplyRenderer applyRenderer;
-	
 	private RenderPipeline opaquePipeline;
 	private RenderPipeline transparentPipeline;
 	private boolean init = false;
@@ -73,9 +71,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	
 	private GpuBuffer fragUniformBuffer;
 	private GpuBuffer vertSharedUniformBuffer;
-	
-	public final BlazeTextureWrapper dhDepthTextureWrapper = BlazeTextureWrapper.createDepth("DhDepthTexture");
-	public final BlazeTextureWrapper dhColorTextureWrapper = BlazeTextureWrapper.createColor("DhColorTexture");
 	
 	
 	
@@ -94,12 +89,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 		}
 		this.init = true; // todo only set when succeeded (in case of exception)
 		
-		
-		this.applyRenderer = new BlazeDhApplyRenderer(
-			"dh_apply_to_mc",
-			null,
-			"apply/blaze/vert", "apply/blaze/frag"
-		);
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
 			.add("vPosition", DhBlazeVertexFormatUtil.SHORT_XYZ_POS)
@@ -293,10 +282,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			}
 		}
 		
-		// textures
-		this.dhDepthTextureWrapper.tryCreateOrResize();
-		this.dhColorTextureWrapper.tryCreateOrResize();
-		
 		
 		
 		// render pass setup
@@ -309,9 +294,9 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			
 			try(RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
 				this::getRenderPassName,
-				this.dhColorTextureWrapper.textureView,
+				BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView,
 				optionalClearColorAsInt,
-				this.dhDepthTextureWrapper.textureView, optionalDepthValueAsDouble)
+				BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, optionalDepthValueAsDouble)
 				)
 			{
 				// bind MC Lightmap
@@ -391,24 +376,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	}
 	private String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
 	private String getRenderPassName() { return "distantHorizons:McLodRenderer"; }
-	
-	
-	@Override
-	public void runRenderPassSetup(RenderParams renderParams) {}
-	@Override
-	public void runRenderPassCleanup(RenderParams renderParams) {}
-	
-	@Override
-	public void applyToMcTexture() 
-	{
-		GpuTexture mcColorTexture = Minecraft.getInstance().getMainRenderTarget().getColorTexture();
-		this.applyRenderer.render(this.dhColorTextureWrapper.texture, this.dhDepthTextureWrapper.texture, mcColorTexture);
-	}
-	
-	@Override
-	public void clearDepth() { this.dhDepthTextureWrapper.clearDepth(1.0f); }
-	@Override
-	public void clearColor() { this.dhColorTextureWrapper.clearColor(ColorUtil.argbToInt(1, 1, 1, 1)); }
 	
 	//endregion
 	

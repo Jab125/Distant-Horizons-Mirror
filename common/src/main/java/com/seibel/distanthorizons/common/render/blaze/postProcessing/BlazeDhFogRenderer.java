@@ -39,6 +39,7 @@ import com.seibel.distanthorizons.api.enums.rendering.EDhApiFogColorMode;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogDirection;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogMixMode;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
@@ -154,8 +155,8 @@ public class BlazeDhFogRenderer implements IDhFogRenderer
 		this.tryInit();
 		
 		
-		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -308,7 +309,7 @@ public class BlazeDhFogRenderer implements IDhFogRenderer
 		
 		
 		this.renderFogToTexture();
-		this.applyRenderer.render(this.fogColorTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.texture);
+		this.applyRenderer.render(this.fogColorTextureWrapper.texture, BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.texture, BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.texture);
 		
 	}
 	

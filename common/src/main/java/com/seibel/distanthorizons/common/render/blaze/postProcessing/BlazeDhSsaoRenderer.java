@@ -36,6 +36,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
@@ -145,8 +146,8 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 		this.tryInit();
 		
 		
-		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -244,7 +245,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 		this.renderSsaoToTexture();
 		
 		this.applyRenderer.setUniform("applyFragUniformBlock", this.applyFragUniformBuffer);
-		this.applyRenderer.render(this.ssaoColorTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.texture, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.texture);
+		this.applyRenderer.render(this.ssaoColorTextureWrapper.texture, BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.texture, BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.texture);
 		
 	}
 	
@@ -257,7 +258,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 			/*depthTexture*/ null,
 			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			renderPass.bindTexture("uDhDepthTexture", BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhDepthTexture", BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
 			
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			

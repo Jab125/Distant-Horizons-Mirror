@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fog;
 
 import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
@@ -81,7 +82,7 @@ public class FogApplyShader extends AbstractShaderRenderer
 		GL32.glUniform1i(this.colorTextureUniform, 0);
 		
 		GLMC.glActiveTexture(GL32.GL_TEXTURE1);
-		GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
+		GLMC.glBindTexture(OpenGlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
 		GL32.glUniform1i(this.depthTextureUniform, 1);
 		
 	}
@@ -107,7 +108,7 @@ public class FogApplyShader extends AbstractShaderRenderer
 		
 		// apply the rendered Fog to DH's framebuffer
 		GLMC.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, FogShader.INSTANCE.frameBuffer);
-		GLMC.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveFramebufferId());
+		GLMC.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, OpenGlDhMetaRenderer.INSTANCE.getActiveFramebufferId());
 		
 		ScreenQuad.INSTANCE.render();
 		

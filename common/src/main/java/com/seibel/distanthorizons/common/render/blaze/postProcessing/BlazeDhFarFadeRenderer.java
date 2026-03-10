@@ -32,6 +32,7 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhCopyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.helpers.*;
@@ -136,8 +137,8 @@ public class BlazeDhFarFadeRenderer implements IDhFarFadeRenderer
 		this.tryInit();
 		
 		
-		if (BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
-			|| BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
+		if (BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
+			|| BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
 			return;	
 		}
@@ -191,7 +192,7 @@ public class BlazeDhFarFadeRenderer implements IDhFarFadeRenderer
 		
 		
 		this.renderFadeToTexture();
-		BlazeDhCopyRenderer.INSTANCE.render(this.dhFadeColorTextureWrapper, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper);
+		BlazeDhCopyRenderer.INSTANCE.render(this.dhFadeColorTextureWrapper, BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper);
 		
 	}
 	
@@ -208,8 +209,8 @@ public class BlazeDhFarFadeRenderer implements IDhFarFadeRenderer
 			renderPass.bindTexture("uMcColorTexture", this.mcColorTextureViewWrapper.textureView, this.mcColorTextureViewWrapper.textureSampler);
 			
 			// DH textures
-			renderPass.bindTexture("uDhDepthTexture", BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
-			renderPass.bindTexture("uDhColorTexture", BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureView, BlazeDhTerrainRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhDepthTexture", BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhColorTexture", BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView, BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureSampler);
 			
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			
