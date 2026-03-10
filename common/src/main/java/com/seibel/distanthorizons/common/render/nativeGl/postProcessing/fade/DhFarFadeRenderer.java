@@ -19,29 +19,29 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
-import com.seibel.distanthorizons.core.util.math.Mat4f;
+import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhFarFadeRenderer;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL43C;
 
 import java.nio.ByteBuffer;
 
 /**
- * Handles fading MC and DH together via {@link DhFadeShader} and {@link FadeApplyShader}. <br><br>
+ * Handles fading MC and DH together via {@link DhFarFadeShader} and {@link DhFarFadeApplyShader}. <br><br>
  * 
- * {@link DhFadeShader} - draws the Fade to a texture. <br>
- * {@link FadeApplyShader} - draws the Fade texture to DH's framebuffer. <br>
+ * {@link DhFarFadeShader} - draws the Fade to a texture. <br>
+ * {@link DhFarFadeApplyShader} - draws the Fade texture to DH's framebuffer. <br>
  */
-public class DhFadeRenderer
+public class DhFarFadeRenderer implements IDhFarFadeRenderer
 {
 	
-	public static DhFadeRenderer INSTANCE = new DhFadeRenderer();
+	public static DhFarFadeRenderer INSTANCE = new DhFarFadeRenderer();
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
@@ -61,16 +61,17 @@ public class DhFadeRenderer
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
-	private DhFadeRenderer() { }
+	private DhFarFadeRenderer() { }
 	
 	public void init()
 	{
 		if (this.init) return;
 		this.init = true;
 		
-		DhFadeShader.INSTANCE.init();
-		FadeApplyShader.INSTANCE.init();
+		DhFarFadeShader.INSTANCE.init();
+		DhFarFadeApplyShader.INSTANCE.init();
 	}
 	
 	private void createFramebuffer(int width, int height)
@@ -107,17 +108,21 @@ public class DhFadeRenderer
 		
 	}
 	
+	//endregion
+	
 	
 	
 	//========//
 	// render //
 	//========//
+	//region
 	
-	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, float partialTicks, IProfilerWrapper profiler)
+	@Override 
+	public void render(RenderParams renderParams)
 	{
 		try
 		{
-			profiler.push("Fade Generate");
+			//profiler.push("Fade Generate");
 			
 			this.init();
 			
@@ -132,19 +137,16 @@ public class DhFadeRenderer
 			}
 			
 			
-			DhFadeShader.INSTANCE.frameBuffer = this.fadeFramebuffer;
-			DhFadeShader.INSTANCE.setProjectionMatrix(mcModelViewMatrix, mcProjectionMatrix);
-			DhFadeShader.INSTANCE.render(partialTicks);
+			DhFarFadeShader.INSTANCE.frameBuffer = this.fadeFramebuffer;
+			DhFarFadeShader.INSTANCE.setProjectionMatrix(renderParams.mcModelViewMatrix, renderParams.mcProjectionMatrix);
+			DhFarFadeShader.INSTANCE.render(0.0f);
 			
-			// restored so we can write the fade texture to the main frame buffer
-			//mcState.restore();
+			//profiler.popPush("Fade Apply");
 			
-			profiler.popPush("Fade Apply");
-			
-			FadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
-			FadeApplyShader.INSTANCE.readFramebuffer = DhFadeShader.INSTANCE.frameBuffer;
-			FadeApplyShader.INSTANCE.drawFramebuffer = BlazeLodRenderer.INSTANCE.getActiveFramebufferId();
-			FadeApplyShader.INSTANCE.render(partialTicks);
+			DhFarFadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
+			DhFarFadeApplyShader.INSTANCE.readFramebuffer = DhFarFadeShader.INSTANCE.frameBuffer;
+			DhFarFadeApplyShader.INSTANCE.drawFramebuffer = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveFramebufferId();
+			DhFarFadeApplyShader.INSTANCE.render(0.0f);
 		}
 		catch (Exception e)
 		{
@@ -152,9 +154,11 @@ public class DhFadeRenderer
 		}
 		finally
 		{
-			profiler.pop();
+			//profiler.pop();
 		}
 	}
+	
+	//emdregion
 	
 	
 	

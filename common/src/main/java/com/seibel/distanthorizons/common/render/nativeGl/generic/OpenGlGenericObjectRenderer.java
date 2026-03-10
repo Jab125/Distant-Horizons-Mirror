@@ -31,20 +31,21 @@ import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLProxy;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.GLElementBuffer;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.jar.EPlatform;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.logging.f3.F3Screen;
 import com.seibel.distanthorizons.core.render.RenderParams;
+import com.seibel.distanthorizons.core.render.renderer.GenericRenderObjectFactory;
+import com.seibel.distanthorizons.core.render.renderer.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.ISodiumAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhGenericRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
@@ -74,6 +75,9 @@ public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 	
 	private static final DhApiRenderableBoxGroupShading DEFAULT_SHADING = DhApiRenderableBoxGroupShading.getUnshaded();
 	
+	
+	public static final OpenGlGenericObjectRenderer INSTANCE = new OpenGlGenericObjectRenderer();
+	
 	/** 
 	 * Can be used to troubleshoot the renderer. 
 	 * If enabled several debug objects will render around (0,150,0). 
@@ -86,7 +90,7 @@ public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 	
 	private IDhApiGenericObjectShaderProgram instancedShaderProgram;
 	private IDhApiGenericObjectShaderProgram directShaderProgram;
-	//private GLVertexBuffer boxVertexBuffer;
+	private GLVertexBuffer boxVertexBuffer;
 	private GLElementBuffer boxIndexBuffer;
 	
 	private boolean instancedRenderingAvailable;
@@ -172,7 +176,7 @@ public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 	//=============//
 	//region
 	
-	public OpenGlGenericObjectRenderer() { }
+	private OpenGlGenericObjectRenderer() { }
 	
 	public void init()
 	{
@@ -219,9 +223,9 @@ public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 		ByteBuffer boxVerticesBuffer = MemoryUtil.memAlloc(BOX_VERTICES.length * Float.BYTES);
 		boxVerticesBuffer.asFloatBuffer().put(BOX_VERTICES);
 		boxVerticesBuffer.rewind();
-		//this.boxVertexBuffer = new GLVertexBuffer(false);
-		//this.boxVertexBuffer.bind();
-		//this.boxVertexBuffer.uploadBuffer(boxVerticesBuffer, 8, EDhApiGpuUploadMethod.DATA, BOX_VERTICES.length * Float.BYTES);
+		this.boxVertexBuffer = new GLVertexBuffer(false);
+		this.boxVertexBuffer.bind();
+		this.boxVertexBuffer.uploadBuffer(boxVerticesBuffer, 8, EDhApiGpuUploadMethod.DATA, BOX_VERTICES.length * Float.BYTES);
 		MemoryUtil.memFree(boxVerticesBuffer);
 		
 		// box vertex indexes
@@ -425,7 +429,7 @@ public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 		}
 		
 		shaderProgram.bind(renderEventParam);
-		//shaderProgram.bindVertexBuffer(this.boxVertexBuffer.getId());
+		shaderProgram.bindVertexBuffer(this.boxVertexBuffer.getId());
 		
 		this.boxIndexBuffer.bind();
 		
@@ -474,7 +478,7 @@ public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 				boxGroup.tryUpdateInstancedDataAsync();	
 				
 				// skip groups that haven't been uploaded yet
-				if (boxGroup.vertexBufferContainer.getState() != NativeGlGenericObjectVertexContainer.EState.RENDER)
+				if (boxGroup.vertexBufferContainer.getState() != OpenGlGenericObjectVertexContainer.EState.RENDER)
 				{
 					continue;
 				}
@@ -556,7 +560,7 @@ public class OpenGlGenericObjectRenderer implements IDhGenericRenderer
 		// Bind instance data //
 		profiler.popPush("binding");
 		
-		NativeGlGenericObjectVertexContainer container = (NativeGlGenericObjectVertexContainer)(boxGroup.vertexBufferContainer);
+		OpenGlGenericObjectVertexContainer container = (OpenGlGenericObjectVertexContainer)(boxGroup.vertexBufferContainer);
 		
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.color);
 		GL32.glEnableVertexAttribArray(1);

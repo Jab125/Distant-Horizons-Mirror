@@ -17,6 +17,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.*;
 
 public class BlazeDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 {
+	public String getApiName() { return "Blaze3D"; }
 	
 	@Override public IDhTerrainRenderer getTerrainRenderer() { return BlazeDhTerrainRenderer.INSTANCE; }
 	@Override public IDhSsaoRenderer getSsaoRenderer() { return BlazeDhSsaoRenderer.INSTANCE; }

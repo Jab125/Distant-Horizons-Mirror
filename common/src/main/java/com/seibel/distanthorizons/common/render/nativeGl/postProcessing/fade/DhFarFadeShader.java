@@ -19,20 +19,21 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
+import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import org.lwjgl.opengl.GL32;
 
-public class DhFadeShader extends AbstractShaderRenderer
+public class DhFarFadeShader extends AbstractShaderRenderer
 {
-	public static DhFadeShader INSTANCE = new DhFadeShader();
+	public static DhFarFadeShader INSTANCE = new DhFarFadeShader();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
@@ -61,7 +62,7 @@ public class DhFadeShader extends AbstractShaderRenderer
 	// constructor //
 	//=============//
 	
-	public DhFadeShader() {  }
+	public DhFarFadeShader() {  }
 
 	@Override
 	public void onInit()
@@ -108,7 +109,7 @@ public class DhFadeShader extends AbstractShaderRenderer
 		
 	}
 	
-	public void setProjectionMatrix(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix)
+	public void setProjectionMatrix(DhApiMat4f mcModelViewMatrix, DhApiMat4f mcProjectionMatrix)
 	{
 		Mat4f dhProjectionMatrix = RenderUtil.createLodProjectionMatrix(mcProjectionMatrix);
 		Mat4f dhModelViewMatrix = RenderUtil.createLodModelViewMatrix(mcModelViewMatrix);
@@ -127,8 +128,8 @@ public class DhFadeShader extends AbstractShaderRenderer
 	@Override
 	protected void onRender()
 	{
-		int depthTextureId = BlazeLodRenderer.INSTANCE.getActiveDepthTextureId();
-		int colorTextureId = BlazeLodRenderer.INSTANCE.getActiveColorTextureId();
+		int depthTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId();
+		int colorTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveColorTextureId();
 		
 		if (depthTextureId == -1
 			|| colorTextureId == -1)

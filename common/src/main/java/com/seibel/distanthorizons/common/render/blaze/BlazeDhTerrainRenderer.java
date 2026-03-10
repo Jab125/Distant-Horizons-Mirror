@@ -65,7 +65,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	
 	private BlazeDhApplyRenderer applyRenderer;
 	
-	private VertexFormat vertexFormat;
 	private RenderPipeline opaquePipeline;
 	private RenderPipeline transparentPipeline;
 	private boolean init = false;
@@ -85,18 +84,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	//=============//
 	//region
 	
-	private BlazeDhTerrainRenderer()
-	{
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SHORT_XYZ_POS)
-			.add("meta", DhBlazeVertexFormatUtil.META)
-			.add("vColor", DhBlazeVertexFormatUtil.RGBA_UBYTE_COLOR)
-			.add("irisMaterial", DhBlazeVertexFormatUtil.IRIS_MATERIAL)
-			.add("irisNormal", DhBlazeVertexFormatUtil.IRIS_NORMAL)
-			.add("paddingTwo", DhBlazeVertexFormatUtil.BYTE_PAD)
-			.add("paddingThree", DhBlazeVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
-			.build();
-	}
+	private BlazeDhTerrainRenderer() { }
 	
 	private void tryInit()
 	{
@@ -113,6 +101,15 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			"apply/blaze/vert", "apply/blaze/frag"
 		);
 		
+		VertexFormat vertexFormat = VertexFormat.builder()
+			.add("vPosition", DhBlazeVertexFormatUtil.SHORT_XYZ_POS)
+			.add("meta", DhBlazeVertexFormatUtil.META)
+			.add("vColor", DhBlazeVertexFormatUtil.RGBA_UBYTE_COLOR)
+			.add("irisMaterial", DhBlazeVertexFormatUtil.IRIS_MATERIAL)
+			.add("irisNormal", DhBlazeVertexFormatUtil.IRIS_NORMAL)
+			.add("paddingTwo", DhBlazeVertexFormatUtil.BYTE_PAD)
+			.add("paddingThree", DhBlazeVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
+			.build();
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
@@ -132,7 +129,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			pipelineBuilder.withUniform("vertSharedUniformBlock", UniformType.UNIFORM_BUFFER);
 			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLES);
+			pipelineBuilder.withVertexFormat(vertexFormat, VertexFormat.Mode.TRIANGLES);
 		}
 		
 		// opaque
@@ -149,9 +146,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	}
 	
 	//endregion
-	
-	@Override
-	public int getVertexByteSize() { return this.vertexFormat.getVertexSize(); }
 	
 	
 	
@@ -397,6 +391,12 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	}
 	private String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
 	private String getRenderPassName() { return "distantHorizons:McLodRenderer"; }
+	
+	
+	@Override
+	public void runRenderPassSetup(RenderParams renderParams) {}
+	@Override
+	public void runRenderPassCleanup(RenderParams renderParams) {}
 	
 	@Override
 	public void applyToMcTexture() 

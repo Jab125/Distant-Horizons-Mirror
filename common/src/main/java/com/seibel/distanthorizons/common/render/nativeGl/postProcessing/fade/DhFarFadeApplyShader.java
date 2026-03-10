@@ -21,11 +21,8 @@ package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
-import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.VanillaFadeRenderer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import org.lwjgl.opengl.GL32;
 
 /**
@@ -35,9 +32,9 @@ import org.lwjgl.opengl.GL32;
  * {@link VanillaFadeRenderer} - Parent to this shader. <br>
  * {@link VanillaFadeShader} - draws the Fade texture. <br>
  */
-public class FadeApplyShader extends AbstractShaderRenderer
+public class DhFarFadeApplyShader extends AbstractShaderRenderer
 {
-	public static FadeApplyShader INSTANCE = new FadeApplyShader();
+	public static DhFarFadeApplyShader INSTANCE = new DhFarFadeApplyShader();
 	
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	

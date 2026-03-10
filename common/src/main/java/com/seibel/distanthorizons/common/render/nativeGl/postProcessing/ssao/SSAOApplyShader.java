@@ -19,10 +19,10 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ssao;
 
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import org.lwjgl.opengl.GL32;
@@ -31,7 +31,7 @@ import org.lwjgl.opengl.GL32;
  * Draws the SSAO texture onto DH's FrameBuffer. <br><br>
  * 
  * See Also: <br>
- * {@link SSAORenderer} - Parent to this shader. <br>
+ * {@link DhSSAORenderer} - Parent to this shader. <br>
  * {@link SSAOShader} - draws the SSAO texture. <br>
  */
 public class SSAOApplyShader extends AbstractShaderRenderer
@@ -85,7 +85,7 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 	protected void onApplyUniforms(float partialTicks)
 	{
 		GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-		GLMC.glBindTexture(BlazeLodRenderer.INSTANCE.getActiveDepthTextureId());
+		GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
 		GL32.glUniform1i(this.gDepthMapUniform, 0);
 		
 		GLMC.glActiveTexture(GL32.GL_TEXTURE1);
@@ -134,7 +134,7 @@ public class SSAOApplyShader extends AbstractShaderRenderer
 		
 		// apply the rendered SSAO to the LODs 
 		GLMC.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, SSAOShader.INSTANCE.frameBuffer);
-		GLMC.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, BlazeLodRenderer.INSTANCE.getActiveFramebufferId());
+		GLMC.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveFramebufferId());
 		
 		
 		ScreenQuad.INSTANCE.render();

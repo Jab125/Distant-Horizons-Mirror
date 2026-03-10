@@ -22,12 +22,13 @@ package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fog;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiFogColorMode;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogDirection;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiHeightFogMixMode;
+import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -244,7 +245,7 @@ public class FogShader extends AbstractShaderRenderer
 		return fogColor;
 	}
 	
-	public void setProjectionMatrix(Mat4f modelViewProjectionMatrix)
+	public void setProjectionMatrix(DhApiMat4f modelViewProjectionMatrix)
 	{
 		this.inverseMvmProjMatrix = new Mat4f(modelViewProjectionMatrix);
 		this.inverseMvmProjMatrix.invert();
@@ -265,7 +266,7 @@ public class FogShader extends AbstractShaderRenderer
 		GLMC.disableBlend();
 		
 		GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-		GLMC.glBindTexture(BlazeLodRenderer.INSTANCE.getActiveDepthTextureId());
+		GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
 		GL32.glUniform1i(this.uDepthMap, 0);
 		
 		// this is necessary for MC 1.16 (IE Legacy OpenGL)

@@ -4,6 +4,7 @@ import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.renderer.RenderableBoxGroup;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import org.lwjgl.opengl.GL32;
@@ -16,7 +17,7 @@ import java.util.List;
  * 
  * @see RenderableBoxGroup
  */
-public class NativeGlGenericObjectVertexContainer implements IDhGenericObjectVertexBufferContainer
+public class OpenGlGenericObjectVertexContainer implements IDhGenericObjectVertexBufferContainer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -50,19 +51,6 @@ public class NativeGlGenericObjectVertexContainer implements IDhGenericObjectVer
 	// render building/uploading //
 	//===========================//
 	//region
-	
-	/** needs to be done on the render thread */
-	public void tryRunRenderThreadSetup()
-	{
-		if (this.chunkPos == 0)
-		{
-			this.chunkPos = GLMC.glGenBuffers();
-			this.subChunkPos = GLMC.glGenBuffers();
-			this.scale = GLMC.glGenBuffers();
-			this.color = GLMC.glGenBuffers();
-			this.material = GLMC.glGenBuffers();
-		}
-	}
 	
 	public void updateVertexData(List<DhApiRenderableBox> uploadBoxList)
 	{
@@ -118,11 +106,13 @@ public class NativeGlGenericObjectVertexContainer implements IDhGenericObjectVer
 			this.materialData[i] = box.material;
 		}
 		
-		this.state = NativeGlGenericObjectVertexContainer.EState.READY_TO_UPLOAD;
+		this.state = OpenGlGenericObjectVertexContainer.EState.READY_TO_UPLOAD;
 	}
 	
 	public void uploadDataToGpu()
 	{
+		this.tryCreateBuffers();
+		
 		// Upload transformation matrices
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, this.chunkPos);
 		GL32.glBufferData(GL32.GL_ARRAY_BUFFER, this.chunkPosData, GL32.GL_DYNAMIC_DRAW);
@@ -140,6 +130,18 @@ public class NativeGlGenericObjectVertexContainer implements IDhGenericObjectVer
 		GL32.glBufferData(GL32.GL_ARRAY_BUFFER, this.materialData, GL32.GL_DYNAMIC_DRAW);
 		
 		this.state = EState.RENDER;
+	}
+	/** needs to be done on the render thread */
+	private void tryCreateBuffers()
+	{
+		if (this.chunkPos == 0)
+		{
+			this.chunkPos = GLMC.glGenBuffers();
+			this.subChunkPos = GLMC.glGenBuffers();
+			this.scale = GLMC.glGenBuffers();
+			this.color = GLMC.glGenBuffers();
+			this.material = GLMC.glGenBuffers();
+		}
 	}
 	
 	//endregion

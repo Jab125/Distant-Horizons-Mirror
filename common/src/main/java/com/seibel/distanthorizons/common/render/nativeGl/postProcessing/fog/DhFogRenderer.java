@@ -19,11 +19,12 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fog;
 
+import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhFogRenderer;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL43C;
 
@@ -35,9 +36,9 @@ import java.nio.ByteBuffer;
  * {@link FogShader} - draws the Fog to a texture. <br>
  * {@link FogApplyShader} - draws the Fog texture to DH's FrameBuffer. <br>
  */
-public class FogRenderer
+public class DhFogRenderer implements IDhFogRenderer
 {
-	public static FogRenderer INSTANCE = new FogRenderer();
+	public static DhFogRenderer INSTANCE = new DhFogRenderer();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
@@ -57,7 +58,7 @@ public class FogRenderer
 	// constructor //
 	//=============//
 	
-	private FogRenderer() { }
+	private DhFogRenderer() { }
 	
 	public void init()
 	{
@@ -104,8 +105,10 @@ public class FogRenderer
 	//========//
 	// render //
 	//========//
+	//region
 	
-	public void render(Mat4f modelViewProjectionMatrix, float partialTicks)
+	@Override
+	public void render(DhApiMat4f modelViewProjectionMatrix, float partialTicks)
 	{
 		// GLState needed in MC 1.16.5 probably due to MC not manually setting each GL state they need before the next rendering step
 		try (GLState state = new GLState())
@@ -131,10 +134,23 @@ public class FogRenderer
 		}
 	}
 	
+	//endregion
+	
+	
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
+	
 	public void free()
 	{
 		FogShader.INSTANCE.free();
 		FogApplyShader.INSTANCE.free();
 	}
+	
+	//endregion
+	
+	
 	
 }

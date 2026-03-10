@@ -93,9 +93,14 @@ public class MixinLightTexture
 		this.renderWrapper.updateLightmap(this.lightPixels, clientLevel);
 		#elif MC_VER < MC_1_21_5
 		this.renderWrapper.setLightmapId(this.target.getColorTextureId(), clientLevel);
+		#elif MC_VER <= MC_1_21_10
+		GlTexture glTexture = (GlTexture) this.texture;
+		this.renderWrapper.setLightmapId(glTexture.glId(), clientLevel);
 		#else
-		//GlTexture glTexture = (GlTexture) this.texture;
-		//this.renderWrapper.setLightmapId(glTexture.glId(), clientLevel);
+		// both options are available since the renderer can be changed to either Blaze3D or OpenGL
+		GlTexture glTexture = (GlTexture) this.texture;
+		this.renderWrapper.setLightmapId(glTexture.glId(), clientLevel);
+		
 		this.renderWrapper.setLightmapGpuTexture(this.texture, clientLevel);
 		#endif
 	}

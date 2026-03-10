@@ -19,19 +19,19 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import org.lwjgl.opengl.GL32;
 
-public class VanillaFadeShader extends AbstractShaderRenderer
+public class VanillaFadeShader extends AbstractShaderRenderer 
 {
 	public static VanillaFadeShader INSTANCE = new VanillaFadeShader();
 	
@@ -67,6 +67,7 @@ public class VanillaFadeShader extends AbstractShaderRenderer
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
 	public VanillaFadeShader() {  }
 
@@ -99,11 +100,14 @@ public class VanillaFadeShader extends AbstractShaderRenderer
 		
 	}
 	
+	//endregion
+	
 	
 	
 	//=============//
 	// render prep //
 	//=============//
+	//region
 	
 	@Override
 	protected void onApplyUniforms(float partialTicks)
@@ -148,17 +152,20 @@ public class VanillaFadeShader extends AbstractShaderRenderer
 	}
 	public void setLevelMaxHeight(int levelMaxHeight) { this.levelMaxHeight = levelMaxHeight; }
 	
+	//endregion
+	
 	
 	
 	//========//
 	// render //
 	//========//
+	//region
 	
 	@Override
 	protected void onRender()
 	{
-		int depthTextureId = BlazeLodRenderer.INSTANCE.getActiveDepthTextureId();
-		int colorTextureId = BlazeLodRenderer.INSTANCE.getActiveColorTextureId();
+		int depthTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId();
+		int colorTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveColorTextureId();
 		
 		if (depthTextureId == -1
 			|| colorTextureId == -1)
@@ -194,5 +201,9 @@ public class VanillaFadeShader extends AbstractShaderRenderer
 		
 		ScreenQuad.INSTANCE.render();
 	}
+	
+	//endregion
+	
+	
 	
 }

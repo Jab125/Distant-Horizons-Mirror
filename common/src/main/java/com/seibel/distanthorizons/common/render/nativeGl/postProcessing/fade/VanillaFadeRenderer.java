@@ -17,20 +17,18 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.common.render.nativeGl.postProcessing;
+package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade;
 
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
-import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade.DhFadeShader;
-import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade.FadeApplyShader;
-import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.fade.VanillaFadeShader;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhVanillaFadeRenderer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL32;
@@ -38,12 +36,12 @@ import org.lwjgl.opengl.GL32;
 import java.nio.ByteBuffer;
 
 /**
- * Handles fading MC and DH together via {@link VanillaFadeShader} and {@link FadeApplyShader}. <br><br>
+ * Handles fading MC and DH together via {@link VanillaFadeShader} and {@link DhFarFadeApplyShader}. <br><br>
  * 
  * {@link VanillaFadeShader} - draws the Fade to a texture. <br>
- * {@link FadeApplyShader} - draws the Fade texture to MC's FrameBuffer. <br>
+ * {@link DhFarFadeApplyShader} - draws the Fade texture to MC's FrameBuffer. <br>
  */
-public class VanillaFadeRenderer
+public class VanillaFadeRenderer implements IDhVanillaFadeRenderer
 {
 	public static VanillaFadeRenderer INSTANCE = new VanillaFadeRenderer();
 	
@@ -67,6 +65,7 @@ public class VanillaFadeRenderer
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
 	private VanillaFadeRenderer() { }
 	
@@ -76,7 +75,7 @@ public class VanillaFadeRenderer
 		this.init = true;
 		
 		VanillaFadeShader.INSTANCE.init();
-		FadeApplyShader.INSTANCE.init();
+		DhFarFadeApplyShader.INSTANCE.init();
 	}
 	
 	private void createFramebuffer(int width, int height)
@@ -114,15 +113,19 @@ public class VanillaFadeRenderer
 		}
 	}
 	
+	//endregion
+	
 	
 	
 	//========//
 	// render //
 	//========//
+	//region
 	
+	@Override
 	public void render(Mat4f mcModelViewMatrix, Mat4f mcProjectionMatrix, IClientLevelWrapper level)
 	{
-		int depthTextureId = BlazeLodRenderer.INSTANCE.getActiveDepthTextureId();
+		int depthTextureId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId();
 		if (depthTextureId == -1)
 		{
 			// the renderer hasn't been set up yet
@@ -165,10 +168,10 @@ public class VanillaFadeRenderer
 			{
 				profiler.popPush("Vanilla Fade Apply");
 				
-				FadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
-				FadeApplyShader.INSTANCE.readFramebuffer = DhFadeShader.INSTANCE.frameBuffer;
-				FadeApplyShader.INSTANCE.drawFramebuffer = MC_RENDER.getTargetFramebuffer();
-				FadeApplyShader.INSTANCE.render(0);
+				DhFarFadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
+				DhFarFadeApplyShader.INSTANCE.readFramebuffer = DhFarFadeShader.INSTANCE.frameBuffer;
+				DhFarFadeApplyShader.INSTANCE.drawFramebuffer = MC_RENDER.getTargetFramebuffer();
+				DhFarFadeApplyShader.INSTANCE.render(0);
 			}
 			
 			profiler.pop(); 
@@ -179,10 +182,23 @@ public class VanillaFadeRenderer
 		}
 	}
 	
+	//endregion
+	
+	
+	
+	//================//
+	// base overrides // 
+	//================//
+	//region
+	
 	public void free()
 	{
 		VanillaFadeShader.INSTANCE.free();
-		FadeApplyShader.INSTANCE.free();
+		DhFarFadeApplyShader.INSTANCE.free();
 	}
+	
+	//endregion
+	
+	
 	
 }

@@ -19,10 +19,11 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ssao;
 
+import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import org.lwjgl.opengl.GL32;
@@ -31,7 +32,7 @@ import org.lwjgl.opengl.GL32;
  * Draws the SSAO to a texture. <br><br>
  *
  * See Also: <br>
- * {@link SSAORenderer} - Parent to this shader. <br>
+ * {@link DhSSAORenderer} - Parent to this shader. <br>
  * {@link SSAOApplyShader} - draws the SSAO texture to DH's FrameBuffer. <br>
  */
 public class SSAOShader extends AbstractShaderRenderer
@@ -91,9 +92,9 @@ public class SSAOShader extends AbstractShaderRenderer
 	// render prep //
 	//=============//
 	
-	public void setProjectionMatrix(Mat4f projectionMatrix)
+	public void setProjectionMatrix(DhApiMat4f projectionMatrix)
 	{
-		this.projection = projectionMatrix;
+		this.projection = new Mat4f(projectionMatrix);
 		
 		this.invertedProjection = new Mat4f(projectionMatrix);
 		this.invertedProjection.invert();
@@ -132,7 +133,7 @@ public class SSAOShader extends AbstractShaderRenderer
 		GLMC.disableBlend();
 		
 		GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-		GLMC.glBindTexture(BlazeLodRenderer.INSTANCE.getActiveDepthTextureId());
+		GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
 		
 		ScreenQuad.INSTANCE.render();
 	}

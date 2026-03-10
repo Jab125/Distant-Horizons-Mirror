@@ -25,15 +25,11 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderP
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.AbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexPointer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
-import com.seibel.distanthorizons.core.util.math.Vec3d;
-import com.seibel.distanthorizons.core.util.math.Vec3f;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
@@ -43,9 +39,9 @@ import java.nio.ByteOrder;
  * Handles rendering the wireframe particles 
  * that are used for seeing what the system's doing.
  */
-public class DebugRenderer extends AbstractDebugWireframeRenderer
+public class OpenGlDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 {
-	public static DebugRenderer INSTANCE = new DebugRenderer();
+	public static OpenGlDebugWireframeRenderer INSTANCE = new OpenGlDebugWireframeRenderer();
 	
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -102,7 +98,7 @@ public class DebugRenderer extends AbstractDebugWireframeRenderer
 	//=============//
 	//region
 	
-	private DebugRenderer() { }
+	private OpenGlDebugWireframeRenderer() { }
 	
 	public void init()
 	{

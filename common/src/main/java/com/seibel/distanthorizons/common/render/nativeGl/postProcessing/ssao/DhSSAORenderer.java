@@ -19,11 +19,12 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ssao;
 
+import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.util.math.Mat4f;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhSsaoRenderer;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL43C;
 
@@ -35,9 +36,9 @@ import java.nio.ByteBuffer;
  * {@link SSAOShader} - draws the SSAO to a texture. <br>
  * {@link SSAOApplyShader} - draws the SSAO texture to DH's FrameBuffer. <br>
  */
-public class SSAORenderer
+public class DhSSAORenderer implements IDhSsaoRenderer
 {
-	public static SSAORenderer INSTANCE = new SSAORenderer();
+	public static DhSSAORenderer INSTANCE = new DhSSAORenderer();
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
@@ -57,7 +58,7 @@ public class SSAORenderer
 	// constructor //
 	//=============//
 	
-	private SSAORenderer() { }
+	private DhSSAORenderer() { }
 	
 	public void init()
 	{
@@ -105,8 +106,9 @@ public class SSAORenderer
 	//========//
 	// render //
 	//========//
+	//region
 	
-	public void render(Mat4f projectionMatrix, float partialTicks)
+	public void render(DhApiMat4f dhProjectionMatrix)
 	{
 		try(GLState state = new GLState())
 		{
@@ -123,18 +125,31 @@ public class SSAORenderer
 			}
 			
 			SSAOShader.INSTANCE.frameBuffer = this.ssaoFramebuffer;
-			SSAOShader.INSTANCE.setProjectionMatrix(projectionMatrix);
-			SSAOShader.INSTANCE.render(partialTicks);
+			SSAOShader.INSTANCE.setProjectionMatrix(dhProjectionMatrix);
+			SSAOShader.INSTANCE.render(0.0f);
 			
 			SSAOApplyShader.INSTANCE.ssaoTexture = this.ssaoTexture;
-			SSAOApplyShader.INSTANCE.render(partialTicks);
+			SSAOApplyShader.INSTANCE.render(0.0f);
 		}
 	}
+	
+	//endregion
+	
+	
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
 	
 	public void free()
 	{
 		SSAOShader.INSTANCE.free();
 		SSAOApplyShader.INSTANCE.free();
 	}
+	
+	//endregion
+	
+	
 	
 }

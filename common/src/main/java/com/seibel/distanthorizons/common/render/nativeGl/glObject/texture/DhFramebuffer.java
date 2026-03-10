@@ -11,9 +11,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	
 	private final Int2IntMap attachments;
-	private final int maxDrawBuffers;
-	private final int maxColorAttachments;
-	private boolean hasDepthAttachment;
 	private int id;
 	
 	
@@ -27,9 +24,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 		this.id = GL32.glGenFramebuffers();
 
 		this.attachments = new Int2IntArrayMap();
-		this.maxDrawBuffers = GL32.glGetInteger(GL32.GL_MAX_DRAW_BUFFERS);
-		this.maxColorAttachments = GL32.glGetInteger(GL32.GL_MAX_COLOR_ATTACHMENTS);
-		this.hasDepthAttachment = false;
 	}
 
 	/** For internal use by Iris, do not remove. */
@@ -38,9 +32,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 		this.id = id;
 		
 		this.attachments = new Int2IntArrayMap();
-		this.maxDrawBuffers = GL32.glGetInteger(GL32.GL_MAX_DRAW_BUFFERS);
-		this.maxColorAttachments = GL32.glGetInteger(GL32.GL_MAX_COLOR_ATTACHMENTS);
-		this.hasDepthAttachment = false;
 	}
 	
 	
@@ -56,8 +47,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 		
 		int depthAttachment = isCombinedStencil ? GL32.GL_DEPTH_STENCIL_ATTACHMENT : GL32.GL_DEPTH_ATTACHMENT;
 		GL32.glFramebufferTexture2D(GL32.GL_FRAMEBUFFER, depthAttachment, GL32.GL_TEXTURE_2D, textureId, 0);
-		
-		this.hasDepthAttachment = true;
 	}
 	
 	@Override
@@ -69,46 +58,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 		this.attachments.put(textureIndex, textureId);
 	}
 
-	public void noDrawBuffers()
-	{
-		this.bind(); 
-		GL32.glDrawBuffers(new int[]{GL32.GL_NONE});
-	}
-	
-	public void drawBuffers(int[] buffers)
-	{
-		int[] glBuffers = new int[buffers.length]; 
-		int index = 0;
-		
-		if (buffers.length > this.maxDrawBuffers)
-		{
-			throw new IllegalArgumentException("Cannot write to more than " + this.maxDrawBuffers + " draw buffers on this GPU");
-		}
-		
-		for (int buffer : buffers)
-		{
-			if (buffer >= this.maxColorAttachments)
-			{
-				throw new IllegalArgumentException("Only " + this.maxColorAttachments + " color attachments are supported on this GPU, but an attempt was made to write to a color attachment with index " + buffer);
-			}
-			
-			glBuffers[index++] = GL32.GL_COLOR_ATTACHMENT0 + buffer;
-		}
-		
-		this.bind(); 
-		GL32.glDrawBuffers(new int[]{GL32.GL_NONE});
-	}
-	
-	public void readBuffer(int buffer)
-	{
-		this.bind();
-		GL32.glReadBuffer(GL32.GL_COLOR_ATTACHMENT0 + buffer);
-	}
-	
-	public int getColorAttachment(int index) { return this.attachments.get(index); }
-	
-	public boolean hasDepthAttachment() { return this.hasDepthAttachment; }
-	
 	@Override
 	public void bind()
 	{
@@ -118,10 +67,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 		} 
 		GLMC.glBindFramebuffer(GL32.GL_FRAMEBUFFER, this.id);
 	}
-	
-	public void bindAsReadBuffer() { GLMC.glBindFramebuffer(GL32.GL_READ_FRAMEBUFFER, this.id); }
-	
-	public void bindAsDrawBuffer() { GLMC.glBindFramebuffer(GL32.GL_DRAW_FRAMEBUFFER, this.id); }
 	
 	@Override
 	public void destroy()

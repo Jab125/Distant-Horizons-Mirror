@@ -19,6 +19,8 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.AbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexPointer;
 import org.lwjgl.opengl.GL32;
@@ -34,22 +36,26 @@ public class ScreenQuad
 {
 	public static ScreenQuad INSTANCE = new ScreenQuad();
 	
-	private static final float[] box_vertices = {
+	private static final float[] BOX_VERTICES = {
 			-1, -1,
 			1, -1,
 			1, 1,
+		
 			-1, -1,
 			1, 1,
 			-1, 1,
 	};
 	
+	private GLVertexBuffer boxBuffer;
 	private AbstractVertexAttribute va;
 	private boolean init = false;
 
 	
+	
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
 	private ScreenQuad() { }
 	
@@ -68,29 +74,43 @@ public class ScreenQuad
 		// Framebuffer
 		this.createBuffer();
 	}
+	private void createBuffer()
+	{
+		ByteBuffer buffer = MemoryUtil.memAlloc(BOX_VERTICES.length * Float.BYTES);
+		buffer.asFloatBuffer().put(BOX_VERTICES);
+		buffer.rewind();
+		
+		this.boxBuffer = new GLVertexBuffer(false);
+		this.boxBuffer.bind();
+		this.boxBuffer.uploadBuffer(buffer, BOX_VERTICES.length, EDhApiGpuUploadMethod.DATA, BOX_VERTICES.length * Float.BYTES);
+		MemoryUtil.memFree(buffer);
+	}
+	
+	//endregion
+	
+	
+	
+	//===========//
+	// rendering //
+	//===========//
+	//region
 	
 	public void render()
 	{
 		this.init();
 		
-		//this.boxBuffer.bind();
+		this.boxBuffer.bind();
 		
 		this.va.bind();
-		//this.va.bindBufferToAllBindingPoints(this.boxBuffer.getId());
+		this.va.bindBufferToAllBindingPoints(this.boxBuffer.getId());
+		
+		GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
 		
 		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 6);
 	}
 	
-	private void createBuffer()
-	{
-		ByteBuffer buffer = MemoryUtil.memAlloc(box_vertices.length * Float.BYTES);
-		buffer.asFloatBuffer().put(box_vertices);
-		buffer.rewind();
-		
-		//this.boxBuffer = new GLVertexBuffer(false);
-		//this.boxBuffer.bind();
-		//this.boxBuffer.uploadBuffer(buffer, box_vertices.length, EDhApiGpuUploadMethod.DATA, box_vertices.length * Float.BYTES);
-		MemoryUtil.memFree(buffer);
-	}
+	//endregion
+	
+	
 	
 }

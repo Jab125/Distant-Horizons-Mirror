@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.render.nativeGl.test;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
+import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.apply.DhApplyShader;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -30,6 +31,7 @@ import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribut
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexPointer;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTestTriangleRenderer;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
@@ -40,14 +42,14 @@ import java.nio.ByteOrder;
  * to the center of the screen to confirm DH's
  * apply shader is running correctly
  */
-public class GlTestRenderer
+public class GlTestTriangleRenderer implements IDhTestTriangleRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	
-	public static final GlTestRenderer INSTANCE = new GlTestRenderer();
+	public static final GlTestTriangleRenderer INSTANCE = new GlTestTriangleRenderer();
 	
 	// Render a square with uv color
 	private static final float[] VERTICES =
@@ -72,7 +74,7 @@ public class GlTestRenderer
 	//=============//
 	//region
 	
-	private GlTestRenderer() { }
+	private GlTestTriangleRenderer() { }
 	
 	public void init()
 	{
@@ -108,7 +110,7 @@ public class GlTestRenderer
 		
 		this.vbo = new GLVertexBuffer(false);
 		this.vbo.bind();
-		this.vbo.uploadBuffer(buffer, 4, EDhApiGpuUploadMethod.DATA, VERTICES.length * Float.BYTES);
+		this.vbo.uploadBuffer(buffer, 3, EDhApiGpuUploadMethod.DATA, VERTICES.length * Float.BYTES);
 	}
 	
 	//endregion
@@ -130,8 +132,7 @@ public class GlTestRenderer
 		this.vbo.bind();
 		this.va.bindBufferToAllBindingPoints(this.vbo.getId());
 		
-		// Render the square
-		GL32.glDrawArrays(GL32.GL_TRIANGLE_FAN, 0, 4);
+		GL32.glDrawArrays(GL32.GL_TRIANGLES, 0, 3);
 	}
 	
 	//endregion

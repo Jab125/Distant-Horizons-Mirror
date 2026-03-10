@@ -19,19 +19,18 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl.postProcessing.apply;
 
+import com.seibel.distanthorizons.common.render.nativeGl.DhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLState;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.ScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.renderer.BlazeLodRenderer;
 import com.seibel.distanthorizons.common.render.nativeGl.util.AbstractShaderRenderer;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL32;
 
 /**
- * Copies {@link BlazeLodRenderer}'s currently active color and depth texture to Minecraft's framebuffer. 
+ * Copies {@link com.seibel.distanthorizons.core.render.renderer.LodRenderer}'s currently active color and depth texture to Minecraft's framebuffer. 
  */
 public class DhApplyShader extends AbstractShaderRenderer
 {
@@ -118,11 +117,11 @@ public class DhApplyShader extends AbstractShaderRenderer
 			//GLMC.glBlendFunc(GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
 			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-			GLMC.glBindTexture(BlazeLodRenderer.INSTANCE.getActiveColorTextureId());
+			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveColorTextureId());
 			GL32.glUniform1i(this.gDhColorTextureUniform, 0);
 			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE1);
-			GLMC.glBindTexture(BlazeLodRenderer.INSTANCE.getActiveDepthTextureId());
+			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
 			GL32.glUniform1i(this.gDepthMapUniform, 1);
 			
 			// Copy to MC's framebuffer
@@ -142,7 +141,7 @@ public class DhApplyShader extends AbstractShaderRenderer
 			return;
 		}
 		
-		int dhFrameBufferId = BlazeLodRenderer.INSTANCE.getActiveFramebufferId();
+		int dhFrameBufferId = DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveFramebufferId();
 		if (dhFrameBufferId == -1)
 		{
 			return;
@@ -162,20 +161,15 @@ public class DhApplyShader extends AbstractShaderRenderer
 			
 			// blending isn't needed, we're just directly merging the MC and DH textures
 			// Note: this prevents the sun/moon and stars from rendering through transparent LODs,
-			// however this also fixes
+			// but it also resolves some other issues, so it's likely not an issue
 			GLMC.disableBlend();
 			
-			// old blending logic in case it's ever needed:
-			//GLMC.enableBlend();
-			//GL32.glBlendEquation(GL32.GL_FUNC_ADD);
-			//GLMC.glBlendFunc(GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
-			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE0);
-			GLMC.glBindTexture(BlazeLodRenderer.INSTANCE.getActiveColorTextureId());
+			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveColorTextureId());
 			GL32.glUniform1i(this.gDhColorTextureUniform, 0);
 			
 			GLMC.glActiveTexture(GL32.GL_TEXTURE1);
-			GLMC.glBindTexture(BlazeLodRenderer.INSTANCE.getActiveDepthTextureId());
+			GLMC.glBindTexture(DhTerrainShaderProgram.OpenGlRenderState.INSTANCE.getActiveDepthTextureId());
 			GL32.glUniform1i(this.gDepthMapUniform, 1);
 			
 			

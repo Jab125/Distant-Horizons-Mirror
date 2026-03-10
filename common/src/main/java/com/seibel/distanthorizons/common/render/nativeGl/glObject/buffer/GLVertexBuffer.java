@@ -21,6 +21,9 @@ package com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer;
 
 import java.nio.ByteBuffer;
 
+import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLProxy;
+import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import org.lwjgl.opengl.GL32;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
@@ -32,7 +35,7 @@ import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
  * @author James Seibel
  * @version 11-20-2021
  */
-public class GLVertexBuffer extends GLBuffer
+public class GLVertexBuffer extends GLBuffer implements IVertexBufferWrapper
 {
 	/**
 	 * When uploading to a buffer that is too small, recreate it this many times
@@ -40,17 +43,61 @@ public class GLVertexBuffer extends GLBuffer
 	 */
 	protected int vertexCount = 0;
 	public int getVertexCount() { return this.vertexCount; }
-	// FIXME: This setter is needed for premapping buffer to manually set the vertexCount. Fix this.
-	public void setVertexCount(int vertexCount) { this.vertexCount = vertexCount; }
 	
 	
-	public GLVertexBuffer(boolean isBufferStorage)
+	
+	//=============//
+	// constructor //
+	//=============//
+	//region
+	
+	public GLVertexBuffer() { this(GLProxy.getInstance().getGpuUploadMethod() == EDhApiGpuUploadMethod.BUFFER_STORAGE); }
+	public GLVertexBuffer(boolean isBufferStorage) { super(isBufferStorage); }
+	
+	//endregion
+	
+	
+	
+	//======================//
+	// uploading/destroying //
+	//======================//
+	//region
+	
+	@Override
+	public int getBufferBindingTarget() { return GL32.GL_ARRAY_BUFFER; }
+	
+	@Override
+	public void upload(ByteBuffer buffer, int vertexCount)
 	{
-		super(isBufferStorage);
+		EDhApiGpuUploadMethod uploadMethod = GLProxy.getInstance().getGpuUploadMethod();
+		int maxBufferSize = LodQuadBuilder.getMaxBufferByteSize();
+		this.uploadBuffer(buffer, vertexCount, uploadMethod, maxBufferSize);
+	}
+	
+	/**
+	 * bufferSize is the number of shared verticies. <br>
+	 * This number will be higher when actually rendered since each box's face needs 2 triangles 
+	 * with 2 shared verticies. 
+	 */
+	public void uploadBuffer(ByteBuffer byteBuffer, int vertexCount, EDhApiGpuUploadMethod uploadMethod, int maxExpansionSize)
+	{
+		if (vertexCount < 0)
+		{
+			throw new IllegalArgumentException("vertexCount is negative!");
+		}
+		
+		// If size is zero, just ignore it.
+		if (byteBuffer.limit() - byteBuffer.position() != 0)
+		{
+			boolean useBuffStorage = uploadMethod.useBufferStorage;
+			super.uploadBuffer(byteBuffer, uploadMethod, maxExpansionSize, useBuffStorage ? 0 : GL32.GL_STATIC_DRAW);
+		}
+		this.vertexCount = vertexCount;
 	}
 	
 	
-	
+	@Override
+	public void close() { this.destroyAsync(); }
 	@Override
 	public void destroyAsync()
 	{
@@ -58,31 +105,8 @@ public class GLVertexBuffer extends GLBuffer
 		this.vertexCount = 0;
 	}
 	
-	@Override
-	public int getBufferBindingTarget() { return GL32.GL_ARRAY_BUFFER; }
+	//endregion
 	
-	/**
-	 * bufferSize is the number of shared verticies. <br>
-	 * This number will be higher when actually rendered since each box's face needs 2 triangles 
-	 * with 2 shared verticies. 
-	 */
-	public void uploadBuffer(ByteBuffer byteBuffer, int bufferSize, EDhApiGpuUploadMethod uploadMethod, int maxExpensionSize)
-	{
-		if (bufferSize < 0)
-		{
-			throw new IllegalArgumentException("VertCount is negative!");
-		}
-		
-		// If size is zero, just ignore it.
-		if (byteBuffer.limit() - byteBuffer.position() != 0)
-		{
-			boolean useBuffStorage = uploadMethod.useBufferStorage;
-			super.uploadBuffer(byteBuffer, uploadMethod, maxExpensionSize, useBuffStorage ? 0 : GL32.GL_STATIC_DRAW);
-		}
-		
-		// /4 to get the number of cubes
-		// *6 to get the number of verticies (2 triangles, 3 verticies each) 
-		this.vertexCount = (bufferSize / 4) * 6;
-	}
+	
 	
 }

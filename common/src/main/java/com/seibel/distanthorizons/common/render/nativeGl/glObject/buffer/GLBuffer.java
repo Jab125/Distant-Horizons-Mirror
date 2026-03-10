@@ -75,16 +75,20 @@ public class GLBuffer implements AutoCloseable
 	//==============//
 	// constructors //
 	//==============//
+	//region
 	
 	static { CLEANUP_THREAD.execute(() -> runPhantomReferenceCleanupLoop()); }
 	
 	public GLBuffer(boolean isBufferStorage) { this.create(isBufferStorage); }
+	
+	//endregion
 	
 	
 	
 	//=========//
 	// methods //
 	//=========//
+	//region
 	
 	// Should be override by subclasses
 	public int getBufferBindingTarget() { return GL32.GL_COPY_READ_BUFFER; }
@@ -92,11 +96,14 @@ public class GLBuffer implements AutoCloseable
 	public void bind() { GL32.glBindBuffer(this.getBufferBindingTarget(), this.id); }
 	public void unbind() { GL32.glBindBuffer(this.getBufferBindingTarget(), 0); }
 	
+	//endregion
+	
 	
 	
 	//====================//
 	// create and destroy //
 	//====================//
+	//region
 	
 	protected void create(boolean asBufferStorage)
 	{
@@ -168,11 +175,14 @@ public class GLBuffer implements AutoCloseable
 		});
 	}
 	
+	//endregion
+	
 	
 	
 	//==================//
 	// buffer uploading //
 	//==================//
+	//region
 	
 	/** 
 	 * Assumes the GL Context is already bound. <br> 
@@ -252,11 +262,14 @@ public class GLBuffer implements AutoCloseable
 		GL32.glBufferSubData(this.getBufferBindingTarget(), 0, bb);
 	}
 	
+	//endregion
 	
 	
-	//===========//
-	// overrides //
-	//===========//
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
 	
 	@Override
 	public void close() { this.destroyAsync(); }
@@ -268,11 +281,14 @@ public class GLBuffer implements AutoCloseable
 				"[id:" + this.id + ",size:" + this.size + (this.isMapped ? ",MAPPED" : "") + "]";
 	}
 	
+	//endregion
+	
 	
 	
 	//================//
 	// helper methods //
 	//================//
+	//region
 	
 	/** 
 	 * Makes sure the buffer exists and is of the correct format
@@ -302,11 +318,14 @@ public class GLBuffer implements AutoCloseable
 		}
 	}
 	
+	//endregion
+	
 	
 	
 	//================//
 	// static cleanup //
 	//================//
+	//region
 	
 	private static void runPhantomReferenceCleanupLoop()
 	{
@@ -341,5 +360,9 @@ public class GLBuffer implements AutoCloseable
 			}
 		}
 	}
+	
+	//endregion
+	
+	
 	
 }
