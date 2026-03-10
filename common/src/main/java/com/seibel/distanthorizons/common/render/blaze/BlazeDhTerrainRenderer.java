@@ -16,8 +16,8 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeBufferRenderEvent;
-import com.seibel.distanthorizons.common.render.blaze.helpers.*;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
+import com.seibel.distanthorizons.common.render.blaze.util.BlazeDhVertexFormatUtil;
+import com.seibel.distanthorizons.common.render.blaze.util.BlazeUniformUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeLodUniformBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVertexBufferWrapper;
@@ -28,8 +28,8 @@ import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuad
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLEnums;
-import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.QuadElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadElementBuffer;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -88,13 +88,13 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 		
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SHORT_XYZ_POS)
-			.add("meta", DhBlazeVertexFormatUtil.META)
-			.add("vColor", DhBlazeVertexFormatUtil.RGBA_UBYTE_COLOR)
-			.add("irisMaterial", DhBlazeVertexFormatUtil.IRIS_MATERIAL)
-			.add("irisNormal", DhBlazeVertexFormatUtil.IRIS_NORMAL)
-			.add("paddingTwo", DhBlazeVertexFormatUtil.BYTE_PAD)
-			.add("paddingThree", DhBlazeVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
+			.add("vPosition", BlazeDhVertexFormatUtil.SHORT_XYZ_POS)
+			.add("meta", BlazeDhVertexFormatUtil.META)
+			.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
+			.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
+			.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
+			.add("paddingTwo", BlazeDhVertexFormatUtil.BYTE_PAD)
+			.add("paddingThree", BlazeDhVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
 			.build();
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
@@ -207,7 +207,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 				.putMat4f(combinedMatrix.createJomlMatrix()) // uCombinedMatrix
 				.get();
 			
-			this.vertSharedUniformBuffer = UniformHandler.createBuffer("vertSharedUniformBlock", uniformBufferSize, this.vertSharedUniformBuffer);
+			this.vertSharedUniformBuffer = BlazeUniformUtil.createBuffer("vertSharedUniformBlock", uniformBufferSize, this.vertSharedUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertSharedUniformBuffer, 0, uniformBufferSize);
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
@@ -249,7 +249,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 				.get()
 			;
 			
-			this.fragUniformBuffer = UniformHandler.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
+			this.fragUniformBuffer = BlazeUniformUtil.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
@@ -260,7 +260,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			if (this.indexBuffer == null)
 			{
 				ByteBuffer buffer = MemoryUtil.memAlloc(LodQuadBuilder.getMaxBufferByteSize() * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6);
-				QuadElementBuffer.buildBuffer(LodQuadBuilder.getMaxBufferByteSize(), buffer, GL32.GL_UNSIGNED_INT);
+				GlQuadElementBuffer.buildBuffer(LodQuadBuilder.getMaxBufferByteSize(), buffer, GL32.GL_UNSIGNED_INT);
 				
 				
 				// create buffer if needed

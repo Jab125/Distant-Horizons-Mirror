@@ -63,7 +63,7 @@ public class BlazePostProcessUtil
 	public static VertexFormat createVertexFormat()
 	{
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
+			.add("vPosition", BlazeDhVertexFormatUtil.SCREEN_POS)
 			.build();
 		return vertexFormat;
 	}

@@ -8,7 +8,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.ILodCont
 
 import java.nio.ByteBuffer;
 
-public class BlazeLodUniformBufferWrapper extends UniformBufferWrapper implements ILodContainerUniformBufferWrapper
+public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper implements ILodContainerUniformBufferWrapper
 {
 	
 	private boolean uploaded = false;

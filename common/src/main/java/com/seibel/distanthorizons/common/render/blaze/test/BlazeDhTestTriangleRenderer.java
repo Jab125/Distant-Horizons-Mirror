@@ -30,7 +30,7 @@ import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
+import com.seibel.distanthorizons.common.render.blaze.util.BlazeDhVertexFormatUtil;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.RenderParams;
@@ -84,8 +84,8 @@ public class BlazeDhTestTriangleRenderer implements IDhTestTriangleRenderer
 		
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.SCREEN_POS)
-			.add("vColor", DhBlazeVertexFormatUtil.RGBA_FLOAT_COLOR)
+			.add("vPosition", BlazeDhVertexFormatUtil.SCREEN_POS)
+			.add("vColor", BlazeDhVertexFormatUtil.RGBA_FLOAT_COLOR)
 			.build();
 		
 		//int breakpointOne = 0;

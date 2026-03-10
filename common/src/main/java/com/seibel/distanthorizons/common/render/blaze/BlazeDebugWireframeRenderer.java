@@ -32,8 +32,8 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
-import com.seibel.distanthorizons.common.render.blaze.util.DhBlazeVertexFormatUtil;
+import com.seibel.distanthorizons.common.render.blaze.util.BlazeUniformUtil;
+import com.seibel.distanthorizons.common.render.blaze.util.BlazeDhVertexFormatUtil;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -135,7 +135,7 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	private void createPipelines()
 	{
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", DhBlazeVertexFormatUtil.FLOAT_XYZ_POS)
+			.add("vPosition", BlazeDhVertexFormatUtil.FLOAT_XYZ_POS)
 			.build();
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
@@ -283,7 +283,7 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 				.get()
 			;
 			
-			this.uniformBuffer = UniformHandler.createBuffer("uniformBlock", uniformBufferSize, this.uniformBuffer);
+			this.uniformBuffer = BlazeUniformUtil.createBuffer("uniformBlock", uniformBufferSize, this.uniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.uniformBuffer, 0, uniformBufferSize);
 			
 			commandEncoder.writeToBuffer(bufferSlice, buffer);

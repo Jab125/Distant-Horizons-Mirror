@@ -35,13 +35,11 @@ import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderPass;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.VertexFormat;
-import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer;
-import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
-import com.seibel.distanthorizons.common.render.blaze.helpers.UniformHandler;
+import com.seibel.distanthorizons.common.render.blaze.util.BlazeUniformUtil;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -199,7 +197,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 				.get()
 			;
 			
-			this.fragUniformBuffer = UniformHandler.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
+			this.fragUniformBuffer = BlazeUniformUtil.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
@@ -236,7 +234,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 				.get()
 			;
 			
-			this.applyFragUniformBuffer = UniformHandler.createBuffer("applyFragUniformBlock", uniformBufferSize, this.applyFragUniformBuffer);
+			this.applyFragUniformBuffer = BlazeUniformUtil.createBuffer("applyFragUniformBlock", uniformBufferSize, this.applyFragUniformBuffer);
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.applyFragUniformBuffer, 0, uniformBufferSize);
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);

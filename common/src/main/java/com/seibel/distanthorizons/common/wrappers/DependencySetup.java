@@ -22,7 +22,7 @@ package com.seibel.distanthorizons.common.wrappers;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderApi;
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderObjectFactory;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhRenderApiDefinition;
-import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhRenderApiDefinition;
+import com.seibel.distanthorizons.common.render.openGl.GlDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.render.renderer.GenericRenderObjectFactory;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
@@ -97,7 +97,7 @@ public class DependencySetup
 		AbstractDhRenderApiDefinition renderDefinition;
 		if (renderingApiEnum == EDhApiRenderApi.OPEN_GL)
 		{
-			renderDefinition = new OpenGlDhRenderApiDefinition();
+			renderDefinition = new GlDhRenderApiDefinition();
 		}
 		else if (renderingApiEnum == EDhApiRenderApi.BLAZE_3D)
 		{
