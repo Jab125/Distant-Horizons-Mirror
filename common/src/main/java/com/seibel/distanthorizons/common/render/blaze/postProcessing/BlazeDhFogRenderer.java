@@ -337,7 +337,7 @@ public class BlazeDhFogRenderer implements IDhFogRenderer
 			/*depthTexture*/ null, 
 			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			renderPass.bindTexture("uDhDepthTexture", this.fogColorTextureWrapper.textureView, this.fogColorTextureWrapper.textureSampler);
+			renderPass.bindTexture("uDhDepthTexture", BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureSampler);
 			
 			renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
 			
