@@ -58,7 +58,7 @@ import java.util.OptionalInt;
 /** Renders SSAO to the DH LODs. */
 public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 {
-	public static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	

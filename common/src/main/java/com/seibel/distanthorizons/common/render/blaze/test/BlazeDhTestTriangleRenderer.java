@@ -47,14 +47,14 @@ import java.util.OptionalInt;
  * to the center of the screen to confirm DH's
  * apply shader is running correctly
  */
-public class BlazeDhTestRenderer implements IDhTestTriangleRenderer
+public class BlazeDhTestTriangleRenderer implements IDhTestTriangleRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
-	public static final BlazeDhTestRenderer INSTANCE = new BlazeDhTestRenderer();
+	public static final BlazeDhTestTriangleRenderer INSTANCE = new BlazeDhTestTriangleRenderer();
 	
 	private RenderPipeline pipeline;
 	private boolean init = false;
@@ -70,7 +70,7 @@ public class BlazeDhTestRenderer implements IDhTestTriangleRenderer
 	//=============//
 	//region
 	
-	private BlazeDhTestRenderer() { }
+	private BlazeDhTestTriangleRenderer() { }
 	
 	private void tryInit()
 	{

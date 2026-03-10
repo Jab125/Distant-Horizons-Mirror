@@ -19,21 +19,19 @@
 
 package com.seibel.distanthorizons.common.wrappers;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderApi;
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderObjectFactory;
-import com.seibel.distanthorizons.common.render.blaze.BlazeDebugWireframeRenderer;
-import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
-import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFarFadeRenderer;
-import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhFogRenderer;
-import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhSsaoRenderer;
-import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeVanillaFadeRenderer;
-import com.seibel.distanthorizons.common.render.blaze.test.BlazeDhTestRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhRenderApiDefinition;
+import com.seibel.distanthorizons.common.render.nativeGl.OpenGlDhRenderApiDefinition;
 import com.seibel.distanthorizons.common.render.nativeGl.generic.GenericRenderObjectFactory;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftServerWrapper;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.level.IKeyedClientLevelManager;
-import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.IConfigGui;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftClientWrapper;
@@ -44,7 +42,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.*;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 
 /**
  * Binds all necessary dependencies, so we
@@ -58,6 +56,9 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.*;
  */
 public class DependencySetup
 {
+	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	
+	
 	
 	public static void createSharedBindings()
 	{
@@ -77,18 +78,38 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IMinecraftSharedWrapper.class, MinecraftClientWrapper.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMinecraftRenderWrapper.class, MinecraftRenderWrapper.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IConfigGui.class, ClassicConfigGUI.CONFIG_CORE_INTERFACE);
-		
-		SingletonInjector.INSTANCE.bind(AbstractDebugWireframeRenderer.class, BlazeDebugWireframeRenderer.INSTANCE);
 	}
 	
-	public static void createRenderBindings()
+	public static void setRenderingApiBindings()
 	{
-		SingletonInjector.INSTANCE.bind(IDhTestTriangleRenderer.class, BlazeDhTestRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IDhVanillaFadeRenderer.class, BlazeVanillaFadeRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IDhTerrainRenderer.class, BlazeDhTerrainRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IDhSsaoRenderer.class, BlazeDhSsaoRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IDhFogRenderer.class, BlazeDhFogRenderer.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IDhFarFadeRenderer.class, BlazeDhFarFadeRenderer.INSTANCE);
+		EDhApiRenderApi renderingApiEnum = Config.Client.Advanced.Graphics.Experimental.renderingApi.get();
+		if (renderingApiEnum == EDhApiRenderApi.AUTO)
+		{
+			#if MC_VER < MC_1_21_11
+			renderingApiEnum = EDhApiRenderApi.OPEN_GL;
+			#else
+			renderingApiEnum = EDhApiRenderApi.BLAZE_3D;
+			#endif
+		}
+		
+		LOGGER.info("Setting DH Rendering API to: ["+renderingApiEnum+"].");
+		
+		AbstractDhRenderApiDefinition renderDefinition;
+		if (renderingApiEnum == EDhApiRenderApi.OPEN_GL)
+		{
+			renderDefinition = new OpenGlDhRenderApiDefinition();
+		}
+		else if (renderingApiEnum == EDhApiRenderApi.BLAZE_3D)
+		{
+			renderDefinition = new BlazeDhRenderApiDefinition();
+		}
+		else
+		{
+			throw new IllegalStateException("No ["+ AbstractDhRenderApiDefinition.class.getSimpleName()+"] concrete implementation found for the value: ["+renderingApiEnum+"].");
+		}
+		renderDefinition.bindRenderers();
 	}
+	
+	
 	
 }

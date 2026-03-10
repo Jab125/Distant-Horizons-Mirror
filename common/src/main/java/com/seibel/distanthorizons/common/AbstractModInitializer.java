@@ -18,8 +18,6 @@ import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.jar.ModJarInfo;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLProxy;
-import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
@@ -47,6 +45,7 @@ public abstract class AbstractModInitializer
 	//==================//
 	// abstract methods //
 	//==================//
+	//region
 	
 	protected abstract void createInitialSharedBindings();
 	protected abstract void createInitialClientBindings();
@@ -60,15 +59,17 @@ public abstract class AbstractModInitializer
 	protected abstract void subscribeServerStartingEvent(Consumer<MinecraftServer> eventHandler);
 	protected abstract void runDelayedSetup();
 	
+	//endregion
+	
 	
 	
 	//===================//
 	// initialize events //
 	//===================//
+	//region
 	
 	public void onInitializeClient()
 	{
-		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread(() -> { DependencySetup.createRenderBindings(); });
 		DependencySetup.createClientBindings();
 		this.createInitialClientBindings();
 		
@@ -96,6 +97,7 @@ public abstract class AbstractModInitializer
 		#endif
 		
 		this.subscribeClientStartedEvent(this::postInit);
+		this.subscribeClientStartedEvent(this::postClientInit);
 	}
 	
 	public void onInitializeServer()
@@ -135,11 +137,14 @@ public abstract class AbstractModInitializer
 		});
 	}
 	
+	//endregion
+	
 	
 	
 	//===========================//
 	// inner initializer methods //
 	//===========================//
+	//region
 	
 	private void startup()
 	{
@@ -212,11 +217,16 @@ public abstract class AbstractModInitializer
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterDhInitEvent.class, null);
 	}
 	
+	private void postClientInit() { DependencySetup.setRenderingApiBindings(); }
+	
+	//endregion
+	
 	
 	
 	//==================================//
 	// mod partial compatibility checks //
 	//==================================//
+	//region
 	
 	/** 
 	 * Some mods will work with a few tweaks
@@ -305,15 +315,22 @@ public abstract class AbstractModInitializer
 		
 	}
 	
+	//endregion
+	
 	
 	
 	//================//
 	// helper classes //
 	//================//
+	//region
 	
 	public interface IEventProxy
 	{
 		void registerEvents();
 	}
+	
+	//endregion
+	
+	
 	
 }

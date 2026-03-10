@@ -24,18 +24,16 @@ import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 import com.seibel.distanthorizons.api.interfaces.override.worldGenerator.IDhApiWorldGenerator;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.interfaces.factories.IDhApiWrapperFactory;
-import com.seibel.distanthorizons.common.render.blaze.BlazeDhGenericObjectRenderer;
-import com.seibel.distanthorizons.common.render.blaze.helpers.BlazeGenericObjectVertexContainer;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeLodUniformBufferWrapper;
-import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVertexBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
@@ -66,6 +64,28 @@ import java.io.IOException;
 public class WrapperFactory implements IWrapperFactory
 {
 	public static final WrapperFactory INSTANCE = new WrapperFactory();
+	
+	
+	
+	//=====================//
+	// internal properties //
+	//=====================//
+	//region
+	
+	private AbstractDhRenderApiDefinition renderDefinition;
+	private AbstractDhRenderApiDefinition getRenderDefinition()
+	{
+		// delayed get to make sure we don't accidentally set the variable before it's bound
+		if (this.renderDefinition != null)
+		{
+			return this.renderDefinition;
+		}
+		
+		this.renderDefinition = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
+		return this.renderDefinition;
+	}
+	
+	//endregion
 	
 	
 	
@@ -219,16 +239,10 @@ public class WrapperFactory implements IWrapperFactory
 	}
 	
 	
-	@Override
-	public IVertexBufferWrapper createVboWrapper(String name) { return new BlazeVertexBufferWrapper(name); }
-	@Override
-	public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new BlazeLodUniformBufferWrapper(); }
-	
-	@Override
-	public IDhGenericObjectVertexBufferContainer createInstancedVboContainer() { return new BlazeGenericObjectVertexContainer(); }
-	
-	@Override
-	public IDhGenericRenderer createGenericRenderer() { return new BlazeDhGenericObjectRenderer(); }
+	@Override public IVertexBufferWrapper createVboWrapper(String name) { return this.getRenderDefinition().createVboWrapper(name); }
+	@Override public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return this.getRenderDefinition().createLodContainerUniformWrapper(); }
+	@Override public IDhGenericObjectVertexBufferContainer createGenericObjectVboContainer() { return this.getRenderDefinition().createGenericVboContainer(); }
+	@Override public IDhGenericRenderer createGenericRenderer() { return this.getRenderDefinition().createGenericRenderer(); }
 	
 	//endregion
 	

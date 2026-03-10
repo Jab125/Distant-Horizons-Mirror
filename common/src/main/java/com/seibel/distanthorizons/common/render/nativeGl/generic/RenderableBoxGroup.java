@@ -67,9 +67,9 @@ public class RenderableBoxGroup
 	public Consumer<DhApiRenderParam> afterRenderFunc;
 	
 	// instance data
-	public IDhGenericObjectVertexBufferContainer vertexBufferContainer = WRAPPER_FACTORY.createInstancedVboContainer();
+	public IDhGenericObjectVertexBufferContainer vertexBufferContainer = WRAPPER_FACTORY.createGenericObjectVboContainer();
 	/** double buffering for thread safety and to prevent locking the render thread during update */
-	private IDhGenericObjectVertexBufferContainer altVertexBufferContainer = WRAPPER_FACTORY.createInstancedVboContainer();
+	private IDhGenericObjectVertexBufferContainer altVertexBufferContainer = WRAPPER_FACTORY.createGenericObjectVboContainer();
 	
 	
 	
