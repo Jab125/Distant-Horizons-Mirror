@@ -18,7 +18,21 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.*;
 
 public class BlazeDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 {
+	//=========//
+	// getters //
+	//=========//
+	//region
+	
 	public String getApiName() { return "Blaze3D"; }
+	
+	//endregion
+	
+	
+	
+	//============//
+	// singletons //
+	//============//
+	//region
 	
 	@Override public IDhMetaRenderer getMetaRenderer() { return BlazeDhMetaRenderer.INSTANCE; }
 	@Override public IDhTerrainRenderer getTerrainRenderer() { return BlazeDhTerrainRenderer.INSTANCE; }
@@ -30,12 +44,22 @@ public class BlazeDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	@Override public IDhVanillaFadeRenderer getVanillaFadeRenderer() { return BlazeVanillaFadeRenderer.INSTANCE; }
 	@Override public IDhTestTriangleRenderer getTestTriangleRenderer() { return BlazeDhTestTriangleRenderer.INSTANCE; }
 	
-	@Override public IDhGenericRenderer createGenericRenderer() { return new BlazeDhGenericObjectRenderer(); }
+	//endregion
 	
+	
+	
+	//===========//
+	// factories //
+	//===========//
+	//region
+	
+	@Override public IDhGenericRenderer createGenericRenderer() { return new BlazeDhGenericObjectRenderer(); }
 	
 	@Override public IVertexBufferWrapper createVboWrapper(String name) { return new BlazeVertexBufferWrapper(name); }
 	@Override public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new BlazeLodUniformBufferWrapper(); }
 	@Override public IDhGenericObjectVertexBufferContainer createGenericVboContainer() { return new BlazeGenericObjectVertexContainer(); }
+	
+	//endregion
 	
 	
 	

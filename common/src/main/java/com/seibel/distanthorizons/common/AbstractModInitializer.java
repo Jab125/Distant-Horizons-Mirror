@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.common;
 
 import com.mojang.brigadier.CommandDispatcher;
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderApi;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeDhInitEvent;
 import com.seibel.distanthorizons.common.commands.CommandInitializer;
@@ -18,6 +19,10 @@ import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.jar.ModJarInfo;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.NativeDialogUtil;
+import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
@@ -244,6 +249,7 @@ public abstract class AbstractModInitializer
 		
 		
 		// Alex's caves
+		//region
 		if (modChecker.isModLoaded("alexscaves"))
 		{
 			// There've been a few reports about this mod breaking DH at a few different points in time
@@ -260,8 +266,10 @@ public abstract class AbstractModInitializer
 			
 			LOGGER.warn(startingString + "[Alex's Caves] may require some config changes in order to render Distant Horizons correctly.");
 		}
+		//endregion
 		
 		// William Wythers' Overhauled Overworld (WWOO)
+		//region
 		if (modChecker.isModLoaded("wwoo"))
 		{
 			// WWOO has a bug with it's world gen that can't be fixed by DH or WWOO
@@ -282,8 +290,11 @@ public abstract class AbstractModInitializer
 			
 			LOGGER.warn(startingString + "[WWOO] "+ wwooWarning);
 		}
+		//endregion
 		
-		// Chunky
+		// Chunky //
+		//region
+		
 		boolean chunkyPresent = false;
 		try
 		{
@@ -312,6 +323,38 @@ public abstract class AbstractModInitializer
 			
 			LOGGER.warn(startingString + "[Chunky] "+ chunkyWarning);
 		}
+		
+		//endregion
+		
+		// iris //
+		//region
+		
+		IIrisAccessor iris = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
+		if (iris != null)
+		{
+			// get the currently selected rendering API
+			EDhApiRenderApi renderApi = Config.Client.Advanced.Graphics.Experimental.renderingApi.get();
+			if (renderApi == EDhApiRenderApi.AUTO)
+			{
+				IVersionConstants versionConstants = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+				renderApi = versionConstants.getDefaultRenderer();
+			}
+			
+			// Iris only supports nataive OpenGL
+			if (renderApi != EDhApiRenderApi.OPEN_GL)
+			{
+				String irisUnsupportedMessage = "Iris doesn't support DH when using the ["+EDhApiRenderApi.BLAZE_3D+"] rendering API, please change it to ["+EDhApiRenderApi.OPEN_GL+"] in DH's config file.";
+				LOGGER.fatal(irisUnsupportedMessage);
+				NativeDialogUtil.showDialog(ModInfo.READABLE_NAME, irisUnsupportedMessage, "ok", "error");
+				
+				IMinecraftClientWrapper mc = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+				String errorMessage = "loading Distant Horizons. "+irisUnsupportedMessage;
+				String exceptionError = "Distant Horizons conditional mod config Exception";
+				mc.crashMinecraft(errorMessage, new Exception(exceptionError));
+			}
+		}
+		
+		//endregion
 		
 	}
 	

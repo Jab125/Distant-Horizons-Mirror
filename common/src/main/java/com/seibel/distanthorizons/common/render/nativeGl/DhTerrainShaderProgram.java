@@ -19,18 +19,14 @@
 
 package com.seibel.distanthorizons.common.render.nativeGl;
 
-import com.seibel.distanthorizons.api.enums.rendering.EDhApiRenderPass;
-import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiFramebuffer;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.*;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
-import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiTextureCreatedParam;
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLProxy;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.QuadElementBuffer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.shader.ShaderProgram;
-import com.seibel.distanthorizons.common.render.nativeGl.glObject.texture.*;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.AbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexAttributePostGL43;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.vertexAttribute.VertexAttributePreGL43;
@@ -42,23 +38,19 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
 import com.seibel.distanthorizons.core.util.math.Vec3f;
 import com.seibel.distanthorizons.core.util.objects.SortedArraySet;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTerrainRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
-import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import org.lwjgl.opengl.GL32;
 
 /**
@@ -330,7 +322,20 @@ public class DhTerrainShaderProgram extends ShaderProgram implements IDhApiShade
 			for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
 			{
 				LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
-				this.setShaderProgramMvmOffset(bufferContainer.minCornerBlockPos, OpenGlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame, renderEventParam);
+				
+				// set uniforms
+				{
+					Vec3d camPos = renderEventParam.exactCameraPosition;
+					Vec3f modelPos = new Vec3f(
+						(float) (bufferContainer.minCornerBlockPos.getX() - camPos.x),
+						(float) (bufferContainer.minCornerBlockPos.getY() - camPos.y),
+						(float) (bufferContainer.minCornerBlockPos.getZ() - camPos.z));
+					
+					OpenGlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame.bind();
+					OpenGlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame.setModelOffsetPos(modelPos);
+					
+					ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
+				}
 				
 				IVertexBufferWrapper[] vertexBuffers = (opaquePass ? bufferContainer.vbos : bufferContainer.vbosTransparent);
 				for (int vboIndex = 0; vboIndex < vertexBuffers.length; vboIndex++)
@@ -370,24 +375,6 @@ public class DhTerrainShaderProgram extends ShaderProgram implements IDhApiShade
 			GLMC.enableFaceCulling();
 		}
 		
-	}
-	
-	/**
-	 * the MVM offset is needed so LODs can be rendered anywhere in the MC world
-	 * without running into floating point percision loss.
-	 */
-	private void setShaderProgramMvmOffset(DhBlockPos pos, IDhApiShaderProgram shaderProgram, RenderParams renderEventParam) throws IllegalStateException
-	{
-		Vec3d camPos = renderEventParam.exactCameraPosition;
-		Vec3f modelPos = new Vec3f(
-			(float) (pos.getX() - camPos.x),
-			(float) (pos.getY() - camPos.y),
-			(float) (pos.getZ() - camPos.z));
-		
-		shaderProgram.bind();
-		shaderProgram.setModelOffsetPos(modelPos);
-		
-		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
 	}
 	
 	//endregion

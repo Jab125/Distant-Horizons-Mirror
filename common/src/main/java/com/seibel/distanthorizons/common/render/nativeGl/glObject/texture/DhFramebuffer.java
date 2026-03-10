@@ -10,7 +10,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 {
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	
-	private final Int2IntMap attachments;
 	private int id;
 	
 	
@@ -18,27 +17,21 @@ public class DhFramebuffer implements IDhApiFramebuffer
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
-	public DhFramebuffer() 
-	{
-		this.id = GL32.glGenFramebuffers();
-
-		this.attachments = new Int2IntArrayMap();
-	}
+	public DhFramebuffer() { this.id = GL32.glGenFramebuffers(); }
 
 	/** For internal use by Iris, do not remove. */
-	public DhFramebuffer(int id) 
-	{
-		this.id = id;
-		
-		this.attachments = new Int2IntArrayMap();
-	}
+	public DhFramebuffer(int id) { this.id = id; }
+	
+	//endregion
 	
 	
 	
 	//=========//
 	// methods //
 	//=========//
+	//region
 	
 	@Override
 	public void addDepthAttachment(int textureId, boolean isCombinedStencil) 
@@ -55,7 +48,6 @@ public class DhFramebuffer implements IDhApiFramebuffer
 		this.bind();
 		
 		GL32.glFramebufferTexture2D(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0 + textureIndex, GL32.GL_TEXTURE_2D, textureId, 0);
-		this.attachments.put(textureIndex, textureId);
 	}
 
 	@Override
@@ -86,12 +78,19 @@ public class DhFramebuffer implements IDhApiFramebuffer
 	@Override
 	public int getId() { return this.id; }
 	
+	//endregion
+	
 	
 	
 	//=============//
 	// API methods //
 	//=============//
+	//region
 	
 	public boolean overrideThisFrame() { return true; }
+	
+	//endregion
+	
+	
 	
 }

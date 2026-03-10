@@ -7,30 +7,19 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.*;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiTextureCreatedParam;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.GLProxy;
-import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.buffer.QuadElementBuffer;
 import com.seibel.distanthorizons.common.render.nativeGl.glObject.texture.*;
 import com.seibel.distanthorizons.common.render.nativeGl.postProcessing.apply.DhApplyShader;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
-import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
+import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
 import com.seibel.distanthorizons.core.render.RenderParams;
-import com.seibel.distanthorizons.core.util.ColorUtil;
-import com.seibel.distanthorizons.core.util.math.Vec3d;
-import com.seibel.distanthorizons.core.util.math.Vec3f;
-import com.seibel.distanthorizons.core.util.objects.SortedArraySet;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.AbstractOptifineAccessor;
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhMetaRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
@@ -90,7 +79,7 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 	{
 		boolean firstPass =
 			(renderParams.renderPass == EDhApiRenderPass.OPAQUE
-				|| renderParams.renderPass == EDhApiRenderPass.OPAQUE_AND_TRANSPARENT);
+			|| renderParams.renderPass == EDhApiRenderPass.OPAQUE_AND_TRANSPARENT);
 		
 		if (!this.renderObjectsCreated)
 		{
@@ -132,7 +121,7 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 		{
 			framebuffer = framebufferOverride;
 		}
-		this.activeFramebufferId = framebuffer.getId();
+		this.setActiveFramebufferId(framebuffer.getId());
 		framebuffer.bind();
 		
 		
@@ -192,16 +181,19 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 		
 		
 		// set the active textures
-		this.activeDepthTextureId = this.depthTexture.getTextureId();
+		int depthTextureId = this.depthTexture.getTextureId();
+		this.setActiveDepthTextureId(depthTextureId);
 		
 		if (this.nullableColorTexture != null)
 		{
-			this.activeColorTextureId = this.nullableColorTexture.getTextureId();
+			int colorTextureId = this.nullableColorTexture.getTextureId();
+			this.setActiveColorTextureId(colorTextureId);
 		}
 		else
 		{
 			// get MC's color texture 
-			this.activeColorTextureId = GL32.glGetFramebufferAttachmentParameteri(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME);
+			int colorTextureId = GL32.glGetFramebufferAttachmentParameteri(GL32.GL_FRAMEBUFFER, GL32.GL_COLOR_ATTACHMENT0, GL32.GL_FRAMEBUFFER_ATTACHMENT_OBJECT_NAME);
+			this.setActiveColorTextureId(colorTextureId);
 		}
 		
 		
@@ -432,12 +424,23 @@ public class OpenGlDhMetaRenderer implements IDhMetaRenderer
 	//===============//
 	//region
 	
+	public void setActiveFramebufferId(int id) { this.activeFramebufferId = id; }
 	/** @return -1 if no frame buffer has been bound yet */
 	public int getActiveFramebufferId() { return this.activeFramebufferId; }
 	
+	public void setActiveColorTextureId(int id)
+	{
+		this.activeColorTextureId = id;
+		DhApiRenderProxy.activeOpenGlDhColorTextureId = id;
+	}
 	/** @return -1 if no texture has been bound yet */
 	public int getActiveColorTextureId() { return this.activeColorTextureId; }
 	
+	public void setActiveDepthTextureId(int id)
+	{
+		this.activeDepthTextureId = id;
+		DhApiRenderProxy.activeOpenGlDhDepthTextureId = id;
+	}
 	/** @return -1 if no texture has been bound yet */
 	public int getActiveDepthTextureId() { return this.activeDepthTextureId; }
 	

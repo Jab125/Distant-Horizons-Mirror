@@ -18,11 +18,24 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.*;
 
 public class OpenGlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 {
+	//=========//
+	// getters //
+	//=========//
+	//region
 	
 	public String getApiName() { return "OpenGL"; }
 	
+	//endregion
+	
+	
+	
+	//============//
+	// singletons //
+	//============//
+	//region
+	
 	@Override public IDhMetaRenderer getMetaRenderer() { return OpenGlDhMetaRenderer.INSTANCE; }
-	@Override public IDhTerrainRenderer getTerrainRenderer() { return DhTerrainShaderProgram.INSTANCE; } // TODO how to support Iris?
+	@Override public IDhTerrainRenderer getTerrainRenderer() { return DhTerrainShaderProgram.INSTANCE; }
 	@Override public IDhSsaoRenderer getSsaoRenderer() { return DhSSAORenderer.INSTANCE; }
 	@Override public IDhFogRenderer getFogRenderer() { return DhFogRenderer.INSTANCE; }
 	@Override public IDhFarFadeRenderer getFarFadeRenderer() { return DhFarFadeRenderer.INSTANCE; }
@@ -31,12 +44,22 @@ public class OpenGlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	@Override public IDhVanillaFadeRenderer getVanillaFadeRenderer() { return VanillaFadeRenderer.INSTANCE; }
 	@Override public IDhTestTriangleRenderer getTestTriangleRenderer() { return GlTestTriangleRenderer.INSTANCE; }
 	
-	@Override public IDhGenericRenderer createGenericRenderer() { return OpenGlGenericObjectRenderer.INSTANCE; }
+	//endregion
 	
+	
+	
+	//===========//
+	// factories //
+	//===========//
+	//region
+	
+	@Override public IDhGenericRenderer createGenericRenderer() { return OpenGlGenericObjectRenderer.INSTANCE; }
 	
 	@Override public IVertexBufferWrapper createVboWrapper(String name) { return new GLVertexBuffer(); }
 	@Override public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new OpenGlDummyUniformData(); }
 	@Override public IDhGenericObjectVertexBufferContainer createGenericVboContainer() { return new OpenGlGenericObjectVertexContainer(); }
+	
+	//endregion
 	
 	
 	
