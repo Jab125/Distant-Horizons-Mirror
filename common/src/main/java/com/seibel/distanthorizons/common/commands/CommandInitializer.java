@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.commands;
 
+#if MC_VER > MC_1_12_2
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
@@ -82,3 +83,4 @@ public class CommandInitializer
 	}
 	
 }
+#endif

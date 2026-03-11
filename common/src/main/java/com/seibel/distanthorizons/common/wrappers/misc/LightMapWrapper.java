@@ -19,7 +19,9 @@
 
 package com.seibel.distanthorizons.common.wrappers.misc;
 
+#if MC_VER > MC_1_12_2
 import com.mojang.blaze3d.platform.NativeImage;
+#endif
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
@@ -38,7 +40,10 @@ public class LightMapWrapper implements ILightMapWrapper
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	private int textureId = 0;
-	
+	#if MC_VER <= MC_1_12_2
+	private int lastTextureId = 0;
+	private int lastTextureUnit = GL32.GL_TEXTURE0;
+	#endif
 	
 	
 	//==============//
@@ -57,6 +62,7 @@ public class LightMapWrapper implements ILightMapWrapper
 	//==================//
 	//region
 	
+	#if MC_VER > MC_1_12_2
 	public void uploadLightmap(NativeImage image)
 	{
 		#if MC_VER < MC_1_21_3
@@ -92,6 +98,7 @@ public class LightMapWrapper implements ILightMapWrapper
 		throw new UnsupportedOperationException("setLightmapId should be used for MC versions after 1.21.3");
 		#endif
 	}
+	#endif
 	
 	public void setLightmapId(int minecraftLightmapTextureId)
 	{
@@ -111,12 +118,27 @@ public class LightMapWrapper implements ILightMapWrapper
 	@Override
 	public void bind()
 	{
+		#if MC_VER <= MC_1_12_2
+		//1.12.2 If we don't bind MC texture back vanilla rendering will break
+		lastTextureUnit = GL32.glGetInteger(GL32.GL_ACTIVE_TEXTURE);
 		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + ILightMapWrapper.BOUND_INDEX);
+		lastTextureId = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
+		#else
+		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + ILightMapWrapper.BOUND_INDEX);
+		#endif
 		GLMC.glBindTexture(this.textureId);
 	}
 	
 	@Override
-	public void unbind() { GLMC.glBindTexture(0); }
+	public void unbind()
+	{
+		#if MC_VER <= MC_1_12_2
+		GLMC.glBindTexture(lastTextureId);
+		GLMC.glActiveTexture(lastTextureUnit);
+		#else
+		GLMC.glBindTexture(0); 
+		#endif
+	}
 	
 	//endregion
 	

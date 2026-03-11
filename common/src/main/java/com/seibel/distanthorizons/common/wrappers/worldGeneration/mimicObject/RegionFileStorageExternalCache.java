@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject;
 
+#if MC_VER > MC_1_12_2
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling.ChunkFileReader;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import net.minecraft.nbt.CompoundTag;
@@ -245,3 +246,4 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 	}
 	
 }
+#endif

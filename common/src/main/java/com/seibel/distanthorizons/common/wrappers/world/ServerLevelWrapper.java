@@ -38,18 +38,24 @@ import com.seibel.distanthorizons.core.world.EWorldEnvironment;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
+#if MC_VER <= MC_1_12_2
+
+#else
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkSource;
+#endif
 
-#if MC_VER <= MC_1_20_4
+#if MC_VER <= MC_1_12_2
+#elif MC_VER <= MC_1_20_4
 import net.minecraft.world.level.chunk.ChunkStatus;
 #else
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 #endif
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import net.minecraft.world.WorldServer;
 import org.jetbrains.annotations.Nullable;
 
 public class ServerLevelWrapper implements IServerLevelWrapper
@@ -59,9 +65,9 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	 * weak references are to prevent rare issues
 	 * where, upon world closure, some levels aren't shutdown/removed properly
 	 */
-	private static final Map<ServerLevel, WeakReference<ServerLevelWrapper>> LEVEL_WRAPPER_REF_BY_SERVER_LEVEL = Collections.synchronizedMap(new WeakHashMap<>());
+	private static final Map<#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif, WeakReference<ServerLevelWrapper>> LEVEL_WRAPPER_REF_BY_SERVER_LEVEL = Collections.synchronizedMap(new WeakHashMap<>());
 	
-	private final ServerLevel level;
+	private final #if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif level;
 	private IDhLevel dhLevel;
 	
 	/** 
@@ -76,7 +82,7 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	// constructors //
 	//==============//
 	
-	public static ServerLevelWrapper getWrapper(ServerLevel level) 
+	public static ServerLevelWrapper getWrapper(#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif level) 
 	{
 		return LEVEL_WRAPPER_REF_BY_SERVER_LEVEL.compute(level, (newLevel, levelRef) ->
 		{
@@ -93,7 +99,7 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 		}).get();
 	}
 	
-	public ServerLevelWrapper(ServerLevel level) 
+	public ServerLevelWrapper(#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif level) 
 	{ 
 		this.level = level;
 		this.KeyedLevelDimensionName = this.createKeyedLevelDimensionName();
@@ -108,7 +114,9 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	@Override
 	public File getMcSaveFolder() 
 	{ 
-		#if MC_VER < MC_1_21_3
+		#if MC_VER <= MC_1_12_2
+		return new File(this.level.getChunkSaveLocation(), "data");
+		#elif MC_VER < MC_1_21_3
 		return this.level.getChunkSource().getDataStorage().dataFolder;
 		#else
 		return this.level.getChunkSource().getDataStorage().dataFolder.toFile();
@@ -157,7 +165,9 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 		{
 			// We use the overworld since it's the only dimension that is stored in the server root folder
 			
-			#if MC_VER >= MC_1_21_3
+			#if MC_VER <= MC_1_12_2
+			return this.level.getMinecraftServer().getWorld(0).getSaveHandler().getWorldDirectory().getParentFile().getName();
+			#elif MC_VER >= MC_1_21_3
 			return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParent().getFileName().toString();
 			#else // <= 1.21.3
 			return this.level.getServer().getLevel(Level.OVERWORLD).getChunkSource().getDataStorage().dataFolder.getParentFile().getName();
@@ -174,7 +184,9 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	@Override
 	public DimensionTypeWrapper getDimensionType() 
 	{
-		#if MC_VER <= MC_1_21_10
+		#if MC_VER <= MC_1_12_2
+		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.provider.getDimensionType());
+		#elif MC_VER <= MC_1_21_10
 		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType());
 		#else
 		return DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType(), this.getDimensionName());
@@ -184,7 +196,9 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	@Override
 	public String getDimensionName()
 	{
-		#if MC_VER <= MC_1_21_10
+		#if MC_VER <= MC_1_12_2
+		return this.level.provider.getDimensionType().getName();
+		#elif MC_VER <= MC_1_21_10
 		return this.level.dimension().location().toString();
 		#else
 		return this.level.dimension().identifier().toString();
@@ -192,7 +206,14 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	}
 	
 	@Override
-	public long getHashedSeed() { return this.level.getBiomeManager().biomeZoomSeed; }
+	public long getHashedSeed()
+	{
+		#if MC_VER <= MC_1_12_2
+		return this.level.getSeed();
+		#else
+		return this.level.getBiomeManager().biomeZoomSeed;
+		#endif
+	}
 	
 	@Override
 	public String getDhIdentifier() { return this.getDimensionName(); }
@@ -200,13 +221,28 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	@Override
 	public EDhApiLevelType getLevelType() { return EDhApiLevelType.SERVER_LEVEL; }
 	
-	public ServerLevel getLevel() { return this.level; }
+	public #if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif getLevel() { return this.level; }
 	
 	@Override
-	public boolean hasCeiling() { return this.level.dimensionType().hasCeiling(); }
+	public boolean hasCeiling()
+	{
+		#if MC_VER <= MC_1_12_2
+		// 1.12.2 has no hasCeiling() - only the nether has a ceiling in vanilla
+		return this.level.provider.isNether();
+		#else
+		return this.level.dimensionType().hasCeiling();
+		#endif
+	}
 	
 	@Override
-	public boolean hasSkyLight() { return this.level.dimensionType().hasSkyLight(); }
+	public boolean hasSkyLight()
+	{
+		#if MC_VER <= MC_1_12_2
+		return this.level.provider.hasSkyLight();
+		#else
+		return this.level.dimensionType().hasSkyLight();
+		#endif
+	}
 	
 	@Override
 	public int getMaxHeight() { return this.level.getHeight(); }
@@ -224,7 +260,7 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	}
 	
 	@Override
-	public ServerLevel getWrappedMcObject() { return this.level; }
+	public #if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif getWrappedMcObject() { return this.level; }
 	
 	@Override
 	public void onUnload() { LEVEL_WRAPPER_REF_BY_SERVER_LEVEL.remove(this.level); }

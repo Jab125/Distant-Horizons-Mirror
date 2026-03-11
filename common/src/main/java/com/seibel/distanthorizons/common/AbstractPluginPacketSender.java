@@ -12,10 +12,17 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSende
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import io.netty.buffer.ByteBufUtil;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.PacketBuffer;
+#else
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.server.level.ServerPlayer;
+#endif
 
-#if MC_VER <= MC_1_21_10
+#if MC_VER <= MC_1_12_2
+import net.minecraft.util.ResourceLocation;
+#elif MC_VER <= MC_1_21_10
 import net.minecraft.resources.ResourceLocation;
 #else
 import net.minecraft.resources.Identifier;
@@ -31,7 +38,7 @@ public abstract class AbstractPluginPacketSender implements IPluginPacketSender
 			.build();
 	
 	#if MC_VER <= MC_1_20_6
-	public static final ResourceLocation WRAPPER_PACKET_RESOURCE = new ResourceLocation(ModInfo.RESOURCE_NAMESPACE, ModInfo.WRAPPER_PACKET_PATH);
+	public static final String WRAPPER_PACKET_RESOURCE = ModInfo.RESOURCE_NAMESPACE + ModInfo.WRAPPER_PACKET_PATH;
 	#elif  MC_VER <= MC_1_21_10
 	public static final ResourceLocation WRAPPER_PACKET_RESOURCE = ResourceLocation.fromNamespaceAndPath(ModInfo.RESOURCE_NAMESPACE, ModInfo.WRAPPER_PACKET_PATH);
 	#else
@@ -52,14 +59,14 @@ public abstract class AbstractPluginPacketSender implements IPluginPacketSender
 	@Override
 	public final void sendToClient(IServerPlayerWrapper serverPlayer, AbstractNetworkMessage message)
 	{
-		this.sendToClient((ServerPlayer) serverPlayer.getWrappedMcObject(), message);
+		this.sendToClient(#if MC_VER <= MC_1_12_2 (EntityPlayerMP) #else (ServerPlayer) #endif serverPlayer.getWrappedMcObject(), message);
 	}
-	public abstract void sendToClient(ServerPlayer serverPlayer, AbstractNetworkMessage message);
+	public abstract void sendToClient(#if MC_VER <= MC_1_12_2 EntityPlayerMP #else ServerPlayer #endif serverPlayer, AbstractNetworkMessage message);
 	
 	@Override
 	public abstract void sendToServer(AbstractNetworkMessage message);
 	
-	public AbstractNetworkMessage decodeMessage(FriendlyByteBuf in)
+	public AbstractNetworkMessage decodeMessage(#if MC_VER <= MC_1_12_2 PacketBuffer #else FriendlyByteBuf #endif in)
 	{
 		AbstractNetworkMessage message = null;
 		
@@ -100,7 +107,7 @@ public abstract class AbstractPluginPacketSender implements IPluginPacketSender
 		}
 	}
 	
-	public void encodeMessage(FriendlyByteBuf out, AbstractNetworkMessage message)
+	public void encodeMessage(#if MC_VER <= MC_1_12_2 PacketBuffer #else FriendlyByteBuf #endif out, AbstractNetworkMessage message)
 	{
 		// This is intentionally unhandled, because errors related to this are unlikely to appear in wild
 		Objects.requireNonNull(message);

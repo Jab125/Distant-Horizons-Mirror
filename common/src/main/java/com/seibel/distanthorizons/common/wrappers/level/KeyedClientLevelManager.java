@@ -3,7 +3,11 @@ package com.seibel.distanthorizons.common.wrappers.level;
 import com.seibel.distanthorizons.core.level.IServerKeyedClientLevel;
 import com.seibel.distanthorizons.core.level.IKeyedClientLevelManager;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.client.multiplayer.WorldClient;
+#else
 import net.minecraft.client.multiplayer.ClientLevel;
+#endif
 import org.jetbrains.annotations.Nullable;
 
 public class KeyedClientLevelManager implements IKeyedClientLevelManager
@@ -38,7 +42,7 @@ public class KeyedClientLevelManager implements IKeyedClientLevelManager
 	@Override
 	public IServerKeyedClientLevel setServerKeyedLevel(IClientLevelWrapper clientLevel, String serverKey, String levelKey)
 	{
-		IServerKeyedClientLevel keyedLevel = new ServerKeyedClientLevelWrapper((ClientLevel) clientLevel.getWrappedMcObject(), serverKey, levelKey);
+		IServerKeyedClientLevel keyedLevel = new ServerKeyedClientLevelWrapper(#if MC_VER <= MC_1_12_2 (WorldClient) #else (ClientLevel) #endif clientLevel.getWrappedMcObject(), serverKey, levelKey);
 		this.serverKeyedLevel = keyedLevel;
 		this.enabled = true;
 		return keyedLevel;

@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.commands;
 
+#if MC_VER > MC_1_12_2
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
@@ -105,3 +106,4 @@ public class PregenCommand extends AbstractCommand
 	}
 	
 }
+#endif

@@ -3,14 +3,18 @@ package com.seibel.distanthorizons.common.wrappers.gui;
 import com.seibel.distanthorizons.core.config.ConfigHandler;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.client.gui.GuiScreen;
+#else
 import net.minecraft.client.gui.screens.Screen;
+#endif
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
 public class GetConfigScreen
 {
 	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	public static Screen getScreen(Screen parent)
+	public static #if MC_VER <= MC_1_12_2 GuiScreen #else Screen #endif getScreen(#if MC_VER <= MC_1_12_2 GuiScreen #else Screen #endif parent)
 	{
 		if (ModInfo.IS_DEV_BUILD)
 		{

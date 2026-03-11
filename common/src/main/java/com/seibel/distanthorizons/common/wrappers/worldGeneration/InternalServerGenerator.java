@@ -22,6 +22,15 @@ import com.seibel.distanthorizons.core.util.TimerUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IC2meAccessor;
 import com.seibel.distanthorizons.coreapi.ModInfo;
+
+
+#if MC_VER <= MC_1_12_2
+import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.chunk.Chunk;
+import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraftforge.common.ForgeChunkManager;
+#else
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.TicketType;
@@ -32,6 +41,7 @@ import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ChunkStatus;
 #else
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+#endif
 #endif
 
 import java.util.*;
@@ -62,7 +72,9 @@ public class InternalServerGenerator
 	 */
 	private static final int MS_TO_IGNORE_CHUNK_AFTER_COMPLETION = 5_000;
 	
-	#if MC_VER < MC_1_21_5
+	#if MC_VER <= MC_1_12_2
+	public static ForgeChunkManager.Ticket DH_SERVER_GEN_TICKET = null;
+	#elif MC_VER < MC_1_21_5
 	private static final TicketType<ChunkPos> DH_SERVER_GEN_TICKET = TicketType.create("dh_server_gen_ticket", Comparator.comparingLong(ChunkPos::toLong));
 	#elif MC_VER < MC_1_21_9
 	private static final TicketType DH_SERVER_GEN_TICKET = new TicketType(/* timeout, 0 = disabled*/0L, /* persist */ false, TicketType.TicketUse.LOADING);
@@ -105,14 +117,14 @@ public class InternalServerGenerator
 			// create gen requests //
 			//=====================//
 			
-			ArrayList<CompletableFuture<ChunkAccess>> getChunkFutureList = new ArrayList<>();
+			ArrayList<CompletableFuture<#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif>> getChunkFutureList = new ArrayList<>();
 			{
 				Iterator<ChunkPos> chunkPosIterator = ChunkPosGenStream.getIterator(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 0);
 				while (chunkPosIterator.hasNext())
 				{
 					ChunkPos chunkPos = chunkPosIterator.next();
 					
-					CompletableFuture<ChunkAccess> requestChunkFuture =
+					CompletableFuture<#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif> requestChunkFuture =
 						this.requestChunkFromServerAsync(chunkPos)
 							// log errors if necessary
 							.whenCompleteAsync(
@@ -155,8 +167,8 @@ public class InternalServerGenerator
 			ArrayList<IChunkWrapper> chunkWrappers = new ArrayList<>();
 			for (int i = 0; i < getChunkFutureList.size(); i++)
 			{
-				CompletableFuture<ChunkAccess> getChunkFuture = getChunkFutureList.get(i);
-				ChunkAccess chunk = getChunkFuture.join();
+				CompletableFuture<#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif> getChunkFuture = getChunkFutureList.get(i);
+				#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif chunk = getChunkFuture.join();
 				if (chunk != null)
 				{
 					ChunkWrapper chunkWrapper = new ChunkWrapper(chunk, this.dhServerLevel.getLevelWrapper());
@@ -230,8 +242,50 @@ public class InternalServerGenerator
 			LOGGER.warn(c2meWarning);
 		}
 	}
-	private CompletableFuture<ChunkAccess> requestChunkFromServerAsync(ChunkPos chunkPos)
+	private CompletableFuture<#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif> requestChunkFromServerAsync(ChunkPos chunkPos)
 	{
+		#if MC_VER <= MC_1_12_2
+		WorldServer level = this.params.mcServerLevel;
+		
+		ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.params.dhServerLevel.getServerLevelWrapper());
+		if (updateManager != null)
+		{
+			updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+		}
+		
+		CompletableFuture<Chunk> future = new CompletableFuture<>();
+		level.getMinecraftServer().addScheduledTask(() ->
+		{
+			try
+			{
+				ChunkProviderServer provider = (ChunkProviderServer) level.getChunkProvider();
+				
+				// load neighbours first so the target chunk can fully populate
+				for (int i = -1; i <= 1; i++)
+				{
+					for (int j = -1; j <= 1; j++)
+					{
+						if (i != 0 || j != 0)
+						{
+							if (!provider.isChunkGeneratedAt(chunkPos.x + i, chunkPos.z + j))
+							{
+								provider.provideChunk(chunkPos.x + i, chunkPos.z + j);
+							}
+						}
+					}
+				}
+				
+				ForgeChunkManager.forceChunk(DH_SERVER_GEN_TICKET, chunkPos);
+				Chunk chunk = provider.provideChunk(chunkPos.x, chunkPos.z);
+				future.complete(chunk);
+			}
+			catch (Exception e)
+			{
+				future.completeExceptionally(e);
+			}
+		});
+		return future;
+		#else
 		return CompletableFuture.supplyAsync(() ->
 		{
 			ServerLevel level = this.params.mcServerLevel;
@@ -242,7 +296,7 @@ public class InternalServerGenerator
 			{
 				updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 			}
-			
+
 			#if MC_VER < MC_1_21_5
 			int chunkLevel = 33; // 33 is equivalent to FULL Chunk
 			level.getChunkSource().distanceManager.addTicket(DH_SERVER_GEN_TICKET, chunkPos, chunkLevel, chunkPos);
@@ -272,13 +326,46 @@ public class InternalServerGenerator
 			
 		}, this.params.mcServerLevel.getChunkSource().chunkMap.mainThreadExecutor)
 		.thenCompose(Function.identity());
+		#endif
 	}
 	/**
 	 * mitigates out of memory issues in the vanilla chunk system. <br>
 	 * See: https://github.com/pop4959/Chunky/pull/383
 	 */
-	private void releaseChunkFromServer(ServerLevel level, IDhServerLevel dhLevel, ChunkPos chunkPos)
+	private void releaseChunkFromServer(#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif level, IDhServerLevel dhLevel, ChunkPos chunkPos)
 	{
+		#if MC_VER <= MC_1_12_2
+		level.getMinecraftServer().addScheduledTask(() ->
+		{
+			try
+			{
+				ForgeChunkManager.unforceChunk(DH_SERVER_GEN_TICKET, chunkPos);
+				
+				// give MC a few seconds to save the chunk before
+				// we can process update events there again
+				this.chunkSaveIgnoreTimer.schedule(new TimerTask()
+				{
+					@Override
+					public void run()
+					{
+						ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(dhLevel.getServerLevelWrapper());
+						if (updateManager != null)
+						{
+							updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+						}
+						else
+						{
+							LOGGER.warn("Unable to find chunk update manager for server level ["+dhLevel+"], chunk updates may fail.");
+						}
+					}
+				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
+			}
+			catch (Exception e)
+			{
+				LOGGER.warn("Failed to release chunk back to internal server. Error: ["+e.getMessage()+"]", e);
+			}
+		});
+		#else
 		level.getChunkSource().chunkMap.mainThreadExecutor.execute(() ->
 		{
 			try
@@ -323,6 +410,7 @@ public class InternalServerGenerator
 				LOGGER.warn("Failed to release chunk back to internal server. Error: ["+e.getMessage()+"]", e);
 			}
 		});
+		#endif
 	}
 	
 	

@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.commands;
 
+#if MC_VER > MC_1_12_2
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.multiplayer.server.ServerPlayerState;
@@ -42,3 +43,4 @@ public class CrashCommand extends AbstractCommand
 	}
 	
 }
+#endif

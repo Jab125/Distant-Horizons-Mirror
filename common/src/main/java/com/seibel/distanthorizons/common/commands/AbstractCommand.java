@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.commands;
 
+#if MC_VER > MC_1_12_2
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.seibel.distanthorizons.common.wrappers.misc.ServerPlayerWrapper;
@@ -100,3 +101,4 @@ public abstract class AbstractCommand
 	}
 	
 }
+#endif

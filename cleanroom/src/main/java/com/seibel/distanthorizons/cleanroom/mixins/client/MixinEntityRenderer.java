@@ -1,0 +1,71 @@
+package com.seibel.distanthorizons.cleanroom.mixins.client;
+
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.EntityRenderer;
+import net.minecraft.client.renderer.GlStateManager;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+import net.minecraft.init.MobEffects;
+import org.apache.logging.log4j.Logger;
+import org.spongepowered.asm.mixin.Final;
+import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.injection.At;
+import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
+
+@Mixin(EntityRenderer.class)
+public class MixinEntityRenderer
+{
+	@Shadow
+	@Final
+	private DynamicTexture lightmapTexture;
+	
+	@Shadow @Final private Minecraft mc;
+	@Shadow @Final private static Logger LOGGER;
+	private static final float A_REALLY_REALLY_BIG_VALUE = 420694206942069.F;
+	private static final float A_EVEN_LARGER_VALUE = 42069420694206942069.F;
+	
+	@Inject(at = @At("TAIL"), method = "updateLightmap")
+	public void onUpdateLightmap(float patrialTicks, CallbackInfo ci)
+	{
+		IMinecraftClientWrapper mc = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+		if (mc == null || mc.getWrappedClientLevel() == null)
+		{
+			return;
+		}
+		
+		IClientLevelWrapper clientLevel = mc.getWrappedClientLevel();
+		MinecraftRenderWrapper renderWrapper = (MinecraftRenderWrapper)SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
+		renderWrapper.setLightmapId(lightmapTexture.getGlTextureId(), clientLevel);
+	}
+	
+	@Inject(at = @At("RETURN"), method = "setupFog")
+	private void disableSetupFog(int startCoords, float partialTicks, CallbackInfo ci)
+	{
+		boolean cameraNotInFluid = mc.getRenderViewEntity() != null && !mc.world.getBlockState(mc.getRenderViewEntity().getPosition()).getMaterial().isLiquid();
+		
+		boolean isSpecialFog = mc.player.isPotionActive(MobEffects.BLINDNESS);
+		
+		if (!isSpecialFog
+			&& cameraNotInFluid
+			&& startCoords == 0 // 0 = terrain fog
+			&& !SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class).isFogStateSpecial()
+			&& !Config.Client.Advanced.Graphics.Fog.enableVanillaFog.get())
+		{
+			GlStateManager.setFogStart(A_REALLY_REALLY_BIG_VALUE);
+			GlStateManager.setFogEnd(A_EVEN_LARGER_VALUE);
+			ClientApi.RENDER_STATE.vanillaFogEnabled = false;
+		}
+		else
+		{
+			ClientApi.RENDER_STATE.vanillaFogEnabled = true;
+		}
+	}
+}

@@ -29,7 +29,7 @@ import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
-import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
+//import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.util.LodUtil;
@@ -40,16 +40,26 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.IBatchGeneratorEnvironmentWrapper;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
-import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.biome.Biome;
+import net.minecraft.world.chunk.Chunk;
 #if MC_VER > MC_1_17_1
 import net.minecraft.core.Holder;
 #endif
+
+#if MC_VER <= MC_1_12_2
+#else
+import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
+#endif
 
 import java.io.IOException;
 import java.util.HashSet;
@@ -72,7 +82,8 @@ public class WrapperFactory implements IWrapperFactory
 	{
 		if (targetLevel instanceof IDhServerLevel)
 		{
-			return new BatchGenerationEnvironment((IDhServerLevel) targetLevel);
+			//return new BatchGenerationEnvironment((IDhServerLevel) targetLevel);
+			return null;
 		}
 		else
 		{
@@ -162,25 +173,25 @@ public class WrapperFactory implements IWrapperFactory
 			// correct number of parameters from the API
 			
 			// chunk
-			if (!(objectArray[0] instanceof ChunkAccess))
+			if (!(objectArray[0] instanceof #if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif))
 			{
 				throw new ClassCastException(createChunkWrapperErrorMessage(objectArray));
 			}
-			ChunkAccess chunk = (ChunkAccess) objectArray[0];
+			#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif chunk = (#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif) objectArray[0];
 			
 			// level / light source
-			if (!(objectArray[1] instanceof Level))
+			if (!(objectArray[1] instanceof #if MC_VER <= MC_1_12_2 World #else Level #endif))
 			{
 				throw new ClassCastException(createChunkWrapperErrorMessage(objectArray));
 			}
 			// the level is needed for the DH level wrapper...
-			Level level = (Level) objectArray[1];
+			#if MC_VER <= MC_1_12_2 World #else Level #endif level = (#if MC_VER <= MC_1_12_2 World #else Level #endif) objectArray[1];
 			
 			
 			// level wrapper
-			ILevelWrapper levelWrapper = level.isClientSide()
-					? ClientLevelWrapper.getWrapper((ClientLevel)level)
-					: ServerLevelWrapper.getWrapper((ServerLevel)level);
+			ILevelWrapper levelWrapper = #if MC_VER <= MC_1_12_2 !level.isRemote #else level.isClientSide() #endif
+					? ClientLevelWrapper.getWrapper((#if MC_VER <= MC_1_12_2 WorldClient #else ClientLevel #endif)level)
+					: ServerLevelWrapper.getWrapper((#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif)level);
 			
 			
 			return new ChunkWrapper(chunk, levelWrapper);
@@ -203,7 +214,7 @@ public class WrapperFactory implements IWrapperFactory
 		//#if MC_VER <= MC_1_XX_X
 		expectedClassNames = new String[] 
 		{
-			ChunkAccess.class.getName(),
+			#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif.class.getName(),
 			"[ServerLevel] or [ClientLevel]" // Classes are not referenced by names to avoid exception when one of them is missing
 		};
 		//#endif
@@ -288,12 +299,12 @@ public class WrapperFactory implements IWrapperFactory
 		{
 			throw new ClassCastException(createBlockStateWrapperErrorMessage(objectArray));
 		}
-		if (!(objectArray[0] instanceof BlockState))
+		if (!(objectArray[0] instanceof #if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif))
 		{
 			throw new ClassCastException(createBlockStateWrapperErrorMessage(objectArray));
 		}
 		
-		BlockState blockState = (BlockState) objectArray[0];
+		#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif blockState = (#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif) objectArray[0];
 		return BlockStateWrapper.fromBlockState(blockState, coreLevelWrapper);
 		//#endif
 	}
@@ -305,7 +316,7 @@ public class WrapperFactory implements IWrapperFactory
 	{
 		String[] expectedClassNames;
 		
-		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+		#if MC_VER <= MC_1_17_1
 		expectedClassNames = new String[] { Biome.class.getName() };
 		#else
 		expectedClassNames = new String[] { Holder.class.getName()+"<"+Biome.class.getName()+">" };

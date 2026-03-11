@@ -3,8 +3,8 @@ plugins {
     id 'java-library'
     id 'maven-publish'
     id 'com.gradleup.shadow' version '9.2.2'
-    id 'xyz.wagyourtail.unimined' version '1.4.9-kappa'
-    id 'net.kyori.blossom'  version '2.1.0'
+    id 'xyz.wagyourtail.unimined' version '1.4.10-kappa'
+    id 'net.kyori.blossom' version '2.1.0'
 }
 
 apply from: 'gradle/scripts/helpers.gradle'
@@ -56,7 +56,11 @@ unimined.minecraft {
     }
 
     cleanroom {
-        loader "0.3.31-alpha"
+        //propertyBool('use_access_transformer')
+        if (true) {
+            accessTransformer "${rootProject.projectDir}/cleanroom/src/main/resources/1_12_2_distanthorizons_at.cfg"
+        }
+        loader "0.4.4-alpha"
         runs.auth.username = "Developer"
         runs.all {
             systemProperty("crl.dev.mixin", "${mod_id}.default.mixin.json,${mod_id}.mod.mixin.json")
@@ -64,15 +68,47 @@ unimined.minecraft {
             if (extraArgs != null && !extraArgs.trim().isEmpty()) {
                 jvmArgs += extraArgs.split { "\\s+" }.toList()
             }
-            if (propertyBool('enable_foundation_debug')) {
+
+            println "Classpath size BEFORE: ${classpath.files.size()}"
+
+            classpath = classpath.filter { file ->
+                def remove =
+                    file.path.contains("DistantHorizons-common") ||
+                        file.path.contains("DistantHorizons-core") ||
+                        file.path.contains("DistantHorizons-api")
+
+                if (remove) {
+                    println "Removing from classpath: $file"
+                }
+
+                return !remove
+            }
+
+            println "Classpath size AFTER: ${classpath.files.size()}"
+
+            def extraPath = [
+                sourceSets.main.output.classesDirs.asPath,
+                sourceSets.main.output.resourcesDir.absolutePath,
+                rootProject.project(':common').sourceSets.main.output.classesDirs.asPath,
+                rootProject.project(':core').sourceSets.main.output.classesDirs.asPath,
+                rootProject.project(':api').sourceSets.main.output.classesDirs.asPath,
+            ].join(File.pathSeparator)
+
+            jvmArgs -= ("-Dcrl.dev.extrapath=")
+            jvmArgs += ("-Dcrl.dev.extrapath=${extraPath}")
+
+            if (false) {
                 systemProperty("foundation.dump", "true")
                 systemProperty("foundation.verbose", "true")
             }
             //propertyBool('is_coremod')
             if (true) {
                 //coremod_plugin_class_name
-                systemProperty("fml.coreMods.load", propertyString('com.seibel.distanthorizons.forge.DistantHorizonsLoadingPlugin'))
+                //forge for now bcs it will crash but correct is .cleanroom
+                systemProperty("fml.coreMods.load", "com.seibel.distanthorizons.cleanroom.DistantHorizonsLoadingPlugin")
             }
+
+
             return
         }
     }
@@ -104,11 +140,7 @@ unimined.minecraft {
 }
 
 dependencies {
-    //propertyBool('enable_junit_testing')
-    if (true) {
-        testImplementation 'org.junit.jupiter:junit-jupiter:5.7.1'
-        testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    }
+    compileOnly "com.cleanroommc:sponge-mixin:0.20.12+mixin.0.8.7"
 }
 
 processResources {
@@ -167,6 +199,13 @@ jar {
         }
     }
     doFirst {
+        archiveClassifier = 'dev'
+        duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+        if (configurations.contain.size() > 0) {
+            into('/') {
+                from configurations.contain
+            }
+        }
         manifest {
             def attribute_map = [:]
             attribute_map['ModType'] = "CRL"
@@ -178,14 +217,15 @@ jar {
             //propertyBool('is_coremod')
             if (true) {
                 //coremod_plugin_class_name
-                attribute_map['FMLCorePlugin'] = propertyString('com.seibel.distanthorizons.cleanroom.DistantHorizonsLoadingPlugin')
+                attribute_map['FMLCorePlugin'] = "com.seibel.distanthorizons.cleanroom.DistantHorizonsLoadingPlugin"
                 //coremod_includes_mod
                 if (true) {
                     attribute_map['FMLCorePluginContainsFMLMod'] = true
                 }
             }
-            if (propertyBool('use_access_transformer')) {
-                attribute_map['FMLAT'] = propertyString('access_transformer_locations')
+            //propertyBool('use_access_transformer')
+            if (true) {
+                attribute_map['FMLAT'] = "1_12_2_distanthorizons_at.cfg"
             }
             attributes(attribute_map)
         }
@@ -196,7 +236,6 @@ jar {
         finalizedBy(tasks.named("remapJar"))
     }
 }
-
 
 shadowJar {
     configurations = [project.configurations.shadow]
@@ -221,7 +260,8 @@ test {
     javaLauncher.set(javaToolchains.launcherFor {
         languageVersion = JavaLanguageVersion.of(21)
     })
-    if (propertyBool('show_testing_output')) {
+    //propertyBool('show_testing_output')
+    if (false) {
         testLogging {
             showStandardStreams = true
         }

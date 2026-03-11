@@ -1,14 +1,19 @@
 package com.seibel.distanthorizons.common.wrappers.gui;
-
+#if MC_VER <= MC_1_12_2
+import net.minecraft.client.gui.GuiScreen;
+import org.lwjglx.opengl.Display;
+#else
+import net.minecraft.client.gui.components.ContainerObjectSelectionList;
+import net.minecraft.client.gui.screens.Screen;
 import com.mojang.blaze3d.platform.Window;
 import com.mojang.blaze3d.vertex.PoseStack;
+#endif
 import com.seibel.distanthorizons.core.config.gui.AbstractScreen;
 import net.minecraft.client.Minecraft;
 #if MC_VER >= MC_1_20_1
 import net.minecraft.client.gui.GuiGraphics;
 #endif
-import net.minecraft.client.gui.components.ContainerObjectSelectionList;
-import net.minecraft.client.gui.screens.Screen;
+
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.file.Path;
@@ -16,19 +21,21 @@ import java.util.*;
 
 public class MinecraftScreen
 {
-	public static Screen getScreen(Screen parent, AbstractScreen screen, String translationName)
+	public static #if MC_VER <= MC_1_12_2 GuiScreen #else Screen #endif getScreen(#if MC_VER <= MC_1_12_2 GuiScreen #else Screen #endif parent, AbstractScreen screen, String translationName)
 	{
 		return new ConfigScreenRenderer(parent, screen, translationName);
 	}
 	
 	private static class ConfigScreenRenderer extends DhScreen
 	{
-		private final Screen parent;
+		private final #if MC_VER <= MC_1_12_2 GuiScreen #else Screen #endif parent;
 		private ConfigListWidget configListWidget;
 		private AbstractScreen screen;
 		
-		
-		#if MC_VER < MC_1_19_2
+		#if MC_VER <= MC_1_12_2
+		public static net.minecraft.util.text.TextComponentTranslation translate(String str, Object... args)
+		{ return new net.minecraft.util.text.TextComponentTranslation(str, args); }
+		#elif MC_VER < MC_1_19_2
 		public static net.minecraft.network.chat.TranslatableComponent translate(String str, Object... args)
 		{ return new net.minecraft.network.chat.TranslatableComponent(str, args); }
 		#else
@@ -36,10 +43,12 @@ public class MinecraftScreen
 		{ return net.minecraft.network.chat.Component.translatable(str, args); }
         #endif
 		
-		protected ConfigScreenRenderer(Screen parent, AbstractScreen screen, String translationName)
+		protected ConfigScreenRenderer(#if MC_VER <= MC_1_12_2 GuiScreen #else Screen #endif parent, AbstractScreen screen, String translationName)
 		{
 			super(translate(translationName));
-			#if MC_VER < MC_1_21_9
+			#if MC_VER <= MC_1_12_2
+			screen.minecraftWindow = Display.getWindow();
+			#elif MC_VER < MC_1_21_9
 			screen.minecraftWindow = Minecraft.getInstance().getWindow().getWindow();
 			#else
 			screen.minecraftWindow = Minecraft.getInstance().getWindow().handle();
@@ -49,18 +58,28 @@ public class MinecraftScreen
 		}
 		
 		@Override
+		#if MC_VER <= MC_1_12_2
+		public void initGui()	
+		#else
 		protected void init()
+		#endif
 		{
-			super.init(); // Init Minecraft's screen
+			super.#if MC_VER <= MC_1_12_2 initGui(); #else init(); #endif // Init Minecraft's screen
+			#if MC_VER <= MC_1_12_2
+			this.screen.width = Display.getWidth();
+			this.screen.height = Display.getHeight();
+			#else
 			Window mcWindow = this.minecraft.getWindow();
 			this.screen.width = mcWindow.getWidth();
 			this.screen.height = mcWindow.getHeight();
+			#endif
 			this.screen.scaledWidth = this.width;
 			this.screen.scaledHeight = this.height;
 			this.screen.init(); // Init our own config screen
 			
-			this.configListWidget = new ConfigListWidget(this.minecraft, this.width, this.height, 0, 0, 25); // Select the area to tint
+			this.configListWidget = new ConfigListWidget(#if MC_VER <= MC_1_12_2 this.mc #else this.minecraft #endif, this.width, this.height, 0, 0, 25); // Select the area to tint
 			
+			#if MC_VER > MC_1_12_2
 			#if MC_VER < MC_1_20_6 // no background is rendered in MC 1.20.6+
 			if (this.minecraft != null && this.minecraft.level != null) // Check if in game
 			{
@@ -69,16 +88,21 @@ public class MinecraftScreen
 			#endif
 			
 			this.addWidget(this.configListWidget); // Add the tint to the things to be rendered
+			#endif
 		}
 		
 		@Override
-        #if MC_VER < MC_1_20_1
+		#if MC_VER <= MC_1_12_2
+		public void drawScreen(int mouseX, int mouseY, float delta)	
+        #elif MC_VER < MC_1_20_1
 		public void render(PoseStack matrices, int mouseX, int mouseY, float delta)
         #else
 		public void render(GuiGraphics matrices, int mouseX, int mouseY, float delta)
         #endif
 		{
-			#if MC_VER < MC_1_20_2
+			#if MC_VER <= MC_1_12_2
+			this.drawDefaultBackground();
+			#elif MC_VER < MC_1_20_2
 			this.renderBackground(matrices); // Render background
 			#elif MC_VER < MC_1_21_6
 			this.renderBackground(matrices, mouseX, mouseY, delta); // Render background
@@ -86,57 +110,89 @@ public class MinecraftScreen
 			// background blur is already being rendered, rendering again causes the game to crash
 			#endif
 			
+			#if MC_VER > MC_1_12_2
 			this.configListWidget.render(matrices, mouseX, mouseY, delta); // Renders the items in the render list (currently only used to tint background darker)
+			#endif
 			
 			this.screen.mouseX = mouseX;
 			this.screen.mouseY = mouseY;
 			this.screen.render(delta); // Render everything on the main screen
 			
+			#if MC_VER <= MC_1_12_2
+			super.drawScreen(mouseX, mouseY, delta);
+			#else
 			super.render(matrices, mouseX, mouseY, delta); // Render the vanilla stuff (currently only used for the background and tint)
+			#endif
 		}
 		
+		@Override
 		#if MC_VER <= MC_1_21_10
-		@Override
+		#if MC_VER <= MC_1_12_2
+		public void setWorldAndResolution(Minecraft mc, int width, int height)
+		#else	
 		public void resize(Minecraft mc, int width, int height)
+		#endif
 		#else
-		@Override
 		public void resize(int width, int height)
 		#endif
 		{
 			// Resize Minecraft's screen
-			#if MC_VER <= MC_1_21_10
+			#if MC_VER <= MC_1_12_2
+			super.setWorldAndResolution(mc, width, height);
+			#elif MC_VER <= MC_1_21_10
 			super.resize(mc, width, height);
 			#else
 			super.resize(width, height);
 			#endif
 			
-			
+			#if MC_VER <= MC_1_12_2
+			this.screen.width = Display.getWidth();
+			this.screen.height = Display.getHeight();
+			#else
 			Window mcWindow = this.minecraft.getWindow();
 			this.screen.width = mcWindow.getWidth();
 			this.screen.height = mcWindow.getHeight();
+			#endif
 			this.screen.scaledWidth = this.width;
 			this.screen.scaledHeight = this.height;
 			this.screen.onResize(); // Resize our screen
 		}
 		
 		@Override
+		#if MC_VER <= MC_1_12_2
+		public void updateScreen()	
+		#else
 		public void tick()
+		#endif
 		{
-			super.tick(); // Tick Minecraft's screen
+			super.#if MC_VER <= MC_1_12_2 updateScreen(); #else tick(); #endif // Tick Minecraft's screen
 			this.screen.tick(); // Tick our screen
 			if (this.screen.close) // If we decide to close the screen, then actually close the screen
 			{
+				#if MC_VER <= MC_1_12_2
+				this.onGuiClosed();
+				#else
 				this.onClose();
+				#endif
 			}
 		}
 		
 		@Override
+		#if MC_VER <= MC_1_12_2
+		public void onGuiClosed()	
+		#else
 		public void onClose()
+		#endif	
 		{
 			this.screen.onClose(); // Close our screen
+			#if MC_VER <= MC_1_12_2
+			Objects.requireNonNull(this.mc).displayGuiScreen(this.parent);
+			#else
 			Objects.requireNonNull(this.minecraft).setScreen(this.parent); // Goto the parent screen
+			#endif
 		}
 		
+		#if MC_VER > MC_1_12_2
 		@Override
 		public void onFilesDrop(@NotNull List<Path> files)
 		{ this.screen.onFilesDrop(files); }
@@ -145,19 +201,21 @@ public class MinecraftScreen
 		@Override
 		public boolean shouldCloseOnEsc()
 		{ return this.screen.shouldCloseOnEsc; }
-		
+		#endif
 	}
 	
-	public static class ConfigListWidget extends ContainerObjectSelectionList
+	public static class ConfigListWidget #if MC_VER > MC_1_12_2 extends ContainerObjectSelectionList #endif
 	{
 		public ConfigListWidget(Minecraft minecraftClient, int canvasWidth, int canvasHeight, int topMargin, int botMargin, int itemSpacing)
 		{
+			#if MC_VER > MC_1_12_2
 			#if MC_VER < MC_1_20_4
 			super(minecraftClient, canvasWidth, canvasHeight, topMargin, canvasHeight - botMargin, itemSpacing);
 			#else
 			super(minecraftClient, canvasWidth, canvasHeight - (topMargin + botMargin), topMargin, itemSpacing);
 			#endif
 			this.centerListVertically = false;
+			#endif
 		}
 		
 	}

@@ -41,6 +41,7 @@ pluginManagement {
         maven {
             url = "https://maven.wagyourtail.xyz/snapshots"
         }
+        
         mavenCentral()
         gradlePluginPortal()
         
