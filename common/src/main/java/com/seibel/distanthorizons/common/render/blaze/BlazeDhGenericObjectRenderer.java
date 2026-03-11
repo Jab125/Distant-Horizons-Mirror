@@ -110,8 +110,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 	
 	private VertexFormat vertexFormat;
 	
-	private RenderPipeline opaquePipeline;
-	private RenderPipeline transparentPipeline;
+	private RenderPipeline pipeline;
 	
 	private GpuBuffer vertUniformBuffer;
 	
@@ -152,6 +151,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 			pipelineBuilder.withCull(true);
 			pipelineBuilder.withDepthWrite(true);
 			pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
+			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:generic"));
@@ -164,20 +164,8 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 			pipelineBuilder.withUniform("vertUniformBlock", UniformType.UNIFORM_BUFFER);
 			
 			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLES);
+			this.pipeline = pipelineBuilder.build();
 		}
-		
-		// opaque
-		{
-			pipelineBuilder.withoutBlend();
-			this.opaquePipeline = pipelineBuilder.build();
-		}
-		
-		// transparent
-		{
-			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
-			this.transparentPipeline = pipelineBuilder.build();
-		}
-		
 	}
 	private void addGenericDebugObjects()
 	{
@@ -568,7 +556,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 		renderPass.setUniform("vertUniformBlock", this.vertUniformBuffer);
 		
 		// set pipeline
-		renderPass.setPipeline(this.opaquePipeline); // TODO
+		renderPass.setPipeline(this.pipeline);
 		renderPass.setIndexBuffer(container.indexGpuBuffer, VertexFormat.IndexType.INT);
 		
 		renderPass.setVertexBuffer(0, container.vboGpuBuffer);
