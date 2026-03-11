@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.openGl;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
 import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlAbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlVertexPointer;
@@ -51,7 +52,8 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	
 	// rendering setup
 	private GlShaderProgram basicShader;
-	private GLElementBuffer outlineIndexBuffer;
+	private GLVertexBuffer vertexBuffer;
+	private GLElementBuffer indexBuffer;
 	private GlAbstractVertexAttribute va;
 	private boolean init = false;
 	
@@ -120,7 +122,7 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		);
 		this.createBuffer();
 	}
-
+	
 	private void createBuffer()
 	{
 		// box vertices 
@@ -128,6 +130,9 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		boxVerticesBuffer.order(ByteOrder.nativeOrder());
 		boxVerticesBuffer.asFloatBuffer().put(BOX_VERTICES);
 		boxVerticesBuffer.rewind();
+		this.vertexBuffer = new GLVertexBuffer(false);
+		this.vertexBuffer.bind();
+		this.vertexBuffer.uploadBuffer(boxVerticesBuffer, 8, EDhApiGpuUploadMethod.DATA, BOX_VERTICES.length * Float.BYTES);
 		
 		
 		// outline vertex indexes
@@ -135,10 +140,11 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		boxOutlineBuffer.order(ByteOrder.nativeOrder());
 		boxOutlineBuffer.asIntBuffer().put(BOX_OUTLINE_INDICES);
 		boxOutlineBuffer.rewind();
-		this.outlineIndexBuffer = new GLElementBuffer(false);
-		this.outlineIndexBuffer.uploadBuffer(boxOutlineBuffer, EDhApiGpuUploadMethod.DATA, BOX_OUTLINE_INDICES.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
+		this.indexBuffer = new GLElementBuffer(false);
+		this.indexBuffer.uploadBuffer(boxOutlineBuffer, EDhApiGpuUploadMethod.DATA, BOX_OUTLINE_INDICES.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
 		
 	}
+	
 	
 	//endregion
 	
@@ -150,7 +156,7 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	//region
 	
 	@Override
-	public void renderPass(RenderParams renderParams)
+	public void render(RenderParams renderParams)
 	{
 		this.init();
 		
@@ -159,14 +165,18 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		
 		this.basicShader.bind();
 		this.va.bind();
+		this.va.bindBufferToAllBindingPoints(this.vertexBuffer.getId());
 		
-		this.outlineIndexBuffer.bind();
+		this.indexBuffer.bind();
 		
-		super.renderPass(renderParams);
+		super.render(renderParams);
+		
+		// revert to prevent issues with the following passes
+		GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
 	}
 	
 	@Override
-	public void render(Box box)
+	public void renderBox(Box box)
 	{
 		Mat4f boxTransform = Mat4f.createTranslateMatrix(box.minPos.x - this.camPosFloatThisFrame.x, box.minPos.y - this.camPosFloatThisFrame.y, box.minPos.z - this.camPosFloatThisFrame.z);
 		boxTransform.multiply(Mat4f.createScaleMatrix(box.maxPos.x - box.minPos.x, box.maxPos.y - box.minPos.y, box.maxPos.z - box.minPos.z));
