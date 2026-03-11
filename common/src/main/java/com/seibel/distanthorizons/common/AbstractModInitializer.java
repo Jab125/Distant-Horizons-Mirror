@@ -1,8 +1,10 @@
 package com.seibel.distanthorizons.common;
 
+import com.mojang.brigadier.CommandDispatcher;
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderApi;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeDhInitEvent;
-//import com.seibel.distanthorizons.common.commands.CommandInitializer;
+import com.seibel.distanthorizons.common.commands.CommandInitializer;
 import com.seibel.distanthorizons.common.wrappers.DependencySetup;
 import com.seibel.distanthorizons.common.wrappers.gui.DhDebugScreenEntry;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftServerWrapper;
@@ -17,15 +19,15 @@ import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.jar.ModJarInfo;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.util.NativeDialogUtil;
+import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.ModInfo;
-#if MC_VER <= MC_1_12_2
-#else
-import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
-#endif
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -41,13 +43,14 @@ public abstract class AbstractModInitializer
 {
 	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	//private CommandInitializer commandInitializer;
+	private CommandInitializer commandInitializer;
 	
 	
 	
 	//==================//
 	// abstract methods //
 	//==================//
+	//region
 	
 	protected abstract void createInitialSharedBindings();
 	protected abstract void createInitialClientBindings();
@@ -55,17 +58,20 @@ public abstract class AbstractModInitializer
 	protected abstract IEventProxy createServerProxy(boolean isDedicated);
 	protected abstract void initializeModCompat();
 	
-	//protected abstract void subscribeRegisterCommandsEvent(Consumer<CommandDispatcher<CommandSourceStack>> eventHandler);
+	protected abstract void subscribeRegisterCommandsEvent(Consumer<CommandDispatcher<CommandSourceStack>> eventHandler);
 	
 	protected abstract void subscribeClientStartedEvent(Runnable eventHandler);
 	protected abstract void subscribeServerStartingEvent(Consumer<MinecraftServer> eventHandler);
 	protected abstract void runDelayedSetup();
+	
+	//endregion
 	
 	
 	
 	//===================//
 	// initialize events //
 	//===================//
+	//region
 	
 	public void onInitializeClient()
 	{
@@ -96,6 +102,7 @@ public abstract class AbstractModInitializer
 		#endif
 		
 		this.subscribeClientStartedEvent(this::postInit);
+		this.subscribeClientStartedEvent(this::postClientInit);
 	}
 	
 	public void onInitializeServer()
@@ -118,8 +125,8 @@ public abstract class AbstractModInitializer
 		this.initializeModCompat();
 		
 		LOGGER.info(ModInfo.READABLE_NAME + " server Initialized, adding event subscribers...");
-		//this.commandInitializer = new CommandInitializer();
-		//this.subscribeRegisterCommandsEvent(dispatcher -> { this.commandInitializer.initCommands(dispatcher); });
+		this.commandInitializer = new CommandInitializer();
+		this.subscribeRegisterCommandsEvent(dispatcher -> { this.commandInitializer.initCommands(dispatcher); });
 		
 		this.subscribeServerStartingEvent(server -> 
 		{
@@ -127,19 +134,22 @@ public abstract class AbstractModInitializer
 			
 			this.initConfig();
 			this.postInit();
-			//this.commandInitializer.onServerReady();
+			this.commandInitializer.onServerReady();
 			
 			this.checkForUpdates();
 			
-			LOGGER.info(ModInfo.READABLE_NAME + " server Initialized at " + server.#if MC_VER <= MC_1_12_2 getDataDirectory() #else getServerDirectory() #endif);
+			LOGGER.info(ModInfo.READABLE_NAME + " server Initialized at " + server.getServerDirectory());
 		});
 	}
+	
+	//endregion
 	
 	
 	
 	//===========================//
 	// inner initializer methods //
 	//===========================//
+	//region
 	
 	private void startup()
 	{
@@ -212,11 +222,16 @@ public abstract class AbstractModInitializer
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterDhInitEvent.class, null);
 	}
 	
+	private void postClientInit() { DependencySetup.setRenderingApiBindings(); }
+	
+	//endregion
+	
 	
 	
 	//==================================//
 	// mod partial compatibility checks //
 	//==================================//
+	//region
 	
 	/** 
 	 * Some mods will work with a few tweaks
@@ -234,6 +249,7 @@ public abstract class AbstractModInitializer
 		
 		
 		// Alex's caves
+		//region
 		if (modChecker.isModLoaded("alexscaves"))
 		{
 			// There've been a few reports about this mod breaking DH at a few different points in time
@@ -250,8 +266,10 @@ public abstract class AbstractModInitializer
 			
 			LOGGER.warn(startingString + "[Alex's Caves] may require some config changes in order to render Distant Horizons correctly.");
 		}
+		//endregion
 		
 		// William Wythers' Overhauled Overworld (WWOO)
+		//region
 		if (modChecker.isModLoaded("wwoo"))
 		{
 			// WWOO has a bug with it's world gen that can't be fixed by DH or WWOO
@@ -272,8 +290,11 @@ public abstract class AbstractModInitializer
 			
 			LOGGER.warn(startingString + "[WWOO] "+ wwooWarning);
 		}
+		//endregion
 		
-		// Chunky
+		// Chunky //
+		//region
+		
 		boolean chunkyPresent = false;
 		try
 		{
@@ -303,17 +324,56 @@ public abstract class AbstractModInitializer
 			LOGGER.warn(startingString + "[Chunky] "+ chunkyWarning);
 		}
 		
+		//endregion
+		
+		// iris //
+		//region
+		
+		IIrisAccessor iris = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
+		if (iris != null)
+		{
+			// get the currently selected rendering API
+			EDhApiRenderApi renderApi = Config.Client.Advanced.Graphics.Experimental.renderingApi.get();
+			if (renderApi == EDhApiRenderApi.AUTO)
+			{
+				IVersionConstants versionConstants = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+				renderApi = versionConstants.getDefaultRenderingApi();
+			}
+			
+			// Iris only supports nataive OpenGL
+			if (renderApi != EDhApiRenderApi.OPEN_GL)
+			{
+				String irisUnsupportedMessage = "Iris doesn't support DH when using the ["+EDhApiRenderApi.BLAZE_3D+"] rendering API, please change it to ["+EDhApiRenderApi.OPEN_GL+"] in DH's config file.";
+				LOGGER.fatal(irisUnsupportedMessage);
+				NativeDialogUtil.showDialog(ModInfo.READABLE_NAME, irisUnsupportedMessage, "ok", "error");
+				
+				IMinecraftClientWrapper mc = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
+				String errorMessage = "loading Distant Horizons. "+irisUnsupportedMessage;
+				String exceptionError = "Distant Horizons conditional mod config Exception";
+				mc.crashMinecraft(errorMessage, new Exception(exceptionError));
+			}
+		}
+		
+		//endregion
+		
 	}
+	
+	//endregion
 	
 	
 	
 	//================//
 	// helper classes //
 	//================//
+	//region
 	
 	public interface IEventProxy
 	{
 		void registerEvents();
 	}
+	
+	//endregion
+	
+	
 	
 }

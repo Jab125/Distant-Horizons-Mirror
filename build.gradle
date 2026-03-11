@@ -294,11 +294,6 @@ subprojects { p ->
         // Netty
         implementation("io.netty:netty-buffer:${rootProject.netty_version}")
 
-        // Remember, for lwjgl dependencies that arent included in Minecraft, you need to also need to add it to the ShadowJar thing
-        forgeShadowMe("org.lwjgl:lwjgl-jawt:${rootProject.lwjgl_version}") {
-            exclude group: "org.lwjgl", module: "lwjgl" // This module is imported by Minecraft so exclude it
-        }
-        
         
         
         //==========================//
@@ -346,11 +341,7 @@ subprojects { p ->
             relocate "com.seibel.distanthorizons.common", "loaderCommon.${p.name}.com.seibel.distanthorizons.common" // Move the loader files to a different location
         }
         def librariesLocation = "DistantHorizons.libraries"
-
-        // LWJGL
-        // Only ever shadow the dependencies we use otherwise some stuff would break when running on an external client
-        relocate "org.lwjgl.system.jawt", "${librariesLocation}.lwjgl.system.jawt"
-
+        
         // Compression (LZ4)
         relocate "net.jpountz", "${librariesLocation}.jpountz"
         
@@ -653,26 +644,30 @@ allprojects { p ->
     if (p == project(":core")) {
         OperatingSystem os = org.gradle.nativeplatform.platform.internal.DefaultNativePlatform.currentOperatingSystem;
 
-        // Set the OS lwjgl is using to the current os
+         // Set the OS lwjgl is using to the current os
         project.ext.lwjglNatives = "natives-" + os.toFamilyName()
 
-        dependencies { // All of these dependencies are in Vanilla Minecraft, but we need to depend on it as we arent importing Minecraft in the core
-            // Imports most of lwjgl's libraries (well, only the ones that we need)
+        dependencies { 
+            // All of these dependencies are in Vanilla Minecraft, but we need to depend on them as we arent importing Minecraft in the core
+            
+            // Imports most of lwjgl's libraries
             implementation platform("org.lwjgl:lwjgl-bom:${rootProject.lwjgl_version}")
 
-            // REMEMBER: Dont shadow stuff here, these are just the libs that are included in Minecraft so that the core can use
+            // REMEMBER: Don't shadow stuff here, these are just the libs that are included in Minecraft so that the core can use them
             implementation "org.lwjgl:lwjgl"
             implementation "org.lwjgl:lwjgl-assimp"
             implementation "org.lwjgl:lwjgl-glfw"
-            implementation "org.lwjgl:lwjgl-openal"
-            implementation "org.lwjgl:lwjgl-opengl"
+            // OpenGL is removed since DH now handles rendering in the "Common" project
+            // so we can use OpenGL for old MC versions and Blaze3D (IE Vulkan) for newer ones
+//            implementation "org.lwjgl:lwjgl-openal"
+//            implementation "org.lwjgl:lwjgl-opengl"
             implementation "org.lwjgl:lwjgl-stb"
             implementation "org.lwjgl:lwjgl-tinyfd"
             runtimeOnly "org.lwjgl:lwjgl::$lwjglNatives"
             runtimeOnly "org.lwjgl:lwjgl-assimp::$lwjglNatives"
             runtimeOnly "org.lwjgl:lwjgl-glfw::$lwjglNatives"
-            runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
-            runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
+//            runtimeOnly "org.lwjgl:lwjgl-openal::$lwjglNatives"
+//            runtimeOnly "org.lwjgl:lwjgl-opengl::$lwjglNatives"
             runtimeOnly "org.lwjgl:lwjgl-stb::$lwjglNatives"
             runtimeOnly "org.lwjgl:lwjgl-tinyfd::$lwjglNatives"
             implementation "org.joml:joml:${rootProject.joml_version}"

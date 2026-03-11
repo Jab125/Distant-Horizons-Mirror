@@ -29,13 +29,19 @@ import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
-//import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.BatchGenerationEnvironment;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.level.IDhLevel;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.ILodContainerUniformBufferWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhGenericRenderer;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.IBatchGeneratorEnvironmentWrapper;
@@ -73,9 +79,31 @@ public class WrapperFactory implements IWrapperFactory
 	
 	
 	
+	//=====================//
+	// internal properties //
+	//=====================//
+	//region
+	
+	private AbstractDhRenderApiDefinition renderDefinition;
+	private AbstractDhRenderApiDefinition getRenderDefinition()
+	{
+		// delayed get to make sure we don't accidentally set the variable before it's bound
+		if (this.renderDefinition != null)
+		{
+			return this.renderDefinition;
+		}
+		
+		this.renderDefinition = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
+		return this.renderDefinition;
+	}
+	//endregion
+	
+	
+	
 	//==============//
 	// core methods //
 	//==============//
+	//region
 	
 	@Override
 	public IBatchGeneratorEnvironmentWrapper createBatchGenerator(IDhLevel targetLevel)
@@ -99,7 +127,7 @@ public class WrapperFactory implements IWrapperFactory
 			throw new ClassCastException("levelWrapper must be returned by DH and of type ["+ILevelWrapper.class.getName()+"].");
 		}
 		
-		return BiomeWrapper.deserialize(resourceLocationString, (ILevelWrapper)levelWrapper); 
+		return BiomeWrapper.deserialize(resourceLocationString, (ILevelWrapper)levelWrapper);
 	}
 	@Override
 	public IDhApiBlockStateWrapper getDefaultBlockStateWrapper(String resourceLocationString, IDhApiLevelWrapper levelWrapper) throws IOException, ClassCastException
@@ -109,19 +137,19 @@ public class WrapperFactory implements IWrapperFactory
 			throw new ClassCastException("Invalid ["+IDhApiLevelWrapper.class.getSimpleName()+"] value given. Level wrapper object must be one given by the DH API (it can't be a custom implementation), specifically of type ["+ILevelWrapper.class.getName()+"].");
 		}
 		
-		return BlockStateWrapper.deserialize(resourceLocationString, (ILevelWrapper)levelWrapper); 
+		return BlockStateWrapper.deserialize(resourceLocationString, (ILevelWrapper)levelWrapper);
 	}
 	
 	@Override
 	public IBiomeWrapper deserializeBiomeWrapper(String str, ILevelWrapper levelWrapper) throws IOException { return BiomeWrapper.deserialize(str, levelWrapper); }
-	@Override 
+	@Override
 	public IBiomeWrapper getPlainsBiomeWrapper(ILevelWrapper levelWrapper)
 	{
 		try
 		{
 			return BiomeWrapper.deserialize(BiomeWrapper.PLAINS_RESOURCE_LOCATION_STRING, levelWrapper);
 		}
-		catch (IOException e) 
+		catch (IOException e)
 		{
 			throw new LodUtil.AssertFailureException("Unable to parse plains resource string ["+BiomeWrapper.PLAINS_RESOURCE_LOCATION_STRING+"], error:\n " + e.getMessage());
 		}
@@ -190,8 +218,8 @@ public class WrapperFactory implements IWrapperFactory
 			
 			// level wrapper
 			ILevelWrapper levelWrapper = #if MC_VER <= MC_1_12_2 !level.isRemote #else level.isClientSide() #endif
-					? ClientLevelWrapper.getWrapper((#if MC_VER <= MC_1_12_2 WorldClient #else ClientLevel #endif)level)
-					: ServerLevelWrapper.getWrapper((#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif)level);
+				? ClientLevelWrapper.getWrapper((#if MC_VER <= MC_1_12_2 WorldClient #else ClientLevel #endif)level)
+				: ServerLevelWrapper.getWrapper((#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif)level);
 			
 			
 			return new ChunkWrapper(chunk, levelWrapper);
@@ -212,25 +240,34 @@ public class WrapperFactory implements IWrapperFactory
 		String[] expectedClassNames;
 		
 		//#if MC_VER <= MC_1_XX_X
-		expectedClassNames = new String[] 
-		{
-			#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif.class.getName(),
-			"[ServerLevel] or [ClientLevel]" // Classes are not referenced by names to avoid exception when one of them is missing
-		};
+		expectedClassNames = new String[]
+			{
+				#if MC_VER <= MC_1_12_2 Chunk #else ChunkAccess #endif.class.getName(),
+				"[ServerLevel] or [ClientLevel]" // Classes are not referenced by names to avoid exception when one of them is missing
+			};
 		//#endif
 		
 		return createWrapperErrorMessage("Chunk wrapper", expectedClassNames, objectArray);
 	}
 	
 	
+	@Override public IVertexBufferWrapper createVboWrapper(String name) { return this.getRenderDefinition().createVboWrapper(name); }
+	@Override public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return this.getRenderDefinition().createLodContainerUniformWrapper(); }
+	@Override public IDhGenericObjectVertexBufferContainer createGenericObjectVboContainer() { return this.getRenderDefinition().createGenericVboContainer(); }
+	@Override public IDhGenericRenderer createGenericRenderer() { return this.getRenderDefinition().createGenericRenderer(); }
+	
+	//endregion
+	
+	
 	
 	//=============//
 	// api methods //
 	//=============//
+	//region
 	
 	// documentation should be in the API interface
 	
-	public IDhApiBiomeWrapper getBiomeWrapper(Object[] objectArray, IDhApiLevelWrapper levelWrapper) 
+	public IDhApiBiomeWrapper getBiomeWrapper(Object[] objectArray, IDhApiLevelWrapper levelWrapper)
 	{
 		// confirm the API level wrapper is also a Core wrapper 
 		if (!(levelWrapper instanceof ILevelWrapper))
@@ -325,19 +362,22 @@ public class WrapperFactory implements IWrapperFactory
 		return createWrapperErrorMessage("BlockState wrapper", expectedClassNames, objectArray);
 	}
 	
+	//endregion
+	
 	
 	
 	
 	//================//
 	// helper methods //
 	//================//
+	//region
 	
 	private static String createWrapperErrorMessage(String wrapperName, String[] expectedClassNames, Object[] objectArray)
 	{
 		// error header
 		StringBuilder message = new StringBuilder(
-				wrapperName + " creation failed. \n" +
-						"Expected object array parameters: \n");
+			wrapperName + " creation failed. \n" +
+				"Expected object array parameters: \n");
 		
 		
 		// expected parameters
@@ -365,5 +405,9 @@ public class WrapperFactory implements IWrapperFactory
 		
 		return message.toString();
 	}
+	
+	//endregion
+	
+	
 	
 }

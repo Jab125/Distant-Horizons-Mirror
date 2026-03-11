@@ -98,24 +98,14 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	// must be defined before AIR, otherwise a null pointer will be thrown
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-    public static final ConcurrentHashMap<#if MC_VER >= MC_1_12_2 IBlockState #else BlockState #endif, BlockStateWrapper> WRAPPER_BY_BLOCK_STATE = new ConcurrentHashMap<>();
-    public static final ConcurrentHashMap<String, BlockStateWrapper> WRAPPER_BY_RESOURCE_LOCATION = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<#if MC_VER >= MC_1_12_2 IBlockState #else BlockState #endif, BlockStateWrapper> WRAPPER_BY_BLOCK_STATE = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<String, BlockStateWrapper> WRAPPER_BY_RESOURCE_LOCATION = new ConcurrentHashMap<>();
 	
 	public static final String AIR_STRING = "AIR";
+	public static final BlockStateWrapper AIR = new BlockStateWrapper(null, null);
 	
 	public static final String DIRT_RESOURCE_LOCATION_STRING = "minecraft:dirt";
 	public static final String WATER_RESOURCE_LOCATION_STRING = "minecraft:water";
-	
-	/** Used to handle older MC versions that don't have an simple way of getting the block's tags */
-	public static final List<String> OLD_BEACON_BASE_BLOCK_NAME_LIST = Arrays.asList(
-		"iron_block",
-		"gold_block",
-		"diamond_block",
-		"emerald_block",
-		"netherite_block"
-	);
-	
-	public static final BlockStateWrapper AIR = new BlockStateWrapper(null, null);
 	
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
@@ -141,11 +131,11 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	/** used by the Iris shader mod to determine how each LOD should be rendered */
 	private byte blockMaterialId = 0;
 	
-	private final boolean isBeaconBlock; 
+	private final boolean isBeaconBlock;
 	private final boolean isBeaconBaseBlock;
 	private final boolean allowsBeaconBeamPassage;
 	/** null if this block can't tint beacons */
-	private final Color beaconTintColor; 
+	private final Color beaconTintColor;
 	private final Color mapColor;
 	
 	
@@ -176,8 +166,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	}
 	
 	#if MC_VER <= MC_1_12_2
-	/** 
-	 * Can be faster than {@link BlockStateWrapper#fromBlockState(IBlockState, ILevelWrapper)} 
+	/**
+	 * Can be faster than {@link BlockStateWrapper#fromBlockState(IBlockState, ILevelWrapper)}
 	 * in cases where the same block state is expected to be referenced multiple times.
 	 */
 	#else
@@ -216,11 +206,21 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		// beacon base blocks
 		#if MC_VER <= MC_1_18_2
+		
+		// Used to handle older MC versions that don't have an simple way of getting the block's tags
+		List<String> oldBeaconBaseBlockNameList = Arrays.asList(
+			"iron_block",
+			"gold_block",
+			"diamond_block",
+			"emerald_block",
+			"netherite_block"
+		);
+		
 		// Older MC versions are harder to get block tags, so just use a static list to determine beacon blocks
 		boolean isBeaconBaseBlock = false;
-		for (int i = 0; i < OLD_BEACON_BASE_BLOCK_NAME_LIST.size(); i++)
+		for (int i = 0; i < oldBeaconBaseBlockNameList.size(); i++)
 		{
-			String baseBlockName = OLD_BEACON_BASE_BLOCK_NAME_LIST.get(i);
+			String baseBlockName = oldBeaconBaseBlockNameList.get(i);
 			if (lowercaseSerial.contains(baseBlockName))
 			{
 				isBeaconBaseBlock = true;
@@ -338,7 +338,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	//====================//
 	//region
 	
-	/** 
+	/**
 	 * Requires a {@link ILevelWrapper} since {@link BlockStateWrapper#deserialize(String,ILevelWrapper)} also requires one. 
 	 * This way the method won't accidentally be called before the deserialization can be completed.
 	 */
@@ -391,7 +391,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		ObjectOpenHashSet<String> blockStringList = new ObjectOpenHashSet<>();
 		if (baseResourceLocations != null)
 		{
-			blockStringList.addAll(baseResourceLocations);	
+			blockStringList.addAll(baseResourceLocations);
 		}
 		
 		// get the config blocks
@@ -570,7 +570,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	}
 	
 	@Override
-	public int hashCode() { return this.hashCode; } 
+	public int hashCode() { return this.hashCode; }
 	
 	
 	@Override
@@ -584,7 +584,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	@Override
 	public boolean isSolid()
 	{
-		if (this.isAir() 
+		if (this.isAir()
 			|| this.blockState == null) // == null isn't necessary since its handled in isAir() but is here to prevent intellij from complaining
 		{
 			return false;
@@ -695,7 +695,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		}
 		
 		this.serialString = resourceLocation.getNamespace() + RESOURCE_LOCATION_SEPARATOR + resourceLocation.getPath()
-				+ STATE_STRING_SEPARATOR + serializeBlockStateProperties(this.blockState);
+			+ STATE_STRING_SEPARATOR + serializeBlockStateProperties(this.blockState);
 		
 		return this.serialString;
 	}
@@ -707,7 +707,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		// we need the final string for the concurrent hash map later
 		final String finalResourceStateString = resourceStateString;
 		
-		if (finalResourceStateString.equals(AIR_STRING) 
+		if (finalResourceStateString.equals(AIR_STRING)
 			|| finalResourceStateString.equals("")) // the empty string shouldn't normally happen, but just in case
 		{
 			return AIR;
@@ -906,7 +906,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	//==============//
 	//region
 	
-	private EDhApiBlockMaterial calculateEDhApiBlockMaterialId() 
+	private EDhApiBlockMaterial calculateEDhApiBlockMaterialId()
 	{
 		if (this.blockState == null)
 		{
@@ -916,11 +916,11 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		String serialString = this.getSerialString().toLowerCase();
 		if (#if MC_VER <= MC_1_12_2 this.blockState.getBlock() instanceof BlockLeaves #else this.blockState.is(BlockTags.LEAVES) #endif
-			|| serialString.contains("bamboo") 
+			|| serialString.contains("bamboo")
 			|| serialString.contains("cactus")
 			|| serialString.contains("chorus_flower")
 			|| serialString.contains("mushroom")
-			) 
+		)
 		{
 			return EDhApiBlockMaterial.LEAVES;
 		}
@@ -933,11 +933,11 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			return EDhApiBlockMaterial.WATER;
 		}
 		else if (#if MC_VER <= MC_1_12_2 this.blockState.getBlock().getSoundType() #else this.blockState.getSoundType() #endif == SoundType.WOOD
-				|| serialString.contains("root")
+			|| serialString.contains("root")
 				#if MC_VER >= MC_1_19_4
 				|| this.blockState.getSoundType() == SoundType.CHERRY_WOOD
 				#endif
-				) 
+		)
 		{
 			return EDhApiBlockMaterial.WOOD;
 		}
@@ -949,24 +949,24 @@ public class BlockStateWrapper implements IBlockStateWrapper
 				|| this.blockState.getSoundType() == SoundType.COPPER_BULB
 				|| this.blockState.getSoundType() == SoundType.COPPER_GRATE
 				#endif
-				) 
+		)
 		{
 			return EDhApiBlockMaterial.METAL;
 		}
 		else if (
 			serialString.contains("grass_block")
-			|| serialString.contains("grass_slab")
-			) 
+				|| serialString.contains("grass_slab")
+		)
 		{
 			return EDhApiBlockMaterial.GRASS;
 		}
 		else if (
 			serialString.contains("dirt")
-			|| serialString.contains("gravel")
-			|| serialString.contains("mud")
-			|| serialString.contains("podzol")
-			|| serialString.contains("mycelium")
-			)
+				|| serialString.contains("gravel")
+				|| serialString.contains("mud")
+				|| serialString.contains("podzol")
+				|| serialString.contains("mycelium")
+		)
 		{
 			return EDhApiBlockMaterial.DIRT;
 		}
@@ -983,7 +983,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		else if (this.serialString.contains("snow"))
 		{
 			return EDhApiBlockMaterial.SNOW;
-		} 
+		}
 		else if (serialString.contains("sand"))
 		{
 			return EDhApiBlockMaterial.SAND;
@@ -991,17 +991,17 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		else if (serialString.contains("terracotta"))
 		{
 			return EDhApiBlockMaterial.TERRACOTTA;
-		} 
-		else if (#if MC_VER <= MC_1_12_2 this.blockState.getBlock() == Blocks.NETHERRACK #else this.blockState.is(BlockTags.BASE_STONE_NETHER) #endif) 
+		}
+		else if (#if MC_VER <= MC_1_12_2 this.blockState.getBlock() == Blocks.NETHERRACK #else this.blockState.is(BlockTags.BASE_STONE_NETHER) #endif)
 		{
 			return EDhApiBlockMaterial.NETHER_STONE;
-		} 
+		}
 		else if (serialString.contains("stone")
-				|| serialString.contains("ore")) 
+			|| serialString.contains("ore"))
 		{
 			return EDhApiBlockMaterial.STONE;
 		}
-		else if (#if MC_VER <= MC_1_12_2 this.blockState.getLightValue() #else this.blockState.getLightEmission() #endif > 0) 
+		else if (#if MC_VER <= MC_1_12_2 this.blockState.getLightValue() #else this.blockState.getLightEmission() #endif > 0)
 		{
 			return EDhApiBlockMaterial.ILLUMINATED;
 		}

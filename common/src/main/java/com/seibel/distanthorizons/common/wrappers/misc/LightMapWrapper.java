@@ -21,10 +21,11 @@ package com.seibel.distanthorizons.common.wrappers.misc;
 
 #if MC_VER > MC_1_12_2
 import com.mojang.blaze3d.platform.NativeImage;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 #endif
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL32;
@@ -34,16 +35,35 @@ import java.nio.ByteBuffer;
 #else
 #endif
 
+#if MC_VER <= MC_1_21_10 && MC_VER > MC_1_12_2
+#else
+import com.mojang.blaze3d.textures.GpuTexture;
+#endif
+
 public class LightMapWrapper implements ILightMapWrapper
 {
-	private static final IMinecraftGLWrapper GLMC = SingletonInjector.INSTANCE.get(IMinecraftGLWrapper.class);
+	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	
+	/**
+	 * which texture index IE 0,1,2... the lightmap will be bound to. <Br> 
+	 * Related to but different from {@link GL32#GL_TEXTURE0}.
+	 */
+	public static final int GL_BOUND_INDEX = 0;
 	
 	private int textureId = 0;
 	#if MC_VER <= MC_1_12_2
 	private int lastTextureId = 0;
 	private int lastTextureUnit = GL32.GL_TEXTURE0;
 	#endif
+	
+		
+	#if MC_VER <= MC_1_21_10
+	#else
+	private GpuTexture gpuTexture = null;
+	#endif
+	
+	private final BlazeTextureViewWrapper lightmapTextureWrapper = new BlazeTextureViewWrapper();
 	
 	
 	//==============//
@@ -106,6 +126,16 @@ public class LightMapWrapper implements ILightMapWrapper
 		this.textureId = minecraftLightmapTextureId;
 	}
 	
+	#if MC_VER <= MC_1_21_10 && MC_VER > MC_1_12_2
+	#else
+	public void setLightmapGpuTexture(GpuTexture gpuTexture)
+	{
+		this.gpuTexture = gpuTexture;
+		this.lightmapTextureWrapper.tryWrap(this.gpuTexture);
+	}
+	#endif
+	
+	
 	//endregion
 	
 	
@@ -139,6 +169,10 @@ public class LightMapWrapper implements ILightMapWrapper
 		GLMC.glBindTexture(0); 
 		#endif
 	}
+	
+	public BlazeTextureViewWrapper getTextureViewWrapper() { return this.lightmapTextureWrapper; }
+	
+	public int getOpenGlId() { return this.textureId; }
 	
 	//endregion
 	

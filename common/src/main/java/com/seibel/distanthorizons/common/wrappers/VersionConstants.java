@@ -19,22 +19,30 @@
 
 package com.seibel.distanthorizons.common.wrappers;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderApi;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 
-/**
- * @author James Seibel
- * @version 12-11-2021
- */
 public class VersionConstants implements IVersionConstants
 {
 	public static final VersionConstants INSTANCE = new VersionConstants();
 	
 	
-	private VersionConstants()
-	{
-		
-	}
 	
+	//=============//
+	// constructor //
+	//=============//
+	//region
+	
+	private VersionConstants() { }
+	
+	//endregion
+	
+	
+	
+	//=========//
+	// methods //
+	//=========//
+	//region
 	
 	@Override
 	public String getMinecraftVersion()
@@ -93,5 +101,19 @@ public class VersionConstants implements IVersionConstants
 		#endif
 		
 	}
+	
+	@Override
+	public EDhApiRenderApi getDefaultRenderingApi()
+	{
+		#if MC_VER <= MC_1_21_11
+			return EDhApiRenderApi.OPEN_GL;
+		#else
+			ERROR MC version constant missing
+		#endif
+	}
+	
+	//endregion
+	
+	
 	
 }

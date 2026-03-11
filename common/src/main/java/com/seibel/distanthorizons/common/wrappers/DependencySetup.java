@@ -19,12 +19,19 @@
 
 package com.seibel.distanthorizons.common.wrappers;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderApi;
+import com.seibel.distanthorizons.api.interfaces.render.IDhApiCustomRenderObjectFactory;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhRenderApiDefinition;
+import com.seibel.distanthorizons.common.render.openGl.GlDhRenderApiDefinition;
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.core.render.renderer.GenericRenderObjectFactory;
 import com.seibel.distanthorizons.common.wrappers.gui.ClassicConfigGUI;
 import com.seibel.distanthorizons.common.wrappers.gui.LangWrapper;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;
-import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftServerWrapper;
 import com.seibel.distanthorizons.core.level.IKeyedClientLevelManager;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.IConfigGui;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftClientWrapper;
@@ -33,9 +40,9 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IWrapperFactory;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftGLWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 
 /**
  * Binds all necessary dependencies, so we
@@ -49,6 +56,9 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSha
  */
 public class DependencySetup
 {
+	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	
+	
 	
 	public static void createSharedBindings()
 	{
@@ -56,6 +66,7 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IVersionConstants.class, VersionConstants.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IWrapperFactory.class, WrapperFactory.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IKeyedClientLevelManager.class, KeyedClientLevelManager.INSTANCE);
+		SingletonInjector.INSTANCE.bind(IDhApiCustomRenderObjectFactory.class, GenericRenderObjectFactory.INSTANCE);
 	}
 	
 	public static void createServerBindings()
@@ -66,8 +77,43 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IMinecraftClientWrapper.class, MinecraftClientWrapper.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMinecraftSharedWrapper.class, MinecraftClientWrapper.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IMinecraftRenderWrapper.class, MinecraftRenderWrapper.INSTANCE);
-		SingletonInjector.INSTANCE.bind(IMinecraftGLWrapper.class, MinecraftGLWrapper.INSTANCE);
 		SingletonInjector.INSTANCE.bind(IConfigGui.class, ClassicConfigGUI.CONFIG_CORE_INTERFACE);
 	}
+	
+	public static void setRenderingApiBindings()
+	{
+		EDhApiRenderApi renderingApiEnum = Config.Client.Advanced.Graphics.Experimental.renderingApi.get();
+		if (renderingApiEnum == EDhApiRenderApi.AUTO)
+		{
+			#if MC_VER < MC_1_21_11
+			renderingApiEnum = EDhApiRenderApi.OPEN_GL;
+			#else
+			renderingApiEnum = EDhApiRenderApi.BLAZE_3D;
+			#endif
+		}
+		
+		LOGGER.info("Setting DH Rendering API to: ["+renderingApiEnum+"].");
+		
+		AbstractDhRenderApiDefinition renderDefinition;
+		if (renderingApiEnum == EDhApiRenderApi.OPEN_GL)
+		{
+			renderDefinition = new GlDhRenderApiDefinition();
+		}
+		else if (renderingApiEnum == EDhApiRenderApi.BLAZE_3D)
+		{
+			#if MC_VER <= MC_1_21_10
+			throw new IllegalStateException("["+renderingApiEnum+"] is not supported on this version of Minecraft.");
+			#else
+			renderDefinition = new BlazeDhRenderApiDefinition();
+			#endif
+		}
+		else
+		{
+			throw new IllegalStateException("No ["+ AbstractDhRenderApiDefinition.class.getSimpleName()+"] concrete implementation found for the value: ["+renderingApiEnum+"].");
+		}
+		renderDefinition.bindRenderers();
+	}
+	
+	
 	
 }
