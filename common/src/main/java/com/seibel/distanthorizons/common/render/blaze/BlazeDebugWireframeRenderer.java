@@ -225,7 +225,7 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	//region
 	
 	@Override
-	public void render(Box box)
+	public void renderBox(Box box)
 	{
 		this.init();
 		
