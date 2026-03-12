@@ -85,11 +85,8 @@ public class DependencySetup
 		EDhApiRenderApi renderingApiEnum = Config.Client.Advanced.Graphics.Experimental.renderingApi.get();
 		if (renderingApiEnum == EDhApiRenderApi.AUTO)
 		{
-			#if MC_VER < MC_1_21_11
-			renderingApiEnum = EDhApiRenderApi.OPEN_GL;
-			#else
-			renderingApiEnum = EDhApiRenderApi.BLAZE_3D;
-			#endif
+			IVersionConstants versionConstants = SingletonInjector.INSTANCE.get(IVersionConstants.class);
+			renderingApiEnum = versionConstants.getDefaultRenderingApi();
 		}
 		
 		LOGGER.info("Setting DH Rendering API to: ["+renderingApiEnum+"].");
