@@ -4,14 +4,17 @@ import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
+import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.generation.PregenManager;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos2D;
+import com.seibel.distanthorizons.core.world.DhServerWorld;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.arguments.DimensionArgument;
 import net.minecraft.commands.arguments.coordinates.ColumnPosArgument;
 import net.minecraft.server.level.ColumnPos;
 import net.minecraft.server.level.ServerLevel;
 
+import java.util.Objects;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.CompletableFuture;
 
@@ -22,7 +25,11 @@ import static net.minecraft.commands.Commands.literal;
 
 public class PregenCommand extends AbstractCommand
 {
-	private final PregenManager pregenManager = new PregenManager();
+	private PregenManager getPregenManager()
+	{
+		DhServerWorld world = (DhServerWorld) Objects.requireNonNull(SharedApi.getAbstractDhWorld());
+		return world.getPregenManager();
+	}
 	
 	@Override
 	public LiteralArgumentBuilder<CommandSourceStack> buildCommand()
@@ -48,7 +55,7 @@ public class PregenCommand extends AbstractCommand
 	
 	private int pregenStatus(CommandContext<CommandSourceStack> c)
 	{
-		String statusString = this.pregenManager.getStatusString();
+		String statusString = this.getPregenManager().getStatusString();
 		//noinspection ReplaceNullCheck
 		if (statusString != null)
 		{
@@ -68,7 +75,7 @@ public class PregenCommand extends AbstractCommand
 		ColumnPos origin = ColumnPosArgument.getColumnPos(c, "origin");
 		int chunkRadius = getInteger(c, "chunkRadius");
 		
-		CompletableFuture<Void> future = this.pregenManager.startPregen(
+		CompletableFuture<Void> future = this.getPregenManager().startPregen(
 				ServerLevelWrapper.getWrapper(level),
 				new DhBlockPos2D(#if MC_VER >= MC_1_19_2 origin.x(), origin.z() #else origin.x, origin.z #endif),
 				chunkRadius
@@ -94,7 +101,7 @@ public class PregenCommand extends AbstractCommand
 	
 	private int pregenStop(CommandContext<CommandSourceStack> c)
 	{
-		CompletableFuture<Void> runningPregen = this.pregenManager.getRunningPregen();
+		CompletableFuture<Void> runningPregen = this.getPregenManager().getRunningPregen();
 		if (runningPregen == null)
 		{
 			return this.sendFailureResponse(c, "Pregen is not running");
