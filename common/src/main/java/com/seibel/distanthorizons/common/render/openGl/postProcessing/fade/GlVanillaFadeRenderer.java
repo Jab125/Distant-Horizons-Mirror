@@ -168,7 +168,7 @@ public class GlVanillaFadeRenderer implements IDhVanillaFadeRenderer
 				profiler.popPush("Vanilla Fade Apply");
 				
 				GlDhFarFadeApplyShader.INSTANCE.fadeTexture = this.fadeTexture;
-				GlDhFarFadeApplyShader.INSTANCE.readFramebuffer = GlDhFarFadeShader.INSTANCE.frameBuffer;
+				GlDhFarFadeApplyShader.INSTANCE.readFramebuffer = GlDhVanillaFadeShader.INSTANCE.frameBuffer;
 				GlDhFarFadeApplyShader.INSTANCE.drawFramebuffer = MC_RENDER.getTargetFramebuffer();
 				GlDhFarFadeApplyShader.INSTANCE.render(renderParams);
 			}
