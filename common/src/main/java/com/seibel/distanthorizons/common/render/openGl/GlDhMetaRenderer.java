@@ -8,7 +8,7 @@ import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhAp
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiTextureCreatedParam;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GlDhFramebuffer;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadIndexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.texture.*;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.apply.GlDhApplyShader;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
@@ -242,7 +242,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		LOGGER.info("Setting up renderer");
 		
-		GlDhTerrainShaderProgram.INSTANCE.quadIBO = new GlQuadElementBuffer();
+		GlDhTerrainShaderProgram.INSTANCE.quadIBO = new GlQuadIndexBuffer();
 		GlDhTerrainShaderProgram.INSTANCE.quadIBO.reserve(LodQuadBuilder.getMaxBufferByteSize());
 		
 		

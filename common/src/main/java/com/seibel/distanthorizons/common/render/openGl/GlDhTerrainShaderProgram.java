@@ -6,7 +6,7 @@ import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhAp
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
 import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLVertexBuffer;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadIndexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlAbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlVertexAttributePostGL43;
@@ -52,7 +52,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	
 	private boolean init = false;
 	
-	public GlQuadElementBuffer quadIBO = null;
+	public GlQuadIndexBuffer quadIBO = null;
 	public GlAbstractVertexAttribute vao;
 	
 	// uniforms //

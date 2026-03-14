@@ -22,13 +22,12 @@ package com.seibel.distanthorizons.common.render.openGl.glObject.buffer;
 import org.lwjgl.opengl.GL32;
 
 /**
- * This is a container for a OpenGL
- * VBO (Vertex Buffer Object).
+ * AKA the GLElementBuffer
  *
  * @author James Seibel
  * @version 11-20-2021
  */
-public class GLElementBuffer extends GLBuffer
+public class GLIndexBuffer extends GLBuffer
 {
 	/**
 	 * When uploading to a buffer that is too small, recreate it this many times
@@ -39,7 +38,7 @@ public class GLElementBuffer extends GLBuffer
 	protected int type = GL32.GL_UNSIGNED_INT;
 	public int getType() { return type; }
 	
-	public GLElementBuffer(boolean isBufferStorage)
+	public GLIndexBuffer(boolean isBufferStorage)
 	{
 		super(isBufferStorage);
 	}
@@ -52,9 +51,6 @@ public class GLElementBuffer extends GLBuffer
 	}
 	
 	@Override
-	public int getBufferBindingTarget()
-	{
-		return GL32.GL_ELEMENT_ARRAY_BUFFER;
-	}
+	public int getBufferBindingTarget() { return GL32.GL_ELEMENT_ARRAY_BUFFER; }
 	
 }

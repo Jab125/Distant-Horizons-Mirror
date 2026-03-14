@@ -30,7 +30,7 @@ import com.seibel.distanthorizons.api.objects.math.DhApiVec3d;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLIndexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
@@ -91,7 +91,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 	private IDhApiGenericObjectShaderProgram instancedShaderProgram;
 	private IDhApiGenericObjectShaderProgram directShaderProgram;
 	private GLVertexBuffer boxVertexBuffer;
-	private GLElementBuffer boxIndexBuffer;
+	private GLIndexBuffer boxIndexBuffer;
 	
 	private boolean instancedRenderingAvailable;
 	private boolean vertexAttribDivisorSupported;
@@ -232,7 +232,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 		ByteBuffer solidIndexBuffer = MemoryUtil.memAlloc(BOX_INDICES.length * Integer.BYTES);
 		solidIndexBuffer.asIntBuffer().put(BOX_INDICES);
 		solidIndexBuffer.rewind();
-		this.boxIndexBuffer = new GLElementBuffer(false);
+		this.boxIndexBuffer = new GLIndexBuffer(false);
 		this.boxIndexBuffer.uploadBuffer(solidIndexBuffer, EDhApiGpuUploadMethod.DATA, BOX_INDICES.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
 		this.boxIndexBuffer.bind();
 		MemoryUtil.memFree(solidIndexBuffer);

@@ -28,8 +28,8 @@ import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
-/** AKA Index Buffer TODO RENAME */
-public class GlQuadElementBuffer extends GLElementBuffer
+/** aka GlQuadElementBuffer */
+public class GlQuadIndexBuffer extends GLIndexBuffer
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -40,7 +40,7 @@ public class GlQuadElementBuffer extends GLElementBuffer
 	//=============//
 	//region
 	
-	public GlQuadElementBuffer() { super(false); }
+	public GlQuadIndexBuffer() { super(false); }
 	
 	public void reserve(int quadCount)
 	{

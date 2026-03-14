@@ -179,7 +179,6 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 				this.vertexBuffer.put(a);
 				
 				this.vertexBuffer.put(box.material);
-				// TODO make sure this all is a multiple of 4 like LodQuadBuilder (might cause issues with AMD/Mac otherwise)
 			}
 		}
 		this.vertexBuffer.flip();
