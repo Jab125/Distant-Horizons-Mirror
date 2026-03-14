@@ -263,7 +263,7 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	@Override
 	public void close()
 	{
-		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread(() -> 
+		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("BlazeGenericObjectVertexContainer close", () -> 
 		{
 			if (this.vboGpuBuffer != null)
 			{
