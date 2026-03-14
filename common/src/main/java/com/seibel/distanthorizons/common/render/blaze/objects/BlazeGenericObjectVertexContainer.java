@@ -84,6 +84,7 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	//===========================//
 	//region
 	
+	@Override
 	public void updateVertexData(List<DhApiRenderableBox> uploadBoxList)
 	{
 		int boxCount = uploadBoxList.size();
@@ -188,14 +189,14 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 		}
 		this.vertexBuffer.flip();
 		this.indexBuffer.flip();
-		
-		
-		this.state = BlazeGenericObjectVertexContainer.EState.READY_TO_UPLOAD;
 	}
 	
 	private int vertexBufferSize()
 	{
-		int faceCount = this.uploadedBoxCount * 6;
+		// minimum of 1 box to prevent trying to create a buffer of size 0
+		int boxCount = Math.max(this.uploadedBoxCount, 1);
+		
+		int faceCount = boxCount * 6;
 		int vertexCount = faceCount * 6;
 		
 		int byteSize = vertexCount * 3 * Float.BYTES; // x,y,z
@@ -205,11 +206,15 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	}
 	private int indexBufferSize()
 	{
-		int quadCount = this.uploadedBoxCount * 36;
+		// minimum of 1 box to prevent trying to create a buffer of size 0
+		int boxCount = Math.max(this.uploadedBoxCount, 1);
+		
+		int quadCount = boxCount * 36;
 		int byteSize = quadCount * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6;
 		return byteSize;
 	}
 	
+	@Override
 	public void uploadDataToGpu()
 	{
 		// vertex
@@ -245,8 +250,6 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, this.indexBuffer);
 		}
-		
-		this.state = EState.RENDER;
 	}
 	private String getVertexBufferName() { return "distantHorizons:GenericVertexBuffer"; }
 	private String getIndexBufferName() { return "distantHorizons:GenericIndexBuffer"; }
