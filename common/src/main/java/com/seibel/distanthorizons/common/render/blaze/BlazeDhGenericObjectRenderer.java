@@ -291,7 +291,11 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 			throw new IllegalArgumentException("Box group must be of type ["+ RenderableBoxGroup.class.getSimpleName()+"], type received: ["+(iBoxGroup != null ? iBoxGroup.getClass() : "NULL")+"].");
 		}
 		RenderableBoxGroup boxGroup = (RenderableBoxGroup) iBoxGroup;
-		
+		if (boxGroup.size() != 0)
+		{
+			// trigger a box change to make sure the initial data is uploaded
+			boxGroup.triggerBoxChange();
+		}
 		
 		long id = boxGroup.getId();
 		if (this.boxGroupById.containsKey(id))
@@ -495,7 +499,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 				BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
 				/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 			{
-				this.renderBoxGroupInstanced(renderPass, renderEventParam, boxGroup, camPos, profiler);
+				this.renderBoxGroupInstanced(renderPass, renderEventParam, boxGroup, profiler);
 			}
 			
 			profiler.pop(); // resource path
@@ -534,7 +538,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 	
 	private void renderBoxGroupInstanced(
 		RenderPass renderPass, RenderParams renderEventParam, 
-		RenderableBoxGroup boxGroup, Vec3d camPos,
+		RenderableBoxGroup boxGroup,
 		IProfilerWrapper profiler)
 	{
 		// update instance data //
@@ -568,7 +572,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 			renderPass.drawIndexed(
 				/*indexStart*/ 0,
 				/*firstIndex*/0,
-				/*indexCount*/container.uploadedBoxCount * 36,
+				/*indexCount*/container.uploadedBoxCount * 36, // 36 = 6 faces * 6 verticies per face
 				/*instanceCount*/1);
 			
 		}

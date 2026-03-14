@@ -88,11 +88,6 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	public void updateVertexData(List<DhApiRenderableBox> uploadBoxList)
 	{
 		int boxCount = uploadBoxList.size();
-		if (boxCount == 0)
-		{
-			return; // TODO done just to fix a buffer empty crash
-		}
-		
 		
 		// recreate the data arrays if their size is different
 		if (this.uploadedBoxCount != boxCount)
@@ -196,8 +191,8 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 		// minimum of 1 box to prevent trying to create a buffer of size 0
 		int boxCount = Math.max(this.uploadedBoxCount, 1);
 		
-		int faceCount = boxCount * 6;
-		int vertexCount = faceCount * 6;
+		int faceCount = boxCount * 6; // 6 faces on a cube
+		int vertexCount = faceCount * 6; // 6 vertices per cube
 		
 		int byteSize = vertexCount * 3 * Float.BYTES; // x,y,z
 		byteSize += vertexCount * 4; // r,g,b,a
@@ -209,8 +204,8 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 		// minimum of 1 box to prevent trying to create a buffer of size 0
 		int boxCount = Math.max(this.uploadedBoxCount, 1);
 		
-		int quadCount = boxCount * 36;
-		int byteSize = quadCount * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6;
+		int quadCount = boxCount * 6 * 6; // 6 faces with 6 vertices each
+		int byteSize = quadCount * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT);
 		return byteSize;
 	}
 	
