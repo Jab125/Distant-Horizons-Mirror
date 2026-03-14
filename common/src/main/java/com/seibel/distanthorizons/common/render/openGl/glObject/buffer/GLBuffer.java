@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.openGl.glObject.buffer;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
+import com.seibel.distanthorizons.common.render.openGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -78,7 +79,7 @@ public class GLBuffer implements AutoCloseable
 	
 	static { CLEANUP_THREAD.execute(() -> runPhantomReferenceCleanupLoop()); }
 	
-	public GLBuffer(boolean isBufferStorage) { this.create(isBufferStorage); }
+	public GLBuffer(boolean isBufferStorage) { this.destroyOldAndCreate(isBufferStorage); }
 	
 	//endregion
 	
@@ -104,7 +105,7 @@ public class GLBuffer implements AutoCloseable
 	//====================//
 	//region
 	
-	protected void create(boolean asBufferStorage)
+	protected void destroyOldAndCreate(boolean asBufferStorage)
 	{
 		if (!GLProxy.runningOnRenderThread())
 		{
@@ -112,10 +113,9 @@ public class GLBuffer implements AutoCloseable
 		}
 		
 		// destroy the old buffer if one is present
-		// (as of 2024-12-31 James didn't see this happen, but just in case)
 		if (this.id != 0)
 		{
-			destroyBufferIdAsync(this.id);
+			destroyBufferIdNow(this.id);
 		}
 		
 		this.id = GLMC.glGenBuffers();
@@ -136,13 +136,19 @@ public class GLBuffer implements AutoCloseable
 			return;
 		}
 		
-		destroyBufferIdAsync(this.id);
+		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("GLBuffer destroyAsync", () -> { destroyBufferIdNow(this.id); });
 		
 		this.id = 0;
 		this.size = 0;
 	}
-	private static void destroyBufferIdAsync(int id)
+	private static void destroyBufferIdNow(int id)
 	{
+		// only delete valid buffers
+		if (id == 0)
+		{
+			return;
+		}
+		
 		// remove and clear the phantom reference if present
 		if (BUFFER_ID_TO_PHANTOM.containsKey(id))
 		{
@@ -157,21 +163,18 @@ public class GLBuffer implements AutoCloseable
 			BUFFER_ID_TO_PHANTOM.remove(id);
 		}
 		
-		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread(() -> 
+		// destroy the buffer if it exists,
+		// the buffer may not exist if the destroy method is called twice
+		if (GL32.glIsBuffer(id))
 		{
-			// destroy the buffer if it exists,
-			// the buffer may not exist if the destroy method is called twice
-			if (GL32.glIsBuffer(id))
+			GLMC.glDeleteBuffers(id);
+			bufferCount.decrementAndGet();
+			
+			if (Config.Client.Advanced.Debugging.logBufferGarbageCollection.get())
 			{
-				GLMC.glDeleteBuffers(id);
-				bufferCount.decrementAndGet();
-				
-				if (Config.Client.Advanced.Debugging.logBufferGarbageCollection.get())
-				{
-					LOGGER.info("destroyed buffer [" + id + "], remaining: [" + BUFFER_ID_TO_PHANTOM.size() + "]");
-				}
+				LOGGER.info("destroyed buffer [" + id + "], remaining: [" + BUFFER_ID_TO_PHANTOM.size() + "]");
 			}
-		});
+		}
 	}
 	
 	//endregion
@@ -202,36 +205,41 @@ public class GLBuffer implements AutoCloseable
 			return;
 		}
 		
-		// make sure the buffer is ready for uploading
-		this.createOrChangeBufferTypeForUpload(uploadMethod);
 		
-		switch (uploadMethod)
+		
+		// GLState to prevent issues with corrupting the global GL state.
+		// This can happen especially on legacy GL for MC 1.16.5, creating a black screen.
+		// Maybe this will also fix random crashing on Mac?
+		try(GLState state = new GLState())
 		{
-			//case NONE:
-			//	return;
-			case AUTO:
-				LodUtil.assertNotReach("GpuUploadMethod AUTO must be resolved before call to uploadBuffer()!");
-			case BUFFER_STORAGE:
-				this.uploadBufferStorage(bb, bufferHint);
-				break;
-			case DATA:
-				this.uploadBufferData(bb, bufferHint);
-				break;
-			case SUB_DATA:
-				this.uploadSubData(bb, maxExpansionSize, bufferHint);
-				break;
-			default:
-				LodUtil.assertNotReach("Unknown GpuUploadMethod!");
+			// make sure the buffer is ready for uploading
+			this.createOrChangeBufferTypeForUpload(uploadMethod);
+			
+			switch (uploadMethod)
+			{
+				case AUTO:
+					LodUtil.assertNotReach("GpuUploadMethod AUTO must be resolved before call to uploadBuffer()!");
+				case BUFFER_STORAGE:
+					this.uploadBufferStorage(bb);
+					break;
+				case DATA:
+					this.uploadBufferData(bb, bufferHint);
+					break;
+				case SUB_DATA:
+					this.uploadSubData(bb, maxExpansionSize, bufferHint);
+					break;
+				default:
+					LodUtil.assertNotReach("Unknown GpuUploadMethod!");
+			}
 		}
 	}
 	/** Requires the buffer to be bound */
-	protected void uploadBufferStorage(ByteBuffer bb, int bufferStorageHint)
+	protected void uploadBufferStorage(ByteBuffer bb)
 	{
 		LodUtil.assertTrue(this.bufferStorage, "Buffer is not bufferStorage but its trying to use bufferStorage upload method!");
 		
 		int bbSize = bb.limit() - bb.position();
-		this.destroyAsync();
-		this.create(true);
+		this.destroyOldAndCreate(true);
 		this.bind();
 		GL44.glBufferStorage(this.getBufferBindingTarget(), bb, 0);
 		this.size = bbSize;
@@ -300,8 +308,8 @@ public class GLBuffer implements AutoCloseable
 		{
 			// recreate if the buffer storage type changed
 			this.bind();
-			this.destroyAsync();
-			this.create(uploadMethod.useBufferStorage);
+			destroyBufferIdNow(this.id);
+			this.destroyOldAndCreate(uploadMethod.useBufferStorage);
 			this.bind();
 		}
 		else
@@ -310,7 +318,7 @@ public class GLBuffer implements AutoCloseable
 			// This can happen if the buffer was deleted previously.
 			if (this.id == 0)
 			{
-				this.create(this.bufferStorage);
+				this.destroyOldAndCreate(this.bufferStorage);
 			}
 			
 			this.bind();
@@ -346,7 +354,7 @@ public class GLBuffer implements AutoCloseable
 					if (PHANTOM_TO_BUFFER_ID.containsKey(phantomRef))
 					{
 						int id = PHANTOM_TO_BUFFER_ID.get(phantomRef);
-						destroyBufferIdAsync(id);
+						RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("GLBuffer phantom destroy", () -> { destroyBufferIdNow(id); });
 						//LOGGER.warn("Buffer Phantom collected, ID: ["+id+"]");
 					}
 					
