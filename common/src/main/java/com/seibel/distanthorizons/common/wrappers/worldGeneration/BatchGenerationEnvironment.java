@@ -729,11 +729,6 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 						{
 							updateManager.addPosToIgnore(chunkWrapper.getChunkPos());
 						}
-						else
-						{
-							// shouldn't happen, but just in case
-							LOGGER.warn("Unable to find chunk update manager for server level ["+BatchGenerationEnvironment.this.dhServerLevel+"], chunk updates may fail.");
-						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
 			}
