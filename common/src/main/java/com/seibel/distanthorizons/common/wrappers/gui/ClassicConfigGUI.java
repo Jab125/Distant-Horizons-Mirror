@@ -445,7 +445,11 @@ public class ClassicConfigGUI
 				
 				// move forward or backwards depending on if the shift key is pressed
 				int index = shiftPressed ? startingIndex-1 : startingIndex+1;
-				index = (index >= enumList.size()) ? 0 : index;
+				
+				// wrap around to the other side of the array when necessary
+				if (index >= enumList.size()) { index = 0; }
+				else if (index < 0) { index = enumList.size() - 1; }
+				
 				
 				// walk through the enums to find the next selectable one
 				while (index != startingIndex)
@@ -462,14 +466,8 @@ public class ClassicConfigGUI
 					index = shiftPressed ? index-1 : index+1;
 					
 					// wrap around to the other side of the array when necessary
-					if (index >= enumList.size())
-					{
-						index = 0;
-					}
-					else if (index < 0)
-					{
-						index = enumList.size() - 1;
-					}
+					if (index >= enumList.size()) { index = 0; }
+					else if (index < 0) { index = enumList.size() - 1; }
 				}
 				
 				
