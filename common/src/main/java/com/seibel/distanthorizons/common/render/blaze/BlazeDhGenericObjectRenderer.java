@@ -568,7 +568,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 			renderPass.drawIndexed(
 				/*indexStart*/ 0,
 				/*firstIndex*/0,
-				/*indexCount*/container.uploadedBoxCount * 24, // TODO?
+				/*indexCount*/container.uploadedBoxCount * 36,
 				/*instanceCount*/1);
 			
 		}
