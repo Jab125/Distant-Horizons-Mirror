@@ -84,14 +84,10 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	//===========================//
 	//region
 	
+	@Override
 	public void updateVertexData(List<DhApiRenderableBox> uploadBoxList)
 	{
 		int boxCount = uploadBoxList.size();
-		if (boxCount == 0)
-		{
-			return; // TODO done just to fix a buffer empty crash
-		}
-		
 		
 		// recreate the data arrays if their size is different
 		if (this.uploadedBoxCount != boxCount)
@@ -183,20 +179,19 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 				this.vertexBuffer.put(a);
 				
 				this.vertexBuffer.put(box.material);
-				// TODO make sure this all is a multiple of 4 like LodQuadBuilder (might cause issues with AMD/Mac otherwise)
 			}
 		}
 		this.vertexBuffer.flip();
 		this.indexBuffer.flip();
-		
-		
-		this.state = BlazeGenericObjectVertexContainer.EState.READY_TO_UPLOAD;
 	}
 	
 	private int vertexBufferSize()
 	{
-		int faceCount = this.uploadedBoxCount * 6;
-		int vertexCount = faceCount * 6;
+		// minimum of 1 box to prevent trying to create a buffer of size 0
+		int boxCount = Math.max(this.uploadedBoxCount, 1);
+		
+		int faceCount = boxCount * 6; // 6 faces on a cube
+		int vertexCount = faceCount * 6; // 6 vertices per cube
 		
 		int byteSize = vertexCount * 3 * Float.BYTES; // x,y,z
 		byteSize += vertexCount * 4; // r,g,b,a
@@ -205,11 +200,15 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	}
 	private int indexBufferSize()
 	{
-		int quadCount = this.uploadedBoxCount * 36;
-		int byteSize = quadCount * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6;
+		// minimum of 1 box to prevent trying to create a buffer of size 0
+		int boxCount = Math.max(this.uploadedBoxCount, 1);
+		
+		int quadCount = boxCount * 6 * 6; // 6 faces with 6 vertices each
+		int byteSize = quadCount * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT);
 		return byteSize;
 	}
 	
+	@Override
 	public void uploadDataToGpu()
 	{
 		// vertex
@@ -245,8 +244,6 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, this.indexBuffer);
 		}
-		
-		this.state = EState.RENDER;
 	}
 	private String getVertexBufferName() { return "distantHorizons:GenericVertexBuffer"; }
 	private String getIndexBufferName() { return "distantHorizons:GenericIndexBuffer"; }
@@ -263,7 +260,7 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 	@Override
 	public void close()
 	{
-		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread(() -> 
+		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("BlazeGenericObjectVertexContainer close", () -> 
 		{
 			if (this.vboGpuBuffer != null)
 			{

@@ -146,7 +146,7 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
-			pipelineBuilder.withDepthWrite(false);
+			pipelineBuilder.withDepthWrite(true);
 			pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withoutBlend();

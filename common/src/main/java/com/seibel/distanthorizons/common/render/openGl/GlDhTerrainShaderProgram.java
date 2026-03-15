@@ -1,22 +1,3 @@
-/*
- *    This file is part of the Distant Horizons mod
- *    licensed under the GNU LGPL v3 License.
- *
- *    Copyright (C) 2020 James Seibel
- *
- *    This program is free software: you can redistribute it and/or modify
- *    it under the terms of the GNU Lesser General Public License as published by
- *    the Free Software Foundation, version 3.
- *
- *    This program is distributed in the hope that it will be useful,
- *    but WITHOUT ANY WARRANTY; without even the implied warranty of
- *    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- *    GNU Lesser General Public License for more details.
- *
- *    You should have received a copy of the GNU Lesser General Public License
- *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
 package com.seibel.distanthorizons.common.render.openGl;
 
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
@@ -25,7 +6,7 @@ import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhAp
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
 import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLVertexBuffer;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadIndexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlAbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlVertexAttributePostGL43;
@@ -55,7 +36,7 @@ import org.lwjgl.opengl.GL32;
 
 /**
  * Handles rendering the normal LOD terrain.
- * @see LodQuadBuilder 
+ * @see LodQuadBuilder
  */
 public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiShaderProgram, IDhTerrainRenderer
 {
@@ -71,7 +52,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	
 	private boolean init = false;
 	
-	public GlQuadElementBuffer quadIBO = null;
+	public GlQuadIndexBuffer quadIBO = null;
 	public GlAbstractVertexAttribute vao;
 	
 	// uniforms //
@@ -118,7 +99,11 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	
 	public void init()
 	{
-		if (this.init) return;
+		if (this.init)
+		{
+			return;
+		}
+		
 		
 		this.uCombinedMatrix = this.getUniformLocation("uCombinedMatrix");
 		this.uModelOffset = this.getUniformLocation("uModelOffset");
@@ -171,6 +156,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 			throw e;
 		}
 		
+		// unbinding here is necessary to fix an issue when running on Legacy GL
 		this.vao.unbind();
 		
 		this.init = true;
@@ -216,7 +202,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		combinedMatrix.multiply(renderParameters.dhModelViewMatrix);
 		
 		super.bind();
-
+		
 		// uniforms
 		this.setUniform(this.uCombinedMatrix, combinedMatrix);
 		this.setUniform(this.uMircoOffset, 0.01f); // 0.01 block offset

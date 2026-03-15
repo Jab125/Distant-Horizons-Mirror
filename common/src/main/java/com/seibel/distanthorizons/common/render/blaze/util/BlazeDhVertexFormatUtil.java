@@ -14,28 +14,29 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @see LodQuadBuilder
  */
+@SuppressWarnings("DataFlowIssue") // ignore null setter warnings in the static constructor (those will only be null if the render API is GL and in that case we should never use these objects)
 public class BlazeDhVertexFormatUtil
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
+	@NotNull public static final VertexFormatElement SCREEN_POS;
+	@NotNull public static final VertexFormatElement RGBA_FLOAT_COLOR;
 	
-	public static final VertexFormatElement SCREEN_POS;
-	public static final VertexFormatElement RGBA_FLOAT_COLOR;
-	
-	public static final VertexFormatElement SHORT_XYZ_POS;
-	public static final VertexFormatElement BYTE_PAD;
+	@NotNull public static final VertexFormatElement SHORT_XYZ_POS;
+	@NotNull public static final VertexFormatElement BYTE_PAD;
 	/** contains light and micro-offset */
-	public static final VertexFormatElement META;
-	public static final VertexFormatElement RGBA_UBYTE_COLOR;
-	public static final VertexFormatElement IRIS_MATERIAL;
-	public static final VertexFormatElement IRIS_NORMAL;
+	@NotNull public static final VertexFormatElement META;
+	@NotNull public static final VertexFormatElement RGBA_UBYTE_COLOR;
+	@NotNull public static final VertexFormatElement IRIS_MATERIAL;
+	@NotNull public static final VertexFormatElement IRIS_NORMAL;
 	
-	public static final VertexFormatElement FLOAT_XYZ_POS;
+	@NotNull public static final VertexFormatElement FLOAT_XYZ_POS;
 	
 	
 	
@@ -84,6 +85,7 @@ public class BlazeDhVertexFormatUtil
 		}
 		else
 		{
+			// set to null so we can fail fast with a null pointer if we ever attempt to incorrectly use these
 			SCREEN_POS = null;
 			RGBA_FLOAT_COLOR = null;
 			

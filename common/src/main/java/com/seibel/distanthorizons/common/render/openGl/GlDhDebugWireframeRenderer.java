@@ -20,7 +20,7 @@
 package com.seibel.distanthorizons.common.render.openGl;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLIndexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlAbstractVertexAttribute;
@@ -53,7 +53,7 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	// rendering setup
 	private GlShaderProgram basicShader;
 	private GLVertexBuffer vertexBuffer;
-	private GLElementBuffer indexBuffer;
+	private GLIndexBuffer indexBuffer;
 	private GlAbstractVertexAttribute va;
 	private boolean init = false;
 	
@@ -140,7 +140,7 @@ public class GlDhDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		boxOutlineBuffer.order(ByteOrder.nativeOrder());
 		boxOutlineBuffer.asIntBuffer().put(BOX_OUTLINE_INDICES);
 		boxOutlineBuffer.rewind();
-		this.indexBuffer = new GLElementBuffer(false);
+		this.indexBuffer = new GLIndexBuffer(false);
 		this.indexBuffer.uploadBuffer(boxOutlineBuffer, EDhApiGpuUploadMethod.DATA, BOX_OUTLINE_INDICES.length * Integer.BYTES, GL32.GL_STATIC_DRAW);
 		
 	}

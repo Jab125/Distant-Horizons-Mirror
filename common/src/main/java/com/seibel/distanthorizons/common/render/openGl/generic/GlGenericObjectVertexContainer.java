@@ -105,10 +105,9 @@ public class GlGenericObjectVertexContainer implements IDhGenericObjectVertexBuf
 			
 			this.materialData[i] = box.material;
 		}
-		
-		this.state = GlGenericObjectVertexContainer.EState.READY_TO_UPLOAD;
 	}
 	
+	@Override
 	public void uploadDataToGpu()
 	{
 		this.tryCreateBuffers();
@@ -128,8 +127,6 @@ public class GlGenericObjectVertexContainer implements IDhGenericObjectVertexBuf
 		// Upload materials
 		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, this.material);
 		GL32.glBufferData(GL32.GL_ARRAY_BUFFER, this.materialData, GL32.GL_DYNAMIC_DRAW);
-		
-		this.state = EState.RENDER;
 	}
 	/** needs to be done on the render thread */
 	private void tryCreateBuffers()

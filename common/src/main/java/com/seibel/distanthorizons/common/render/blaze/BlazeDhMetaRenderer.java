@@ -8,15 +8,20 @@ public class BlazeDhMetaRenderer {}
 import com.mojang.blaze3d.textures.GpuTexture;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhApplyRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureWrapper;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhMetaRenderer;
 import net.minecraft.client.Minecraft;
 
+import java.awt.*;
+
 public class BlazeDhMetaRenderer implements IDhMetaRenderer
 {
 	public static final BlazeDhMetaRenderer INSTANCE = new BlazeDhMetaRenderer();
+	
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	
 	private BlazeDhApplyRenderer applyRenderer;
@@ -79,12 +84,10 @@ public class BlazeDhMetaRenderer implements IDhMetaRenderer
 	@Override
 	public void clearDhDepthAndColorTextures(RenderParams renderParams) 
 	{
-		// TODO use for clear color
-		//IMinecraftRenderWrapper r;
-		//r.getSkyColor()
-		
 		this.dhDepthTextureWrapper.clearDepth(1.0f);
-		this.dhColorTextureWrapper.clearColor(ColorUtil.argbToInt(1, 1, 1, 1)); 
+		
+		Color color = MC_RENDER.getSkyColor();
+		this.dhColorTextureWrapper.clearColor(ColorUtil.toColorInt(color)); 
 	}
 	
 	//endregion

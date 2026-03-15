@@ -2,6 +2,7 @@ package com.seibel.distanthorizons.common.render.openGl;
 
 import com.seibel.distanthorizons.common.render.openGl.generic.GlGenericObjectRenderer;
 import com.seibel.distanthorizons.common.render.openGl.generic.GlGenericObjectVertexContainer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.GLState;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GlDummyUniformData;
 import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLVertexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.fade.GlDhFarFadeRenderer;
@@ -43,6 +44,15 @@ public class GlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	
 	@Override public IDhVanillaFadeRenderer getVanillaFadeRenderer() { return GlVanillaFadeRenderer.INSTANCE; }
 	@Override public IDhTestTriangleRenderer getTestTriangleRenderer() { return GlTestTriangleRenderer.INSTANCE; }
+	
+	@Override 
+	public void bindRenderers()
+	{
+		try (GLState state = new GLState())
+		{
+			super.bindRenderers();
+		}
+	}
 	
 	//endregion
 	

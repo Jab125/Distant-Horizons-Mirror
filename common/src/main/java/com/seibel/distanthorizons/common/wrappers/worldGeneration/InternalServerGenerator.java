@@ -405,11 +405,6 @@ public class InternalServerGenerator
 						{
 							updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 						}
-						else
-						{
-							// shouldn't happen, but just in case
-							LOGGER.warn("Unable to find chunk update manager for server level ["+dhLevel+"], chunk updates may fail.");
-						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
 				

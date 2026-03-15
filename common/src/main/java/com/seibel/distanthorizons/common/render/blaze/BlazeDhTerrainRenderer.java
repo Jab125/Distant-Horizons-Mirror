@@ -33,7 +33,7 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadElementBuffer;
+import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadIndexBuffer;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -88,7 +88,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 		{
 			return;
 		}
-		this.init = true; // todo only set when succeeded (in case of exception)
+		
 		
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
@@ -133,6 +133,8 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
 			this.transparentPipeline = pipelineBuilder.build();
 		}
+		
+		this.init = true;
 	}
 	
 	//endregion
@@ -264,7 +266,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			if (this.indexBuffer == null)
 			{
 				ByteBuffer buffer = MemoryUtil.memAlloc(LodQuadBuilder.getMaxBufferByteSize() * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6);
-				GlQuadElementBuffer.buildBuffer(LodQuadBuilder.getMaxBufferByteSize(), buffer, GL32.GL_UNSIGNED_INT);
+				GlQuadIndexBuffer.buildBuffer(LodQuadBuilder.getMaxBufferByteSize(), buffer, GL32.GL_UNSIGNED_INT);
 				
 				
 				// create buffer if needed

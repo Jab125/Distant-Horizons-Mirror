@@ -18,6 +18,8 @@ import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.jar.ModJarInfo;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
+import com.seibel.distanthorizons.core.render.renderer.StubDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.util.NativeDialogUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -140,13 +142,14 @@ public abstract class AbstractModInitializer
 			
 			this.initConfig();
 			this.postInit();
+			this.postServerInit();
 			#if MC_VER > MC_1_12_2
 			this.commandInitializer.onServerReady();
 			#endif
 			
 			this.checkForUpdates();
 			
-			LOGGER.info(ModInfo.READABLE_NAME + " server Initialized at " + server.#if MC_VER <= MC_1_12_2 getDataDirectory() #else getServerDirectory() #endif);
+			LOGGER.info(ModInfo.READABLE_NAME + " server Initialized at " + server.getServerDirectory());
 		});
 	}
 	
@@ -231,7 +234,10 @@ public abstract class AbstractModInitializer
 	}
 	
 	private void postClientInit() { DependencySetup.setRenderingApiBindings(); }
-	
+	private void postServerInit()
+	{
+		SingletonInjector.INSTANCE.bind(AbstractDebugWireframeRenderer.class, new StubDebugWireframeRenderer());
+	}
 	//endregion
 	
 	

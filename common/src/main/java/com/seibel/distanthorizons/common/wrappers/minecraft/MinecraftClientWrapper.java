@@ -239,7 +239,7 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/false);
 		#else
 		
-		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread(() -> 
+		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("MinecraftClientWrapper sendChatMessage", () -> 
 		{
 			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/false);
 		});
