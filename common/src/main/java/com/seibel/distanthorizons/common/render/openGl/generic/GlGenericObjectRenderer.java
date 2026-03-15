@@ -195,6 +195,13 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 		this.vertexAttribDivisorSupported = GLProxy.getInstance().vertexAttribDivisorSupported;
 		this.instancedArraysSupported = GLProxy.getInstance().instancedArraysSupported;
 		boolean isMac = (EPlatform.get() == EPlatform.MACOS);
+		if (isMac)
+		{
+			LOGGER.warn("Generic rendering not supported by Mac. Clouds, beacons, and some other effects will be disabled.");
+			Config.Client.Advanced.Graphics.GenericRendering.enableGenericRendering.setApiValue(false);
+			return;
+		}
+		
 		this.instancedRenderingAvailable = (this.vertexAttribDivisorSupported || this.instancedArraysSupported) && !isMac;
 		if (!this.instancedRenderingAvailable)
 		{
@@ -399,6 +406,14 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 	@Override
 	public void render(RenderParams renderEventParam, IProfilerWrapper profiler, boolean renderingWithSsao)
 	{
+		// generic rendering (both instanced and direct) is extremely unstable on Mac, so don't render anything
+		if (EPlatform.get() == EPlatform.MACOS)
+		{
+			return;
+		}
+		
+		
+		
 		// render setup //
 		profiler.push("setup");
 		
@@ -509,6 +524,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 			
 			boxGroup.postRender(renderEventParam);
 		}
+		
 		
 		
 		//==========//

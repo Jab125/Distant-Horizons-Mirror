@@ -20,13 +20,17 @@
 package com.seibel.distanthorizons.common.render.openGl.glObject.buffer;
 
 import java.nio.ByteBuffer;
+import java.nio.ByteOrder;
 
+import com.seibel.distanthorizons.common.render.openGl.GlDhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
+import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import org.lwjgl.opengl.GL32;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * This is a container for a OpenGL
@@ -43,6 +47,8 @@ public class GLVertexBuffer extends GLBuffer implements IVertexBufferWrapper
 	 */
 	protected int vertexCount = 0;
 	public int getVertexCount() { return this.vertexCount; }
+	
+	public GlQuadIndexBuffer quadIBO = null;
 	
 	
 	
@@ -89,12 +95,36 @@ public class GLVertexBuffer extends GLBuffer implements IVertexBufferWrapper
 		// If size is zero, just ignore it.
 		if (byteBuffer.limit() - byteBuffer.position() != 0)
 		{
-			boolean useBuffStorage = uploadMethod.useBufferStorage;
-			super.uploadBuffer(byteBuffer, uploadMethod, maxExpansionSize, useBuffStorage ? 0 : GL32.GL_STATIC_DRAW);
+			// vertex data
+			{
+				super.uploadBuffer(byteBuffer, uploadMethod, maxExpansionSize, uploadMethod.useBufferStorage ? 0 : GL32.GL_STATIC_DRAW);
+			}
+			
+			// index data
+			{
+				if (this.quadIBO != null)
+				{
+					this.quadIBO.close();
+				}
+				
+				int quadCount = (vertexCount / 4);
+				this.quadIBO = new GlQuadIndexBuffer();
+				this.quadIBO.reserve(quadCount);
+			}
+			
 		}
+		
 		this.vertexCount = vertexCount;
 	}
 	
+	//endregion
+	
+	
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
 	
 	@Override
 	public void close() { this.destroyAsync(); }
@@ -102,6 +132,7 @@ public class GLVertexBuffer extends GLBuffer implements IVertexBufferWrapper
 	public void destroyAsync()
 	{
 		super.destroyAsync();
+		this.quadIBO.destroyAsync();
 		this.vertexCount = 0;
 	}
 	

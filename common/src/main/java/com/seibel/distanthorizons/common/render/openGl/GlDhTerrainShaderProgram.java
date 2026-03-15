@@ -52,7 +52,6 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	
 	private boolean init = false;
 	
-	public GlQuadIndexBuffer quadIBO = null;
 	public GlAbstractVertexAttribute vao;
 	
 	// uniforms //
@@ -351,12 +350,16 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 					int indexCount = (int)(vbo.getVertexCount() * 1.5);
 					
 					vbo.bind();
+					vbo.quadIBO.bind();
+					
 					GlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame.bindVertexBuffer(vbo.getId());
 					GL32.glDrawElements(
 						GL32.GL_TRIANGLES,
 						indexCount,
-						this.quadIBO.getType(), 0);
+						vbo.quadIBO.getType(), 0);
+					
 					vbo.unbind();
+					vbo.quadIBO.unbind();
 				}
 			}
 		}

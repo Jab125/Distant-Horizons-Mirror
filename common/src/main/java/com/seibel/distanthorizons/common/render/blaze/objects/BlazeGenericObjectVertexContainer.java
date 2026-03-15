@@ -215,8 +215,15 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 		{
 			int totalVertexByteSize = this.vertexBufferSize();
 			if (this.vboGpuBuffer == null
-				|| this.vboGpuBuffer.size() < totalVertexByteSize)
+				// recreating if the size changes is always necessary (even if we only need a smaller amount)
+				// due to a bug on Mac where it will attempt to render anything allocated in the buffer
+				|| this.vboGpuBuffer.size() != totalVertexByteSize)
 			{
+				if (this.vboGpuBuffer != null)
+				{
+					this.vboGpuBuffer.close();
+				}
+				
 				int usage = GpuBuffer.USAGE_COPY_DST 
 					| GpuBuffer.USAGE_VERTEX;
 				this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getVertexBufferName, usage, totalVertexByteSize);
@@ -230,12 +237,17 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 		{
 			int totalVertexByteSize = this.indexBufferSize();
 			if (this.indexGpuBuffer == null
-				|| this.indexGpuBuffer.size() < totalVertexByteSize)
+				// recreating if the size changes is always necessary (even if we only need a smaller amount)
+				// due to a bug on Mac where it will attempt to render anything allocated in the buffer
+				|| this.indexGpuBuffer.size() != totalVertexByteSize)
 			{
+				if (this.indexGpuBuffer != null)
+				{
+					this.indexGpuBuffer.close();
+				}
+				
 				int usage = GpuBuffer.USAGE_COPY_DST 
-					| GpuBuffer.USAGE_VERTEX 
-					| GpuBuffer.USAGE_INDEX 
-					| GpuBuffer.USAGE_UNIFORM;
+					| GpuBuffer.USAGE_INDEX;
 				this.indexGpuBuffer = GPU_DEVICE.createBuffer(this::getIndexBufferName, usage, totalVertexByteSize);
 			}
 			

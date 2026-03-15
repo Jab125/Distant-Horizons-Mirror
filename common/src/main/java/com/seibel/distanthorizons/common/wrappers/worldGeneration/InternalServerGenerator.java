@@ -45,6 +45,7 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 #endif
 #endif
 
+import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionException;
@@ -89,6 +90,8 @@ public class InternalServerGenerator
 	
 	private final GlobalWorldGenParams params;
 	private final IDhServerLevel dhServerLevel;
+	@Nullable
+	private final ChunkUpdateQueueManager updateManager;
 	private final Timer chunkSaveIgnoreTimer = TimerUtil.CreateTimer("ChunkSaveIgnoreTimer");
 	
 	
@@ -108,6 +111,7 @@ public class InternalServerGenerator
 			LOGGER.error("DH_SERVER_GEN_TICKET is null for level: " + dhServerLevel.getServerLevelWrapper().getDimensionName());
 		}
 		#endif
+		this.updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.dhServerLevel.getServerLevelWrapper());
 	}
 	
 	
@@ -256,10 +260,9 @@ public class InternalServerGenerator
 		#if MC_VER <= MC_1_12_2
 		WorldServer level = this.params.mcServerLevel;
 		
-		ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.params.dhServerLevel.getServerLevelWrapper());
-		if (updateManager != null)
+		if (this.updateManager != null)
 		{
-			updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+			this.updateManager.removePosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 		}
 		
 		CompletableFuture<Chunk> future = new CompletableFuture<>();
@@ -300,10 +303,9 @@ public class InternalServerGenerator
 			ServerLevel level = this.params.mcServerLevel;
 			
 			// ignore chunk update events for this position
-			ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.params.dhServerLevel.getServerLevelWrapper());
-			if (updateManager != null)
+			if (this.updateManager != null)
 			{
-				updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+				this.updateManager.removePosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 			}
 
 			#if MC_VER < MC_1_21_5
@@ -357,14 +359,9 @@ public class InternalServerGenerator
 					@Override
 					public void run()
 					{
-						ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(dhLevel.getServerLevelWrapper());
-						if (updateManager != null)
+						if (InternalServerGenerator.this.updateManager != null)
 						{
-							updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
-						}
-						else
-						{
-							LOGGER.warn("Unable to find chunk update manager for server level ["+dhLevel+"], chunk updates may fail.");
+							InternalServerGenerator.this.updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
@@ -400,10 +397,9 @@ public class InternalServerGenerator
 					@Override
 					public void run() 
 					{
-						ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(dhLevel.getServerLevelWrapper());
-						if (updateManager != null)
+						if (InternalServerGenerator.this.updateManager != null)
 						{
-							updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+							InternalServerGenerator.this.updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);

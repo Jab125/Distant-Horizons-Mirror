@@ -93,6 +93,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.ChunkStatus;
 #else
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import org.jetbrains.annotations.Nullable;
 #endif
 
 public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironmentWrapper
@@ -126,6 +127,8 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	
 	
 	private final IDhServerLevel dhServerLevel;
+	@Nullable
+	private final ChunkUpdateQueueManager updateManager;
 	
 	public final InternalServerGenerator internalServerGenerator;
 	
@@ -199,6 +202,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	public BatchGenerationEnvironment(IDhServerLevel dhServerLevel)
 	{
 		this.dhServerLevel = dhServerLevel;
+		this.updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.dhServerLevel.getServerLevelWrapper());
 		this.globalParams = new GlobalWorldGenParams(dhServerLevel);
 		this.internalServerGenerator = new InternalServerGenerator(this.globalParams, this.dhServerLevel);
 		#if MC_VER > MC_1_12_2
@@ -613,10 +617,9 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 				
 				// usually ignoring the chunk's position is unnecessary,
 				// but this improves performance if a chunk update event does sneak through 
-				ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(this.dhServerLevel.getServerLevelWrapper());
-				if (updateManager != null)
+				if (this.updateManager != null)
 				{
-					updateManager.addPosToIgnore(chunkWrapper.getChunkPos());
+					this.updateManager.addPosToIgnore(chunkWrapper.getChunkPos());
 				}
 				
 			});
@@ -745,10 +748,9 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					@Override
 					public void run() 
 					{
-						ChunkUpdateQueueManager updateManager = WorldChunkUpdateManager.INSTANCE.getByLevelWrapper(BatchGenerationEnvironment.this.dhServerLevel.getServerLevelWrapper());
-						if (updateManager != null)
+						if (BatchGenerationEnvironment.this.updateManager != null)
 						{
-							updateManager.addPosToIgnore(chunkWrapper.getChunkPos());
+							BatchGenerationEnvironment.this.updateManager.removePosToIgnore(chunkWrapper.getChunkPos());
 						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);

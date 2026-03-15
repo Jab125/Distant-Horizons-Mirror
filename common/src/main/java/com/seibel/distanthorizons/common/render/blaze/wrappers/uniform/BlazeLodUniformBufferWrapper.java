@@ -32,7 +32,7 @@ public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper impl
 	
 	
 	//========//
-	// ??? //
+	// upload //
 	//========//
 	//region
 	
@@ -71,6 +71,8 @@ public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper impl
 	}
 	
 	//endregion
+	
+	
 	
 }
 #endif

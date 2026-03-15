@@ -91,23 +91,43 @@ public class DependencySetup
 		
 		LOGGER.info("Setting DH Rendering API to: ["+renderingApiEnum+"].");
 		
+		
+		
+		boolean validApi;
 		AbstractDhRenderApiDefinition renderDefinition;
 		if (renderingApiEnum == EDhApiRenderApi.OPEN_GL)
 		{
+			validApi = true;
 			renderDefinition = new GlDhRenderApiDefinition();
 		}
 		else if (renderingApiEnum == EDhApiRenderApi.BLAZE_3D)
 		{
 			#if MC_VER <= MC_1_21_10
-			throw new IllegalStateException("["+renderingApiEnum+"] is not supported on this version of Minecraft.");
+			validApi = false;
+			renderDefinition = null;
 			#else
+			validApi = true;
 			renderDefinition = new BlazeDhRenderApiDefinition();
 			#endif
 		}
 		else
 		{
-			throw new IllegalStateException("No ["+ AbstractDhRenderApiDefinition.class.getSimpleName()+"] concrete implementation found for the value: ["+renderingApiEnum+"].");
+			String message = "No ["+ AbstractDhRenderApiDefinition.class.getSimpleName()+"] concrete implementation found for the value: ["+renderingApiEnum+"].";
+			LOGGER.fatal(message);
+			throw new IllegalStateException(message);
 		}
+		
+		
+		// crash if an invalid API is set
+		if (!validApi)
+		{
+			String message = "["+renderingApiEnum+"] is not supported on this version of Minecraft, reverting to ["+EDhApiRenderApi.AUTO+"].";
+			LOGGER.fatal(message);
+			Config.Client.Advanced.Graphics.Experimental.renderingApi.set(EDhApiRenderApi.AUTO);
+			throw new IllegalStateException(message);
+		}
+		
+		
 		renderDefinition.bindRenderers();
 	}
 	
