@@ -30,6 +30,7 @@ import com.seibel.distanthorizons.coreapi.ModInfo;
 #if MC_VER <= MC_1_12_2
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.*;
+import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
@@ -554,7 +555,7 @@ public class ClassicConfigGUI
 					configEntry.uiSetWithoutSaving(configEntry.getDefaultValue());
 					this.reload = true;
 					#if MC_VER <= MC_1_12_2
-					Objects.requireNonNull(this.mc).displayGuiScreen(this.parent);
+					Objects.requireNonNull(this.mc).displayGuiScreen(ClassicConfigGUI.getScreen(this.parent, this.category));
 					#else
 					Objects.requireNonNull(this.minecraft).setScreen(this.parent);
 					#endif
@@ -782,8 +783,11 @@ public class ClassicConfigGUI
 			super.render(matrices, mouseX, mouseY, delta);
 			#endif
 			
-			this.configListWidget.render(#if MC_VER > MC_1_12_2 matrices,#endif mouseX, mouseY, delta); // Render buttons
-			
+			#if MC_VER <= MC_1_12_2
+			this.configListWidget.drawScreen(mouseX, mouseY, delta); // Render buttons
+			#else
+			this.configListWidget.render(matrices, mouseX, mouseY, delta); // Render buttons
+			#endif
 			
 			// Render config title
 			this.DhDrawCenteredString(
@@ -826,18 +830,13 @@ public class ClassicConfigGUI
 						#endif);
 			}
 			
-			
-			this.renderTooltip(
-				#if MC_VER > MC_1_12_2
-				matrices,
-				#endif
-				mouseX, mouseY, delta);
-			
 			#if MC_VER <= MC_1_12_2
 			super.drawScreen(mouseX, mouseY, delta);
 			#elif MC_VER < MC_1_20_2
 			super.render(matrices, mouseX, mouseY, delta);
 			#endif
+			
+			this.renderTooltip(#if MC_VER > MC_1_12_2 matrices,#endif mouseX, mouseY, delta);
 		}
 		
 		#if MC_VER <= MC_1_12_2
@@ -914,31 +913,32 @@ public class ClassicConfigGUI
 		{
 			super.mouseClicked(mouseX, mouseY, mouseButton);
 			
-			for (ClassicConfigGUI.DhButtonEntry entry : this.configListWidget.children)
+			if (mouseY >= this.configListWidget.top && mouseY <= this.configListWidget.bottom)
 			{
-				if (entry.button instanceof GuiButton btn && btn.visible)
+				for (ClassicConfigGUI.DhButtonEntry entry : this.configListWidget.children)
 				{
-					if (mouseX >= btn.x && mouseX < btn.x + btn.width
-						&& mouseY >= btn.y && mouseY < btn.y + btn.height)
+					if (entry.button instanceof GuiButton btn && btn.visible)
 					{
-						btn.mousePressed(this.mc, mouseX, mouseY);
-						OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(btn);
-						if (handler != null) handler.pressed(btn);
+						if (btn.mousePressed(this.mc, mouseX, mouseY))
+						{
+							btn.playPressSound(this.mc.getSoundHandler());
+							OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(btn);
+							if (handler != null) handler.pressed(btn);
+						}
 					}
-				}
-				else if (entry.button instanceof GuiTextField field && field.getVisible())
-				{
-					field.mouseClicked(mouseX, mouseY, mouseButton);
-				}
-				
-				if (entry.resetButton instanceof GuiButton reset && reset.visible)
-				{
-					if (mouseX >= reset.x && mouseX < reset.x + reset.width
-						&& mouseY >= reset.y && mouseY < reset.y + reset.height)
+					else if (entry.button instanceof GuiTextField field && field.getVisible())
 					{
-						reset.mousePressed(this.mc, mouseX, mouseY);
-						OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(reset);
-						if (handler != null) handler.pressed(reset);
+						field.mouseClicked(mouseX, mouseY, mouseButton);
+					}
+					
+					if (entry.resetButton instanceof GuiButton reset && reset.visible)
+					{
+						if (reset.mousePressed(this.mc, mouseX, mouseY))
+						{
+							reset.playPressSound(this.mc.getSoundHandler());
+							OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(reset);
+							if (handler != null) handler.pressed(reset);
+						}
 					}
 				}
 			}
@@ -956,7 +956,15 @@ public class ClassicConfigGUI
 				}
 			}
 		}
-#endif
+		
+		@Override
+		public void handleMouseInput() throws java.io.IOException
+		{
+			super.handleMouseInput();
+			this.configListWidget.handleMouseInput();
+		}
+		
+		#endif
 		
 		//==========//
 		// shutdown //
@@ -986,17 +994,16 @@ public class ClassicConfigGUI
 	// helper classes //
 	//================//
 	
-	public static class ConfigListWidget #if MC_VER > MC_1_12_2 extends ContainerObjectSelectionList<DhButtonEntry> #endif
+	public static class ConfigListWidget extends #if MC_VER <= MC_1_12_2 GuiListExtended #else ContainerObjectSelectionList<DhButtonEntry> #endif
 	{
 		#if MC_VER <= MC_1_12_2
 		private List<DhButtonEntry> children = new ArrayList<>();
-		#else
-		Font textRenderer;
 		#endif
+		
+		#if MC_VER <= MC_1_12_2 FontRenderer #else Font #endif textRenderer;
 		
 		public ConfigListWidget(Minecraft minecraftClient, int canvasWidth, int canvasHeight, int topMargin, int botMargin, int itemSpacing)
 		{
-			#if MC_VER > MC_1_12_2
 			#if MC_VER < MC_1_20_4
 			super(minecraftClient, canvasWidth, canvasHeight, topMargin, canvasHeight - botMargin, itemSpacing);
 			#else
@@ -1004,9 +1011,33 @@ public class ClassicConfigGUI
 			#endif
 			
 			this.centerListVertically = false;
-			this.textRenderer = minecraftClient.font;
-			#endif
+			this.textRenderer = minecraftClient.#if MC_VER <= MC_1_12_2 fontRenderer #else font #endif;
 		}
+		
+		#if MC_VER<= MC_1_12_2
+		@Override
+		protected int getSize()
+		{
+			return this.children.size();
+		}
+		
+		@Override
+		public IGuiListEntry getListEntry(int index)
+		{
+			return this.children.get(index);
+		}
+		
+		@Override
+		protected void drawContainerBackground(Tessellator tessellator)
+		{
+			if (this.mc.world != null)
+			{
+				return; // in-game don't draw dirt background
+			}
+			super.drawContainerBackground(tessellator);
+		}
+		
+		#endif
 		
 		#if MC_VER <= MC_1_12_2
 		public void addButton(DhConfigScreen gui, AbstractConfigBase dhConfigType, Gui button, GuiButton resetButton, GuiButton indexButton, ITextComponent text)
@@ -1015,10 +1046,8 @@ public class ClassicConfigGUI
 		#endif
 		{ this.#if MC_VER <= MC_1_12_2 children.add #else addEntry #endif(new DhButtonEntry(gui, dhConfigType, button, text, resetButton, indexButton)); }
 		
-		#if MC_VER > MC_1_12_2
 		@Override
-		public int getRowWidth() { return 10_000; }
-		#endif
+		public int #if MC_VER <= MC_1_12_2 getListWidth() #else getRowWidth() #endif { return 10_000; }
 		
 		public #if MC_VER <= MC_1_12_2 Gui #else AbstractWidget #endif getHoveredButton(double mouseX, double mouseY)
 		{
@@ -1074,27 +1103,16 @@ public class ClassicConfigGUI
 				{
                     return button;
 				}
-        #endif
+                #endif
 			}
 			
 			return null;
 		}
 		
-		#if MC_VER <= MC_1_12_2
-		public void render(int mouseX, int mouseY, float delta) {
-			int y = 40;
-			for (DhButtonEntry buttonEntry : this.children)
-			{
-				buttonEntry.render(y, 0, mouseX, mouseY, delta);
-				y += 25;
-			}
-		}
-		#endif
-		
 	}
 	
 	
-	public static class DhButtonEntry #if MC_VER > MC_1_12_2 extends ContainerObjectSelectionList.Entry<DhButtonEntry> #endif
+	public static class DhButtonEntry #if MC_VER <= MC_1_12_2 implements GuiListExtended.IGuiListEntry #else extends ContainerObjectSelectionList.Entry<DhButtonEntry> #endif
 	{
 		private static final #if MC_VER <= MC_1_12_2 FontRenderer #else Font #endif textRenderer = Minecraft. #if MC_VER <= MC_1_12_2 getMinecraft().fontRenderer; #else getInstance().font; #endif
 		
@@ -1160,9 +1178,9 @@ public class ClassicConfigGUI
 			
 		}
 		
-		
 		#if MC_VER <= MC_1_12_2
-		public void render(int y, int x, int mouseX, int mouseY, float tickDelta)
+		@Override
+		public void drawEntry(int slotIndex, int x, int y, int listWidth, int slotHeight, int mouseX, int mouseY, boolean isSelected, float tickDelta)
         #elif MC_VER < MC_1_20_1
 		@Override
 		public void render(PoseStack matrices, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta)
@@ -1291,6 +1309,20 @@ public class ClassicConfigGUI
 				RATE_LIMITED_LOGGER.error("Unexpected gui rendering issue: ["+e.getMessage()+"]", e);
 			}
 		}
+		
+		#if MC_VER <= MC_1_12_2
+		@Override
+		public void updatePosition(int slotIndex, int x, int y, float partialTicks) { }
+		
+		@Override
+		public boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY)
+		{
+			return false; // handled in DhConfigScreen.mouseClicked
+		}
+		
+		@Override
+		public void mouseReleased(int slotIndex, int x, int y, int mouseEvent, int relativeX, int relativeY) { }
+		#endif
 		
 		#if MC_VER > MC_1_12_2
 		@Override

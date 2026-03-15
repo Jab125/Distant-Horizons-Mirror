@@ -1,6 +1,8 @@
 package com.seibel.distanthorizons.common.wrappers.gui;
 #if MC_VER <= MC_1_12_2
+import net.minecraft.client.gui.GuiListExtended;
 import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.client.gui.GuiSlot;
 import org.lwjglx.opengl.Display;
 #else
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
@@ -101,7 +103,7 @@ public class MinecraftScreen
         #endif
 		{
 			#if MC_VER <= MC_1_12_2
-			this.drawDefaultBackground();
+			//this.drawDefaultBackground(); // seems to do nothing
 			#elif MC_VER < MC_1_20_2
 			this.renderBackground(matrices); // Render background
 			#elif MC_VER < MC_1_21_6
@@ -110,7 +112,9 @@ public class MinecraftScreen
 			// background blur is already being rendered, rendering again causes the game to crash
 			#endif
 			
-			#if MC_VER > MC_1_12_2
+			#if MC_VER <= MC_1_12_2
+			//this.configListWidget.drawScreen(mouseX, mouseY, delta); // seems to do nothing
+			#else
 			this.configListWidget.render(matrices, mouseX, mouseY, delta); // Renders the items in the render list (currently only used to tint background darker)
 			#endif
 			
@@ -204,19 +208,31 @@ public class MinecraftScreen
 		#endif
 	}
 	
-	public static class ConfigListWidget #if MC_VER > MC_1_12_2 extends ContainerObjectSelectionList #endif
+	public static class ConfigListWidget extends #if MC_VER <= MC_1_12_2 GuiListExtended #else ContainerObjectSelectionList #endif
 	{
 		public ConfigListWidget(Minecraft minecraftClient, int canvasWidth, int canvasHeight, int topMargin, int botMargin, int itemSpacing)
 		{
-			#if MC_VER > MC_1_12_2
 			#if MC_VER < MC_1_20_4
 			super(minecraftClient, canvasWidth, canvasHeight, topMargin, canvasHeight - botMargin, itemSpacing);
 			#else
 			super(minecraftClient, canvasWidth, canvasHeight - (topMargin + botMargin), topMargin, itemSpacing);
 			#endif
 			this.centerListVertically = false;
-			#endif
 		}
+		
+		#if MC_VER <= MC_1_12_2
+		@Override
+		protected int getSize()
+		{
+			return 0;
+		}
+		@Override
+		public IGuiListEntry getListEntry(int index)
+		{
+			return null;
+		}
+		#endif
+		
 		
 	}
 	
