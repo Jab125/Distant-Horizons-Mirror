@@ -11,7 +11,7 @@ buildscript {
 }
 
 if (rootProject.minecraft_version != "1.12.2") {
-    apply plugin: "org.spongepowered.gradle.vanilla" version "0.2.1-SNAPSHOT"
+    apply plugin: "org.spongepowered.gradle.vanilla"
 }
 
 if (rootProject.minecraft_version != "1.12.2") {

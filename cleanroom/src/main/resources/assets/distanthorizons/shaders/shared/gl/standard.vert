@@ -1,9 +1,9 @@
 #version 150 core
 
 in uvec4 vPosition;
-out vec4 vPos;
 in vec4 color;
 
+out vec4 vPos;
 out vec4 vertexColor;
 out vec3 vertexWorldPos;
 out float vertexYPos;

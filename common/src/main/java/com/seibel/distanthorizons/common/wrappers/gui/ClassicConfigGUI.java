@@ -46,6 +46,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.glfw.GLFW;
 #endif
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
@@ -1097,7 +1098,7 @@ public class ClassicConfigGUI
 	
 	public static class DhButtonEntry #if MC_VER > MC_1_12_2 extends ContainerObjectSelectionList.Entry<DhButtonEntry> #endif
 	{
-		private static final #if MC_VER <= MC_1_12_2 FontRenderer #else Font #endif textRenderer = Minecraft. #if MC_VER <= MC_1_12_2 getMinecraft().fontRenderer; #else .getInstance().font; #endif
+		private static final #if MC_VER <= MC_1_12_2 FontRenderer #else Font #endif textRenderer = Minecraft. #if MC_VER <= MC_1_12_2 getMinecraft().fontRenderer; #else getInstance().font; #endif
 		
 		private final #if MC_VER <= MC_1_12_2 Gui #else AbstractWidget #endif button;
 		

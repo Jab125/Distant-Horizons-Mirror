@@ -33,9 +33,11 @@ plugins {
     id "systems.manifold.manifold-gradle-plugin" version "0.0.2-alpha"
 
     // Architectury is used here only as a replacement for forge's own loom
-    id "dev.architectury.loom" version "1.0-SNAPSHOT" apply false
+    id "dev.architectury.loom" version "1.13-SNAPSHOT" apply false
 
     id 'xyz.wagyourtail.unimined' version '1.4.10-kappa' apply false
+
+    id 'org.spongepowered.gradle.vanilla' version '0.2.1-20240507.024226-82' apply false
 }
 
 /**
@@ -212,6 +214,7 @@ subprojects { p ->
         implementation.extendsFrom(forgeShadowMe)
         shadowMe.extendsFrom(forgeShadowMe)
         forgeRuntimeLibrary.extendsFrom(forgeShadowMe)
+        shadow.extendsFrom(forgeShadowMe)
 
 
         if (isMinecraftSubProject && p != project(":common")) {

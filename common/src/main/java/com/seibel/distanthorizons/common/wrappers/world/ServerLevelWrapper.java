@@ -39,7 +39,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 #if MC_VER <= MC_1_12_2
-
+import net.minecraft.world.WorldServer;
 #else
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
@@ -55,7 +55,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 #endif
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
-import net.minecraft.world.WorldServer;
 import org.jetbrains.annotations.Nullable;
 
 public class ServerLevelWrapper implements IServerLevelWrapper

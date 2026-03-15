@@ -48,6 +48,8 @@ configurations {
     runtimeOnly.extendsFrom(modRuntimeOnly)
 }
 
+String remapTaskName = "remapShadowJar"
+
 unimined.minecraft {
     version "1.12.2"
 
@@ -64,10 +66,12 @@ unimined.minecraft {
         runs.auth.username = "Developer"
         runs.all {
             systemProperty("crl.dev.mixin", "${mod_id}.default.mixin.json,${mod_id}.mod.mixin.json")
-            def extraArgs = ''
-            if (extraArgs != null && !extraArgs.trim().isEmpty()) {
-                jvmArgs += extraArgs.split { "\\s+" }.toList()
-            }
+            jvmArgs += ['-Xmx4G']
+            jvmArgs += [
+                '-XX:+UseZGC',
+                '-XX:-UseG1GC'
+            ]
+            jvmArgs += ['-XX:+ZGenerational']
 
             println "Classpath size BEFORE: ${classpath.files.size()}"
 
@@ -115,7 +119,8 @@ unimined.minecraft {
 
     defaultRemapJar = false
 
-    if (propertyBool('enable_shadow')) {
+    //propertyBool('enable_shadow')
+    if (true) {
         remap(tasks.shadowJar) {
             mixinRemap {
                 enableBaseMixin()
@@ -149,11 +154,11 @@ processResources {
     inputs.property 'mod_name', propertyString('mod_name')
     inputs.property 'mod_version', propertyString('mod_version')
     inputs.property 'mod_description', propertyString('mod_description')
-    inputs.property 'mod_authors', "${propertyStringList('mod_authors', ',').join(', ')}"
+    inputs.property 'mod_authors', propertyString('mod_authors').replace('[', '').replace(']', '').split(',').collect { it.trim().replace('"', '') }.join('", "')
     inputs.property 'mod_credits', propertyString('mod_credits')
-    inputs.property 'mod_url', propertyString('mod_url')
+    inputs.property 'mod_url', propertyString('mod_homepage')
     inputs.property 'mod_update_json', propertyString('mod_update_json')
-    inputs.property 'mod_logo_path', propertyString('mod_logo_path')
+    inputs.property 'mod_logo_path', "assets/distanthorizons/icon.png"
 
     def filterList = ['mcmod.info', 'pack.mcmeta']
 
@@ -163,11 +168,11 @@ processResources {
             'mod_name': propertyString('mod_name'),
             'mod_version': propertyString('mod_version'),
             'mod_description': propertyString('mod_description'),
-            'mod_authors': "${propertyStringList('mod_authors', ',').join(', ')}",
+            'mod_authors': propertyString('mod_authors').replace('[', '').replace(']', '').split(',').collect { it.trim().replace('"', '') }.join('", "'),
             'mod_credits': propertyString('mod_credits'),
-            'mod_url': propertyString('mod_url'),
+            'mod_url': propertyString('mod_homepage'),
             'mod_update_json': propertyString('mod_update_json'),
-            'mod_logo_path': propertyString('mod_logo_path'),
+            'mod_logo_path': "assets/distanthorizons/icon.png",
         )
     }
 
@@ -186,8 +191,8 @@ sourceSets {
         }
     }
 }
-
-if (!propertyBool('enable_shadow')) {
+//propertyBool('enable_shadow')
+if (!true) {
     shadowJar.enabled = false
 }
 
@@ -230,19 +235,25 @@ jar {
             attributes(attribute_map)
         }
     }
-    if (propertyBool('enable_shadow')) {
-        finalizedBy(tasks.named("remapShadowJar"))
-    } else {
-        finalizedBy(tasks.named("remapJar"))
-    }
+    finalizedBy(tasks.named(remapTaskName).get())
 }
 
 shadowJar {
-    configurations = [project.configurations.shadow]
+    configurations = [project.configurations.shadowMe, project.configurations.shadowCommon]
     archiveClassifier = "shadow"
+
+    manifest {
+        def attribute_map = [:]
+        attribute_map['ModType'] = "CRL"
+        attribute_map['MixinConfigs'] = "${mod_id}.default.mixin.json,${mod_id}.mod.mixin.json"
+        attribute_map['FMLCorePlugin'] = "com.seibel.distanthorizons.cleanroom.DistantHorizonsLoadingPlugin"
+        attribute_map['FMLCorePluginContainsFMLMod'] = true
+        attribute_map['FMLAT'] = "1_12_2_distanthorizons_at.cfg"
+        attributes(attribute_map)
+    }
 }
 
-remapJar {
+tasks.named(remapTaskName).configure {
     doFirst {
         logging.captureStandardOutput LogLevel.INFO
     }

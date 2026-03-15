@@ -69,9 +69,10 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	
 	
+	private boolean init = false;
 	
 	public GlQuadElementBuffer quadIBO = null;
-	public final GlAbstractVertexAttribute vao;
+	public GlAbstractVertexAttribute vao;
 	
 	// uniforms //
 	//region 
@@ -113,6 +114,11 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 			"assets/distanthorizons/shaders/shared/gl/flat_shaded.frag",
 			new String[]{"vPosition", "color"}
 		);
+	}
+	
+	public void init()
+	{
+		if (this.init) return;
 		
 		this.uCombinedMatrix = this.getUniformLocation("uCombinedMatrix");
 		this.uModelOffset = this.getUniformLocation("uModelOffset");
@@ -165,6 +171,9 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 			throw e;
 		}
 		
+		this.vao.unbind();
+		
+		this.init = true;
 	}
 	
 	//endregion
@@ -179,6 +188,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	@Override
 	public void bind()
 	{
+		this.init();
 		super.bind();
 		this.vao.bind();
 	}

@@ -23,6 +23,7 @@ package com.seibel.distanthorizons.common.wrappers.misc;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 #endif
+import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -35,7 +36,7 @@ import java.nio.ByteBuffer;
 #else
 #endif
 
-#if MC_VER <= MC_1_21_10 && MC_VER > MC_1_12_2
+#if MC_VER <= MC_1_21_10
 #else
 import com.mojang.blaze3d.textures.GpuTexture;
 #endif
@@ -52,12 +53,7 @@ public class LightMapWrapper implements ILightMapWrapper
 	public static final int GL_BOUND_INDEX = 0;
 	
 	private int textureId = 0;
-	#if MC_VER <= MC_1_12_2
-	private int lastTextureId = 0;
-	private int lastTextureUnit = GL32.GL_TEXTURE0;
-	#endif
 	
-		
 	#if MC_VER <= MC_1_21_10
 	#else
 	private GpuTexture gpuTexture = null;
@@ -126,7 +122,7 @@ public class LightMapWrapper implements ILightMapWrapper
 		this.textureId = minecraftLightmapTextureId;
 	}
 	
-	#if MC_VER <= MC_1_21_10 && MC_VER > MC_1_12_2
+	#if MC_VER <= MC_1_21_10
 	#else
 	public void setLightmapGpuTexture(GpuTexture gpuTexture)
 	{
@@ -144,31 +140,6 @@ public class LightMapWrapper implements ILightMapWrapper
 	// lightmap use //
 	//==============//
 	//region
-	
-	@Override
-	public void bind()
-	{
-		#if MC_VER <= MC_1_12_2
-		//1.12.2 If we don't bind MC texture back vanilla rendering will break
-		lastTextureUnit = GL32.glGetInteger(GL32.GL_ACTIVE_TEXTURE);
-		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + ILightMapWrapper.BOUND_INDEX);
-		lastTextureId = GL32.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
-		#else
-		GLMC.glActiveTexture(GL32.GL_TEXTURE0 + ILightMapWrapper.BOUND_INDEX);
-		#endif
-		GLMC.glBindTexture(this.textureId);
-	}
-	
-	@Override
-	public void unbind()
-	{
-		#if MC_VER <= MC_1_12_2
-		GLMC.glBindTexture(lastTextureId);
-		GLMC.glActiveTexture(lastTextureUnit);
-		#else
-		GLMC.glBindTexture(0); 
-		#endif
-	}
 	
 	public BlazeTextureViewWrapper getTextureViewWrapper() { return this.lightmapTextureWrapper; }
 	

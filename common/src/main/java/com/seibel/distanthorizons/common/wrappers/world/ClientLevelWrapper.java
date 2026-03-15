@@ -19,12 +19,13 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
-import net.minecraft.block.state.IBlockState;
+
 import net.minecraft.client.Minecraft;
 #if MC_VER <= MC_1_12_2
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.block.state.IBlockState;
 #else
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
@@ -541,7 +542,5 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	}
 	
 	//endregion
-	
-	
 	
 }

@@ -1,13 +1,26 @@
 package com.seibel.distanthorizons.common.commands;
-
-#if MC_VER > MC_1_12_2
+#if MC_VER <= MC_1_12_2
+import com.seibel.distanthorizons.core.config.ConfigHandler;
+import com.seibel.distanthorizons.core.config.types.AbstractConfigBase;
+import com.seibel.distanthorizons.core.config.types.ConfigEntry;
+import com.seibel.distanthorizons.core.logging.f3.F3Screen;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.text.TextComponentString;
+#else
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
+import static net.minecraft.commands.Commands.literal;
+#endif
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static com.seibel.distanthorizons.core.network.messages.MessageRegistry.DEBUG_CODEC_CRASH_MESSAGE;
-import static net.minecraft.commands.Commands.literal;
 
 #if MC_VER <= MC_1_21_10
 #else
@@ -25,7 +38,65 @@ public class CommandInitializer
 	private static final PermissionCheck COMMAND_PERMISSION_CHECK = new PermissionCheck.Require(Permissions.COMMANDS_OWNER);
 	#endif
 	
-	
+	#if MC_VER <= MC_1_12_2
+	public static ICommand initCommands()
+	{
+		return new CommandBase()
+		{
+			@Override
+			public String getName() { return "dh"; }
+			
+			@Override
+			public String getUsage(ICommandSender sender) { return "/dh <debug|config>"; }
+			
+			@Override
+			public void execute(MinecraftServer server, ICommandSender sender, String[] args)
+			{
+				if (args.length == 0)
+				{
+					if (DEBUG_CODEC_CRASH_MESSAGE)
+					{
+						sender.sendMessage(new TextComponentString("Usage: /dh <debug|config|crash>"));
+					}
+					else
+					{
+						sender.sendMessage(new TextComponentString("Usage: /dh <debug|config"));
+					}
+					return;
+				}
+				
+				switch (args[0])
+				{
+					case "debug":
+						DebugCommand debugCommand = new DebugCommand();
+						debugCommand.execute(sender);
+						break;
+					case "config":
+						ConfigCommand configCommand = new ConfigCommand();
+						configCommand.execute(sender, args);
+						break;
+					case "crash":
+						if (DEBUG_CODEC_CRASH_MESSAGE)
+						{
+							CrashCommand crashCommand = new CrashCommand();
+							crashCommand.execute(sender, args);
+						}
+						break;
+					case "pregen":
+						PregenCommand pregenCommand = new PregenCommand();
+						pregenCommand.execute(server, sender, args);
+						break;
+					default:
+						sender.sendMessage(new TextComponentString("Unknown subcommand: " + args[0]));
+				}
+			}
+		};
+		
+		//event.registerServerCommand(new PregenCommand().buildCommand());
+		
+		
+	}
+	#else
 	/**
 	 * A received command dispatcher, which is held until the server is ready to initialize the commands.
 	 */
@@ -81,6 +152,5 @@ public class CommandInitializer
 		
 		commandDispatcher.register(builder);
 	}
-	
+	#endif
 }
-#endif

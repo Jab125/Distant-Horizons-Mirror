@@ -27,8 +27,8 @@ import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGeneratio
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 #if MC_VER > MC_1_12_2
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling.ChunkFileReader;
-#endif
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.*;
+#endif
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.api.internal.chunkUpdating.ChunkUpdateQueueManager;
@@ -67,6 +67,8 @@ import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepSurfa
 #endif 
 
 #if MC_VER <= MC_1_12_2
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.ForgeChunkManager;
 #else
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.*;
@@ -588,6 +590,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	
 	// direct generation //
 	
+	#if MC_VER > MC_1_12_2
 	public void generateDirect(
 			GenerationEvent genEvent, ArrayGridList<ChunkWrapper> chunkWrappersToGenerate,
 			DhLitWorldGenRegion region) throws InterruptedException
@@ -759,7 +762,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	}
 	private static <T> ArrayGridList<T> GetCutoutFrom(ArrayGridList<T> total, int border) { return new ArrayGridList<>(total, border, total.gridSize - border); }
 	private static <T> ArrayGridList<T> GetCutoutFrom(ArrayGridList<T> total, EDhApiWorldGenerationStep step) { return GetCutoutFrom(total, WORLD_GEN_CHUNK_BORDER_NEEDED_BY_GEN_STEP.get(step)); }
-	
+	#endif
 	
 	
 	// queue task //
@@ -800,8 +803,13 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		}
 		
 		
+		#if MC_VER <= MC_1_12_2
+		WorldServer worldServer = (WorldServer) this.dhServerLevel.getServerLevelWrapper().getWrappedMcObject();
+		InternalServerGenerator.DH_SERVER_GEN_TICKET_MAP.remove(worldServer);
+		ForgeChunkManager.releaseTicket(InternalServerGenerator.DH_SERVER_GEN_TICKET_MAP.get(worldServer));
+		#else
 		this.chunkFileReader.close();
-		
+		#endif
 	}
 	
 	
@@ -829,12 +837,12 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 	// helper classes //
 	//================//
 	
+	#if MC_VER > MC_1_12_2
 	@FunctionalInterface
 	public interface IEmptyChunkRetrievalFunc
 	{
 		ChunkAccess getChunk(int chunkPosX, int chunkPosZ);
 	}
-	
-	
+	#endif
 	
 }

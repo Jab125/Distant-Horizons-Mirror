@@ -46,17 +46,18 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.worldGeneration.IBatchGeneratorEnvironmentWrapper;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
+
+#if MC_VER > MC_1_17_1
+import net.minecraft.core.Holder;
+#endif
+
+#if MC_VER <= MC_1_12_2
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraft.world.chunk.Chunk;
-#if MC_VER > MC_1_17_1
-import net.minecraft.core.Holder;
-#endif
-
-#if MC_VER <= MC_1_12_2
 #else
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.server.level.ServerLevel;
@@ -110,8 +111,7 @@ public class WrapperFactory implements IWrapperFactory
 	{
 		if (targetLevel instanceof IDhServerLevel)
 		{
-			//return new BatchGenerationEnvironment((IDhServerLevel) targetLevel);
-			return null;
+			return new BatchGenerationEnvironment((IDhServerLevel) targetLevel);
 		}
 		else
 		{

@@ -49,6 +49,7 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
@@ -78,13 +79,8 @@ public class CleanroomClientProxy implements AbstractModInitializer.IEventProxy
 	public void registerEvents()
 	{
 		MinecraftForge.EVENT_BUS.register(this);
-		
-		// handles singleplayer, LAN, and connecting to a server
-		PACKET_SENDER.setPacketHandler((IServerPlayerWrapper player, @NotNull AbstractNetworkMessage message) ->
-		{
-			ClientApi.INSTANCE.pluginMessageReceived(message);
-			ServerApi.INSTANCE.pluginMessageReceived(player, message);
-		});
+		MinecraftForge.EVENT_BUS.register(FMLCommonHandler.instance());
+		CleanroomPluginPacketSender.setPacketHandler(ClientApi.INSTANCE::pluginMessageReceived);
 	}
 	
 	

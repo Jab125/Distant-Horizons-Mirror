@@ -37,6 +37,7 @@ import net.minecraft.init.Blocks;
 import net.minecraft.block.BlockLiquid;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.properties.IProperty;
+import net.minecraftforge.fluids.IFluidBlock;
 #else
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.BeaconBeamBlock;
@@ -55,7 +56,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import net.minecraftforge.fluids.IFluidBlock;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -98,7 +98,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	// must be defined before AIR, otherwise a null pointer will be thrown
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	public static final ConcurrentHashMap<#if MC_VER >= MC_1_12_2 IBlockState #else BlockState #endif, BlockStateWrapper> WRAPPER_BY_BLOCK_STATE = new ConcurrentHashMap<>();
+	public static final ConcurrentHashMap<#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif, BlockStateWrapper> WRAPPER_BY_BLOCK_STATE = new ConcurrentHashMap<>();
 	public static final ConcurrentHashMap<String, BlockStateWrapper> WRAPPER_BY_RESOURCE_LOCATION = new ConcurrentHashMap<>();
 	
 	public static final String AIR_STRING = "AIR";

@@ -34,10 +34,10 @@ import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
-#if MC_VER <= MC_1_12_2
-import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.client.entity.EntityPlayerSP;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.profiler.Profiler;

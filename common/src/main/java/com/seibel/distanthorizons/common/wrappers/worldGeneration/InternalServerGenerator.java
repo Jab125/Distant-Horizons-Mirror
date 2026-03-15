@@ -26,6 +26,7 @@ import com.seibel.distanthorizons.coreapi.ModInfo;
 
 #if MC_VER <= MC_1_12_2
 import net.minecraft.util.math.ChunkPos;
+import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
@@ -73,7 +74,8 @@ public class InternalServerGenerator
 	private static final int MS_TO_IGNORE_CHUNK_AFTER_COMPLETION = 5_000;
 	
 	#if MC_VER <= MC_1_12_2
-	public static ForgeChunkManager.Ticket DH_SERVER_GEN_TICKET = null;
+	public static Map<World, ForgeChunkManager.Ticket> DH_SERVER_GEN_TICKET_MAP = new HashMap<>();
+	private final ForgeChunkManager.Ticket DH_SERVER_GEN_TICKET;
 	#elif MC_VER < MC_1_21_5
 	private static final TicketType<ChunkPos> DH_SERVER_GEN_TICKET = TicketType.create("dh_server_gen_ticket", Comparator.comparingLong(ChunkPos::toLong));
 	#elif MC_VER < MC_1_21_9
@@ -99,6 +101,13 @@ public class InternalServerGenerator
 	{
 		this.params = params;
 		this.dhServerLevel = dhServerLevel;
+		#if MC_VER <= MC_1_12_2
+		this.DH_SERVER_GEN_TICKET = DH_SERVER_GEN_TICKET_MAP.get((WorldServer) this.dhServerLevel.getServerLevelWrapper().getWrappedMcObject());
+		if (this.DH_SERVER_GEN_TICKET == null)
+		{
+			LOGGER.error("DH_SERVER_GEN_TICKET is null for level: " + dhServerLevel.getServerLevelWrapper().getDimensionName());
+		}
+		#endif
 	}
 	
 	

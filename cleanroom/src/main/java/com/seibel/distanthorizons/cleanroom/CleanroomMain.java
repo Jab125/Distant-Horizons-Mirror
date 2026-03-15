@@ -21,19 +21,24 @@ package com.seibel.distanthorizons.cleanroom;
 
 import com.seibel.distanthorizons.cleanroom.modAccessor.ModChecker;
 import com.seibel.distanthorizons.common.AbstractModInitializer;
+import com.seibel.distanthorizons.common.commands.CommandInitializer;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.InternalServerGenerator;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSender;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.World;
+import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
+import net.minecraftforge.fml.common.event.*;
+import org.apache.logging.log4j.Level;
+import org.apache.logging.log4j.core.config.Configurator;
 
 
+import java.util.List;
 import java.util.function.Consumer;
 
 /**
@@ -46,6 +51,13 @@ public class CleanroomMain extends AbstractModInitializer
 {
 	@Mod.Instance
 	public static CleanroomMain instance;
+	
+	@Mod.EventHandler
+	public void preinit(FMLPreInitializationEvent event)
+	{
+		Configurator.setLevel("org.sqlite", Level.INFO);
+		ForgeChunkManager.setForcedChunkLoadingCallback(CleanroomMain.instance, (tickets, world) -> { });	
+	}
 	
 	@Mod.EventHandler
 	public void init(FMLInitializationEvent event)
@@ -91,6 +103,12 @@ public class CleanroomMain extends AbstractModInitializer
 		// Just run the event handler, since there are no proper ClientLifecycleEvent for the client 
 		// to signify readiness other than FmlClientSetupEvent
 		eventHandler.run();
+	}
+	
+	@Mod.EventHandler
+	public void onServerStarting(FMLServerStartingEvent event)
+	{
+		event.registerServerCommand(CommandInitializer.initCommands());
 	}
 	
 	@Mod.EventHandler

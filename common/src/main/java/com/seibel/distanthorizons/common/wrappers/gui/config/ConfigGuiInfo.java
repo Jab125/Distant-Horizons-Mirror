@@ -1,9 +1,9 @@
 package com.seibel.distanthorizons.common.wrappers.gui.config;
 
-import com.seibel.distanthorizons.common.wrappers.gui.OnPressed;
 import com.seibel.distanthorizons.core.config.gui.IConfigGuiInfo;
 import com.seibel.distanthorizons.core.config.types.AbstractConfigBase;
 #if MC_VER <= MC_1_12_2
+import com.seibel.distanthorizons.common.wrappers.gui.OnPressed;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.util.text.ITextComponent;

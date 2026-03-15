@@ -84,7 +84,7 @@ public class MixinChunkMapCommon
 		#endif
 		
 		
-		
+		//System.out.println("SUBMITTING: " + chunk.getPos());
 		// submit the update event
 		ServerApi.INSTANCE.serverChunkSaveEvent(
 			new ChunkWrapper(chunk, levelWrapper),

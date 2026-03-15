@@ -1,6 +1,8 @@
 package com.seibel.distanthorizons.cleanroom;
 
 import com.seibel.distanthorizons.common.AbstractModInitializer;
+import com.seibel.distanthorizons.common.commands.CommandInitializer;
+import com.seibel.distanthorizons.common.commonMixins.MixinChunkMapCommon;
 import com.seibel.distanthorizons.common.util.ProxyUtil;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.ServerPlayerWrapper;
@@ -22,13 +24,17 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkDataEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.WorldEvent;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 import net.minecraftforge.fml.common.Mod;
 import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
+import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
 import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 
 import java.lang.reflect.Field;
+
+import static com.seibel.distanthorizons.cleanroom.CleanroomMain.instance;
 
 public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 {
@@ -45,6 +51,7 @@ public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 	public void registerEvents()
 	{
 		MinecraftForge.EVENT_BUS.register(this);
+		FMLCommonHandler.instance().bus().register(this);
 		if (this.isDedicated)
 		{
 			PACKET_SENDER.setPacketHandler(ServerApi.INSTANCE::pluginMessageReceived);
@@ -65,25 +72,15 @@ public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 	// events //
 	//========//
 	
+	
 	// ServerLevelLoadEvent
 	@SubscribeEvent
 	public void serverLevelLoadEvent(WorldEvent.Load event)
 	{
 		if (GetEventLevel(event) instanceof WorldServer)
 		{
+			InternalServerGenerator.DH_SERVER_GEN_TICKET_MAP.put(event.getWorld(), ForgeChunkManager.requestTicket(instance, event.getWorld(), ForgeChunkManager.Type.NORMAL));
 			this.serverApi.serverLevelLoadEvent(getServerLevelWrapper((WorldServer) GetEventLevel(event)));
-			InternalServerGenerator.DH_SERVER_GEN_TICKET = ForgeChunkManager.requestTicket(CleanroomMain.instance, event.getWorld(), ForgeChunkManager.Type.NORMAL);
-			//increase chunk limit 
-			try
-			{
-				Field maxDepthField = InternalServerGenerator.DH_SERVER_GEN_TICKET.getClass().getDeclaredField("maxDepth");
-				maxDepthField.setAccessible(true);
-				maxDepthField.setInt(InternalServerGenerator.DH_SERVER_GEN_TICKET, 1000);
-			}
-			catch (Exception e)
-			{
-				e.printStackTrace();
-			}
 		}
 	}
 	
@@ -106,6 +103,15 @@ public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 	}
 	
 	@SubscribeEvent
+	public void serverChunkSaveEvent(ChunkDataEvent.Save event)
+	{
+		if (event.getWorld() instanceof WorldServer worldServer)
+		{
+			MixinChunkMapCommon.onChunkSave(worldServer, event.getChunk());
+		}
+	}
+	
+	@SubscribeEvent
 	public void playerLoggedInEvent(PlayerEvent.PlayerLoggedInEvent event)
 	{ this.serverApi.serverPlayerJoinEvent(getServerPlayerWrapper(event)); }
 	@SubscribeEvent
@@ -115,9 +121,9 @@ public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 	public void playerChangedDimensionEvent(PlayerEvent.PlayerChangedDimensionEvent event)
 	{
 		this.serverApi.serverPlayerLevelChangeEvent(
-				getServerPlayerWrapper(event),
-				getServerLevelWrapper(event.fromDim, event),
-				getServerLevelWrapper(event.toDim, event)
+			getServerPlayerWrapper(event),
+			getServerLevelWrapper(event.fromDim, event),
+			getServerLevelWrapper(event.toDim, event)
 		);
 	}
 	

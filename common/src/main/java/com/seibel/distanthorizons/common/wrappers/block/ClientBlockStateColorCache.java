@@ -28,16 +28,17 @@ import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.WorldClient;
-import net.minecraft.client.renderer.block.model.BakedQuad;
-import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.block.model.BakedQuad;
 #if MC_VER <= MC_1_12_2
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumFacing;
 import net.minecraft.block.BlockRotatedPillar;
 import net.minecraft.block.*;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.util.math.BlockPos;
 #else
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.*;
@@ -47,10 +48,14 @@ import net.minecraft.world.level.block.state.properties.SlabType;
 #if MC_VER >= MC_1_19_2
 import net.minecraft.util.RandomSource;
 #else
-import java.util.*;
+import java.util.Random;
 #endif
+
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.List;
+
 import com.seibel.distanthorizons.core.logging.DhLogger;
-import net.minecraft.util.math.BlockPos;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.concurrent.locks.ReentrantLock;
