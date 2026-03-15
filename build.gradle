@@ -8,6 +8,17 @@ import org.apache.tools.zip.ZipOutputStream
 import java.util.function.Function
 import java.util.function.Predicate
 
+buildscript {
+    configurations.configureEach {
+        resolutionStrategy.eachDependency { details ->
+            if (details.requested.group == "org.apache.commons" && details.requested.name == "commons-compress") {
+                details.useVersion("1.28.0")
+                details.because("Needed because of Cleanroom. net.minecraftforge:DiffPatch:2.0.7 from dev.architectury.loom pulls ancient commons-compress 1.18")
+            }
+            
+        }
+    }
+}
 
 plugins {
     id "java"
@@ -23,8 +34,11 @@ plugins {
 
     // Architectury is used here only as a replacement for forge's own loom
     id "dev.architectury.loom" version "1.13-SNAPSHOT" apply false
-}
 
+    id 'xyz.wagyourtail.unimined' version '1.4.10-kappa' apply false
+
+    id 'org.spongepowered.gradle.vanilla' version '0.2.1-20240507.024226-82' apply false
+}
 
 /**
  * Creates the list of preprocessors to use.
@@ -150,6 +164,20 @@ subprojects { p ->
     apply plugin: "com.github.johnrengelman.shadow"
     if (isMinecraftSubProject)
         apply plugin: "systems.manifold.manifold-gradle-plugin"
+
+
+    if (rootProject.minecraft_version == "1.12.2" && p == project(":common")) {
+        p.afterEvaluate {
+            def cleanroomProject = project(":cleanroom")
+            cleanroomProject.afterEvaluate {
+                p.dependencies {
+                    compileOnly p.files(cleanroomProject.configurations.minecraftLibraries.files)
+                    compileOnly p.files(cleanroomProject.configurations.forgeRuntimeLibrary.files)
+                    compileOnly p.files(cleanroomProject.configurations.minecraft.files)
+                }
+            }
+        }
+    }
     
     // Apply forge's loom
     if ((findProject(":forge") && p == project(":forge")) ||
@@ -186,6 +214,7 @@ subprojects { p ->
         implementation.extendsFrom(forgeShadowMe)
         shadowMe.extendsFrom(forgeShadowMe)
         forgeRuntimeLibrary.extendsFrom(forgeShadowMe)
+        shadow.extendsFrom(forgeShadowMe)
 
 
         if (isMinecraftSubProject && p != project(":common")) {
@@ -587,8 +616,6 @@ allprojects { p ->
         // VanillaGradle and Mixins in common
         maven { url "https://repo.spongepowered.org/maven/" }
 
-        // Canvas mod
-        maven { url "https://maven.vram.io/" }
         // ModMenu mod
         maven { url "https://maven.terraformersmc.com/" }
 

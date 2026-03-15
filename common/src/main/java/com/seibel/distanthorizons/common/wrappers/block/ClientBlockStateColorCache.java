@@ -26,24 +26,38 @@ import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPosMutable;
 import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.block.model.BakedQuad;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.client.renderer.block.model.BakedQuad;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
+import net.minecraft.util.EnumFacing;
+import net.minecraft.block.BlockRotatedPillar;
+import net.minecraft.block.*;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.color.BlockColors;
+import net.minecraft.util.math.BlockPos;
+#else
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.*;
+import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.block.state.properties.SlabType;
+#endif
 #if MC_VER >= MC_1_19_2
 import net.minecraft.util.RandomSource;
 #else
 import java.util.Random;
 #endif
-import net.minecraft.world.level.block.state.BlockState;
-import com.seibel.distanthorizons.core.logging.DhLogger;
-import net.minecraft.world.level.block.state.properties.SlabType;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import org.jetbrains.annotations.Nullable;
+
 import java.util.concurrent.locks.ReentrantLock;
 
 #if MC_VER < MC_1_21_5
@@ -51,6 +65,15 @@ import java.util.concurrent.locks.ReentrantLock;
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 #endif
 
+#if MC_VER <= MC_1_12_2
+/**
+ * This stores and calculates the colors
+ * the given {@link IBlockState} should have based
+ * on the given {@link IClientLevelWrapper}.
+ * 
+ * @see ColorUtil
+ */
+#else
 /**
  * This stores and calculates the colors
  * the given {@link BlockState} should have based
@@ -58,14 +81,15 @@ import net.minecraft.client.renderer.block.model.BlockModelPart;
  * 
  * @see ColorUtil
  */
+#endif
 public class ClientBlockStateColorCache
 {
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
-	private static final Minecraft MC = Minecraft.getInstance();
+	private static final Minecraft MC = Minecraft.#if MC_VER <= MC_1_12_2 getMinecraft() #else getInstance() #endif;
 	
-	private static final HashSet<BlockState> BLOCK_STATES_THAT_NEED_LEVEL = new HashSet<>();
-	private static final HashSet<BlockState> BROKEN_BLOCK_STATES = new HashSet<>();
+	private static final HashSet<#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif> BLOCK_STATES_THAT_NEED_LEVEL = new HashSet<>();
+	private static final HashSet<#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif> BROKEN_BLOCK_STATES = new HashSet<>();
 	
 	/** 
 	 * Methods using MC's "RandomSource" object aren't thread safe <br>
@@ -79,15 +103,15 @@ public class ClientBlockStateColorCache
 	
 	
 	/** This is the order each direction on a block is processed when attempting to get the texture/color */
-	private static final @Nullable Direction[] COLOR_RESOLUTION_DIRECTION_ORDER = 
-		{ 
-			Direction.UP,
+	private static final @Nullable #if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif[] COLOR_RESOLUTION_DIRECTION_ORDER = 
+		{
+			#if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif.UP,
 			null, // null represents "unculled" faces, IE the top of farmland
-			Direction.NORTH, 
-			Direction.EAST, 
-			Direction.WEST, 
-			Direction.SOUTH, 
-			Direction.DOWN 
+			#if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif.NORTH,
+			#if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif.EAST,
+			#if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif.WEST,
+			#if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif.SOUTH,
+			#if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif.DOWN 
 		};
 	
 	private static final int FLOWER_COLOR_SCALE = 5;
@@ -102,7 +126,7 @@ public class ClientBlockStateColorCache
 	#endif
 	
 	private final IClientLevelWrapper clientLevelWrapper;
-	private final BlockState blockState;
+	private final #if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif blockState;
 	private final BlockStateWrapper blockStateWrapper;
 	
 	private boolean isColorResolved = false;
@@ -174,8 +198,10 @@ public class ClientBlockStateColorCache
 			0.93011117f, 0.9386859f, 0.9473069f, 0.9559735f, 0.9646866f, 0.9734455f, 0.98225087f, 0.9911022f, 1.0f
 		};
 	
+	#if MC_VER > MC_1_12_2
 	private static final ThreadLocal<TintWithoutLevelOverrider> TintWithoutLevelOverrideGetter = ThreadLocal.withInitial(() -> new TintWithoutLevelOverrider());
 	private static final ThreadLocal<TintGetterOverride> TintOverrideGetter = ThreadLocal.withInitial(() -> new TintGetterOverride());
+	#endif
 	
 	
 	
@@ -183,7 +209,7 @@ public class ClientBlockStateColorCache
 	// constructor //
 	//=============//
 	
-	public ClientBlockStateColorCache(BlockState blockState, IClientLevelWrapper clientLevelWrapper)
+	public ClientBlockStateColorCache(#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif blockState, IClientLevelWrapper clientLevelWrapper)
 	{
 		this.blockState = blockState;
 		this.blockStateWrapper = BlockStateWrapper.fromBlockState(blockState, clientLevelWrapper);
@@ -210,17 +236,17 @@ public class ClientBlockStateColorCache
 			// getQuads() isn't thread safe so we need to put this logic in a lock
 			RESOLVE_LOCK.lock();
 			
-			if (this.blockState.getFluidState().isEmpty())
+			if (#if MC_VER <= MC_1_12_2 !this.blockState.getMaterial().isLiquid() #else this.blockState.getFluidState().isEmpty() #endif)
 			{
 				// look for the first non-empty direction
 				List<BakedQuad> quads = null;
-				for (Direction direction : COLOR_RESOLUTION_DIRECTION_ORDER)
+				for (#if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif direction : COLOR_RESOLUTION_DIRECTION_ORDER)
 				{
 					quads = this.getQuadsForDirection(direction);
 					if (quads != null && !quads.isEmpty()
 						&& !(
-							this.blockState.getBlock() instanceof RotatedPillarBlock
-							&& direction == Direction.UP
+							this.blockState.getBlock() instanceof #if MC_VER <= MC_1_12_2 BlockRotatedPillar #else RotatedPillarBlock #endif
+							&& direction == #if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif.UP
 							)
 						)
 					{
@@ -239,7 +265,7 @@ public class ClientBlockStateColorCache
 				{
 					BakedQuad firstQuad = quads.get(0);
 					
-					this.needPostTinting = firstQuad.isTinted();
+					this.needPostTinting = firstQuad.#if MC_VER <= MC_1_12_2 hasTintIndex() #else isTinted() #endif;
 					#if MC_VER <= MC_1_21_4
 					this.tintIndex = firstQuad.getTintIndex();
 					#else
@@ -248,7 +274,7 @@ public class ClientBlockStateColorCache
 					
 					#if MC_VER < MC_1_17_1
 					this.baseColor = calculateColorFromTexture(
-                        firstQuad.sprite,
+                        firstQuad.#if MC_VER <= MC_1_12_2 getSprite() #else sprite #endif,
 						EColorMode.getColorMode(this.blockState.getBlock()));
 					#elif MC_VER < MC_1_21_5
 					this.baseColor = calculateColorFromTexture(
@@ -288,20 +314,31 @@ public class ClientBlockStateColorCache
 	@Nullable
 	private List<BakedQuad> getUnculledQuads() { return this.getQuadsForDirection(null); }
 	@Nullable
-	private List<BakedQuad> getQuadsForDirection(@Nullable Direction direction)
+	private List<BakedQuad> getQuadsForDirection(@Nullable #if MC_VER <= MC_1_12_2 EnumFacing #else Direction #endif direction)
 	{
-		BlockState effectiveBlockState = this.blockState;
+		#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif effectiveBlockState = this.blockState;
 		
 		// if this block is a slab, use it's double variant so we can get the top face,
 		// otherwise the color will use the side, which isn't as accurate
+		// 1.12.2 doesn't have SlabType as property
+		#if MC_VER > MC_1_12_2
 		if (this.blockState.getBlock() instanceof SlabBlock)
 		{
-			effectiveBlockState = this.blockState.setValue( SlabBlock.TYPE, SlabType.DOUBLE );
+			effectiveBlockState = this.blockState.setValue(SlabBlock.TYPE, SlabType.DOUBLE);
 		}
+		#endif
 		
 		List<BakedQuad> quads;
 		
-		#if MC_VER < MC_1_21_5
+		#if MC_VER <= MC_1_12_2
+		try {
+			quads = MC.getBlockRendererDispatcher().getModelForState(effectiveBlockState).getQuads(effectiveBlockState, direction, RANDOM.nextLong());
+		}
+		catch (Exception e)
+		{
+			quads = Collections.emptyList();
+		}
+		#elif MC_VER < MC_1_21_5
 		quads = MC.getModelManager().getBlockModelShaper().
 			getBlockModel(effectiveBlockState).getQuads(effectiveBlockState, direction, RANDOM);
 		#else
@@ -347,10 +384,18 @@ public class ClientBlockStateColorCache
 					//_ OpenGL RGBA format Java Order: 0xAA BB GG RR
 					tempColor = TextureAtlasSpriteWrapper.getPixelRGBA(texture, 0, u, v);
 					
+					#if MC_VER <= MC_1_12_2
+					int b = (tempColor & 0x000000FF);
+					int g = (tempColor & 0x0000FF00) >>> 8;
+					int r = (tempColor & 0x00FF0000) >>> 16;
+					int a = (tempColor & 0xFF000000) >>> 24;
+					#else
 					int r = (tempColor & 0x000000FF);
 					int g = (tempColor & 0x0000FF00) >>> 8;
 					int b = (tempColor & 0x00FF0000) >>> 16;
 					int a = (tempColor & 0xFF000000) >>> 24;
+					#endif
+					
 					int scale = 1;
 					if (colorMode == EColorMode.Leaves)
 					{
@@ -415,7 +460,9 @@ public class ClientBlockStateColorCache
 	}
 	private static int getTextureWidth(TextureAtlasSprite texture)
 	{
-        #if MC_VER < MC_1_19_4
+		#if MC_VER <= MC_1_12_2
+		return texture.getIconWidth();
+        #elif MC_VER < MC_1_19_4
 		return texture.getWidth();
         #else
 		return texture.contents().width();
@@ -423,7 +470,9 @@ public class ClientBlockStateColorCache
 	}
 	private static int getTextureHeight(TextureAtlasSprite texture)
 	{
-        #if MC_VER < MC_1_19_4
+		#if MC_VER <= MC_1_12_2
+		return texture.getIconHeight();
+        #elif MC_VER < MC_1_19_4
 		return texture.getHeight();
         #else
 		return texture.contents().height();
@@ -457,8 +506,12 @@ public class ClientBlockStateColorCache
 	private int getParticleIconColor()
 	{
 		return calculateColorFromTexture(
-				Minecraft.getInstance().getModelManager().getBlockModelShaper().getParticleIcon(this.blockState),
-				EColorMode.getColorMode(this.blockState.getBlock()));
+			#if MC_VER <= MC_1_12_2
+			Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getTexture(this.blockState),
+			#else
+			Minecraft.getInstance().getModelManager().getBlockModelShaper().getParticleIcon(this.blockState),
+			#endif
+			EColorMode.getColorMode(this.blockState.getBlock()));
 	}
 	
 	
@@ -486,6 +539,37 @@ public class ClientBlockStateColorCache
 		int tintColor = -1;
 		try
 		{
+			// 1.12.2 doesn't have BlockAndTintGetter -> get tintColor from biome
+			#if MC_VER <= MC_1_12_2
+			WorldClient world = (WorldClient) this.clientLevelWrapper.getWrappedMcObject();
+			BlockPos mcPos = new BlockPos(blockPos.getX(), blockPos.getY(), blockPos.getZ());
+			Block block = this.blockState.getBlock();
+			if (block instanceof BlockGrass || block instanceof BlockBush)
+			{
+				tintColor = biomeWrapper.biome.getGrassColorAtPos(mcPos);
+			}
+			else if (block instanceof BlockLeaves)
+			{
+				tintColor = biomeWrapper.biome.getFoliageColorAtPos(mcPos);
+			}
+			else if (block instanceof BlockLiquid) // We don't want lava to fall into the else block
+			{
+				if(block == Blocks.WATER || block == Blocks.FLOWING_WATER)
+				{
+					tintColor = biomeWrapper.biome.getWaterColor();
+				}
+			}
+			else
+			{
+				BlockColors blockColors = Minecraft.getMinecraft().getBlockColors();
+				tintColor = blockColors.colorMultiplier(blockState, world, mcPos, this.tintIndex);
+				
+				if (tintColor == -1)
+				{
+					tintColor = blockColors.getColor(blockState, world, mcPos);
+				}
+			}
+			#else
 			// try to use the fast tint getter logic first
 			if (!BLOCK_STATES_THAT_NEED_LEVEL.contains(this.blockState))
 			{
@@ -536,6 +620,7 @@ public class ClientBlockStateColorCache
 									this.tintIndex);
 				}
 			}
+			#endif
 		}
 		catch (Exception e)
 		{
@@ -576,15 +661,15 @@ public class ClientBlockStateColorCache
 		
 		static EColorMode getColorMode(Block block)
 		{
-			if (block instanceof LeavesBlock)
+			if (block instanceof #if MC_VER <= MC_1_12_2 BlockLeaves #else LeavesBlock #endif)
 			{
 				return Leaves;
 			}
-			if (block instanceof FlowerBlock)
+			if (block instanceof #if MC_VER <= MC_1_12_2 BlockFlower #else FlowerBlock #endif)
 			{
 				return Flower;
 			}
-			if (block.toString().contains("glass"))
+			if (block.toString().toLowerCase().contains("glass"))
 			{
 				return Glass;
 			}

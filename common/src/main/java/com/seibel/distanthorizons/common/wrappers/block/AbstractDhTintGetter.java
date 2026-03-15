@@ -1,5 +1,5 @@
 package com.seibel.distanthorizons.common.wrappers.block;
-
+#if MC_VER > MC_1_12_2
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.BlockBiomeWrapperPair;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.FullDataSourceV2;
@@ -12,11 +12,15 @@ import com.seibel.distanthorizons.core.util.FullDataPointUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.client.Minecraft;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.world.biome.Biome;
+#else
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.biome.Biome;
+#endif
 
 import java.io.IOException;
 import java.util.concurrent.ConcurrentHashMap;
@@ -335,3 +339,4 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	
 	
 }
+#endif

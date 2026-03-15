@@ -18,7 +18,7 @@
  */
 
 package com.seibel.distanthorizons.common.wrappers.block;
-
+#if MC_VER > MC_1_12_2
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.FullDataSourceV2;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import net.minecraft.core.BlockPos;
@@ -88,3 +88,4 @@ public class TintWithoutLevelOverrider extends AbstractDhTintGetter
 	#endif
 	
 }
+#endif

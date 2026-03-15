@@ -1,5 +1,10 @@
 package com.seibel.distanthorizons.common.wrappers.gui;
 
+#if MC_VER <= MC_1_12_2
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.gui.GuiScreen;
+import net.minecraft.util.text.ITextComponent;
+#else
 import net.minecraft.client.gui.Font;
 #if MC_VER < MC_1_20_1
 import com.mojang.blaze3d.vertex.PoseStack;
@@ -9,29 +14,67 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+#endif
 
 import java.util.List;
 
-public class DhScreen extends Screen
+public class DhScreen extends #if MC_VER <= MC_1_12_2 GuiScreen #else Screen #endif
 {
-	
-	protected DhScreen(Component $$0)
+	#if MC_VER <= MC_1_12_2
+	protected ITextComponent title;
+	protected DhScreen(ITextComponent title)
 	{
-		super($$0);
+		this.title = title;
 	}
+	#else
+	protected DhScreen(Component title)
+	{
+		super(title);
+	}
+	#endif
 	
 	// addRenderableWidget in 1.17 and over
 	// addButton in 1.16 and below
-	protected Button addBtn(Button button)
+	protected #if MC_VER <= MC_1_12_2 GuiButton #else Button #endif addBtn(#if MC_VER <= MC_1_12_2 GuiButton #else Button #endif button)
 	{
-		#if MC_VER < MC_1_17_1
+		#if MC_VER <= MC_1_12_2
+		this.buttonList.add(button);
+		return button;
+		#elif MC_VER < MC_1_17_1
         return this.addButton(button);
 		#else
 		return this.addRenderableWidget(button);
 		#endif
 	}
 	
-	#if MC_VER < MC_1_20_1
+	#if MC_VER <= MC_1_12_2
+	
+	@Override
+	protected void actionPerformed(GuiButton button)
+	{
+		OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(button);
+		if (handler != null)
+		{
+			handler.pressed(button);
+		}
+	}
+	
+	protected void DhDrawCenteredString(ITextComponent text, int x, int y, int color) {
+		drawCenteredString(fontRenderer, text.getFormattedText(), x, y, color);
+	}
+	
+	protected void DhDrawString(ITextComponent text, int x, int y, int color) {
+		drawString(fontRenderer, text.getFormattedText(), x, y, color);
+	}
+	
+	protected void DhRenderComponentTooltip(List<ITextComponent> list, int x, int y) {
+		drawHoveringText(list.stream().map(ITextComponent::getFormattedText).toList(), x, y, fontRenderer);
+	}
+	
+	protected void DhRenderTooltip(ITextComponent text, int x, int y) {
+		drawHoveringText(List.of(text.getFormattedText()), x, y, fontRenderer);
+	}
+	#elif MC_VER < MC_1_20_1
 	protected void DhDrawCenteredString(PoseStack guiStack, Font font, Component text, int x, int y, int color)
 	{
 		drawCenteredString(guiStack, font, text, x, y, color);

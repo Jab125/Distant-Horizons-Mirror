@@ -6,23 +6,39 @@ import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import com.seibel.distanthorizons.core.util.math.Vec3d;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.network.NetHandlerPlayServer;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.WorldServer;
+#else
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import net.minecraft.world.phys.Vec3;
+#endif
 
 import java.net.SocketAddress;
 import java.util.concurrent.ConcurrentMap;
 
+#if MC_VER <= MC_1_12_2
+
+/**
+ * This wrapper transparently ensures that the underlying {@link EntityPlayerMP} is always valid,
+ * unless the player has disconnected.
+ */
+#else
 /**
  * This wrapper transparently ensures that the underlying {@link ServerPlayer} is always valid,
  * unless the player has disconnected.
  */
+#endif
 public class ServerPlayerWrapper implements IServerPlayerWrapper
 {
-	private static final ConcurrentMap<ServerGamePacketListenerImpl, ServerPlayerWrapper> serverPlayerWrapperMap = new MapMaker().weakKeys().weakValues().makeMap();
+	private static final ConcurrentMap<#if MC_VER <= MC_1_12_2 NetHandlerPlayServer #else ServerGamePacketListenerImpl #endif , ServerPlayerWrapper> serverPlayerWrapperMap = new MapMaker().weakKeys().weakValues().makeMap();
 	
-	private final ServerGamePacketListenerImpl connection;
+	private final #if MC_VER <= MC_1_12_2 NetHandlerPlayServer #else ServerGamePacketListenerImpl #endif connection;
 	
 	
 	
@@ -30,10 +46,10 @@ public class ServerPlayerWrapper implements IServerPlayerWrapper
 	// constructor //
 	//=============//
 	
-	public static ServerPlayerWrapper getWrapper(ServerPlayer serverPlayer) 
+	public static ServerPlayerWrapper getWrapper(#if MC_VER <= MC_1_12_2 EntityPlayerMP #else ServerPlayer #endif serverPlayer)
 	{ return serverPlayerWrapperMap.computeIfAbsent(serverPlayer.connection, ignored -> new ServerPlayerWrapper(serverPlayer.connection)); }
 	
-	private ServerPlayerWrapper(ServerGamePacketListenerImpl connection) { this.connection = connection; }
+	private ServerPlayerWrapper(#if MC_VER <= MC_1_12_2 NetHandlerPlayServer #else ServerGamePacketListenerImpl #endif connection) { this.connection = connection; }
 	
 	
 	
@@ -41,18 +57,29 @@ public class ServerPlayerWrapper implements IServerPlayerWrapper
 	// getters //
 	//=========//
 	
-	private ServerPlayer getServerPlayer() { return this.connection.player; }
+	private #if MC_VER <= MC_1_12_2 EntityPlayerMP #else ServerPlayer #endif getServerPlayer() { return this.connection.player; }
 	
 	@Override
-	public String getName() { return this.getServerPlayer().getName().getString(); }
+	public String getName() { return this.getServerPlayer().getName()#if MC_VER > MC_1_12_2 .getString() #endif ; }
 	
 	@Override
 	public IServerLevelWrapper getLevel()
 	{
-		ServerLevel level = ((IMixinServerPlayer) this.getServerPlayer()).distantHorizons$getDimensionChangeDestination();
+		#if MC_VER <= MC_1_12_2
+		WorldServer level = null;
+		if (this.getServerPlayer() instanceof IMixinServerPlayer mixinPlayer)
+		{
+			level = mixinPlayer.distantHorizons$getDimensionChangeDestination();
+		}
+		#else
+		ServerLevel  level = ((IMixinServerPlayer) this.getServerPlayer()).distantHorizons$getDimensionChangeDestination();
+		#endif
 		if (level == null)
 		{
-			#if MC_VER < MC_1_20_1
+			#if MC_VER <= MC_1_12_2
+			MinecraftServer server = this.getServerPlayer().getServer();
+			level = (server != null) ? server.getWorld(this.getServerPlayer().dimension) : this.getServerPlayer().getServerWorld();
+			#elif MC_VER < MC_1_20_1
 			level = this.getServerPlayer().getLevel();
 			#elif MC_VER < MC_1_21_6
 			level = this.getServerPlayer().serverLevel();
@@ -67,8 +94,13 @@ public class ServerPlayerWrapper implements IServerPlayerWrapper
 	@Override
 	public Vec3d getPosition()
 	{
+		#if MC_VER <= MC_1_12_2
+		BlockPos position = this.getServerPlayer().getPosition();
+		return new Vec3d(position.getX(), position.getY(), position.getZ());
+		#else
 		Vec3 position = this.getServerPlayer().position();
 		return new Vec3d(position.x, position.y, position.z);
+		#endif
 	}
 	
 	

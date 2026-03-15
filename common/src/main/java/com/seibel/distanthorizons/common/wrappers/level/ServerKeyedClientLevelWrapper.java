@@ -2,7 +2,11 @@ package com.seibel.distanthorizons.common.wrappers.level;
 
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.level.IServerKeyedClientLevel;
+#if MC_VER <= MC_1_12_2
+import net.minecraft.client.multiplayer.WorldClient;
+#else
 import net.minecraft.client.multiplayer.ClientLevel;
+#endif
 
 public class ServerKeyedClientLevelWrapper extends ClientLevelWrapper implements IServerKeyedClientLevel
 {
@@ -18,7 +22,7 @@ public class ServerKeyedClientLevelWrapper extends ClientLevelWrapper implements
 	// constructor //
 	//=============//
 	
-	public ServerKeyedClientLevelWrapper(ClientLevel level, String serverKey, String serverLevelKey)
+	public ServerKeyedClientLevelWrapper(#if MC_VER <= MC_1_12_2 WorldClient #else ClientLevel #endif level, String serverKey, String serverLevelKey)
 	{
 		super(level);
 		this.serverKey = serverKey;
