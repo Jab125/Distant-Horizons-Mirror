@@ -47,7 +47,7 @@ public class CommandInitializer
 			public String getName() { return "dh"; }
 			
 			@Override
-			public String getUsage(ICommandSender sender) { return "/dh <debug|config>"; }
+			public String getUsage(ICommandSender sender) { return "/dh <debug|config|pregen>"; }
 			
 			@Override
 			public void execute(MinecraftServer server, ICommandSender sender, String[] args)
@@ -56,11 +56,11 @@ public class CommandInitializer
 				{
 					if (DEBUG_CODEC_CRASH_MESSAGE)
 					{
-						sender.sendMessage(new TextComponentString("Usage: /dh <debug|config|crash>"));
+						sender.sendMessage(new TextComponentString("Usage: /dh <debug|config|crash|pregen>"));
 					}
 					else
 					{
-						sender.sendMessage(new TextComponentString("Usage: /dh <debug|config"));
+						sender.sendMessage(new TextComponentString("Usage: /dh <debug|config|pregen"));
 					}
 					return;
 				}
@@ -83,6 +83,11 @@ public class CommandInitializer
 						}
 						break;
 					case "pregen":
+						if (!server.isDedicatedServer())
+						{
+							sender.sendMessage(new TextComponentString("Pregen command is only available on dedicated servers"));
+							break;
+						}
 						PregenCommand pregenCommand = new PregenCommand();
 						pregenCommand.execute(server, sender, args);
 						break;
@@ -91,9 +96,6 @@ public class CommandInitializer
 				}
 			}
 		};
-		
-		//event.registerServerCommand(new PregenCommand().buildCommand());
-		
 		
 	}
 	#else
