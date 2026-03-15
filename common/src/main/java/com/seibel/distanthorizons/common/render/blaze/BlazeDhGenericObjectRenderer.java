@@ -492,15 +492,7 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 			profiler.push(boxGroup.getResourceLocationNamespace());
 			profiler.push(boxGroup.getResourceLocationPath());
 			
-			try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-				this::getRenderPassName,
-				BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
-				/*optionalClearColorAsInt*/ OptionalInt.empty(),
-				BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
-				/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
-			{
-				this.renderBoxGroupInstanced(renderPass, renderEventParam, boxGroup, profiler);
-			}
+			this.renderBoxGroupInstanced(renderEventParam, boxGroup, profiler);
 			
 			profiler.pop(); // resource path
 			profiler.pop(); // resource namespace
@@ -537,46 +529,54 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 	//region
 	
 	private void renderBoxGroupInstanced(
-		RenderPass renderPass, RenderParams renderEventParam, 
+		RenderParams renderEventParam, 
 		RenderableBoxGroup boxGroup,
 		IProfilerWrapper profiler)
 	{
-		// update instance data //
-		
-		profiler.push("vertex setup");
-		
-		BlazeGenericObjectVertexContainer container = (BlazeGenericObjectVertexContainer) boxGroup.vertexBufferContainer;
-		
-		LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-		BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
-		renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
-		
-		
-		
-		// Bind instance data //
-		profiler.popPush("binding");
-		
-		
-		renderPass.setUniform("vertUniformBlock", this.vertUniformBuffer);
-		
-		// set pipeline
-		renderPass.setPipeline(this.pipeline);
-		renderPass.setIndexBuffer(container.indexGpuBuffer, VertexFormat.IndexType.INT);
-		
-		renderPass.setVertexBuffer(0, container.vboGpuBuffer);
-		
-		// Draw instanced
-		profiler.popPush("render");
-		if (container.uploadedBoxCount > 0)
+		try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+			this::getRenderPassName,
+			BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView,
+			/*optionalClearColorAsInt*/ OptionalInt.empty(),
+			BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView,
+			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
 		{
-			renderPass.drawIndexed(
-				/*indexStart*/ 0,
-				/*firstIndex*/0,
-				/*indexCount*/container.uploadedBoxCount * 36, // 36 = 6 faces * 6 verticies per face
-				/*instanceCount*/1);
 			
+			// update instance data //
+			
+			profiler.push("vertex setup");
+			
+			BlazeGenericObjectVertexContainer container = (BlazeGenericObjectVertexContainer) boxGroup.vertexBufferContainer;
+			
+			LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+			BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
+			renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
+			
+			
+			
+			// Bind instance data //
+			profiler.popPush("binding");
+			
+			
+			renderPass.setUniform("vertUniformBlock", this.vertUniformBuffer);
+			
+			// set pipeline
+			renderPass.setPipeline(this.pipeline);
+			renderPass.setIndexBuffer(container.indexGpuBuffer, VertexFormat.IndexType.INT);
+			
+			renderPass.setVertexBuffer(0, container.vboGpuBuffer);
+			
+			// Draw instanced
+			profiler.popPush("render");
+			if (container.uploadedBoxCount > 0)
+			{
+				renderPass.drawIndexed(
+					/*indexStart*/ 0,
+					/*firstIndex*/0,
+					/*indexCount*/container.uploadedBoxCount * 36, // 36 = 6 faces * 6 verticies per face
+					/*instanceCount*/1);
+				
+			}
 		}
-		
 		profiler.pop();
 	}
 	

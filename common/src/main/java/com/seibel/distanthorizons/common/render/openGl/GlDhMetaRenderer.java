@@ -106,7 +106,6 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		this.setGLState(renderParams, firstPass);
 		
-		GlDhTerrainShaderProgram.INSTANCE.quadIBO.bind();
 		this.bindLightmap(renderParams.lightmap);
 	}
 	private void setGLState(
@@ -242,9 +241,6 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		LOGGER.info("Setting up renderer");
 		
-		GlDhTerrainShaderProgram.INSTANCE.quadIBO = new GlQuadIndexBuffer();
-		GlDhTerrainShaderProgram.INSTANCE.quadIBO.reserve(LodQuadBuilder.getMaxBufferByteSize());
-		
 		
 		// create or get the frame buffer
 		if (AbstractOptifineAccessor.optifinePresent())
@@ -362,7 +358,6 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		
 		this.unbindLightmap();
-		GlDhTerrainShaderProgram.INSTANCE.quadIBO.unbind();
 		this.shaderProgramForThisFrame.unbind();
 	}
 	

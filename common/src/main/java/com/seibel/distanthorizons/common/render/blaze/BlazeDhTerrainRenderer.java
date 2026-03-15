@@ -68,8 +68,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	private RenderPipeline transparentPipeline;
 	private boolean init = false;
 	
-	private GpuBuffer indexBuffer;
-	
 	private GpuBuffer fragUniformBuffer;
 	private GpuBuffer vertSharedUniformBuffer;
 	
@@ -261,30 +259,6 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
 		}
 		
-		// create index buffer
-		{
-			if (this.indexBuffer == null)
-			{
-				ByteBuffer buffer = MemoryUtil.memAlloc(LodQuadBuilder.getMaxBufferByteSize() * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT) * 6);
-				GlQuadIndexBuffer.buildBuffer(LodQuadBuilder.getMaxBufferByteSize(), buffer, GL32.GL_UNSIGNED_INT);
-				
-				
-				// create buffer if needed
-				if (this.indexBuffer == null
-					|| this.indexBuffer.size() < buffer.capacity())
-				{
-					int usage = GpuBuffer.USAGE_COPY_DST 
-						| GpuBuffer.USAGE_VERTEX 
-						| GpuBuffer.USAGE_INDEX 
-						| GpuBuffer.USAGE_UNIFORM;
-					this.indexBuffer = GPU_DEVICE.createBuffer(this::getIndexBufferName, usage, buffer.capacity());
-				}
-				
-				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexBuffer, /*offset*/ 0, buffer.capacity());
-				COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
-			}
-		}
-		
 		
 		
 		// render pass setup
@@ -292,25 +266,20 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			profiler.popPush("setup");
 			
 			// create a render pass
-			OptionalInt optionalClearColorAsInt = OptionalInt.empty();
-			OptionalDouble optionalDepthValueAsDouble = OptionalDouble.empty();
-			
 			try(RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
 				this::getRenderPassName,
 				BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView,
-				optionalClearColorAsInt,
-				BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, optionalDepthValueAsDouble)
+				/*optionalClearColorAsInt*/ OptionalInt.empty(),
+				BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+				/*optionalDepthValueAsDouble*/ OptionalDouble.empty())
 				)
 			{
-				// bind MC Lightmap
-				//renderPass.bindTexture("uLightMap", this.mcLightTextureViewWrapper.textureView, this.mcLightTextureViewWrapper.textureSampler);
 				LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
 				BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
 				renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
 				
 				// set pipeline
 				renderPass.setPipeline(opaquePass ? this.opaquePipeline : this.transparentPipeline);
-				renderPass.setIndexBuffer(this.indexBuffer, VertexFormat.IndexType.INT);
 				
 				// shared uniforms
 				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
@@ -367,6 +336,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 							ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
 						}
 						
+						renderPass.setIndexBuffer(bufferWrapper.indexBuffer, VertexFormat.IndexType.INT);
 						renderPass.setVertexBuffer(0, bufferWrapper.vboGpuBuffer); // vertex buffer can only be "0" lol
 						
 						if (!bufferWrapper.vboGpuBuffer.isClosed())
