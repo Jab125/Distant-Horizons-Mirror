@@ -93,8 +93,9 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.ChunkStatus;
 #else
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import org.jetbrains.annotations.Nullable;
 #endif
+import org.jetbrains.annotations.Nullable;
+
 
 public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironmentWrapper
 {
