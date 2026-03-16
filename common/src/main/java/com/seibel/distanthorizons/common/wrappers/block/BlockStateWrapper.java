@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.wrappers.block;
 
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiBlockMaterial;
+import com.seibel.distanthorizons.common.wrappers.WrapperFactory;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -44,7 +45,6 @@ import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 #if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
@@ -95,6 +95,9 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
+	public static ObjectOpenHashSet<IBlockStateWrapper> waterSubsurfaceReplacementBlocks = null;
+	public static ObjectOpenHashSet<IBlockStateWrapper> waterSurfaceReplacementBlocks = null;
+	public static IBlockStateWrapper waterBlock = null;
 	
 	/** keep track of broken blocks so we don't log every time */
 	#if MC_VER <= MC_1_21_10
@@ -312,10 +315,12 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	//====================//
 	//region
 	
-	/** 
-	 * Requires a {@link ILevelWrapper} since {@link BlockStateWrapper#deserialize(String,ILevelWrapper)} also requires one. 
+	/**
+	 * Each of the following methods require
+	 * a {@link ILevelWrapper} since {@link BlockStateWrapper#deserialize(String,ILevelWrapper)} also requires one. 
 	 * This way the method won't accidentally be called before the deserialization can be completed.
 	 */
+	
 	public static ObjectOpenHashSet<IBlockStateWrapper> getRendererIgnoredBlocks(ILevelWrapper levelWrapper)
 	{
 		// use the cached version if possible
@@ -329,10 +334,6 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		rendererIgnoredBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderBlockCsv, baseIgnoredBlock, levelWrapper);
 		return rendererIgnoredBlocks;
 	}
-	/**
-	 * Requires a {@link ILevelWrapper} since {@link BlockStateWrapper#deserialize(String,ILevelWrapper)} also requires one. 
-	 * This way the method won't accidentally be called before the deserialization can be completed.
-	 */
 	public static ObjectOpenHashSet<IBlockStateWrapper> getRendererIgnoredCaveBlocks(ILevelWrapper levelWrapper)
 	{
 		// use the cached version if possible
@@ -346,9 +347,50 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		rendererIgnoredCaveBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.ignoredRenderCaveBlockCsv, baseIgnoredBlock, levelWrapper);
 		return rendererIgnoredCaveBlocks;
 	}
+	public static ObjectOpenHashSet<IBlockStateWrapper> getWaterSurfaceReplacementBlocks(ILevelWrapper levelWrapper)
+	{
+		// use the cached version if possible
+		if (waterSurfaceReplacementBlocks != null)
+		{
+			return waterSurfaceReplacementBlocks;
+		}
+		
+		ObjectOpenHashSet<String> baseIgnoredBlock = new ObjectOpenHashSet<>();
+		waterSurfaceReplacementBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.waterSurfaceBlockReplacementCsv, baseIgnoredBlock, levelWrapper);
+		return waterSurfaceReplacementBlocks;
+	}
+	public static ObjectOpenHashSet<IBlockStateWrapper> getWaterSubsurfaceReplacementBlocks(ILevelWrapper levelWrapper)
+	{
+		// use the cached version if possible
+		if (waterSubsurfaceReplacementBlocks != null)
+		{
+			return waterSubsurfaceReplacementBlocks;
+		}
+		
+		ObjectOpenHashSet<String> baseIgnoredBlock = new ObjectOpenHashSet<>();
+		waterSubsurfaceReplacementBlocks = getAllBlockWrappers(Config.Client.Advanced.Graphics.Culling.waterSubSurfaceBlockReplacementCsv, baseIgnoredBlock, levelWrapper);
+		return waterSubsurfaceReplacementBlocks;
+	}
+	public static IBlockStateWrapper getWaterBlockStateWrapper(ILevelWrapper levelWrapper)
+	{
+		// use the cached version if possible
+		if (waterBlock != null)
+		{
+			return waterBlock;
+		}
+		
+		waterBlock = WrapperFactory.INSTANCE.deserializeBlockStateWrapperOrGetDefault("minecraft:water", levelWrapper);
+		return waterBlock;
+	}
 	
-	public static void clearRendererIgnoredBlocks() { rendererIgnoredBlocks = null; }
-	public static void clearRendererIgnoredCaveBlocks() { rendererIgnoredCaveBlocks = null; }
+	public static void clearCachedIgnoreBlocks() 
+	{
+		rendererIgnoredBlocks = null;
+		rendererIgnoredCaveBlocks = null;
+		waterSurfaceReplacementBlocks = null;
+		waterSubsurfaceReplacementBlocks = null;
+		waterBlock = null; 
+	}
 	
 	//endregion
 	
