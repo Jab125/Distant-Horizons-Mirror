@@ -35,6 +35,7 @@ plugins {
     // Architectury is used here only as a replacement for forge's own loom
     id "dev.architectury.loom" version "1.13-SNAPSHOT" apply false
 
+    // Plugin used for 1.12.2
     id 'xyz.wagyourtail.unimined' version '1.4.10-kappa' apply false
 
     id 'org.spongepowered.gradle.vanilla' version '0.2.1-20240507.024226-82' apply false
@@ -615,6 +616,9 @@ allprojects { p ->
 
         // VanillaGradle and Mixins in common
         maven { url "https://repo.spongepowered.org/maven/" }
+        
+        // Canvas mod
+        maven { url "https://maven.vram.io/" }
 
         // ModMenu mod
         maven { url "https://maven.terraformersmc.com/" }

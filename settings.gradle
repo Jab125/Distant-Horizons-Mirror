@@ -3,7 +3,7 @@ pluginManagement {
     resolutionStrategy {
         eachPlugin {
             if (requested.id.id == "dev.architectury.loom") {
-                def mcVer = settings.startParameter.projectProperties.get("mcVer") ?: settings.providers.gradleProperty("mcVer").getOrElse("1.20.1")
+                def mcVer = settings.startParameter.projectProperties.get("mcVer") ?: settings.providers.gradleProperty("mcVer").getOrElse("1.21.11")
                 if (mcVer == "1.12.2") {
                     useVersion("1.0-SNAPSHOT")
                 }
