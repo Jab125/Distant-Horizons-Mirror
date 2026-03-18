@@ -54,6 +54,7 @@ import java.util.function.Consumer;
 
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepBiomes;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepFeatures;
@@ -83,7 +84,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.ChunkStatus;
 #else
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-import org.jetbrains.annotations.Nullable;
 #endif
 
 public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironmentWrapper
