@@ -15,11 +15,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-/**
- * At the moment this is only used for the auto updater
- *
- * @author coolGi
- */
 @Mixin(SharedConstants.class)
 public abstract class MixinSharedConstants
 {

@@ -20,17 +20,13 @@
 package com.seibel.distanthorizons.common.render.openGl.glObject.buffer;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
-import com.seibel.distanthorizons.common.render.openGl.GlDhTerrainShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
-import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import org.lwjgl.opengl.GL32;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
-import org.lwjgl.system.MemoryUtil;
 
 /**
  * This is a container for a OpenGL

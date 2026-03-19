@@ -1,12 +1,12 @@
-package com.seibel.distanthorizons.common.render.openGl;
+package com.seibel.distanthorizons.common.render.openGl.terrain;
 
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.*;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
+import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
 import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GLVertexBuffer;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadIndexBuffer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlAbstractVertexAttribute;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlVertexAttributePostGL43;
@@ -30,7 +30,6 @@ import com.seibel.distanthorizons.core.util.objects.SortedArraySet;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTerrainRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import org.lwjgl.opengl.GL32;
 
@@ -38,13 +37,11 @@ import org.lwjgl.opengl.GL32;
  * Handles rendering the normal LOD terrain.
  * @see LodQuadBuilder
  */
-public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiShaderProgram, IDhTerrainRenderer
+public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiShaderProgram
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder()
 		.fileLevelConfig(Config.Common.Logging.logRendererEventToFile)
 		.build();
-	
-	public static final GlDhTerrainShaderProgram INSTANCE = new GlDhTerrainShaderProgram();
 	
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
@@ -87,7 +84,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	//=============//
 	//region
 	
-	private GlDhTerrainShaderProgram()
+	public GlDhTerrainShaderProgram()
 	{
 		super(
 			"assets/distanthorizons/shaders/shared/gl/standard.vert",
@@ -96,7 +93,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		);
 	}
 	
-	public void init()
+	public void tryInit()
 	{
 		if (this.init)
 		{
@@ -173,7 +170,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	@Override
 	public void bind()
 	{
-		this.init();
+		this.tryInit();
 		super.bind();
 		this.vao.bind();
 	}
@@ -262,7 +259,6 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	//===========//
 	//region
 	
-	@Override
 	public void render(RenderParams renderEventParam, boolean opaquePass, SortedArraySet<LodBufferContainer> bufferContainers, IProfilerWrapper profiler)
 	{
 		//=======================//

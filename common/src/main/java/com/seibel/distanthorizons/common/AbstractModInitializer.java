@@ -22,6 +22,9 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.render.renderer.StubDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.util.NativeDialogUtil;
+import com.seibel.distanthorizons.core.util.ThreadUtil;
+import com.seibel.distanthorizons.core.util.threading.DhThreadFactory;
+import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
@@ -34,6 +37,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.dedicated.DedicatedServer;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 
+import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -225,11 +229,35 @@ public abstract class AbstractModInitializer
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiAfterDhInitEvent.class, null);
 	}
 	
-	private void postClientInit() { DependencySetup.setRenderingApiBindings(); }
-	private void postServerInit()
+	private void postClientInit() 
 	{
-		SingletonInjector.INSTANCE.bind(AbstractDebugWireframeRenderer.class, new StubDebugWireframeRenderer());
+		CompletableFuture<Void> future = new CompletableFuture<>();
+		
+		// This method may be called from either the render thread,
+		// or some other random setup thread.
+		// In order to avoid confusion we're always going to run
+		// this setup on our own thread.
+		Thread dhSetupThread = new Thread(() -> 
+		{
+			try
+			{
+				DependencySetup.setRenderingApiBindings();
+			}
+			catch (Exception e)
+			{
+				future.completeExceptionally(e);
+			}
+			finally
+			{
+				future.complete(null);
+			}
+		});
+		dhSetupThread.setName(ThreadUtil.THREAD_NAME_PREFIX + "PostClientInit Thread");
+		dhSetupThread.start();
+		
+		future.join();
 	}
+	private void postServerInit() { SingletonInjector.INSTANCE.bind(AbstractDebugWireframeRenderer.class, new StubDebugWireframeRenderer()); }
 	
 	//endregion
 	
