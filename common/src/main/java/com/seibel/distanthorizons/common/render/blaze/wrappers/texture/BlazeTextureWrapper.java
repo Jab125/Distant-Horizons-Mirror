@@ -103,10 +103,10 @@ public class BlazeTextureWrapper
 			this.width = viewWidth;
 			this.height = viewHeight;
 			
-			int usage = GpuBuffer.USAGE_HINT_CLIENT_STORAGE 
-				| GpuBuffer.USAGE_COPY_DST 
-				| GpuBuffer.USAGE_VERTEX 
-				| GpuBuffer.USAGE_UNIFORM;
+			int usage = GpuTexture.USAGE_COPY_DST 
+				| GpuTexture.USAGE_TEXTURE_BINDING
+				| GpuTexture.USAGE_COPY_SRC
+				| GpuTexture.USAGE_RENDER_ATTACHMENT;
 			this.texture = GPU_DEVICE.createTexture(this.name,
 				usage,
 				this.textureFormat,
