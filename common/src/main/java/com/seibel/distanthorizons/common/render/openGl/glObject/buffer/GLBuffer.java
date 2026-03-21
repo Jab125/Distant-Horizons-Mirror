@@ -210,10 +210,11 @@ public class GLBuffer implements AutoCloseable
 		
 		
 		
-		// GLState to prevent issues with corrupting the global GL state.
-		// This can happen especially on legacy GL for MC 1.16.5, creating a black screen.
-		// Maybe this will also fix random crashing on Mac?
-		try(GLState state = new GLState())
+		// re-binding the old VBO is necessary for old MC versions (IE 1.16.5 and older)
+		// otherwise the screen may be black when on the home menu
+		int previousBoundVbo = GL32.glGetInteger(GL32.GL_ARRAY_BUFFER_BINDING);
+		
+		try
 		{
 			// make sure the buffer is ready for uploading
 			this.createOrChangeBufferTypeForUpload(uploadMethod);
@@ -234,6 +235,10 @@ public class GLBuffer implements AutoCloseable
 				default:
 					LodUtil.assertNotReach("Unknown GpuUploadMethod!");
 			}
+		}
+		finally
+		{
+			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, GL32.glIsBuffer(previousBoundVbo) ? previousBoundVbo : 0);
 		}
 	}
 	/** Requires the buffer to be bound */
