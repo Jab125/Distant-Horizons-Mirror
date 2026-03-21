@@ -16,6 +16,7 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 
@@ -75,6 +76,8 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 				
 				GpuBufferSlice bufferSlice = new GpuBufferSlice(GLOBAL_INDEX_GPU_BUFFER, /*offset*/ 0, indexBuffer.capacity());
 				COMMAND_ENCODER.writeToBuffer(bufferSlice, indexBuffer);
+				
+				MemoryUtil.memFree(indexBuffer);
 				
 			});
 		}
@@ -156,6 +159,9 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 			
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexGpuBuffer, /*offset*/ 0, indexBuffer.capacity());
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, indexBuffer);
+			
+			MemoryUtil.memFree(indexBuffer);
+			
 		}
 	}
 	private static String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
