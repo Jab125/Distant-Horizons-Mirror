@@ -136,7 +136,8 @@ public class GLBuffer implements AutoCloseable
 			return;
 		}
 		
-		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("GLBuffer destroyAsync", () -> { destroyBufferIdNow(this.id); });
+		final int idToDelete = this.id; // saving the ID to a separate variable is necessary so it can be captured by the lambda
+		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("GLBuffer destroyAsync", () -> { destroyBufferIdNow(idToDelete); });
 		
 		this.id = 0;
 		this.size = 0;
@@ -146,6 +147,7 @@ public class GLBuffer implements AutoCloseable
 		// only delete valid buffers
 		if (id == 0)
 		{
+			LOGGER.warn("Attempted to destroy a buffer with ID 0, VRAM memory leaks may occur.");
 			return;
 		}
 		
