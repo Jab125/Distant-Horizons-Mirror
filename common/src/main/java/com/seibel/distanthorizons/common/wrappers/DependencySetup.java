@@ -80,6 +80,7 @@ public class DependencySetup
 		SingletonInjector.INSTANCE.bind(IConfigGui.class, ClassicConfigGUI.CONFIG_CORE_INTERFACE);
 	}
 	
+	/** will be called from a DH thread, not the render thread */
 	public static void setRenderingApiBindings()
 	{
 		EDhApiRenderApi renderingApiEnum = Config.Client.Advanced.Graphics.Experimental.renderingApi.get();

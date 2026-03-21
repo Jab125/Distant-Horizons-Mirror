@@ -45,12 +45,6 @@ public class GlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	@Override public IDhVanillaFadeRenderer getVanillaFadeRenderer() { return GlVanillaFadeRenderer.INSTANCE; }
 	@Override public IDhTestTriangleRenderer getTestTriangleRenderer() { return GlTestTriangleRenderer.INSTANCE; }
 	
-	@Override 
-	public void bindRenderers()
-	{
-		super.bindRenderers();
-	}
-	
 	//endregion
 	
 	

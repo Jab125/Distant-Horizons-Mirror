@@ -234,9 +234,9 @@ public abstract class AbstractModInitializer
 		CompletableFuture<Void> future = new CompletableFuture<>();
 		
 		// This method may be called from either the render thread,
-		// or some other random setup thread.
-		// In order to avoid confusion we're always going to run
-		// this setup on our own thread.
+		// or some other random setup thread depending on the mod loader.
+		// In order to avoid confusion/inconsistent problems, we're always going 
+		// to run setup on our own thread.
 		Thread dhSetupThread = new Thread(() -> 
 		{
 			try
