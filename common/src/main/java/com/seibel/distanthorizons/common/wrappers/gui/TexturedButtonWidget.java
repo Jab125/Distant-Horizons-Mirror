@@ -63,8 +63,10 @@ import net.minecraft.resources.Identifier;
  * @version 2023-10-03
  */
 #if MC_VER < MC_1_20_2
+@SuppressWarnings("deprecation") // we use a few deprecated Mojang functions (as expected when running on old MC versions)
 public class TexturedButtonWidget extends ImageButton
 #else
+@SuppressWarnings("deprecation") // we use a few deprecated Mojang functions (as expected when running on old MC versions)
 public class TexturedButtonWidget extends Button
 #endif
 {
