@@ -54,7 +54,7 @@ public class GlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	//===========//
 	//region
 	
-	@Override public IDhGenericRenderer createGenericRenderer() { return GlGenericObjectRenderer.INSTANCE; }
+	@Override public IDhGenericRenderer createGenericRenderer() { return new GlGenericObjectRenderer(); }
 	
 	@Override public IVertexBufferWrapper createVboWrapper(String name) { return new GLVertexBuffer(); }
 	@Override public ILodContainerUniformBufferWrapper createLodContainerUniformWrapper() { return new GlDummyUniformData(); }

@@ -76,8 +76,6 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 	private static final DhApiRenderableBoxGroupShading DEFAULT_SHADING = DhApiRenderableBoxGroupShading.getUnshaded();
 	
 	
-	public static final GlGenericObjectRenderer INSTANCE = new GlGenericObjectRenderer();
-	
 	/** 
 	 * Can be used to troubleshoot the renderer. 
 	 * If enabled several debug objects will render around (0,150,0). 
@@ -176,7 +174,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 	//=============//
 	//region
 	
-	private GlGenericObjectRenderer() { }
+	public GlGenericObjectRenderer() { }
 	
 	public void init()
 	{
