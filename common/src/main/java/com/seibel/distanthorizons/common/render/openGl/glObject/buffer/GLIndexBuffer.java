@@ -34,9 +34,8 @@ public class GLIndexBuffer extends GLBuffer
 	 * bigger than the upload payload
 	 */
 	protected int indicesCount = 0;
-	public int getIndicesCount() { return this.indicesCount; }
-	protected int type = GL32.GL_UNSIGNED_INT;
-	public int getType() { return type; }
+	protected int glType = GL32.GL_UNSIGNED_INT;
+	public int getGlType() { return this.glType; }
 	
 	public GLIndexBuffer(boolean isBufferStorage)
 	{

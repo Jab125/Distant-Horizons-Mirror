@@ -10,18 +10,19 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadIndexBuffer;
-import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
+import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.IndexBufferBuilder;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
-import org.lwjgl.opengl.GL32;
-import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
-import java.nio.ByteOrder;
 
 public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 {
+	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
+	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
 	
@@ -29,12 +30,26 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	public final String name;
 	public String getName() { return this.name; }
 	
-	public GpuBuffer vboGpuBuffer = null;
-	public GpuBuffer indexBuffer = null;
+	public GpuBuffer vertexGpuBuffer = null;
 	
 	public int vertexCount = -1;
 	public int indexCount = -1;
 	public boolean uploaded = false;
+	
+	
+	private GpuBuffer indexGpuBuffer = null;
+	private static GpuBuffer GLOBAL_INDEX_GPU_BUFFER = null;
+	public GpuBuffer getIndexGpuBuffer()
+	{
+		if (RENDER_DEF.useSingleIbo())
+		{
+			return GLOBAL_INDEX_GPU_BUFFER;
+		}
+		else
+		{
+			return this.indexGpuBuffer;
+		}
+	}
 	
 	
 	
@@ -42,6 +57,28 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	// constructor //
 	//=============//
 	//region
+	
+	static
+	{
+		if (RENDER_DEF.useSingleIbo())
+		{
+			RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("Global IBO Creation", () ->
+			{
+				int maxSize = LodQuadBuilder.getMaxBufferByteSize();
+				int maxVertexCount = maxSize / LodQuadBuilder.BYTES_PER_VERTEX;
+				int maxQuadCount = (maxVertexCount / 4);
+				ByteBuffer indexBuffer = IndexBufferBuilder.createBuffer(maxQuadCount);
+				
+				int usage = GpuBuffer.USAGE_COPY_DST
+					| GpuBuffer.USAGE_INDEX;
+				GLOBAL_INDEX_GPU_BUFFER = GPU_DEVICE.createBuffer(BlazeVertexBufferWrapper::getIndexBufferName, usage, indexBuffer.capacity());
+				
+				GpuBufferSlice bufferSlice = new GpuBufferSlice(GLOBAL_INDEX_GPU_BUFFER, /*offset*/ 0, indexBuffer.capacity());
+				COMMAND_ENCODER.writeToBuffer(bufferSlice, indexBuffer);
+				
+			});
+		}
+	}
 	
 	public BlazeVertexBufferWrapper(String name) { this.name = name; }
 	
@@ -55,7 +92,7 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	//region
 	
 	@Override
-	public void upload(ByteBuffer vertexBuffer, int vertexCount)
+	public void uploadVertexBuffer(ByteBuffer vertexBuffer, int vertexCount)
 	{
 		int oldVertexCount = this.vertexCount;
 		
@@ -65,50 +102,63 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 		this.uploaded = true;
 		
 		
-		if (this.vboGpuBuffer == null
+		
+		if (this.vertexGpuBuffer == null
 			// recreating if the size changes is always necessary (even if we only need a smaller amount)
 			// due to a bug on Mac where it will attempt to render anything allocated in the buffer
 			|| oldVertexCount != vertexCount)
 		{
-			if (this.vboGpuBuffer != null)
+			if (this.vertexGpuBuffer != null)
 			{
-				this.vboGpuBuffer.close();
+				this.vertexGpuBuffer.close();
 			}
 			
 			int usage = GpuBuffer.USAGE_COPY_DST
 				| GpuBuffer.USAGE_VERTEX;
 			int byteSize = (vertexBuffer.limit() - vertexBuffer.position());
-			this.vboGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, byteSize);
+			this.vertexGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, byteSize);
 			
-			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vboGpuBuffer, /*offset*/0, byteSize);
+			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertexGpuBuffer, /*offset*/0, byteSize);
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, vertexBuffer);
+		}
+	}
+	
+	@Override 
+	public void uploadIndexBuffer(ByteBuffer buffer, int vertexCount)
+	{
+		int oldIndexCount = this.indexCount;
+		// 4 vertices per face, but 6 indices (IE 2 triangles) per face, aka need to multiply by 1.5
+		this.indexCount = (int)(vertexCount * 1.5);
+		
+		if (RENDER_DEF.useSingleIbo())
+		{
+			// ignore index uploading when running a single IBO
+			return;
 		}
 		
 		
-		if (this.indexBuffer == null
-			// recreating if the size changes is always necessary (even if we only need a smaller amount)
-			// due to a bug on Mac where it will attempt to render anything allocated in the buffer
-			|| oldVertexCount != vertexCount)
+		
+		// recreating if the size changes is always necessary (even if we only need a smaller amount)
+		// due to a bug on Mac where it will attempt to render anything allocated in the buffer
+		if (this.indexGpuBuffer == null
+			|| oldIndexCount != this.indexCount)
 		{
-			if (this.indexBuffer != null)
+			if (this.indexGpuBuffer != null)
 			{
-				this.indexBuffer.close();
+				this.indexGpuBuffer.close();
 			}
 			
-			int quadCount = (this.vertexCount / 4);
-			ByteBuffer indexBuffer = MemoryUtil.memAlloc(quadCount * 6 * GLEnums.getTypeSize(GL32.GL_UNSIGNED_INT));
-			indexBuffer.order(ByteOrder.nativeOrder());
-			GlQuadIndexBuffer.buildBuffer(quadCount, indexBuffer, GL32.GL_UNSIGNED_INT);
+			ByteBuffer indexBuffer = IndexBufferBuilder.createBuffer(this.vertexCount);
 			
 			int usage = GpuBuffer.USAGE_COPY_DST
 				| GpuBuffer.USAGE_INDEX;
-			this.indexBuffer = GPU_DEVICE.createBuffer(this::getIndexBufferName, usage, indexBuffer.capacity());
+			this.indexGpuBuffer = GPU_DEVICE.createBuffer(BlazeVertexBufferWrapper::getIndexBufferName, usage, indexBuffer.capacity());
 			
-			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexBuffer, /*offset*/ 0, indexBuffer.capacity());
+			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexGpuBuffer, /*offset*/ 0, indexBuffer.capacity());
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, indexBuffer);
 		}
 	}
-	private String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
+	private static String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
 	
 	//endregion
 	
@@ -122,9 +172,14 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	@Override
 	public void close()
 	{
-		if (this.vboGpuBuffer != null)
+		if (this.vertexGpuBuffer != null)
 		{
-			this.vboGpuBuffer.close();
+			this.vertexGpuBuffer.close();
+		}
+		
+		if (this.indexGpuBuffer != null)
+		{
+			this.indexGpuBuffer.close();
 		}
 	}
 	

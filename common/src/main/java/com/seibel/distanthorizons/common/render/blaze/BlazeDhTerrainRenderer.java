@@ -28,12 +28,9 @@ import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVerte
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
-import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
-import com.seibel.distanthorizons.common.render.openGl.glObject.buffer.GlQuadIndexBuffer;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.Mat4f;
@@ -45,8 +42,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTe
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import net.minecraft.resources.Identifier;
-import org.lwjgl.opengl.GL32;
-import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -316,7 +311,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 					profiler.popPush("rendering");
 					
 					// render each buffer
-					IVertexBufferWrapper[] bufferWrapperList = opaquePass ? bufferContainer.vbos : bufferContainer.vbosTransparent;
+					IVertexBufferWrapper[] bufferWrapperList = opaquePass ? bufferContainer.vboOpaqueWrappers : bufferContainer.vboTransparentWrappers;
 					for (int i = 0; i < bufferWrapperList.length; i++)
 					{
 						BlazeVertexBufferWrapper bufferWrapper = (BlazeVertexBufferWrapper) bufferWrapperList[i];
@@ -336,10 +331,10 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 							ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
 						}
 						
-						renderPass.setIndexBuffer(bufferWrapper.indexBuffer, VertexFormat.IndexType.INT);
-						renderPass.setVertexBuffer(0, bufferWrapper.vboGpuBuffer); // vertex buffer can only be "0" lol
+						renderPass.setIndexBuffer(bufferWrapper.getIndexGpuBuffer(), VertexFormat.IndexType.INT);
+						renderPass.setVertexBuffer(0, bufferWrapper.vertexGpuBuffer); // vertex buffer can only be "0" lol
 						
-						if (!bufferWrapper.vboGpuBuffer.isClosed())
+						if (!bufferWrapper.vertexGpuBuffer.isClosed())
 						{
 							renderPass.drawIndexed(
 								/*indexStart*/ 0,

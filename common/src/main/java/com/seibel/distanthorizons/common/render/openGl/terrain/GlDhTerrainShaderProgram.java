@@ -328,7 +328,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 					ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
 				}
 				
-				IVertexBufferWrapper[] vertexBuffers = (opaquePass ? bufferContainer.vbos : bufferContainer.vbosTransparent);
+				IVertexBufferWrapper[] vertexBuffers = (opaquePass ? bufferContainer.vboOpaqueWrappers : bufferContainer.vboTransparentWrappers);
 				for (int vboIndex = 0; vboIndex < vertexBuffers.length; vboIndex++)
 				{
 					GLVertexBuffer vbo = (GLVertexBuffer) vertexBuffers[vboIndex];
@@ -346,16 +346,16 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 					int indexCount = (int)(vbo.getVertexCount() * 1.5);
 					
 					vbo.bind();
-					vbo.quadIBO.bind();
+					vbo.getQuadIBO().bind();
 					
 					GlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame.bindVertexBuffer(vbo.getId());
 					GL32.glDrawElements(
 						GL32.GL_TRIANGLES,
 						indexCount,
-						vbo.quadIBO.getType(), 0);
+						vbo.getQuadIBO().getGlType(), 0);
 					
 					vbo.unbind();
-					vbo.quadIBO.unbind();
+					vbo.getQuadIBO().unbind();
 				}
 			}
 		}
