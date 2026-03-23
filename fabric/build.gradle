@@ -23,8 +23,12 @@ loom {
                     "-XX:+UseZGC",
                     "-XX:+ZGenerational"
             )
-            // "--renderDebugLabels" is a Mojang command to show render names in RenderDoc
-            programArgs("--username", "Dev", "--renderDebugLabels")
+            programArgs(
+                "--username", "Dev",
+                // "--renderDebugLabels" is a Mojang command to show render names in RenderDoc
+                "--renderDebugLabels",
+                // "--tracy" is a Mojang command to allow individual frames to be debugged using Tracy https://github.com/wolfpld/tracy/releases/tag/v0.13.1
+                "--tracy")
         }
         server {
             server()

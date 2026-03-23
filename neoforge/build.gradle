@@ -31,9 +31,15 @@ loom {
             setConfigName("NeoForge Client")
             ideConfigGenerated(false) // When true a run configuration file will be generated for IDE's. By default only set to true for the root project.
             runDir("../run/client")
-            vmArgs("-Dio.netty.leakDetection.level=advanced") // https://netty.io/wiki/reference-counted-objects.html#leak-detection-levels
-            // "--renderDebugLabels" is a Mojang command to show render names in RenderDoc
-            programArgs("--username", "Dev", "--renderDebugLabels")
+            vmArgs(
+                "-Dio.netty.leakDetection.level=advanced",
+                "-XX:+UseZGC") // https://netty.io/wiki/reference-counted-objects.html#leak-detection-levels
+            programArgs(
+                "--username", "Dev",
+                // "--renderDebugLabels" is a Mojang command to show render names in RenderDoc
+                "--renderDebugLabels",
+                // "--tracy" is a Mojang command to allow individual frames to be debugged using Tracy https://github.com/wolfpld/tracy/releases/tag/v0.13.1
+                "--tracy")
         }
         server {
             server()
