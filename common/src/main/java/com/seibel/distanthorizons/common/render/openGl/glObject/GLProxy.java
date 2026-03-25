@@ -220,16 +220,7 @@ public class GLProxy
 		return instance;
 	}
 	
-	public EDhApiGpuUploadMethod getGpuUploadMethod() 
-	{
-		EDhApiGpuUploadMethod uploadOverride = Config.Client.Advanced.Debugging.OpenGl.glUploadMode.get();
-		if (uploadOverride == EDhApiGpuUploadMethod.AUTO)
-		{
-			return this.preferredUploadMethod;
-		}
-		
-		return uploadOverride;
-	}
+	public EDhApiGpuUploadMethod getGpuUploadMethod() { return this.preferredUploadMethod; }
 	
 	public static boolean runningOnRenderThread()
 	{

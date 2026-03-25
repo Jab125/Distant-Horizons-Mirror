@@ -417,9 +417,6 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 		
 		this.init();
 		
-		boolean useInstancedRendering = this.instancedRenderingAvailable
-				&& Config.Client.Advanced.Graphics.GenericRendering.enableInstancedRendering.get();
-		
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericRenderSetupEvent.class, renderEventParam);
 		
 		
@@ -439,7 +436,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 		GL32.glBlendEquation(GL32.GL_FUNC_ADD);
 		GLMC.glBlendFuncSeparate(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA, GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
 		
-		IDhApiGenericObjectShaderProgram shaderProgram = useInstancedRendering ? this.instancedShaderProgram : this.directShaderProgram;
+		IDhApiGenericObjectShaderProgram shaderProgram = this.instancedRenderingAvailable ? this.instancedShaderProgram : this.directShaderProgram;
 		IDhApiGenericObjectShaderProgram shaderProgramOverride = OverrideInjector.INSTANCE.get(IDhApiGenericObjectShaderProgram.class);
 		if (shaderProgramOverride != null && shaderProgram.overrideThisFrame())
 		{
@@ -491,7 +488,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 			}
 			
 			// update instanced data if needed
-			if (useInstancedRendering)
+			if (this.instancedRenderingAvailable)
 			{
 				boxGroup.tryUpdateInstancedDataAsync();	
 				
@@ -509,7 +506,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 			profiler.popPush("rendering");
 			profiler.push(boxGroup.getResourceLocationNamespace());
 			profiler.push(boxGroup.getResourceLocationPath());
-			if (useInstancedRendering)
+			if (this.instancedRenderingAvailable)
 			{
 				this.renderBoxGroupInstanced(shaderProgram, renderEventParam, boxGroup, camPos, profiler);
 			}
