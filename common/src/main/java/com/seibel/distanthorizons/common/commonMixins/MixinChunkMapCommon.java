@@ -7,6 +7,7 @@ import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
+import net.minecraft.world.level.chunk.ProtoChunk;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 public class MixinChunkMapCommon
@@ -44,7 +45,7 @@ public class MixinChunkMapCommon
 			return;
 		}
 		#else
-		if (chunk.isUnsaved() || chunk.isUpgrading() || !chunk.isLightCorrect())
+		if (chunk.isUnsaved() || chunk.isUpgrading() || !chunk.isLightCorrect() || chunk instanceof ProtoChunk)
 		{
 			return;
 		}
