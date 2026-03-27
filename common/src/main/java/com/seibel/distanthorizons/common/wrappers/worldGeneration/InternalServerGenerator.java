@@ -245,7 +245,7 @@ public class InternalServerGenerator
 			// ignore chunk update events for this position
 			if (this.updateManager != null)
 			{
-				this.updateManager.removePosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+				this.updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 			}
 			
 			#if MC_VER < MC_1_21_5
@@ -311,7 +311,7 @@ public class InternalServerGenerator
 					{
 						if (InternalServerGenerator.this.updateManager != null)
 						{
-							InternalServerGenerator.this.updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+							InternalServerGenerator.this.updateManager.removePosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
 						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
