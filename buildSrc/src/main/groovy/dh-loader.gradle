@@ -204,7 +204,6 @@ project(":core").configurations.compileOnly.allDependencies.each { dep ->
 dependencies {
     // Manifold preprocessor & strings
     annotationProcessor(manifold.module("preprocessor"))
-    annotationProcessor(manifold.module("strings"))
 
     // NightConfig: implementation in core (bundled) but Unimined strips it from compile classpath
     compileOnly("com.electronwill.night-config:toml:${rootProject.nightconfig_version}")
