@@ -151,6 +151,8 @@ if (isNotCommonProject) {
                 enableBaseMixin()
                 enableMixinExtra()
             }
+            // Some Fabric API modules ship AW in 'named' namespace instead of 'intermediary'
+            catchAWNamespaceAssertion()
         }
     }
 
