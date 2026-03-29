@@ -12,6 +12,18 @@ rootProject.ext.versionStr = rootProject.mod_version + "-" + rootProject.minecra
 rootProject.allprojects {
     version = (it == rootProject ? "" : it.name + "-") + rootProject.versionStr
     group = rootProject.maven_group
+
+    // Custom javadoc tags for all subprojects
+    plugins.withType(JavaPlugin) {
+        javadoc {
+            options.tags(
+                'todo:X"',
+                'apiNote:a:API Note:',
+                'implSpec:a:Implementation Requirements:',
+                'implNote:a:Implementation Note:'
+            )
+        }
+    }
 }
 
 // Create build.properties with preprocessor definitions

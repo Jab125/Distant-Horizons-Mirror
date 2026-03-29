@@ -95,16 +95,6 @@ if (isNotCommonProject) {
     group = rootProject.maven_group
 
     javadoc.title = rootProject.mod_name + "-" + project.name
-    javadoc {
-        configure(options) {
-            tags(
-                'todo:X"',
-                'apiNote:a:API Note:',
-                'implSpec:a:Implementation Requirements:',
-                'implNote:a:Implementation Note:'
-            )
-        }
-    }
 
     tasks.withType(GenerateModuleMetadata).configureEach {
         enabled = false
