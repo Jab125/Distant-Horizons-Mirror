@@ -333,8 +333,11 @@ if (isNotCommonProject) {
             inputFile.set(shadowJar.archiveFile)
         }
 
-        // Make run tasks use the shadow jar so relocated deps (NightConfig, etc.) work in dev.
-        def shadowedFiles = configurations.shadowMe.resolve().collect { it.name }.toSet() // Filter out jars that are already bundled+relocated in the shadow jar to avoid classpath conflicts (e.g. DH's NightConfig vs NeoForge's).
+        // Make run tasks use the shadow jar so relocated deps work in dev.
+        // Filter out jars bundled in the shadow jar, but keep jars that the loader also
+        // needs (e.g. NightConfig — DH relocates it, but NeoForge needs the original).
+        def shadowedPaths = configurations.shadowMe.resolve().collect { it.path }.toSet()
+        def loaderPaths = configurations.minecraftLibraries.resolve().collect { it.path }.toSet()
         tasks.withType(JavaExec).configureEach { runTask ->
             dependsOn(shadowJar)
             classpath = files(shadowJar.archiveFile) + classpath.filter { file ->
@@ -342,7 +345,7 @@ if (isNotCommonProject) {
                 !file.path.contains("core${File.separator}build") &&
                 !file.path.contains("api${File.separator}build") &&
                 !file.path.contains("common${File.separator}build") &&
-                !shadowedFiles.contains(file.name)
+                !(shadowedPaths.contains(file.path) && !loaderPaths.contains(file.path))
             }
         }
     }
