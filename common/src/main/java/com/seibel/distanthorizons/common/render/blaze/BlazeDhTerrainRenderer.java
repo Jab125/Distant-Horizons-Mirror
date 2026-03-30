@@ -11,7 +11,6 @@ import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -85,21 +84,21 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 		
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", BlazeDhVertexFormatUtil.SHORT_XYZ_POS)
-			.add("meta", BlazeDhVertexFormatUtil.META)
-			.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
-			.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
-			.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
-			.add("paddingTwo", BlazeDhVertexFormatUtil.BYTE_PAD)
-			.add("paddingThree", BlazeDhVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
+			//.add("vPosition", BlazeDhVertexFormatUtil.SHORT_XYZ_POS)
+			//.add("meta", BlazeDhVertexFormatUtil.META)
+			//.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
+			//.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
+			//.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
+			//.add("paddingTwo", BlazeDhVertexFormatUtil.BYTE_PAD)
+			//.add("paddingThree", BlazeDhVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
 			.build();
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(true);
-			pipelineBuilder.withDepthWrite(true);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
-			pipelineBuilder.withColorWrite(true);
+			//pipelineBuilder.withDepthWrite(true);
+			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
+			//pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:lod_render"));
 			
@@ -117,13 +116,13 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 		
 		// opaque
 		{
-			pipelineBuilder.withoutBlend();
+			//pipelineBuilder.withoutBlend();
 			this.opaquePipeline = pipelineBuilder.build();
 		}
 		
 		// transparent
 		{
-			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
+			//pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
 			this.transparentPipeline = pipelineBuilder.build();
 		}
 		

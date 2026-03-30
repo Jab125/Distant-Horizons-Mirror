@@ -26,7 +26,6 @@ public class BlazeDhCopyRenderer {}
 
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
@@ -85,10 +84,10 @@ public class BlazeDhCopyRenderer
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
-			pipelineBuilder.withDepthWrite(false);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
-			pipelineBuilder.withColorWrite(true);
-			pipelineBuilder.withoutBlend();
+			//pipelineBuilder.withDepthWrite(false);
+			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
+			//pipelineBuilder.withColorWrite(true);
+			//pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:copy_render"));
 			
@@ -119,17 +118,17 @@ public class BlazeDhCopyRenderer
 		BlazeTextureWrapper sourceColorTextureWrapper,
 		BlazeTextureViewWrapper destinationColorTextureWrapper)
 	{
-		this.render(
-			sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,
-			destinationColorTextureWrapper.textureView);
+		//this.render(
+		//	sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,
+		//	destinationColorTextureWrapper.textureView);
 	}
 	public void render(
 		BlazeTextureWrapper sourceColorTextureWrapper,
 		BlazeTextureWrapper destinationColorTextureWrapper)
 	{
-		this.render(
-			sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,
-			destinationColorTextureWrapper.textureView);
+		//this.render(
+		//	sourceColorTextureWrapper.textureView, sourceColorTextureWrapper.textureSampler,
+		//	destinationColorTextureWrapper.textureView);
 	}
 	
 	private void render(

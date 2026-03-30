@@ -30,7 +30,6 @@ import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -132,9 +131,9 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 		this.init = true;
 		
 		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", BlazeDhVertexFormatUtil.FLOAT_XYZ_POS)
-			.add("aColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
-			.add("aMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
+			//.add("vPosition", BlazeDhVertexFormatUtil.FLOAT_XYZ_POS)
+			//.add("aColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
+			//.add("aMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
 			.build();
 		
 		this.createPipelines();
@@ -149,10 +148,10 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(true);
-			pipelineBuilder.withDepthWrite(true);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
-			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
-			pipelineBuilder.withColorWrite(true);
+			//pipelineBuilder.withDepthWrite(true);
+			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
+			//pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
+			//pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:generic"));
 			

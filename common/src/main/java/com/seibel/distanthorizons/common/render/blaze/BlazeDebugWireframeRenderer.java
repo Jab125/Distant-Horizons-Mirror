@@ -29,7 +29,6 @@ import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -140,16 +139,16 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	private void createPipelines()
 	{
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", BlazeDhVertexFormatUtil.FLOAT_XYZ_POS)
+			//.add("vPosition", BlazeDhVertexFormatUtil.FLOAT_XYZ_POS)
 			.build();
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
-			pipelineBuilder.withDepthWrite(true);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
-			pipelineBuilder.withColorWrite(true);
-			pipelineBuilder.withoutBlend();
+			//pipelineBuilder.withDepthWrite(true);
+			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
+			//pipelineBuilder.withColorWrite(true);
+			//pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.WIREFRAME);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:debug_wireframe_renderer"));
 			
@@ -229,11 +228,11 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 	{
 		this.init();
 		
-		if (BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
-			|| BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
-		{
-			return;
-		}
+		//if (BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty()
+		//	|| BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty())
+		//{
+		//	return;
+		//}
 		
 		// shouldn't happen, but just in case
 		if (box == null)
@@ -298,27 +297,27 @@ public class BlazeDebugWireframeRenderer extends AbstractDebugWireframeRenderer
 		
 		// render //
 		
-		try (RenderPass renderPass = commandEncoder.createRenderPass(
-			this::getRenderPassName,
-			BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
-			/*optionalClearColorAsInt*/ OptionalInt.empty(),
-			BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
-			/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
-		{
-			// Bind instance data //
-			renderPass.setUniform("uniformBlock", this.uniformBuffer);
-			
-			renderPass.setPipeline(this.pipeline);
-			renderPass.setIndexBuffer(this.boxIndexBuffer, VertexFormat.IndexType.INT);
-			
-			renderPass.setVertexBuffer(0, this.boxVertexBuffer);
-			
-			renderPass.drawIndexed(
-				/*indexStart*/ 0,
-				/*firstIndex*/0,
-				/*indexCount*/BOX_OUTLINE_INDICES.length,
-				/*instanceCount*/1);
-		}
+		//try (RenderPass renderPass = commandEncoder.createRenderPass(
+		//	this::getRenderPassName,
+		//	BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView, 
+		//	/*optionalClearColorAsInt*/ OptionalInt.empty(),
+		//	BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
+		//	/*optionalDepthValueAsDouble*/ OptionalDouble.empty()))
+		//{
+		//	// Bind instance data //
+		//	renderPass.setUniform("uniformBlock", this.uniformBuffer);
+		//	
+		//	renderPass.setPipeline(this.pipeline);
+		//	renderPass.setIndexBuffer(this.boxIndexBuffer, VertexFormat.IndexType.INT);
+		//	
+		//	renderPass.setVertexBuffer(0, this.boxVertexBuffer);
+		//	
+		//	renderPass.drawIndexed(
+		//		/*indexStart*/ 0,
+		//		/*firstIndex*/0,
+		//		/*indexCount*/BOX_OUTLINE_INDICES.length,
+		//		/*instanceCount*/1);
+		//}
 	}
 	private String getRenderPassName() { return "distantHorizons:McDebugRenderer"; }
 	

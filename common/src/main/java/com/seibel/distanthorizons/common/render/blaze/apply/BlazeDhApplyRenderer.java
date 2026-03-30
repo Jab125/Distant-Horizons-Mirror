@@ -27,7 +27,6 @@ public class BlazeDhApplyRenderer {}
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -151,24 +150,24 @@ public class BlazeDhApplyRenderer
 		}
 		
 		VertexFormat vertexFormat = VertexFormat.builder()
-			.add("vPosition", BlazeDhVertexFormatUtil.SCREEN_POS)
+			//.add("vPosition", BlazeDhVertexFormatUtil.SCREEN_POS)
 			.build();
 		
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
-			pipelineBuilder.withDepthWrite(false);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
-			pipelineBuilder.withColorWrite(true);
+			//pipelineBuilder.withDepthWrite(false);
+			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
+			//pipelineBuilder.withColorWrite(true);
 			
-			if (this.blendFunction != null)
-			{
-				pipelineBuilder.withBlend(this.blendFunction);
-			}
-			else
-			{
-				pipelineBuilder.withoutBlend();
-			}
+			//if (this.blendFunction != null)
+			//{
+			//	pipelineBuilder.withBlend(this.blendFunction);
+			//}
+			//else
+			//{
+			//	pipelineBuilder.withoutBlend();
+			//}
 			
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse(this.identifierName)); // TODO will complain if capital letters are included

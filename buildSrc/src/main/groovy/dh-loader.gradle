@@ -128,7 +128,7 @@ unimined.minecraft(sourceSets.main, true) {
 
     mappings {
         mojmap()
-        devNamespace "mojmap"
+        //devNamespace "mojmap"
     }
 }
 
