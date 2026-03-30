@@ -126,9 +126,11 @@ if (isNotCommonProject) {
 unimined.minecraft(sourceSets.main, true) {
     version gradle.ext.minecraft_version
 
-    mappings {
-        mojmap()
-        //devNamespace "mojmap"
+    if (gradle.ext.minecraft_version.startsWith("1.")) { // 26.1+ doesn't use obfuscation
+        mappings {
+            mojmap()
+            devNamespace "mojmap"
+        }
     }
 }
 
@@ -346,6 +348,26 @@ if (isNotCommonProject) {
                 !file.path.contains("api${File.separator}build") &&
                 !file.path.contains("common${File.separator}build") &&
                 !(shadowedPaths.contains(file.path) && !loaderPaths.contains(file.path))
+            }
+
+            // Shared run directory so all loaders use the same worlds
+            def isClient = runTask.name.toLowerCase().contains("client")
+            runTask.workingDir = rootProject.file("run/${isClient ? 'client' : 'server'}")
+
+            // JVM args
+            runTask.jvmArgs(
+                "-Dio.netty.leakDetection.level=advanced",
+                "-XX:+UseZGC",
+                "-XX:+ZGenerational",
+            )
+            if (isClient) {
+                runTask.jvmArgs(
+                    "-Dminecraft.api.auth.host=https://nope.invalid",
+                    "-Dminecraft.api.account.host=https://nope.invalid",
+                    "-Dminecraft.api.session.host=https://nope.invalid",
+                    "-Dminecraft.api.services.host=https://nope.invalid",
+                )
+                runTask.args("--username", "Dev", "--renderDebugLabels", "--tracy")
             }
         }
     }
