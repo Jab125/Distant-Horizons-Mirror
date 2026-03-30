@@ -334,14 +334,15 @@ if (isNotCommonProject) {
         }
 
         // Make run tasks use the shadow jar so relocated deps (NightConfig, etc.) work in dev.
-        // Without this, NeoForge's bundled NightConfig 3.8.x conflicts with DH's 3.6.6.
+        def shadowedFiles = configurations.shadowMe.resolve().collect { it.name }.toSet() // Filter out jars that are already bundled+relocated in the shadow jar to avoid classpath conflicts (e.g. DH's NightConfig vs NeoForge's).
         tasks.withType(JavaExec).configureEach { runTask ->
             dependsOn(shadowJar)
             classpath = files(shadowJar.archiveFile) + classpath.filter { file ->
                 !file.path.contains(project.buildDir.path) &&
                 !file.path.contains("core${File.separator}build") &&
                 !file.path.contains("api${File.separator}build") &&
-                !file.path.contains("common${File.separator}build")
+                !file.path.contains("common${File.separator}build") &&
+                !shadowedFiles.contains(file.name)
             }
         }
     }
