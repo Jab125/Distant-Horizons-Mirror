@@ -30,7 +30,6 @@ import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.platform.SourceFactor;
@@ -113,10 +112,10 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
-			pipelineBuilder.withDepthWrite(false);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
-			pipelineBuilder.withColorWrite(true);
-			pipelineBuilder.withoutBlend();
+			//pipelineBuilder.withDepthWrite(false);
+			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
+			//pipelineBuilder.withColorWrite(true);
+			//pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:ssao_render"));
 			

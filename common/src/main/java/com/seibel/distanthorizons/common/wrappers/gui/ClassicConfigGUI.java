@@ -71,8 +71,6 @@ import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.Translata
  * Based upon TinyConfig but is highly modified
  * https://github.com/Minenash/TinyConfig
  *
- * Note: floats don't work with this system, use doubles.
- *
  * @author coolGi
  * @author Motschen
  * @author James Seibel

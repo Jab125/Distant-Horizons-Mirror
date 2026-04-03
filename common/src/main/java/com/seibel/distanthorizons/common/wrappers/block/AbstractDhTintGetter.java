@@ -10,11 +10,9 @@ import com.seibel.distanthorizons.core.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.FullDataPointUtil;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
-import it.unimi.dsi.fastutil.longs.LongArrayList;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.BlockAndTintGetter;
 import net.minecraft.world.level.ColorResolver;
 import net.minecraft.world.level.biome.Biome;
 
@@ -30,6 +28,11 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.Holder;
 #endif
 
+#if MC_VER <= MC_1_21_11
+import net.minecraft.world.level.BlockAndTintGetter;
+#else
+import net.minecraft.client.renderer.block.BlockAndTintGetter;
+#endif
 
 public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 {
