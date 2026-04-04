@@ -1,6 +1,6 @@
 # use Eclipse's JDK
 # The ci should always use a unix(-like) OS to work
-image: eclipse-temurin:21
+image: eclipse-temurin:25
 
 # all stages need to be defined here
 stages:
