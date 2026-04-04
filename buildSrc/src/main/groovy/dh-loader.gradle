@@ -357,8 +357,8 @@ if (isNotCommonProject) {
             // JVM args
             runTask.jvmArgs(
                 "-Dio.netty.leakDetection.level=advanced",
-                "-XX:+UseZGC",
-                "-XX:+ZGenerational",
+                //"-XX:+UseZGC",
+                //"-XX:+ZGenerational",
             )
             if (isClient) {
                 runTask.jvmArgs(

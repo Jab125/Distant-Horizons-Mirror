@@ -49,6 +49,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 #else
 import net.minecraft.resources.Identifier;
+import net.minecraft.core.component.DataComponentMap;
 #endif
 
 import net.minecraft.world.level.biome.Biome;
@@ -221,17 +222,17 @@ public class BiomeWrapper implements IBiomeWrapper
 		Level level = (Level)levelWrapper.getWrappedMcObject();
 		net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 		
-		#if MC_VER < MC_1_21_11
+		#if MC_VER <= MC_1_21_10
 		ResourceLocation resourceLocation;
 		#else
 		Identifier resourceLocation;
 		#endif
 		
-		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+		#if MC_VER <= MC_1_17_1
 		resourceLocation = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getKey(this.biome);
-		#elif MC_VER == MC_1_18_2 || MC_VER == MC_1_19_2
+		#elif MC_VER <= MC_1_19_2
 		resourceLocation = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getKey(this.biome.value());
-		#elif MC_VER < MC_1_21_3
+		#elif MC_VER <= MC_1_21_4
 		resourceLocation = registryAccess.registryOrThrow(Registries.BIOME).getKey(this.biome.value());
 		#else
 		resourceLocation = registryAccess.lookupOrThrow(Registries.BIOME).getKey(this.biome.value());
@@ -240,7 +241,7 @@ public class BiomeWrapper implements IBiomeWrapper
 		if (resourceLocation == null)
 		{
 			String biomeName;
-			#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+			#if MC_VER <= MC_1_17_1
 			biomeName = this.biome.toString();
 			#else
 			biomeName = this.biome.value().toString();
@@ -354,18 +355,18 @@ public class BiomeWrapper implements IBiomeWrapper
 		
 		
 		boolean success;
-		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+		#if MC_VER <= MC_1_17_1
 		Biome biome = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).get(resourceLocation);
 		success = (biome != null);
-		#elif MC_VER == MC_1_18_2 || MC_VER == MC_1_19_2
+		#elif MC_VER <= MC_1_19_2
 		Biome unwrappedBiome = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).get(resourceLocation);
 		success = (unwrappedBiome != null);
 		Holder<Biome> biome = new Holder.Direct<>(unwrappedBiome);
-		#elif MC_VER < MC_1_21_3
+		#elif MC_VER <= MC_1_21_4
 		Biome unwrappedBiome = registryAccess.registryOrThrow(Registries.BIOME).get(resourceLocation);
 		success = (unwrappedBiome != null);
 		Holder<Biome> biome = new Holder.Direct<>(unwrappedBiome);
-		#else
+		#elif MC_VER <= MC_1_21_11
 		Holder<Biome> biome;
 		Optional<Holder.Reference<Biome>> optionalBiomeHolder = registryAccess.lookupOrThrow(Registries.BIOME).get(resourceLocation);
 		if (optionalBiomeHolder.isPresent())
@@ -373,6 +374,20 @@ public class BiomeWrapper implements IBiomeWrapper
 			Biome unwrappedBiome = optionalBiomeHolder.get().value();
 			success = (unwrappedBiome != null);
 			biome = new Holder.Direct<>(unwrappedBiome);
+		}
+		else
+		{
+			success = false;
+			biome = null;
+		}
+		#else
+		Holder<Biome> biome;
+		Optional<Holder.Reference<Biome>> optionalBiomeHolder = registryAccess.lookupOrThrow(Registries.BIOME).get(resourceLocation);
+		if (optionalBiomeHolder.isPresent())
+		{
+			Biome unwrappedBiome = optionalBiomeHolder.get().value();
+			success = (unwrappedBiome != null);
+			biome = new Holder.Direct<>(unwrappedBiome, DataComponentMap.EMPTY);
 		}
 		else
 		{

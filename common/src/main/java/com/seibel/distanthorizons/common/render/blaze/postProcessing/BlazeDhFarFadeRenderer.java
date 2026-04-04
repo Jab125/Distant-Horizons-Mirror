@@ -100,10 +100,10 @@ public class BlazeDhFarFadeRenderer implements IDhFarFadeRenderer
 		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
 		{
 			pipelineBuilder.withCull(false);
-			pipelineBuilder.withDepthWrite(false);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
-			pipelineBuilder.withColorWrite(true);
-			pipelineBuilder.withoutBlend();
+			//pipelineBuilder.withDepthWrite(false);
+			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
+			//pipelineBuilder.withColorWrite(true);
+			//pipelineBuilder.withoutBlend();
 			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
 			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:far_fade"));
 			

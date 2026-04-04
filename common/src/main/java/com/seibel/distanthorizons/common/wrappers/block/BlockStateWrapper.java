@@ -214,7 +214,14 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		if (blockState != null)
 		{
 			// check if this block has any tags 
-			Stream<TagKey<Block>> tags = blockState.getTags();
+			
+			Stream<TagKey<Block>> tags;
+			#if MC_VER <= MC_1_21_11
+			tags = blockState.getTags();
+			#else
+			tags = blockState.tags();
+			#endif
+			
 			this.isBeaconBaseBlock = tags.anyMatch((TagKey<Block> tag) -> tag.location().getPath().toLowerCase().contains("beacon_base_blocks"));
 		}
 		else
@@ -667,22 +674,23 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		
 		// older versions of MC have a static registry
-		#if MC_VER > MC_1_17_1
+		#if MC_VER <= MC_1_16_5
+		#else
 		Level level = (Level)levelWrapper.getWrappedMcObject();
 		net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 		#endif
 		
-		#if MC_VER < MC_1_21_11
+		#if MC_VER <= MC_1_21_10
 		ResourceLocation resourceLocation;
 		#else
 		Identifier resourceLocation;
 		#endif
 		
-		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+		#if MC_VER <= MC_1_17_1
 		resourceLocation = Registry.BLOCK.getKey(this.blockState.getBlock());
-		#elif MC_VER == MC_1_18_2 || MC_VER == MC_1_19_2
+		#elif MC_VER <= MC_1_19_2
 		resourceLocation = registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY).getKey(this.blockState.getBlock());
-		#elif MC_VER < MC_1_21_3
+		#elif MC_VER <= MC_1_21_4
 		resourceLocation = registryAccess.registryOrThrow(Registries.BLOCK).getKey(this.blockState.getBlock());
 		#else
 		resourceLocation = registryAccess.lookupOrThrow(Registries.BLOCK).getKey(this.blockState.getBlock());
@@ -771,18 +779,19 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			try
 			{
 				
-				#if MC_VER > MC_1_17_1
+				#if MC_VER <= MC_1_16_5
+				#else
 				LodUtil.assertTrue(levelWrapper != null && levelWrapper.getWrappedMcObject() != null);
 				Level level = (Level)levelWrapper.getWrappedMcObject();
 				#endif
 				
 				Block block;
-				#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+				#if MC_VER <= MC_1_17_1
 				block = Registry.BLOCK.get(resourceLocation);
-				#elif MC_VER == MC_1_18_2 || MC_VER == MC_1_19_2
+				#elif MC_VER <= MC_1_19_2
 				net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 				block = registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY).get(resourceLocation);
-				#elif MC_VER < MC_1_21_3
+				#elif MC_VER <= MC_1_21_4
 				net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 				block = registryAccess.registryOrThrow(Registries.BLOCK).get(resourceLocation);
 				#else

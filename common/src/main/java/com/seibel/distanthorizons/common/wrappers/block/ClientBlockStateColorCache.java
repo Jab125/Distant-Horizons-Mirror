@@ -46,6 +46,7 @@ import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
 #if MC_VER < MC_1_21_5
+import net.minecraft.client.renderer.block.model.BakedQuad;
 #elif MC_VER <= MC_1_21_11
 import net.minecraft.client.renderer.block.model.BlockModelPart;
 import net.minecraft.client.renderer.block.model.BakedQuad;

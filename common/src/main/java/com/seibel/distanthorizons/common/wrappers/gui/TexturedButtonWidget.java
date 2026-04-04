@@ -45,8 +45,11 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.client.renderer.RenderPipelines;
-#else
+#elif MC_VER <= MC_1_21_11
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.RenderPipelines;
+#else
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.renderer.RenderPipelines;
 #endif
 
@@ -196,9 +199,12 @@ public class TexturedButtonWidget extends Button
 		#if MC_VER < MC_1_21_11
 	@Override
 	public void renderWidget(GuiGraphics matrices, int mouseX, int mouseY, float delta)
-		#else
+		#elif MC_VER <= MC_1_21_11
 	@Override 
 	protected void renderContents(GuiGraphics matrices, int mouseX, int mouseY, float delta)
+		#else
+	@Override
+	protected void extractContents(GuiGraphicsExtractor matrices, int mouseX, int mouseY, float delta)
 		#endif
 	{
 		if (this.renderBackground)
@@ -212,11 +218,11 @@ public class TexturedButtonWidget extends Button
 					this.getX(), this.getY(),
 					this.getWidth(), this.getHeight());
 			#else
-			matrices.blitSprite(
-				RenderPipelines.GUI_TEXTURED,
-				SPRITES.get(this.active, this.isHoveredOrFocused()),
-				this.getX(), this.getY(),
-				this.getWidth(), this.getHeight());
+			//matrices.blitSprite(
+			//	RenderPipelines.GUI_TEXTURED,
+			//	SPRITES.get(this.active, this.isHoveredOrFocused()),
+			//	this.getX(), this.getY(),
+			//	this.getWidth(), this.getHeight());
 
 			#endif
 		}

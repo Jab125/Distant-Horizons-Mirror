@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
 import com.seibel.distanthorizons.api.DhApi;
+import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.GlobalWorldGenParams;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
@@ -245,7 +246,7 @@ public class InternalServerGenerator
 			// ignore chunk update events for this position
 			if (this.updateManager != null)
 			{
-				this.updateManager.addPosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+				this.updateManager.addPosToIgnore(McObjectConverter.Convert(chunkPos));
 			}
 			
 			#if MC_VER < MC_1_21_5
@@ -258,7 +259,10 @@ public class InternalServerGenerator
 			// probably not the most optimal to run updates here, but fast enough
 			level.getChunkSource().distanceManager.runAllUpdates(level.getChunkSource().chunkMap);
 			
-			ChunkHolder chunkHolder = level.getChunkSource().chunkMap.getUpdatingChunkIfPresent(chunkPos.toLong());
+			ChunkHolder chunkHolder = level.getChunkSource().chunkMap
+				.getUpdatingChunkIfPresent(
+					#if MC_VER <= MC_1_21_11 chunkPos.toLong() #else chunkPos.pack() #endif
+				);
 			if (chunkHolder == null)
 			{
 				throw new IllegalStateException("No chunk chunkHolder for pos ["+chunkPos+"] after ticket has been added.");

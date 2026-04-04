@@ -69,8 +69,13 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 		}
 		
 		
+		long chunkPosLong;
+		#if MC_VER <= MC_1_21_11
+		chunkPosLong = ChunkPos.asLong(chunkPos.getRegionX(), chunkPos.getRegionZ());
+		#else
+		chunkPosLong = ChunkPos.pack(chunkPos.getRegionX(), chunkPos.getRegionZ());
+		#endif
 		
-		long chunkPosLong = ChunkPos.asLong(chunkPos.getRegionX(), chunkPos.getRegionZ());
 		RegionFile regionFile = null;
 		
 		// Check vanilla cache
@@ -179,7 +184,7 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 		regionFile = new RegionFile(new RegionStorageInfo("level", null, "level type"), regionFilePath, storageFolderPath, false);
 		#endif
 		
-		this.regionFileCache.add(new RegionFileCache(ChunkPos.asLong(chunkPos.getRegionX(), chunkPos.getRegionZ()), regionFile));
+		this.regionFileCache.add(new RegionFileCache(chunkPosLong, regionFile));
 		while (this.regionFileCache.size() > MAX_CACHE_SIZE)
 		{
 			this.regionFileCache.poll().file.close();

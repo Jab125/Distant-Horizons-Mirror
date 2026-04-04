@@ -182,8 +182,10 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		return MC.getFrameTime();
 		#elif MC_VER < MC_1_21_3
 		return MC.getTimer().getRealtimeDeltaTicks();
-		#else
+		#elif MC_VER <= MC_1_21_11
 		return MC.deltaTracker.getRealtimeDeltaTicks();
+		#else
+		return MC.getDeltaTracker().getRealtimeDeltaTicks();
 		#endif
 	}
 	
@@ -513,7 +515,11 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 				if (MC.level != null)
 				{
 					Direction mcDir = McObjectConverter.Convert(lodDirection);
+					#if MC_VER <= MC_1_21_11
 					return MC.level.getShade(mcDir, true);
+					#else
+					return MC.level.cardinalLighting().byFace(mcDir);
+					#endif
 				}
 				else
 				{

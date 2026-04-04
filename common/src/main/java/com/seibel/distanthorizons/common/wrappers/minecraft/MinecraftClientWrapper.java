@@ -172,7 +172,12 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
         #else
 		ChunkPos playerPos = player.chunkPosition();
         #endif
+		
+		#if MC_VER <= MC_1_21_11
 		return new DhChunkPos(playerPos.x, playerPos.z);
+		#else
+		return new DhChunkPos(playerPos.x(), playerPos.z());
+		#endif
 	}
 	
 	//endregion
@@ -227,7 +232,11 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		
 		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("MinecraftClientWrapper sendChatMessage", () -> 
 		{
+			#if MC_VER <= MC_1_21_11
 			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/false);
+			#else
+			player.sendSystemMessage(net.minecraft.network.chat.Component.translatable(string));
+			#endif
 		});
         #endif
 	}
@@ -243,8 +252,10 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 		
         #if MC_VER < MC_1_19_2
 		player.displayClientMessage(new TextComponent(string), /*isOverlay*/true);
-        #else
+		#elif MC_VER <= MC_1_21_11
 		player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/true);
+        #else
+		player.sendOverlayMessage(net.minecraft.network.chat.Component.translatable(string));
         #endif
 	}
 	
