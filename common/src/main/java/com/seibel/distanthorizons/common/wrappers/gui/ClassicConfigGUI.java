@@ -761,6 +761,8 @@ public class ClassicConfigGUI
 		
 		#if MC_VER < MC_1_20_1
 		private void renderTooltip(PoseStack matrices, int mouseX, int mouseY, float delta)
+		#elif MC_VER <= MC_1_21_11
+		private void renderTooltip(GuiGraphics matrices, int mouseX, int mouseY, float delta)
         #else
 		private void renderTooltip(GuiGraphicsExtractor matrices, int mouseX, int mouseY, float delta)
 		#endif
