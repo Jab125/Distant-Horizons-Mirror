@@ -48,10 +48,18 @@ public class DhDebugScreenEntry implements net.minecraft.client.gui.components.d
 				// The screen entry
 				new DhDebugScreenEntry()
 		);
-		#else
+		#elif MC_VER <= MC_1_21_11
 		DebugScreenEntries.allEntries().put(
 			// The id, this will be displayed on the options screen
 			Identifier.fromNamespaceAndPath(ModInfo.RESOURCE_NAMESPACE, "distant_horizons"),
+
+			// The screen entry
+			new DhDebugScreenEntry()
+		);
+		#else
+		DebugScreenEntries.register(
+			// The id, this will be displayed on the options screen
+			ModInfo.RESOURCE_NAMESPACE,
 			
 			// The screen entry
 			new DhDebugScreenEntry()
@@ -70,6 +78,8 @@ public class DhDebugScreenEntry implements net.minecraft.client.gui.components.d
 		{
 			displayer.addLine(message);
 		}
+		
+		//region
 		
 		//// The following will display like so if it is the only entry on the screen:
 		//// First left!                                                First Right!
@@ -99,6 +109,8 @@ public class DhDebugScreenEntry implements net.minecraft.client.gui.components.d
 		//
 		//displayer.addToGroup(GROUP_TWO, "I am another group!");
 		//displayer.addToGroup(GROUP_TWO, "This will appear after with no line breaks!");
+		
+		//endregion
 	}
 	
 	@Override
@@ -107,5 +119,8 @@ public class DhDebugScreenEntry implements net.minecraft.client.gui.components.d
 		// Always show regardless of accessibility option
 		return true;
 	}
+	
+	
+	
 }
 #endif
