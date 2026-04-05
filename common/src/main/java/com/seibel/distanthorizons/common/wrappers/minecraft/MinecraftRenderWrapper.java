@@ -40,6 +40,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import net.minecraft.client.renderer.FogRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 #else
+import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
 #endif
 
@@ -255,12 +256,30 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			return Color.white;
 		}
 		
+		float darkenAmount;
+		#if MC_VER <= MC_1_21_11
+		darkenAmount = MC.gameRenderer.getDarkenWorldAmount(MC.deltaTracker.getGameTimeDeltaPartialTick(true));
+		#else
+		darkenAmount = MC.gameRenderer.getBossOverlayWorldDarkening(MC.deltaTracker.getGameTimeDeltaPartialTick(true));
+		#endif
+		
+		#if MC_VER <= MC_1_21_11
 		Vector4f colorValues = mcFogRenderer.setupFog(
 			MC.gameRenderer.getMainCamera(),
 			MC.options.getEffectiveRenderDistance(),
 			MC.deltaTracker,
-			MC.gameRenderer.getDarkenWorldAmount(MC.deltaTracker.getGameTimeDeltaPartialTick(true)),
+			darkenAmount,
 			MC.level);
+		#else
+		FogData fogData = mcFogRenderer.setupFog(
+			MC.gameRenderer.getMainCamera(),
+			MC.options.getEffectiveRenderDistance(),
+			MC.deltaTracker,
+			darkenAmount,
+			MC.level);
+		Vector4f colorValues = fogData.color;
+		#endif
+		
 		return new Color(
 				Math.max(0f, Math.min(colorValues.x, 1f)), // r
 				Math.max(0f, Math.min(colorValues.y, 1f)), // g

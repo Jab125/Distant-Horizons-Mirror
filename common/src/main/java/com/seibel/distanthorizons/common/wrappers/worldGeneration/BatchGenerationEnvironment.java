@@ -24,6 +24,7 @@ import com.google.common.collect.ImmutableMap;
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
+import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling.ChunkFileReader;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.*;
@@ -353,12 +354,12 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		while (existingChunkPosIterator.hasNext())
 		{
 			ChunkPos chunkPos = existingChunkPosIterator.next();
-			DhChunkPos dhChunkPos = new DhChunkPos(chunkPos.x, chunkPos.z);
+			DhChunkPos dhChunkPos = McObjectConverter.Convert(chunkPos);
 			
 			CompletableFuture<ChunkWrapper> getExistingChunkFuture
 				// running async allows file IO to run in parallel when C2ME is present
 				= this.chunkFileReader.createEmptyOrPreExistingChunkWrapperAsync(
-					chunkPos.x, chunkPos.z,
+					dhChunkPos.getX(), dhChunkPos.getZ(),
 					chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, chunkWrappersByDhPos);
 			
 			readFutureByDhChunkPos.put(dhChunkPos, getExistingChunkFuture);
@@ -385,7 +386,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 		while (emptyChunkPosIterator.hasNext())
 		{
 			ChunkPos chunkPos = emptyChunkPosIterator.next();
-			DhChunkPos dhChunkPos = new DhChunkPos(chunkPos.x, chunkPos.z);
+			DhChunkPos dhChunkPos = McObjectConverter.Convert(chunkPos);
 			
 			// create empty chunks outside the generation radius
 			if (!readFutureByDhChunkPos.containsKey(dhChunkPos))
@@ -436,7 +437,11 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 									relZ + refPosZ + zOffsetFinal));
 					
 					ChunkAccess centerChunk = regionChunks.stream()
+							#if MC_VER <= MC_1_21_11	
 							.filter((chunk) -> chunk.getPos().x == centerX && chunk.getPos().z == centerZ)
+							#else
+							.filter((chunk) -> chunk.getPos().x() == centerX && chunk.getPos().z() == centerZ)	
+							#endif
 							.findFirst()
 							.orElseGet(() -> regionChunks.getFirst());
 					
@@ -534,9 +539,9 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 			Iterator<ChunkPos> iterator = ChunkPosGenStream.getIterator(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 0);
 			while (iterator.hasNext())
 			{
-				ChunkPos pos = iterator.next();
-				DhChunkPos dhPos = new DhChunkPos(pos.x, pos.z);
-				ChunkWrapper wrappedChunk = chunkWrappersByDhPos.get(dhPos);
+				ChunkPos chunkPos = iterator.next();
+				DhChunkPos dhChunkPos = McObjectConverter.Convert(chunkPos);
+				ChunkWrapper wrappedChunk = chunkWrappersByDhPos.get(dhChunkPos);
 				
 				// only pass along chunks that have been generated up to BIOMES
 				// this is to prevent issues with generating existing
@@ -550,7 +555,7 @@ public final class BatchGenerationEnvironment implements IBatchGeneratorEnvironm
 					if (!this.generatedChunkWithoutBiomeWarningLogged)
 					{
 						this.generatedChunkWithoutBiomeWarningLogged = true;
-						LOGGER.warn("Chunk [" + dhPos + "] wasn't generated up to BIOMES, world gen may appear empty.");
+						LOGGER.warn("Chunk [" + dhChunkPos + "] wasn't generated up to BIOMES, world gen may appear empty.");
 					}
 				}
 			}

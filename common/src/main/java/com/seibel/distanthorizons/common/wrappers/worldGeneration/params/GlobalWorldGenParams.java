@@ -118,7 +118,7 @@ public final class GlobalWorldGenParams
 		this.biomes = this.registry.lookupOrThrow(Registries.BIOME);
 		this.worldSeed = this.worldOptions.seed();
 		#else
-		this.worldOptions = null;//worldData.worldGenOptions();
+		this.worldOptions = server.getWorldGenSettings().options();
 		this.biomes = this.registry.lookupOrThrow(Registries.BIOME);
 		this.worldSeed = this.worldOptions.seed();
 		#endif

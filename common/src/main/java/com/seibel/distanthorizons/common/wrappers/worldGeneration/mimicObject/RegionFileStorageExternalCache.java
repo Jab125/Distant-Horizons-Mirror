@@ -89,7 +89,7 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 			{
 				this.getRegionFileLock.lock();
 				
-				#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+				#if MC_VER <= MC_1_17_1
 				regionFile = this.storage.getRegionFile(chunkPos);
 				
 				// keeping the region cache size low helps prevent concurrency issues
@@ -109,7 +109,7 @@ public class RegionFileStorageExternalCache implements AutoCloseable
 			}
 			catch (ArrayIndexOutOfBoundsException e)
 			{
-				#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+				#if MC_VER <= MC_1_17_1
 				// the file just wasn't cached
 				break;
 				#else

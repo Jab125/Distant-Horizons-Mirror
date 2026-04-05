@@ -381,7 +381,15 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 		if (chunk == null)
 		{
 			// check memory
-			chunk = this.chunkMap.get(ChunkPos.asLong(chunkX, chunkZ));
+			
+			long chunkPosAsLong;
+			#if MC_VER <= MC_1_21_11
+			chunkPosAsLong = ChunkPos.asLong(chunkX, chunkZ);
+			#else
+			chunkPosAsLong = ChunkPos.pack(chunkX, chunkZ);
+			#endif
+			
+			chunk = this.chunkMap.get(chunkPosAsLong);
 			if (chunk == null)
 			{
 				// chunk isn't in memory, generate a new one
@@ -390,7 +398,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 				{
 					throw new NullPointerException("The provided generator should not return null!");
 				}
-				this.chunkMap.put(ChunkPos.asLong(chunkX, chunkZ), chunk);
+				this.chunkMap.put(chunkPosAsLong, chunk);
 			}
 		}
 		

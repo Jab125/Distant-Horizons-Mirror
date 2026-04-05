@@ -315,7 +315,7 @@ public class InternalServerGenerator
 					{
 						if (InternalServerGenerator.this.updateManager != null)
 						{
-							InternalServerGenerator.this.updateManager.removePosToIgnore(new DhChunkPos(chunkPos.x, chunkPos.z));
+							InternalServerGenerator.this.updateManager.removePosToIgnore(McObjectConverter.Convert(chunkPos));
 						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
