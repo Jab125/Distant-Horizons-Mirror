@@ -378,7 +378,7 @@ public abstract class AbstractModInitializer
 			// Iris only supports nataive OpenGL
 			if (renderApi != EDhApiRenderApi.OPEN_GL)
 			{
-				String irisUnsupportedMessage = "Iris doesn't support DH when using the ["+EDhApiRenderApi.BLAZE_3D+"] rendering API, please change it to ["+EDhApiRenderApi.OPEN_GL+"] in DH's config file.";
+				String irisUnsupportedMessage = "Iris doesn't support DH when using the ["+EDhApiRenderApi.BLAZE_3D+"] rendering API, this will need to be fixed on Iris' end. As a temporary fix please change the rendering API to ["+EDhApiRenderApi.OPEN_GL+"] in DH's config file.";
 				LOGGER.fatal(irisUnsupportedMessage);
 				NativeDialogUtil.showDialog(ModInfo.READABLE_NAME, irisUnsupportedMessage, "ok", "error");
 				
