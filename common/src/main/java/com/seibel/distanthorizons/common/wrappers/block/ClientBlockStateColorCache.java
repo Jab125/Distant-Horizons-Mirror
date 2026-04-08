@@ -30,11 +30,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.*;
-#if MC_VER >= MC_1_19_2
-import net.minecraft.util.RandomSource;
-#else
-import java.util.Random;
-#endif
 import net.minecraft.world.level.block.state.BlockState;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import net.minecraft.world.level.block.state.properties.SlabType;
@@ -45,6 +40,12 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.concurrent.locks.ReentrantLock;
 
+#if MC_VER >= MC_1_19_2
+import net.minecraft.util.RandomSource;
+#else
+import java.util.Random;
+#endif
+
 #if MC_VER < MC_1_21_5
 import net.minecraft.client.renderer.block.model.BakedQuad;
 #elif MC_VER <= MC_1_21_11
@@ -53,6 +54,9 @@ import net.minecraft.client.renderer.block.model.BakedQuad;
 #else
 import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
+import net.minecraft.core.BlockPos;
+import net.minecraft.client.color.block.BlockTintSource;
+import net.minecraft.client.multiplayer.ClientLevel;
 #endif
 
 /**
@@ -542,15 +546,30 @@ public class ClientBlockStateColorCache
 										McObjectConverter.Convert(blockPos),
 										this.tintIndex);
 						#else
-						tintColor = Minecraft.getInstance()
+						BlockTintSource tintSource = Minecraft.getInstance()
 							.getBlockColors()
-							.getTintSources(this.blockState)
-							.get(this.tintIndex)
-							.color(this.blockState);
+							.getTintSource(this.blockState, this.tintIndex);
+						if (tintSource != null)
+						{
+							tintColor = tintSource.color(this.blockState);
+						}
+						
+						if (tintColor == -1)
+						{
+							ClientLevel level = (ClientLevel)this.clientLevelWrapper.getWrappedMcObject();
+							tintSource.colorInWorld(this.blockState, level, BlockPos.ZERO);
+						}
+						
+						if (tintColor == -1)
+						{
+							ClientLevel level = (ClientLevel)this.clientLevelWrapper.getWrappedMcObject();
+							tintSource.colorAsTerrainParticle(this.blockState, level, BlockPos.ZERO);
+						}
+						
 						#endif
 					}
 				}
-				catch (UnsupportedOperationException e)
+				catch (Exception e)
 				{
 					// this exception generally occurs if the tint requires other blocks besides itself
 					LOGGER.debug("Unable to use ["+ TintWithoutLevelOverrider.class.getSimpleName()+"] to get the block tint for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: [" + e.getMessage() + "]. Attempting to use backup method...", e);
