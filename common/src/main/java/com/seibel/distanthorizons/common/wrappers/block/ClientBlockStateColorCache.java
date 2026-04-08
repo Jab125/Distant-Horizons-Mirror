@@ -551,21 +551,17 @@ public class ClientBlockStateColorCache
 							.getTintSource(this.blockState, this.tintIndex);
 						if (tintSource != null)
 						{
-							tintColor = tintSource.color(this.blockState);
+							// Try colorInWorld first (biome-aware for grass/foliage),
+							// fall back to colorAsTerrainParticle (biome-aware for water).
+							// Grass overrides colorAsTerrainParticle to return -1,
+							// water doesn't override colorInWorld (defaults to -1).
+							BlockPos mcPos = McObjectConverter.Convert(blockPos);
+							tintColor = tintSource.colorInWorld(this.blockState, tintOverride, mcPos);
+							if (tintColor == -1)
+							{
+								tintColor = tintSource.colorAsTerrainParticle(this.blockState, tintOverride, mcPos);
+							}
 						}
-						
-						if (tintColor == -1)
-						{
-							ClientLevel level = (ClientLevel)this.clientLevelWrapper.getWrappedMcObject();
-							tintSource.colorInWorld(this.blockState, level, BlockPos.ZERO);
-						}
-						
-						if (tintColor == -1)
-						{
-							ClientLevel level = (ClientLevel)this.clientLevelWrapper.getWrappedMcObject();
-							tintSource.colorAsTerrainParticle(this.blockState, level, BlockPos.ZERO);
-						}
-						
 						#endif
 					}
 				}
@@ -597,12 +593,19 @@ public class ClientBlockStateColorCache
 									McObjectConverter.Convert(blockPos),
 									this.tintIndex);
 					#else
-						tintColor = Minecraft.getInstance()
-							.getBlockColors()
-							.getTintSources(this.blockState)
-							.get(this.tintIndex)
-							.color(this.blockState);
-						#endif
+					BlockTintSource tintSource = Minecraft.getInstance()
+						.getBlockColors()
+						.getTintSource(this.blockState, this.tintIndex);
+					if (tintSource != null)
+					{
+						net.minecraft.core.BlockPos mcPos = McObjectConverter.Convert(blockPos);
+						tintColor = tintSource.colorInWorld(this.blockState, tintOverride, mcPos);
+						if (tintColor == -1)
+						{
+							tintColor = tintSource.colorAsTerrainParticle(this.blockState, tintOverride, mcPos);
+						}
+					}
+					#endif
 				}
 			}
 		}
