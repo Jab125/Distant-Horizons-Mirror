@@ -583,7 +583,11 @@ public class ClassicConfigGUI
 					widget.insertText(String.valueOf(configEntry.get()));
 					
 					Predicate<String> processor = configGuiInfo.tooltipFunction.apply(widget, this.doneButton);
-					//widget.setFilter(processor);
+					#if MC_VER <= MC_1_21_11
+					widget.setFilter(processor);
+					#else
+					widget.setResponder(processor::test);
+					#endif
 					
 					this.configListWidget.addButton(this, configEntry, widget, resetButton, null, textComponent);
 					
