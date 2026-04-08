@@ -218,11 +218,11 @@ public class TexturedButtonWidget extends Button
 					this.getX(), this.getY(),
 					this.getWidth(), this.getHeight());
 			#else
-			//matrices.blitSprite(
-			//	RenderPipelines.GUI_TEXTURED,
-			//	SPRITES.get(this.active, this.isHoveredOrFocused()),
-			//	this.getX(), this.getY(),
-			//	this.getWidth(), this.getHeight());
+			matrices.blitSprite(
+				RenderPipelines.GUI_TEXTURED,
+				SPRITES.get(this.active, this.isHoveredOrFocused()),
+				this.getX(), this.getY(),
+				this.getWidth(), this.getHeight());
 
 			#endif
 		}
