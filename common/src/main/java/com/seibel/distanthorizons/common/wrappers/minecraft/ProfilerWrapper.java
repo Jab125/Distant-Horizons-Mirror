@@ -36,14 +36,14 @@ public class ProfilerWrapper implements IProfilerWrapper
 	
 	/** starts a new section inside the currently running section */
 	@Override
-	public void push(String newSection) { this.profiler.push(newSection); }
+	public void push(String newSection) { /*this.profiler.push(newSection);*/ }
 	
 	/** ends the currently running section and starts a new one */
 	@Override
-	public void popPush(String newSection) { this.profiler.popPush(newSection); }
+	public void popPush(String newSection) { /*this.profiler.popPush(newSection);*/ }
 	
 	/** ends the currently running section */
 	@Override
-	public void pop() { this.profiler.pop(); }
+	public void pop() { /*this.profiler.pop();*/ }
 	
 }
