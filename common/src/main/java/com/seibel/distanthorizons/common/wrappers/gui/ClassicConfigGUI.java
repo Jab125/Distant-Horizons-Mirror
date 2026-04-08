@@ -46,8 +46,10 @@ import org.jetbrains.annotations.Nullable;
 #if MC_VER < MC_1_20_1
 import com.mojang.blaze3d.vertex.PoseStack;
 import net.minecraft.client.gui.GuiComponent;
-#else
+#elif MC_VER <= MC_1_21_11
 import net.minecraft.client.gui.GuiGraphics;
+#else
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 #endif
 
 #if MC_VER >= MC_1_17_1
@@ -70,8 +72,6 @@ import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.Translata
 /*
  * Based upon TinyConfig but is highly modified
  * https://github.com/Minenash/TinyConfig
- *
- * Note: floats don't work with this system, use doubles.
  *
  * @author coolGi
  * @author Motschen
@@ -583,7 +583,7 @@ public class ClassicConfigGUI
 					widget.insertText(String.valueOf(configEntry.get()));
 					
 					Predicate<String> processor = configGuiInfo.tooltipFunction.apply(widget, this.doneButton);
-					widget.setFilter(processor);
+					//widget.setFilter(processor);
 					
 					this.configListWidget.addButton(this, configEntry, widget, resetButton, null, textComponent);
 					
@@ -700,17 +700,26 @@ public class ClassicConfigGUI
 		@Override
         #if MC_VER < MC_1_20_1
 		public void render(PoseStack matrices, int mouseX, int mouseY, float delta)
-        #else
+        #elif MC_VER <= MC_1_21_11
 		public void render(GuiGraphics matrices, int mouseX, int mouseY, float delta)
+        #else
+		public void extractRenderState(GuiGraphicsExtractor matrices, int mouseX, int mouseY, float delta)
 		#endif
 		{
 			#if MC_VER < MC_1_20_2 // 1.20.2 now enables this by default in the `this.list.render` function
-			this.renderBackground(matrices); // Renders background
-			#else
+			this.renderBackground(matrices);
+			#elif MC_VER <= MC_1_21_11
 			super.render(matrices, mouseX, mouseY, delta);
+			#else
+			super.extractRenderState(matrices, mouseX, mouseY, delta);
 			#endif
 			
-			this.configListWidget.render(matrices, mouseX, mouseY, delta); // Render buttons
+			// Render buttons
+			#if MC_VER <= MC_1_21_11
+			this.configListWidget.render(matrices, mouseX, mouseY, delta);
+			#else
+			this.configListWidget.extractRenderState(matrices, mouseX, mouseY, delta);
+		    #endif
 			
 			
 			// Render config title
@@ -752,8 +761,10 @@ public class ClassicConfigGUI
 		
 		#if MC_VER < MC_1_20_1
 		private void renderTooltip(PoseStack matrices, int mouseX, int mouseY, float delta)
-        #else
+		#elif MC_VER <= MC_1_21_11
 		private void renderTooltip(GuiGraphics matrices, int mouseX, int mouseY, float delta)
+        #else
+		private void renderTooltip(GuiGraphicsExtractor matrices, int mouseX, int mouseY, float delta)
 		#endif
 		{
 			AbstractWidget hoveredWidget = this.configListWidget.getHoveredButton(mouseX, mouseY);
@@ -955,8 +966,10 @@ public class ClassicConfigGUI
 		public void render(PoseStack matrices, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta)
         #elif MC_VER < MC_1_21_9
 		public void render(GuiGraphics matrices, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta)
-		#else
+		#elif MC_VER <= MC_1_21_11
 		public void renderContent(GuiGraphics matrices, int mouseX, int mouseY, boolean hovered, float tickDelta)
+		#else
+		public void extractContent(GuiGraphicsExtractor matrices, int mouseX, int mouseY, boolean hovered, float tickDelta)
 		#endif
 		{
 			try
@@ -975,19 +988,31 @@ public class ClassicConfigGUI
 				if (this.button != null)
 				{
 					SetY(this.button, y);
+					#if MC_VER <= MC_1_21_11
 					this.button.render(matrices, mouseX, mouseY, tickDelta);
+					#else
+					this.button.extractRenderState(matrices, mouseX, mouseY, tickDelta);
+					#endif
 				}
 				
 				if (this.resetButton != null)
 				{
 					SetY(this.resetButton, y);
+					#if MC_VER <= MC_1_21_11
 					this.resetButton.render(matrices, mouseX, mouseY, tickDelta);
+					#else
+					this.resetButton.extractRenderState(matrices, mouseX, mouseY, tickDelta);
+					#endif
 				}
 				
 				if (this.indexButton != null)
 				{
 					SetY(this.indexButton, y);
+					#if MC_VER <= MC_1_21_11
 					this.indexButton.render(matrices, mouseX, mouseY, tickDelta);
+					#else
+					this.indexButton.extractRenderState(matrices, mouseX, mouseY, tickDelta);
+					#endif
 				}
 				
 				if (this.text != null)
@@ -1036,8 +1061,13 @@ public class ClassicConfigGUI
 							this.text,
 							textXPos, y + 5,
 							0xFFFFFF);
-				#else
+				#elif MC_VER <= MC_1_21_11
 				matrices.drawString(textRenderer, 
+						this.text,
+						textXPos, y + 5, 
+						0xFFFFFFFF);
+				#else
+				matrices.text(textRenderer, 
 						this.text,
 						textXPos, y + 5, 
 						0xFFFFFFFF);

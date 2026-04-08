@@ -179,6 +179,11 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 				this.vertexBuffer.put(a);
 				
 				this.vertexBuffer.put(box.material);
+				
+				// padding so the vertex format's byte count is a multiple of 4
+				this.vertexBuffer.put((byte)0);
+				this.vertexBuffer.put((byte)0);
+				this.vertexBuffer.put((byte)0);
 			}
 		}
 		this.vertexBuffer.flip();

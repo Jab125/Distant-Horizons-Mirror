@@ -315,7 +315,16 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 		// networking event //
 		//==================//
 		
-		#if MC_VER >= MC_1_20_6
+		#if MC_VER < MC_1_20_6
+		ClientPlayNetworking.registerGlobalReceiver(AbstractPluginPacketSender.WRAPPER_PACKET_RESOURCE, (client, handler, buffer, packetSender) ->
+		{
+			AbstractNetworkMessage message = PACKET_SENDER.decodeMessage(buffer);
+			if (message != null)
+			{
+				ClientApi.INSTANCE.pluginMessageReceived(message);
+			}
+		});
+		#elif MC_VER <= MC_1_21_11
 		PayloadTypeRegistry.playS2C().register(CommonPacketPayload.TYPE, new CommonPacketPayload.Codec());
 		ClientPlayNetworking.registerGlobalReceiver(CommonPacketPayload.TYPE, (payload, context) ->
 		{
@@ -326,13 +335,14 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 			ClientApi.INSTANCE.pluginMessageReceived(payload.message());
 		});
 		#else
-		ClientPlayNetworking.registerGlobalReceiver(AbstractPluginPacketSender.WRAPPER_PACKET_RESOURCE, (client, handler, buffer, packetSender) ->
+		PayloadTypeRegistry.clientboundPlay().register(CommonPacketPayload.TYPE, new CommonPacketPayload.Codec());
+		ClientPlayNetworking.registerGlobalReceiver(CommonPacketPayload.TYPE, (payload, context) ->
 		{
-			AbstractNetworkMessage message = PACKET_SENDER.decodeMessage(buffer);
-			if (message != null)
+			if (payload.message() == null)
 			{
-				ClientApi.INSTANCE.pluginMessageReceived(message);
+				return;
 			}
+			ClientApi.INSTANCE.pluginMessageReceived(payload.message());
 		});
 		#endif
 	}

@@ -47,6 +47,11 @@ import com.mojang.blaze3d.textures.GpuSampler;
 public class MixinChunkSectionsToRender
 {
 	
+	//===========//
+	// Pre MC 26 //
+	//===========//
+	//regino
+	#if MC_VER <= MC_1_21_11
 	
 	#if MC_VER <= MC_1_21_10
 	// needs to fire at HEAD with a lower than normal order (less than 1000)
@@ -73,6 +78,51 @@ public class MixinChunkSectionsToRender
 			ClientApi.INSTANCE.renderFadeTransparent();
 		}
 	}
+	
+	//endregion
+	#else
+	
+	
+	
+	//============//
+	// post MC 26 //
+	//============//
+	//region
+	
+	// needs to fire at HEAD with a lower than normal order (less than 1000)
+	// otherwise it will be canceled by Sodium
+	@Inject(at = @At("HEAD"), method = "renderGroup", order = 800)
+	private void renderDeferredLayerHead(ChunkSectionLayerGroup chunkSectionLayerGroup, GpuSampler gpuSampler, CallbackInfo ci)
+	{
+		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, Minecraft.getInstance().levelRenderer.level);
+		
+		
+		ClientApi.RENDER_STATE.canRenderOrThrow();
+		
+		if (chunkSectionLayerGroup == ChunkSectionLayerGroup.TRANSLUCENT)
+		{
+			ClientApi.INSTANCE.renderDeferredLodsForShaders();
+		}
+		else if (chunkSectionLayerGroup == ChunkSectionLayerGroup.OPAQUE)
+		{
+			ClientApi.INSTANCE.renderFadeTransparent();
+			ClientApi.INSTANCE.renderLods();
+		}
+	}
+	
+	@Inject(at = @At("RETURN"), method = "renderGroup", order = 800)
+	private void renderDeferredLayerReturn(ChunkSectionLayerGroup chunkSectionLayerGroup, GpuSampler gpuSampler, CallbackInfo ci)
+	{
+		ClientApi.RENDER_STATE.canRenderOrThrow();
+		
+		if (chunkSectionLayerGroup == ChunkSectionLayerGroup.TRANSLUCENT)
+		{
+			ClientApi.INSTANCE.renderFadeOpaque();
+		}
+	}
+	
+	//endregion
+	#endif
 	
 	
 	

@@ -4,6 +4,7 @@ import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
+import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.chunk.ChunkAccess;
@@ -17,8 +18,18 @@ public class MixinChunkMapCommon
 	{
 		IServerLevelWrapper levelWrapper = ServerLevelWrapper.getWrapper(level);
 		
+		int chunkPosX;
+		int chunkPosZ;
+		#if MC_VER <= MC_1_21_11
+		chunkPosX = chunk.getPos().x;
+		chunkPosZ = chunk.getPos().z;
+		#else
+		chunkPosX = chunk.getPos().x();
+		chunkPosZ = chunk.getPos().z();
+		#endif
+		
 		// is this position already being updated?
-		if (SharedApi.isChunkAtChunkPosAlreadyUpdating(levelWrapper, chunk.getPos().x, chunk.getPos().z))
+		if (SharedApi.isChunkAtChunkPosAlreadyUpdating(levelWrapper, chunkPosX, chunkPosZ))
 		{
 			return;
 		}
@@ -39,7 +50,7 @@ public class MixinChunkMapCommon
 		
 		// MC has a tendency to try saving incomplete or corrupted chunks (which show up as empty or black chunks)
 		// this logic should prevent that from happening
-		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+		#if MC_VER <= MC_1_17_1
 		if (chunk.isUnsaved() || chunk.getUpgradeData() != null || !chunk.isLightCorrect())
 		{
 			return;
@@ -56,7 +67,7 @@ public class MixinChunkMapCommon
 		// biome validation //
 		
 		// some chunks may be missing their biomes, which cause issues when attempting to save them
-		#if MC_VER == MC_1_16_5 || MC_VER == MC_1_17_1
+		#if MC_VER <= MC_1_17_1
 		if (chunk.getBiomes() == null)
 		{
 			return;

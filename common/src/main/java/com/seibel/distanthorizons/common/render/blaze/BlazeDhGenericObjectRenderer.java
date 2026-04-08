@@ -30,7 +30,6 @@ import com.mojang.blaze3d.buffers.Std140Builder;
 import com.mojang.blaze3d.buffers.Std140SizeCalculator;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.DepthTestFunction;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.systems.CommandEncoder;
@@ -49,6 +48,7 @@ import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBox;
 import com.seibel.distanthorizons.api.objects.render.DhApiRenderableBoxGroupShading;
 import com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObjectVertexContainer;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazeDhVertexFormatUtil;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.RenderPipelineBuilderWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazeUniformUtil;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
@@ -108,8 +108,6 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 	// rendering setup
 	private boolean init = false;
 	
-	private VertexFormat vertexFormat;
-	
 	private RenderPipeline pipeline;
 	
 	private GpuBuffer vertUniformBuffer;
@@ -131,12 +129,6 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 		}
 		this.init = true;
 		
-		this.vertexFormat = VertexFormat.builder()
-			.add("vPosition", BlazeDhVertexFormatUtil.FLOAT_XYZ_POS)
-			.add("aColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
-			.add("aMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
-			.build();
-		
 		this.createPipelines();
 		
 		if (RENDER_DEBUG_OBJECTS)
@@ -146,26 +138,36 @@ public class BlazeDhGenericObjectRenderer implements IDhGenericRenderer
 	}
 	private void createPipelines()
 	{
-		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
+		RenderPipelineBuilderWrapper pipelineBuilder = new RenderPipelineBuilderWrapper();
 		{
-			pipelineBuilder.withCull(true);
+			pipelineBuilder.withFaceCulling(true);
 			pipelineBuilder.withDepthWrite(true);
-			pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
-			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
+			pipelineBuilder.withDepthTest(RenderPipelineBuilderWrapper.EDhDepthTest.LESS);
+			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT); // TRANSLUCENT = new BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA);
 			pipelineBuilder.withColorWrite(true);
-			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:generic"));
+			pipelineBuilder.withPolygonMode(RenderPipelineBuilderWrapper.EDhPolygonMode.FILL);
+			pipelineBuilder.withName("generic_objects");
 			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "generic/blaze/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "generic/blaze/frag"));
+			pipelineBuilder.withVertexShader("generic/blaze/vert");
+			pipelineBuilder.withFragmentShader("generic/blaze/frag");
 			
 			pipelineBuilder.withSampler("uLightMap");
 			
-			pipelineBuilder.withUniform("vertUniformBlock", UniformType.UNIFORM_BUFFER);
+			pipelineBuilder.withUniformBuffer("vertUniformBlock");
 			
-			pipelineBuilder.withVertexFormat(this.vertexFormat, VertexFormat.Mode.TRIANGLES);
-			this.pipeline = pipelineBuilder.build();
+			VertexFormat vertexFormat = VertexFormat.builder()
+				.add("vPosition", BlazeDhVertexFormatUtil.FLOAT_XYZ_POS)
+				.add("aColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
+				.add("aMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
+				
+				.add("paddingOne", BlazeDhVertexFormatUtil.BYTE_PAD)
+				.add("paddingTwo", BlazeDhVertexFormatUtil.BYTE_PAD)
+				.add("paddingThree", BlazeDhVertexFormatUtil.BYTE_PAD)
+				.build();
+			pipelineBuilder.withVertexFormat(vertexFormat);
+			pipelineBuilder.withVertexMode(RenderPipelineBuilderWrapper.EDhVertexMode.TRIANGLES);
 		}
+		this.pipeline = pipelineBuilder.build();
 	}
 	private void addGenericDebugObjects()
 	{

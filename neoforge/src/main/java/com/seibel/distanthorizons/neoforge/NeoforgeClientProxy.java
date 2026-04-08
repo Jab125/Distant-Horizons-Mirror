@@ -218,8 +218,13 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	#else
 	
 	
+	#if MC_VER <= MC_1_21_11
 	@SubscribeEvent
 	public void afterLevelEntityRenderEvent(RenderLevelStageEvent.AfterEntities event)
+	#else
+	@SubscribeEvent
+	public void afterLevelEntityRenderEvent(RenderLevelStageEvent.AfterOpaqueFeatures event)
+	#endif
 	{
 		#if MC_VER < MC_1_21_9
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, (ClientLevel)event.getLevel());

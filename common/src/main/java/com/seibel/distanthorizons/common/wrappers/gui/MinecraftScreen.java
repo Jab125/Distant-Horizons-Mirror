@@ -1,15 +1,23 @@
 package com.seibel.distanthorizons.common.wrappers.gui;
 
 import com.mojang.blaze3d.platform.Window;
-import com.mojang.blaze3d.vertex.PoseStack;
+
+
 import com.seibel.distanthorizons.core.config.gui.AbstractScreen;
+
 import net.minecraft.client.Minecraft;
-#if MC_VER >= MC_1_20_1
-import net.minecraft.client.gui.GuiGraphics;
-#endif
 import net.minecraft.client.gui.components.ContainerObjectSelectionList;
 import net.minecraft.client.gui.screens.Screen;
+
 import org.jetbrains.annotations.NotNull;
+
+#if MC_VER < MC_1_20_1
+import com.mojang.blaze3d.vertex.PoseStack;
+#elif MC_VER <= MC_1_21_11
+import net.minecraft.client.gui.GuiGraphics;
+#else
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+#endif
 
 import java.nio.file.Path;
 import java.util.*;
@@ -74,8 +82,10 @@ public class MinecraftScreen
 		@Override
         #if MC_VER < MC_1_20_1
 		public void render(PoseStack matrices, int mouseX, int mouseY, float delta)
-        #else
+        #elif MC_VER <= MC_1_21_11
 		public void render(GuiGraphics matrices, int mouseX, int mouseY, float delta)
+        #else
+		public void extractRenderState(GuiGraphicsExtractor matrices, int mouseX, int mouseY, float delta)
         #endif
 		{
 			#if MC_VER < MC_1_20_2
@@ -86,13 +96,21 @@ public class MinecraftScreen
 			// background blur is already being rendered, rendering again causes the game to crash
 			#endif
 			
+			#if MC_VER <= MC_1_21_11
 			this.configListWidget.render(matrices, mouseX, mouseY, delta); // Renders the items in the render list (currently only used to tint background darker)
-			
+			#else
+			this.configListWidget.extractRenderState(matrices, mouseX, mouseY, delta); // Renders the items in the render list (currently only used to tint background darker)
+			#endif
+		    
 			this.screen.mouseX = mouseX;
 			this.screen.mouseY = mouseY;
 			this.screen.render(delta); // Render everything on the main screen
 			
+			#if MC_VER <= MC_1_21_11
 			super.render(matrices, mouseX, mouseY, delta); // Render the vanilla stuff (currently only used for the background and tint)
+			#else
+			super.extractRenderState(matrices, mouseX, mouseY, delta); // Renders the items in the render list (currently only used to tint background darker)
+			#endif
 		}
 		
 		#if MC_VER <= MC_1_21_10

@@ -20,12 +20,14 @@
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.chunkFileHandling;
 
 import com.mojang.serialization.Codec;
+import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.level.IDhServerLevel;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.ChunkLightStorage;
 
@@ -673,7 +675,9 @@ public class ChunkCompoundTagParser
 	{
 		LOGGED_ERROR_MESSAGE_MAP.computeIfAbsent(message, (newMessage) ->
 		{
-			LOGGER.warn("Unable to deserialize blocks for chunk section [" + chunkPos.x + ", " + sectionYIndex + ", " + chunkPos.z + "], error: ["+newMessage+"]. " +
+			DhChunkPos dhChunkPos = McObjectConverter.Convert(chunkPos);
+			
+			LOGGER.warn("Unable to deserialize blocks for chunk section [" + dhChunkPos.getX() + ", " + sectionYIndex + ", " + dhChunkPos.getZ() + "], error: ["+newMessage+"]. " +
 					"This can probably be ignored, although if your world looks wrong, optimizing it via the single player menu then deleting your DH database(s) should fix the problem.");
 			
 			return newMessage;
@@ -683,7 +687,9 @@ public class ChunkCompoundTagParser
 	{
 		LOGGED_ERROR_MESSAGE_MAP.computeIfAbsent(message, (newMessage) -> 
 		{
-			LOGGER.warn("Unable to deserialize biomes for chunk section [" + chunkPos.x + ", " + sectionYIndex + ", " + chunkPos.z + "], error: ["+newMessage+"]. " +
+			DhChunkPos dhChunkPos = McObjectConverter.Convert(chunkPos);
+			
+			LOGGER.warn("Unable to deserialize biomes for chunk section [" + dhChunkPos.getX() + ", " + sectionYIndex + ", " + dhChunkPos.getZ() + "], error: ["+newMessage+"]. " +
 					"This can probably be ignored, although if your world looks wrong, optimizing it via the single player menu then deleting your DH database(s) should fix the problem.");
 			
 			return newMessage;
