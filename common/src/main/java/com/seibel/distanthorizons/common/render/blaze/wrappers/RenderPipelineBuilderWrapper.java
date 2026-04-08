@@ -6,6 +6,7 @@ import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.platform.PolygonMode;
+import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.Identifier;
 
@@ -62,7 +63,7 @@ public class RenderPipelineBuilderWrapper
 	}
 	
 	private BlendFunction blendFunction = null;
-	public RenderPipelineBuilderWrapper withBlendFunction(BlendFunction blendFunction)
+	public RenderPipelineBuilderWrapper withBlend(BlendFunction blendFunction)
 	{
 		this.blendFunction = blendFunction;
 		return this;
@@ -115,6 +116,18 @@ public class RenderPipelineBuilderWrapper
 		}
 		
 		this.blazePipelineBuilder.withLocation(Identifier.parse(NAME_PREFIX + name));
+		return this;
+	}
+	
+	public RenderPipelineBuilderWrapper withSampler(String name) throws IllegalArgumentException
+	{
+		this.blazePipelineBuilder.withSampler(name);
+		return this;
+	}
+	
+	public RenderPipelineBuilderWrapper withUniformBuffer(String name) throws IllegalArgumentException
+	{
+		this.blazePipelineBuilder.withUniform(name, UniformType.UNIFORM_BUFFER);
 		return this;
 	}
 	
@@ -201,7 +214,7 @@ public class RenderPipelineBuilderWrapper
 				case LESS:
 					break;
 			}
-			this.blazePipelineBuilder.withDepthTestFunction(DepthTestFunction.NO_DEPTH_TEST);
+			this.blazepipelineBuilder.withDepthTest(RenderPipelineBuilderWrapper.EDhDepthTest.NONE);
 			
 			#else
 			
@@ -238,6 +251,9 @@ public class RenderPipelineBuilderWrapper
 			{
 				case TRIANGLES:
 					blazeVertexMode = VertexFormat.Mode.TRIANGLES;
+					break;
+				case TRIANGLE_FAN:
+					blazeVertexMode = VertexFormat.Mode.TRIANGLE_FAN;
 					break;
 				case LINES:
 					blazeVertexMode = VertexFormat.Mode.DEBUG_LINES;
@@ -303,6 +319,7 @@ public class RenderPipelineBuilderWrapper
 	public enum EDhVertexMode
 	{
 		TRIANGLES,
+		TRIANGLE_FAN,
 		LINES;
 	}
 	

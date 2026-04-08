@@ -101,7 +101,7 @@ public class BlazeDhTestTriangleRenderer implements IDhTestTriangleRenderer
 			pipelineBuilder.withDepthTest(RenderPipelineBuilderWrapper.EDhDepthTest.NONE);
 			pipelineBuilder.withColorWrite(true);
 			pipelineBuilder.withoutBlend();
-			pipelineBuilder.withName("triangle_test_render");
+			pipelineBuilder.withName("triangle_test");
 			
 			pipelineBuilder.withVertexShader("test/blaze/vert");
 			pipelineBuilder.withFragmentShader("test/blaze/frag");

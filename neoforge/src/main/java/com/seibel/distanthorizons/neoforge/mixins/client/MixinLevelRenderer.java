@@ -35,6 +35,7 @@ import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.renderer.LevelRenderer;
 
+import net.minecraft.client.renderer.state.level.CameraRenderState;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
 import org.joml.Vector4f;
@@ -76,6 +77,12 @@ public class MixinLevelRenderer
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	
+	
+	//===========//
+	// Pre MC 26 //
+	//===========//
+	//region
+	#if MC_VER <= MC_1_21_11
 	
 	#if MC_VER < MC_1_21_6
 	@Inject(at = @At("HEAD"), method = "renderSectionLayer")
@@ -165,6 +172,71 @@ public class MixinLevelRenderer
 	}
 	
 	#endif
+	#endif
+	//endregion
+	
+	
+	
+	//============//
+	// post MC 26 //
+	//============//
+	//region
+	
+	#if MC_VER <= MC_1_21_11
+	#else
+	
+	@Inject(at = @At("HEAD"), method = "prepareChunkRenders")
+	private void prepareChunkRenders(final Matrix4fc modelViewMatrix, CallbackInfoReturnable<ChunkSectionsToRender> callback)
+	{
+		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.level);
+	}
+	
+	@Inject(at = @At("HEAD"), method = "renderLevel")
+	public void renderLevel(
+		final GraphicsResourceAllocator resourceAllocator, final DeltaTracker deltaTracker,
+		final boolean renderBlockOutline, final CameraRenderState camera,
+		final Matrix4fc modelViewMatrix, final GpuBufferSlice terrainFog,
+		final Vector4f fogColor, final boolean shouldRenderSky,
+		final ChunkSectionsToRender chunkSectionsToRender,
+		CallbackInfo callback)
+	{
+		ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.Convert(modelViewMatrix);
+		ClientApi.RENDER_STATE.mcProjectionMatrix = McObjectConverter.Convert(camera.projectionMatrix);
+		
+		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
+		
+	}
+	
+	@Inject(
+		method = "addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/culling/Frustum;Lorg/joml/Matrix4fc;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;ZLnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/client/DeltaTracker;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V",
+		at = @At(
+			value = "RETURN",
+			target = "Lcom/mojang/blaze3d/framegraph/FramePass;executes(Ljava/lang/Runnable;)V",
+			remap = false
+		)
+	)
+	public void addMainPass(
+		CallbackInfo ci)
+	{
+		// only crash during development
+		if (ModInfo.IS_DEV_BUILD)
+		{
+			try
+			{
+				ClientApi.RENDER_STATE.canRenderOrThrow();
+			}
+			catch (IllegalStateException e)
+			{
+				return;
+			}
+		}
+		
+		ClientApi.INSTANCE.renderLods();
+		
+	}
+	
+	#endif
+	//endregion
 	
 	
 	

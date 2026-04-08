@@ -78,7 +78,7 @@ public class BlazeDhVertexFormatUtil
 				BYTE_PAD = VertexFormatElement.register(/*id*/25, /*index*/0, VertexFormatElement.Type.BYTE, false, /*count*/ 1);
 				
 				META = VertexFormatElement.register(/*id*/26, /*index*/0, VertexFormatElement.Type.USHORT, false, /*count*/ 1);
-				RGBA_UBYTE_COLOR = VertexFormatElement.register(/*id*/27, /*index*/0, VertexFormatElement.Type.UBYTE, false, /*count*/ 4);
+				RGBA_UBYTE_COLOR = VertexFormatElement.register(/*id*/27, /*index*/0, VertexFormatElement.Type.UBYTE, true, /*count*/ 4);
 				IRIS_MATERIAL = VertexFormatElement.register(/*id*/28, /*index*/0, VertexFormatElement.Type.BYTE, false, /*count*/ 1);
 				IRIS_NORMAL = VertexFormatElement.register(/*id*/29, /*index*/0, VertexFormatElement.Type.BYTE, false, /*count*/ 1);
 				

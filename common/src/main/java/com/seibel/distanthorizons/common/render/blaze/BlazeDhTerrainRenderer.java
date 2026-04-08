@@ -21,6 +21,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeBufferRenderEvent;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazeDhVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazeUniformUtil;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.RenderPipelineBuilderWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeLodUniformBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVertexBufferWrapper;
@@ -41,6 +42,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhTe
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import net.minecraft.resources.Identifier;
+import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
 import java.nio.ByteOrder;
@@ -83,46 +85,48 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 		
 		
 		
-		VertexFormat vertexFormat = VertexFormat.builder()
-			//.add("vPosition", BlazeDhVertexFormatUtil.SHORT_XYZ_POS)
-			//.add("meta", BlazeDhVertexFormatUtil.META)
-			//.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
-			//.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
-			//.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
-			//.add("paddingTwo", BlazeDhVertexFormatUtil.BYTE_PAD)
-			//.add("paddingThree", BlazeDhVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
-			.build();
-		
-		RenderPipeline.Builder pipelineBuilder = RenderPipeline.builder();
+		RenderPipelineBuilderWrapper pipelineBuilder = new RenderPipelineBuilderWrapper();
 		{
-			pipelineBuilder.withCull(true);
-			//pipelineBuilder.withDepthWrite(true);
-			//pipelineBuilder.withDepthTestFunction(DepthTestFunction.LESS_DEPTH_TEST);
-			//pipelineBuilder.withColorWrite(true);
-			pipelineBuilder.withPolygonMode(PolygonMode.FILL);
-			pipelineBuilder.withLocation(Identifier.parse("distanthorizons:lod_render"));
-			
-			pipelineBuilder.withVertexShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/blaze/vert"));
-			pipelineBuilder.withFragmentShader(Identifier.fromNamespaceAndPath("distanthorizons", "lod/blaze/frag"));
+			pipelineBuilder.withFaceCulling(true);
+			pipelineBuilder.withDepthWrite(true);
+			pipelineBuilder.withDepthTest(RenderPipelineBuilderWrapper.EDhDepthTest.LESS);
+			pipelineBuilder.withColorWrite(true);
+			pipelineBuilder.withPolygonMode(RenderPipelineBuilderWrapper.EDhPolygonMode.FILL);
+			pipelineBuilder.withName("terrain");
 			
 			pipelineBuilder.withSampler("uLightMap");
 			
-			pipelineBuilder.withUniform("vertUniqueUniformBlock", UniformType.UNIFORM_BUFFER);
-			pipelineBuilder.withUniform("vertSharedUniformBlock", UniformType.UNIFORM_BUFFER);
-			pipelineBuilder.withUniform("fragUniformBlock", UniformType.UNIFORM_BUFFER);
+			pipelineBuilder.withVertexShader("lod/blaze/vert");
+			pipelineBuilder.withFragmentShader("lod/blaze/frag");
 			
-			pipelineBuilder.withVertexFormat(vertexFormat, VertexFormat.Mode.TRIANGLES);
+			pipelineBuilder.withUniformBuffer("vertUniqueUniformBlock");
+			pipelineBuilder.withUniformBuffer("vertSharedUniformBlock");
+			pipelineBuilder.withUniformBuffer("fragUniformBlock");
+			
+			VertexFormat vertexFormat = VertexFormat.builder()
+				.add("vPosition", BlazeDhVertexFormatUtil.SHORT_XYZ_POS)
+				.add("meta", BlazeDhVertexFormatUtil.META)
+				.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
+				.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
+				.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
+				.add("paddingTwo", BlazeDhVertexFormatUtil.BYTE_PAD)
+				.add("paddingThree", BlazeDhVertexFormatUtil.BYTE_PAD) // padding is to make sure the format is a multiple of 4
+				.build();
+			pipelineBuilder.withVertexFormat(vertexFormat);
+			
+			pipelineBuilder.withVertexMode(RenderPipelineBuilderWrapper.EDhVertexMode.TRIANGLES);
 		}
 		
 		// opaque
 		{
-			//pipelineBuilder.withoutBlend();
+			pipelineBuilder.withoutBlend();
 			this.opaquePipeline = pipelineBuilder.build();
 		}
 		
 		// transparent
 		{
-			//pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
+			// TRANSLUCENT = new BlendFunction(SourceFactor.SRC_ALPHA, DestFactor.ONE_MINUS_SRC_ALPHA, SourceFactor.ONE, DestFactor.ONE_MINUS_SRC_ALPHA);
+			pipelineBuilder.withBlend(BlendFunction.TRANSLUCENT);
 			this.transparentPipeline = pipelineBuilder.build();
 		}
 		
@@ -189,7 +193,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 				.putMat4f() // uCombinedMatrix
 				.get();
 			
-			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
+			ByteBuffer buffer = MemoryUtil.memAlloc(uniformBufferSize);
 			buffer.order(ByteOrder.nativeOrder());
 			Std140Builder.intoBuffer(buffer)
 				.putInt(0) // uIsWhiteWorld
@@ -209,6 +213,8 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertSharedUniformBuffer, 0, uniformBufferSize);
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
+			
+			MemoryUtil.memFree(buffer);
 		}
 		
 		profiler.popPush("set frag uniforms");
@@ -235,7 +241,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			
 			// upload data //
 			
-			ByteBuffer buffer = ByteBuffer.allocateDirect(uniformBufferSize);
+			ByteBuffer buffer = MemoryUtil.memAlloc(uniformBufferSize);
 			buffer.order(ByteOrder.nativeOrder());
 			buffer = Std140Builder.intoBuffer(buffer)
 				.putFloat(dhNearClipDistance) // uClipDistance
@@ -251,6 +257,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
 			
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
+			MemoryUtil.memFree(buffer);
 		}
 		
 		

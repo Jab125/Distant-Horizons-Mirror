@@ -13,19 +13,26 @@ import com.mojang.blaze3d.systems.RenderSystem;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.IndexBufferBuilder;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import org.lwjgl.system.MemoryUtil;
 
 import java.nio.ByteBuffer;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 {
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
+	
 	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
+	
+	private static final AtomicInteger BUFFER_COUNT_REF = new AtomicInteger(0);
 	
 	
 	public final String name;
@@ -111,6 +118,12 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 			// due to a bug on Mac where it will attempt to render anything allocated in the buffer
 			|| oldVertexCount != vertexCount)
 		{
+			if (this.vertexGpuBuffer == null)
+			{
+				BUFFER_COUNT_REF.incrementAndGet();
+				//LOGGER.info("Create, count: ["+BUFFER_COUNT_REF.get()+"]");
+			}
+			
 			if (this.vertexGpuBuffer != null)
 			{
 				this.vertexGpuBuffer.close();
@@ -146,6 +159,11 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 		if (this.indexGpuBuffer == null
 			|| oldIndexCount != this.indexCount)
 		{
+			if (this.indexGpuBuffer == null)
+			{
+				BUFFER_COUNT_REF.incrementAndGet();
+			}
+
 			if (this.indexGpuBuffer != null)
 			{
 				this.indexGpuBuffer.close();
@@ -180,13 +198,17 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	{
 		if (this.vertexGpuBuffer != null)
 		{
+			BUFFER_COUNT_REF.decrementAndGet();
 			this.vertexGpuBuffer.close();
 		}
 		
 		if (this.indexGpuBuffer != null)
 		{
+			BUFFER_COUNT_REF.decrementAndGet();
 			this.indexGpuBuffer.close();
 		}
+		
+		//LOGGER.info("Close, count: ["+BUFFER_COUNT_REF.get()+"]");
 	}
 	
 	//endregion
