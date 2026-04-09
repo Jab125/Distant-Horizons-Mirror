@@ -56,7 +56,6 @@ import net.minecraft.client.renderer.block.dispatch.BlockStateModelPart;
 import net.minecraft.client.resources.model.geometry.BakedQuad;
 import net.minecraft.core.BlockPos;
 import net.minecraft.client.color.block.BlockTintSource;
-import net.minecraft.client.multiplayer.ClientLevel;
 #endif
 
 /**
@@ -123,6 +122,7 @@ public class ClientBlockStateColorCache
 	//===========//
 	// constants //
 	//===========//
+	//region
 	
 	private static final int MIN_SRGB_BITS = 0x39000000; // 2^(-13)
 	private static final int MAX_SRGB_BITS = 0x3f7fffff; // 1.0 - f32::EPSILON
@@ -186,14 +186,18 @@ public class ClientBlockStateColorCache
 			//endregion
 		};
 	
+	// these are threadlocals since AbstractDhTintGetter use local variables to handle color queries
 	private static final ThreadLocal<TintWithoutLevelOverrider> TintWithoutLevelOverrideGetter = ThreadLocal.withInitial(() -> new TintWithoutLevelOverrider());
 	private static final ThreadLocal<TintGetterOverride> TintOverrideGetter = ThreadLocal.withInitial(() -> new TintGetterOverride());
+	
+	//endregion
 	
 	
 	
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
 	public ClientBlockStateColorCache(BlockState blockState, IClientLevelWrapper clientLevelWrapper)
 	{
@@ -203,6 +207,8 @@ public class ClientBlockStateColorCache
 		
 		this.resolveColors();
 	}
+	
+	//endregion
 	
 	
 	
@@ -521,7 +527,7 @@ public class ClientBlockStateColorCache
 		
 		
 		// attempt to get the tint
-		int tintColor = -1;
+		int tintColor = AbstractDhTintGetter.INVALID_COLOR;
 		try
 		{
 			// try to use the fast tint getter logic first
@@ -542,19 +548,18 @@ public class ClientBlockStateColorCache
 						tintColor = Minecraft.getInstance()
 								.getBlockColors()
 								.getColor(this.blockState,
-										tintOverride,
+										tintOverride, // tintOverride will save the result of this query to speed up future queries
 										McObjectConverter.Convert(blockPos),
 										this.tintIndex);
 						#else
 						BlockTintSource tintSource = Minecraft.getInstance()
 							.getBlockColors()
 							.getTintSource(this.blockState, this.tintIndex);
+						// a tint source may be null for blocks that don't actually need tinting
+						// in that case the base color should be sufficient
+						// Example: cherry blossom leaves
 						if (tintSource != null)
 						{
-							// Try colorInWorld first (biome-aware for grass/foliage),
-							// fall back to colorAsTerrainParticle (biome-aware for water).
-							// Grass overrides colorAsTerrainParticle to return -1,
-							// water doesn't override colorInWorld (defaults to -1).
 							BlockPos mcPos = McObjectConverter.Convert(blockPos);
 							tintColor = tintSource.colorInWorld(this.blockState, tintOverride, mcPos);
 							if (tintColor == -1)
@@ -562,17 +567,39 @@ public class ClientBlockStateColorCache
 								tintColor = tintSource.colorAsTerrainParticle(this.blockState, tintOverride, mcPos);
 							}
 						}
+						
+						if (tintColor == -1)
+						{
+							// no color found, use the base color
+							tintColor = AbstractDhTintGetter.INVALID_COLOR;
+						}
+						
+						// save this color to speed up future queries
+						TintWithoutLevelOverrider.setStaticColor(this.blockStateWrapper, biomeWrapper, tintColor);
+						// try to get the blended color with this new information
+						tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
 						#endif
 					}
 				}
 				catch (Exception e)
 				{
+					#if MC_VER <= MC_1_21_11
 					// this exception generally occurs if the tint requires other blocks besides itself
 					LOGGER.debug("Unable to use ["+ TintWithoutLevelOverrider.class.getSimpleName()+"] to get the block tint for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: [" + e.getMessage() + "]. Attempting to use backup method...", e);
 					BLOCK_STATES_THAT_NEED_LEVEL.add(this.blockState);
+					#else
+					// only display the error once per block/biome type to reduce log spam
+					if (!BROKEN_BLOCK_STATES.contains(this.blockState))
+					{
+						LOGGER.warn("Failed to get block color for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: ["+e.getMessage() + "]. Note: future errors for this block/biome will be ignored.", e);
+						BROKEN_BLOCK_STATES.add(this.blockState);
+					}
+					#endif
 				}
 			}
 			
+			// level-specific logic is only needed for MC 1.21.11 and older
+			#if MC_VER <= MC_1_21_11
 			// use the level logic only if requested
 			if (BLOCK_STATES_THAT_NEED_LEVEL.contains(this.blockState))
 			{
@@ -585,29 +612,15 @@ public class ClientBlockStateColorCache
 				tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
 				if (tintColor == AbstractDhTintGetter.INVALID_COLOR)
 				{
-					#if MC_VER <= MC_1_21_11
 					tintColor = Minecraft.getInstance()
 							.getBlockColors()
 							.getColor(this.blockState,
 									tintOverride,
 									McObjectConverter.Convert(blockPos),
 									this.tintIndex);
-					#else
-					BlockTintSource tintSource = Minecraft.getInstance()
-						.getBlockColors()
-						.getTintSource(this.blockState, this.tintIndex);
-					if (tintSource != null)
-					{
-						net.minecraft.core.BlockPos mcPos = McObjectConverter.Convert(blockPos);
-						tintColor = tintSource.colorInWorld(this.blockState, tintOverride, mcPos);
-						if (tintColor == -1)
-						{
-							tintColor = tintSource.colorAsTerrainParticle(this.blockState, tintOverride, mcPos);
-						}
-					}
-					#endif
 				}
 			}
+			#endif
 		}
 		catch (Exception e)
 		{
@@ -621,7 +634,7 @@ public class ClientBlockStateColorCache
 		
 		
 		
-		if (tintColor != -1)
+		if (tintColor != AbstractDhTintGetter.INVALID_COLOR)
 		{
 			return ColorUtil.multiplyARGBwithRGB(this.baseColor, tintColor);
 		}
@@ -637,6 +650,7 @@ public class ClientBlockStateColorCache
 	//================//
 	// helper classes //
 	//================//
+	//region
 	
 	private enum EColorMode
 	{
@@ -667,6 +681,8 @@ public class ClientBlockStateColorCache
 			return Default;
 		}
 	}
+	
+	//endregion
 	
 	
 	

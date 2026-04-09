@@ -46,7 +46,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	
 	private static final ConcurrentHashMap<BlockBiomeWrapperPair, Integer> COLOR_BY_BLOCK_BIOME_PAIR = new ConcurrentHashMap<>();
 	/** returned if the color cache is incomplete */
-	public static final int INVALID_COLOR = Integer.MIN_VALUE;
+	public static final int INVALID_COLOR = -1;
 	
 	
 	protected BiomeWrapper biomeWrapper;
@@ -60,6 +60,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	//=============//
 	// constructor //
 	//=============//
+	//region
 	
 	public AbstractDhTintGetter() { }
 	
@@ -76,11 +77,14 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		this.smoothingRadiusInBlocks = Config.Client.Advanced.Graphics.Quality.lodBiomeBlending.get();
 	}
 	
+	//endregion
 	
 	
-	//================//
-	// shared methods //
-	//================//
+	
+	//===============//
+	// color getters //
+	//===============//
+	//region
 	
 	/** Called by MC's tint getter */
 	@Override
@@ -195,7 +199,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		BlockBiomeWrapperPair pair = BlockBiomeWrapperPair.get(this.blockStateWrapper, biomeWrapper);
 		
 		// use the cached color if possible
-		Integer cachedColor = COLOR_BY_BLOCK_BIOME_PAIR.get(pair); // explicit Integer return here reduces unnecessary allocations
+		Integer cachedColor = COLOR_BY_BLOCK_BIOME_PAIR.get(pair);
 		if (cachedColor != null)
 		{
 			return cachedColor;
@@ -334,6 +338,27 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 					return existingBiome;
 				});
 	}
+	
+	//endregion
+	
+	
+	
+	//===========//
+	// set color //
+	//===========//
+	//region
+	
+	/** 
+	 * can be used in newer MC versions
+	 * where the color getting logic is a bit more manual
+	 */
+	public static void setStaticColor(BlockStateWrapper blockStateWrapper, BiomeWrapper biomeWrapper, Integer colorInt)
+	{
+		BlockBiomeWrapperPair pair = BlockBiomeWrapperPair.get(blockStateWrapper, biomeWrapper);
+		COLOR_BY_BLOCK_BIOME_PAIR.put(pair, colorInt);
+	}
+	
+	//endregion
 	
 	
 	
