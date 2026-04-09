@@ -1,14 +1,25 @@
 package com.seibel.distanthorizons.common.render.blaze.wrappers;
 
+
+#if MC_VER <= MC_1_21_10
+public class RenderPipelineBuilderWrapper {}
+
+#else
+
 import com.mojang.blaze3d.pipeline.BlendFunction;
-import com.mojang.blaze3d.pipeline.ColorTargetState;
-import com.mojang.blaze3d.pipeline.DepthStencilState;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
-import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.platform.PolygonMode;
 import com.mojang.blaze3d.shaders.UniformType;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.resources.Identifier;
+
+#if MC_VER <= MC_1_21_11
+import com.mojang.blaze3d.platform.DepthTestFunction;
+#else
+import com.mojang.blaze3d.pipeline.ColorTargetState;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.platform.CompareOp;
+#endif
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -206,15 +217,20 @@ public class RenderPipelineBuilderWrapper
 				this.blazePipelineBuilder.withoutBlend();
 			}
 			
+			DepthTestFunction depthTestFunction;
 			switch (this.depthTest)
 			{
 				case NONE:
-					
+					depthTestFunction = DepthTestFunction.NO_DEPTH_TEST;
 					break;
 				case LESS:
+					depthTestFunction = DepthTestFunction.LESS_DEPTH_TEST;
 					break;
+				
+				default:
+					throw new UnsupportedOperationException("No depth test defined for type ["+this.depthTest+"].");
 			}
-			this.blazepipelineBuilder.withDepthTest(RenderPipelineBuilderWrapper.EDhDepthTest.NONE);
+			this.blazePipelineBuilder.withDepthTestFunction(depthTestFunction);
 			
 			#else
 			
@@ -349,3 +365,4 @@ public class RenderPipelineBuilderWrapper
 	
 	
 }
+#endif

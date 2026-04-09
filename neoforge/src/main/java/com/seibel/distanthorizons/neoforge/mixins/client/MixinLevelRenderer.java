@@ -26,6 +26,23 @@ import net.minecraft.client.renderer.LevelRenderer;
 import net.minecraft.client.renderer.RenderType;
 import net.neoforged.neoforge.client.event.RenderLevelStageEvent;
 import org.joml.Matrix4f;
+#elif MC_VER <= MC_1_21_11
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
+import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
+import net.minecraft.client.multiplayer.ClientLevel;
+import net.minecraft.client.renderer.LevelRenderer;
+
+import org.joml.Matrix4f;
+import org.joml.Matrix4fc;
+import org.joml.Vector4f;
+	
+import com.mojang.blaze3d.buffers.GpuBufferSlice;
+import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
+
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 #else
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import net.minecraft.client.Minecraft;
