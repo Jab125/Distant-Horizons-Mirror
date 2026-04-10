@@ -286,7 +286,6 @@ class NativeTransformer implements ResourceTransformer {
 if (isNotCommonProject) {
     shadowJar {
         configurations = [project.configurations.shadowMe]
-        relocate "com.seibel.distanthorizons.common", "loaderCommon.${project.name}.com.seibel.distanthorizons.common"
         def librariesLocation = "DistantHorizons.libraries"
 
         // LZ4
