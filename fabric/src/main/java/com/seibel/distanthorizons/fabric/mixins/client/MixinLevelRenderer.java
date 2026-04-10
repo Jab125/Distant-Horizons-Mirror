@@ -237,7 +237,6 @@ public class MixinLevelRenderer
 		CallbackInfo callback)
 	{
 		ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.Convert(modelViewMatrix);
-		ClientApi.RENDER_STATE.mcProjectionMatrix = McObjectConverter.Convert(camera.projectionMatrix);
 		
 		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
 		
