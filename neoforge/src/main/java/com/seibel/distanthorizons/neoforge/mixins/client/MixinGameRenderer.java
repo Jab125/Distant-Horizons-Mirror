@@ -20,6 +20,12 @@
 package com.seibel.distanthorizons.neoforge.mixins.client;
 
 #if MC_VER <= MC_1_21_11
+import net.minecraft.world.entity.Entity;
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(Entity.class)
+public class MixinGamerenderer {}
+
 #else
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
@@ -41,6 +47,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(GameRenderer.class)
 public class MixinGameRenderer
 {
+	// get the modified projection matrix right before it's uploaded to the GPU
 	@Inject(
 		method = "renderLevel",
 		at = @At(
