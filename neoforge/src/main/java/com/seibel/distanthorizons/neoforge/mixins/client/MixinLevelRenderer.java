@@ -232,20 +232,12 @@ public class MixinLevelRenderer
 			remap = false
 		)
 	)
-	public void addMainPass(
-		CallbackInfo ci)
+	public void addMainPass(CallbackInfo ci)
 	{
 		// only crash during development
 		if (ModInfo.IS_DEV_BUILD)
 		{
-			try
-			{
-				ClientApi.RENDER_STATE.canRenderOrThrow();
-			}
-			catch (IllegalStateException e)
-			{
-				return;
-			}
+			ClientApi.RENDER_STATE.canRenderOrThrow();
 		}
 		
 		ClientApi.INSTANCE.renderLods();
