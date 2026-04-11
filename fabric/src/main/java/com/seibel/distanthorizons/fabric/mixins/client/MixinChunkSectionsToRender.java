@@ -105,19 +105,7 @@ public class MixinChunkSectionsToRender
 		}
 		else if (chunkSectionLayerGroup == ChunkSectionLayerGroup.OPAQUE)
 		{
-			ClientApi.INSTANCE.renderFadeTransparent();
 			ClientApi.INSTANCE.renderLods();
-		}
-	}
-	
-	@Inject(at = @At("RETURN"), method = "renderGroup", order = 800)
-	private void renderDeferredLayerReturn(ChunkSectionLayerGroup chunkSectionLayerGroup, GpuSampler gpuSampler, CallbackInfo ci)
-	{
-		ClientApi.RENDER_STATE.canRenderOrThrow();
-		
-		if (chunkSectionLayerGroup == ChunkSectionLayerGroup.TRANSLUCENT)
-		{
-			ClientApi.INSTANCE.renderFadeOpaque();
 		}
 	}
 	
