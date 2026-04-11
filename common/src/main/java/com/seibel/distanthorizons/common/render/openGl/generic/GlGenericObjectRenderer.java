@@ -413,7 +413,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 		
 		
 		// render setup //
-		try (var setup_profile = profiler.push("setup"))
+		try (IProfilerWrapper.IProfileBlock setup_profile = profiler.push("setup"))
 		{
 			
 			this.init();
@@ -556,7 +556,7 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 			RenderableBoxGroup boxGroup, Vec3d camPos,
 			IProfilerWrapper profiler)
 	{
-		try (var render_profile = profiler.push("vertex setup"))
+		try (IProfilerWrapper.IProfileBlock render_profile = profiler.push("vertex setup"))
 		{
 			
 			// update instance data //

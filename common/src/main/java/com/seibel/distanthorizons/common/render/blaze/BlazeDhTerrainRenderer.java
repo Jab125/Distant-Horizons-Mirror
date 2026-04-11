@@ -151,7 +151,7 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	{
 		this.tryInit();
 		
-		try(var terrain_profile = profiler.push("terrain render"))
+		try(IProfilerWrapper.IProfileBlock terrain_profile = profiler.push("terrain render"))
 		{
 			profiler.popPush("vert unique uniforms");
 			{
