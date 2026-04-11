@@ -353,11 +353,23 @@ if (isNotCommonProject) {
             def isClient = runTask.name.toLowerCase().contains("client")
             runTask.workingDir = rootProject.file("run/${isClient ? 'client' : 'server'}")
 
+            // Minecraft automatically has G1GC args present,
+            // remove them so we can use ZGC instead
+            def filteredArgs = runTask.jvmArgs.findAll { arg ->
+                !arg.startsWith("-XX:+UseG1GC") &&
+                !arg.startsWith("-XX:G1") &&
+                !arg.startsWith("-XX:MaxGCPauseMillis")
+            }
+            runTask.jvmArgs = filteredArgs
+            
             // JVM args
             runTask.jvmArgs(
                 "-Dio.netty.leakDetection.level=advanced",
-                //"-XX:+UseZGC",
+                // TODO only use for modern java versions
+                "-XX:+UseZGC",
+                // TODO don't use for even more modern-er java versions
                 //"-XX:+ZGenerational",
+                rootProject.minecraftMemoryJavaArg,
             )
             if (isClient) {
                 runTask.jvmArgs(
@@ -366,7 +378,13 @@ if (isNotCommonProject) {
                     "-Dminecraft.api.session.host=https://nope.invalid",
                     "-Dminecraft.api.services.host=https://nope.invalid",
                 )
-                runTask.args("--username", "Dev", "--renderDebugLabels", "--tracy")
+                runTask.args(
+                    // use a consistent username for easier debugging in a given world (vs randomly teleporting to a new user each time the game boots)
+                    "--username", "Dev",
+                    // "--renderDebugLabels" is a Mojang command to show render names in RenderDoc
+                    "--renderDebugLabels",
+                    // "--tracy" is a Mojang command to allow individual frames to be debugged using Tracy https://github.com/wolfpld/tracy/releases/tag/v0.13.1
+                    "--tracy")
             }
         }
     }
