@@ -51,6 +51,7 @@ import org.jetbrains.annotations.Nullable;
 import net.minecraft.core.Registry;
 import net.minecraft.core.BlockPos;
 import net.minecraft.world.level.EmptyBlockGetter;
+import net.minecraft.world.level.Level;
 #elif MC_VER == MC_1_18_2 || MC_VER == MC_1_19_2
 import net.minecraft.tags.TagKey;
 import net.minecraft.client.Minecraft;
