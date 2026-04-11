@@ -17,7 +17,7 @@
  *    along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.seibel.distanthorizons.fabric.mixins.client;
+package com.seibel.distanthorizons.neoforge.mixins.client;
 
 #if MC_VER < MC_1_21_9
 import net.minecraft.world.entity.Entity;
@@ -27,7 +27,8 @@ import org.spongepowered.asm.mixin.Mixin;
 public class MixinChunkSectionsToRender
 { /* rendering before was handled via Fabric API events */ }
 #else
-	
+
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import net.minecraft.client.Minecraft;
@@ -40,53 +41,19 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 #if MC_VER <= MC_1_21_10
 #else
-import com.mojang.blaze3d.textures.GpuSampler;
 #endif
 
 @Mixin(ChunkSectionsToRender.class)
 public class MixinChunkSectionsToRender
 {
 	
-	//===========//
-	// Pre MC 26 //
-	//===========//
-	#if MC_VER <= MC_1_21_11
-	//region
-	
-	#if MC_VER <= MC_1_21_10
-	// needs to fire at HEAD with a lower than normal order (less than 1000)
-	// otherwise it will be canceled by Sodium
-	@Inject(at = @At("HEAD"), method = "renderGroup", order = 800)
-	private void renderDeferredLayer(ChunkSectionLayerGroup chunkSectionLayerGroup, CallbackInfo ci)
-	#else
-	// needs to fire at HEAD with a lower than normal order (less than 1000)
-	// otherwise it will be canceled by Sodium
-	@Inject(at = @At("HEAD"), method = "renderGroup", order = 800)
-	private void renderDeferredLayer(ChunkSectionLayerGroup chunkSectionLayerGroup, GpuSampler gpuSampler, CallbackInfo ci)
-	#endif
-	{
-		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, Minecraft.getInstance().levelRenderer.level);
-		
-		
-		if (chunkSectionLayerGroup == ChunkSectionLayerGroup.TRANSLUCENT)
-		{
-			ClientApi.INSTANCE.renderFadeOpaque();
-			ClientApi.INSTANCE.renderDeferredLodsForShaders();
-		}
-		else if (chunkSectionLayerGroup == ChunkSectionLayerGroup.TRIPWIRE)
-		{
-			ClientApi.INSTANCE.renderFadeTransparent();
-		}
-	}
-	//endregion
-	#else
-	
-	
-	
 	//============//
 	// post MC 26 //
 	//============//
 	//region
+	
+	#if MC_VER <= MC_1_21_11
+	#else
 	
 	// needs to fire at HEAD with a lower than normal order (less than 1000)
 	// otherwise it will be canceled by Sodium

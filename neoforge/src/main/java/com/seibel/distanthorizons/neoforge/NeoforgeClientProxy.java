@@ -228,8 +228,10 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		#if MC_VER < MC_1_21_9
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, (ClientLevel)event.getLevel());
-		#else
+		#elif MC_VER <= MC_1_21_11
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, event.getLevelRenderer().level);
+		#else
+		// handled via the same mixin as fabric for consistency
 		#endif
 		
 		ClientApi.INSTANCE.renderFadeOpaque();
@@ -241,11 +243,11 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		#if MC_VER < MC_1_21_9
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, (ClientLevel)event.getLevel());
-		#else
+		#elif MC_VER <= MC_1_21_11
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, event.getLevelRenderer().level);
+		#else
+		// handled via the same mixin as fabric for consistency
 		#endif
-		
-		ClientApi.INSTANCE.renderDeferredLodsForShaders();
 	}
 	
 	@SubscribeEvent
@@ -253,8 +255,10 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		#if MC_VER < MC_1_21_9
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, (ClientLevel)event.getLevel());
-		#else
+		#elif MC_VER <= MC_1_21_11
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, event.getLevelRenderer().level);
+		#else
+		// handled via the same mixin as fabric for consistency
 		#endif
 		
 		

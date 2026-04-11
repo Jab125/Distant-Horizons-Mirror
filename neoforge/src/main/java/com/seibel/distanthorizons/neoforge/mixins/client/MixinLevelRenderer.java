@@ -44,8 +44,10 @@ import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 #else
+import com.mojang.blaze3d.textures.GpuSampler;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.Camera;
 import net.minecraft.client.DeltaTracker;
@@ -220,26 +222,6 @@ public class MixinLevelRenderer
 		ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.Convert(modelViewMatrix);
 		
 		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
-		
-	}
-	
-	@Inject(
-		method = "addMainPass(Lcom/mojang/blaze3d/framegraph/FrameGraphBuilder;Lnet/minecraft/client/renderer/culling/Frustum;Lorg/joml/Matrix4fc;Lcom/mojang/blaze3d/buffers/GpuBufferSlice;ZLnet/minecraft/client/renderer/state/level/LevelRenderState;Lnet/minecraft/client/DeltaTracker;Lnet/minecraft/util/profiling/ProfilerFiller;Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;)V",
-		at = @At(
-			value = "RETURN",
-			target = "Lcom/mojang/blaze3d/framegraph/FramePass;executes(Ljava/lang/Runnable;)V",
-			remap = false
-		)
-	)
-	public void addMainPass(CallbackInfo ci)
-	{
-		// only crash during development
-		if (ModInfo.IS_DEV_BUILD)
-		{
-			ClientApi.RENDER_STATE.canRenderOrThrow();
-		}
-		
-		ClientApi.INSTANCE.renderLods();
 		
 	}
 	
