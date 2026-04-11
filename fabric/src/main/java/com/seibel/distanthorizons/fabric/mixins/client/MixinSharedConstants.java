@@ -1,5 +1,14 @@
 package com.seibel.distanthorizons.fabric.mixins.client;
 
+#if MC_VER <= MC_1_21_10
+import net.minecraft.world.entity.Entity;
+import org.spongepowered.asm.mixin.Mixin;
+
+@Mixin(Entity.class)
+public class MixinSharedConstants
+{ /* not present in older MC versions */ }
+#else
+
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.ModInfo;
@@ -49,3 +58,4 @@ public abstract class MixinSharedConstants
 	}
 	
 }
+#endif
