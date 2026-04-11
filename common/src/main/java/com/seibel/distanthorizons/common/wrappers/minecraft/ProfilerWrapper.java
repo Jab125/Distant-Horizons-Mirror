@@ -23,27 +23,47 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrap
 
 import net.minecraft.util.profiling.ProfilerFiller;
 
-/**
- * @author James Seibel
- * @version 11-20-2021
- */
 public class ProfilerWrapper implements IProfilerWrapper
 {
 	public ProfilerFiller profiler;
 	
 	public ProfilerWrapper(ProfilerFiller newProfiler) { this.profiler = newProfiler; }
 	
-	
-	/** starts a new section inside the currently running section */
 	@Override
-	public void push(String newSection) { /*this.profiler.push(newSection);*/ }
+	public IProfileBlock push(String newSection) 
+	{
+		this.profiler.push(newSection); 
+		return new ProfileBlock(this.profiler);
+	}
 	
-	/** ends the currently running section and starts a new one */
 	@Override
-	public void popPush(String newSection) { /*this.profiler.popPush(newSection);*/ }
+	public void popPush(String newSection) 
+	{
+		this.profiler.popPush(newSection);
+	}
 	
-	/** ends the currently running section */
-	@Override
-	public void pop() { /*this.profiler.pop();*/ }
+	
+	
+	//================//
+	// helper classes //
+	//================//
+	//region
+	
+	public static class ProfileBlock implements IProfileBlock
+	{
+		private final ProfilerFiller profiler;
+		public ProfileBlock(ProfilerFiller newProfiler) { this.profiler = newProfiler; }
+		
+		
+		@Override
+		public void close()
+		{
+			this.profiler.pop();
+		}
+	}
+	
+	//endregion
+	
+	
 	
 }

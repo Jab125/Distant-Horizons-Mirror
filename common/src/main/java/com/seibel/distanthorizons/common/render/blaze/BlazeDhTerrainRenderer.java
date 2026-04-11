@@ -151,210 +151,206 @@ public class BlazeDhTerrainRenderer implements IDhTerrainRenderer
 	{
 		this.tryInit();
 		
-		
-		profiler.push("vert unique uniforms");
+		try(var terrain_profile = profiler.push("terrain render"))
 		{
-			// create data //
-			
-			for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
+			profiler.popPush("vert unique uniforms");
 			{
-				LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
-				bufferContainer.uniformContainer.tryUpload();
-			}
-		}
-		
-		profiler.popPush("vert share uniforms");
-		{
-			Mat4f combinedMatrix = new Mat4f(renderEventParam.dhProjectionMatrix);
-			combinedMatrix.multiply(renderEventParam.dhModelViewMatrix);
-			
-			float earthCurveRatio = Config.Client.Advanced.Graphics.Experimental.earthCurveRatio.get();
-			if (earthCurveRatio < -1.0f || earthCurveRatio > 1.0f)
-			{
-				earthCurveRatio = /*6371KM*/ 6371000.0f / earthCurveRatio;
-			}
-			else
-			{
-				// disable curvature if the config value is between -1 and 1
-				earthCurveRatio = 0.0f;
-			}
-			
-			
-			// upload data //
-			
-			int uniformBufferSize = new Std140SizeCalculator()
-				.putInt() // uIsWhiteWorld
-				
-				.putFloat() // uWorldYOffset
-				.putFloat() // uMircoOffset
-				.putFloat() // uEarthRadius
-				
-				.putVec3() // uCameraPos
-				.putMat4f() // uCombinedMatrix
-				.get();
-			
-			ByteBuffer buffer = MemoryUtil.memAlloc(uniformBufferSize);
-			buffer.order(ByteOrder.nativeOrder());
-			Std140Builder.intoBuffer(buffer)
-				.putInt(0) // uIsWhiteWorld
-				
-				.putFloat((float) renderEventParam.worldYOffset) // uWorldYOffset
-				.putFloat(0.01f) // uMircoOffset // 0.01 block offset
-				.putFloat(earthCurveRatio) // uEarthRadius
-				
-				.putVec3(
-					(float)renderEventParam.exactCameraPosition.x,
-					(float)renderEventParam.exactCameraPosition.y,
-					(float)renderEventParam.exactCameraPosition.z) // uCameraPos
-				.putMat4f(combinedMatrix.createJomlMatrix()) // uCombinedMatrix
-				.get();
-			
-			this.vertSharedUniformBuffer = BlazeUniformUtil.createBuffer("vertSharedUniformBlock", uniformBufferSize, this.vertSharedUniformBuffer);
-			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertSharedUniformBuffer, 0, uniformBufferSize);
-			
-			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
-			
-			MemoryUtil.memFree(buffer);
-		}
-		
-		profiler.popPush("set frag uniforms");
-		{
-			int uniformBufferSize = new Std140SizeCalculator()
-				.putFloat() // uClipDistance
-				.putFloat() // uNoiseIntensity
-				.putInt() // uNoiseSteps
-				.putInt() // uNoiseDropoff
-				.putInt() // uDitherDhRendering
-				.putInt() // uNoiseEnabled
-				.get();
-			
-			
-			// create data //
-			
-			float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
-			if (!Config.Client.Advanced.Debugging.lodOnlyMode.get())
-			{
-				// this added value prevents the near clip plane and discard circle from touching, which looks bad
-				dhNearClipDistance += 16f;
-			}
-			
-			
-			// upload data //
-			
-			ByteBuffer buffer = MemoryUtil.memAlloc(uniformBufferSize);
-			buffer.order(ByteOrder.nativeOrder());
-			buffer = Std140Builder.intoBuffer(buffer)
-				.putFloat(dhNearClipDistance) // uClipDistance
-				.putFloat(Config.Client.Advanced.Graphics.NoiseTexture.noiseIntensity.get()) // uNoiseIntensity
-				.putInt(Config.Client.Advanced.Graphics.NoiseTexture.noiseSteps.get()) // uNoiseSteps
-				.putInt(Config.Client.Advanced.Graphics.NoiseTexture.noiseDropoff.get()) // uNoiseDropoff
-				.putInt(Config.Client.Advanced.Graphics.Quality.ditherDhFade.get() ? 1 : 0) // uDitherDhRendering
-				.putInt(Config.Client.Advanced.Graphics.NoiseTexture.enableNoiseTexture.get() ? 1 : 0) // uNoiseEnabled
-				.get()
-			;
-			
-			this.fragUniformBuffer = BlazeUniformUtil.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
-			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
-			
-			COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
-			MemoryUtil.memFree(buffer);
-		}
-		
-		
-		
-		// render pass setup
-		{
-			profiler.popPush("setup");
-			
-			// create a render pass
-			try(RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
-				this::getRenderPassName,
-				BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView,
-				/*optionalClearColorAsInt*/ OptionalInt.empty(),
-				BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView, 
-				/*optionalDepthValueAsDouble*/ OptionalDouble.empty())
-				)
-			{
-				LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
-				BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
-				renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
-				
-				// set pipeline
-				renderPass.setPipeline(opaquePass ? this.opaquePipeline : this.transparentPipeline);
-				
-				// shared uniforms
-				renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
-				renderPass.setUniform("vertSharedUniformBlock", this.vertSharedUniformBuffer);
-				
-				
+				// create data //
 				
 				for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
 				{
-					profiler.popPush("binding");
-					
 					LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
-					BlazeLodUniformBufferWrapper uniformWrapper = (BlazeLodUniformBufferWrapper)bufferContainer.uniformContainer;
-					
-					boolean columnBuilderDebugEnabled = Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugEnable.get();
-					if (columnBuilderDebugEnabled)
-					{
-						if (DhSectionPos.getDetailLevel(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugDetailLevel.get()
-							&& DhSectionPos.getX(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugXPos.get()
-							&& DhSectionPos.getZ(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugZPos.get())
-						{
-							int breakpoint = 0;
-						}
-						else
-						{
-							continue;
-						}
-					}
-					
-					renderPass.setUniform("vertUniqueUniformBlock", uniformWrapper.gpuBuffer);
-					
-					
-					
-					profiler.popPush("rendering");
-					
-					// render each buffer
-					IVertexBufferWrapper[] bufferWrapperList = opaquePass ? bufferContainer.vboOpaqueWrappers : bufferContainer.vboTransparentWrappers;
-					for (int i = 0; i < bufferWrapperList.length; i++)
-					{
-						BlazeVertexBufferWrapper bufferWrapper = (BlazeVertexBufferWrapper) bufferWrapperList[i];
-						if (!bufferWrapper.uploaded
-							|| bufferWrapper.vertexCount == 0)
-						{
-							continue;
-						}
-						
-						// fire render event
-						{
-							Vec3d camPos = renderEventParam.exactCameraPosition;
-							Vec3f modelPos = new Vec3f(
-								(float) (bufferContainer.minCornerBlockPos.getX() - camPos.x),
-								(float) (bufferContainer.minCornerBlockPos.getY() - camPos.y),
-								(float) (bufferContainer.minCornerBlockPos.getZ() - camPos.z));
-							ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
-						}
-						
-						renderPass.setIndexBuffer(bufferWrapper.getIndexGpuBuffer(), VertexFormat.IndexType.INT);
-						renderPass.setVertexBuffer(0, bufferWrapper.vertexGpuBuffer); // vertex buffer can only be "0" lol
-						
-						if (!bufferWrapper.vertexGpuBuffer.isClosed())
-						{
-							renderPass.drawIndexed(
-								/*indexStart*/ 0,
-								/*firstIndex*/0,
-								/*indexCount*/bufferWrapper.indexCount,
-								/*instanceCount*/1);
-						}
-					}
+					bufferContainer.uniformContainer.tryUpload();
+				}
+			}
+			
+			profiler.popPush("vert share uniforms");
+			{
+				Mat4f combinedMatrix = new Mat4f(renderEventParam.dhProjectionMatrix);
+				combinedMatrix.multiply(renderEventParam.dhModelViewMatrix);
+				
+				float earthCurveRatio = Config.Client.Advanced.Graphics.Experimental.earthCurveRatio.get();
+				if (earthCurveRatio < -1.0f || earthCurveRatio > 1.0f)
+				{
+					earthCurveRatio = /*6371KM*/ 6371000.0f / earthCurveRatio;
+				}
+				else
+				{
+					// disable curvature if the config value is between -1 and 1
+					earthCurveRatio = 0.0f;
 				}
 				
+				
+				// upload data //
+				
+				int uniformBufferSize = new Std140SizeCalculator()
+					.putInt() // uIsWhiteWorld
+					
+					.putFloat() // uWorldYOffset
+					.putFloat() // uMircoOffset
+					.putFloat() // uEarthRadius
+					
+					.putVec3() // uCameraPos
+					.putMat4f() // uCombinedMatrix
+					.get();
+				
+				ByteBuffer buffer = MemoryUtil.memAlloc(uniformBufferSize);
+				buffer.order(ByteOrder.nativeOrder());
+				Std140Builder.intoBuffer(buffer)
+					.putInt(0) // uIsWhiteWorld
+					
+					.putFloat((float) renderEventParam.worldYOffset) // uWorldYOffset
+					.putFloat(0.01f) // uMircoOffset // 0.01 block offset
+					.putFloat(earthCurveRatio) // uEarthRadius
+					
+					.putVec3(
+						(float) renderEventParam.exactCameraPosition.x,
+						(float) renderEventParam.exactCameraPosition.y,
+						(float) renderEventParam.exactCameraPosition.z) // uCameraPos
+					.putMat4f(combinedMatrix.createJomlMatrix()) // uCombinedMatrix
+					.get();
+				
+				this.vertSharedUniformBuffer = BlazeUniformUtil.createBuffer("vertSharedUniformBlock", uniformBufferSize, this.vertSharedUniformBuffer);
+				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertSharedUniformBuffer, 0, uniformBufferSize);
+				
+				COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
+				
+				MemoryUtil.memFree(buffer);
+			}
+			
+			profiler.popPush("set frag uniforms");
+			{
+				int uniformBufferSize = new Std140SizeCalculator()
+					.putFloat() // uClipDistance
+					.putFloat() // uNoiseIntensity
+					.putInt() // uNoiseSteps
+					.putInt() // uNoiseDropoff
+					.putInt() // uDitherDhRendering
+					.putInt() // uNoiseEnabled
+					.get();
+				
+				
+				// create data //
+				
+				float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
+				if (!Config.Client.Advanced.Debugging.lodOnlyMode.get())
+				{
+					// this added value prevents the near clip plane and discard circle from touching, which looks bad
+					dhNearClipDistance += 16f;
+				}
+				
+				
+				// upload data //
+				
+				ByteBuffer buffer = MemoryUtil.memAlloc(uniformBufferSize);
+				buffer.order(ByteOrder.nativeOrder());
+				buffer = Std140Builder.intoBuffer(buffer)
+					.putFloat(dhNearClipDistance) // uClipDistance
+					.putFloat(Config.Client.Advanced.Graphics.NoiseTexture.noiseIntensity.get()) // uNoiseIntensity
+					.putInt(Config.Client.Advanced.Graphics.NoiseTexture.noiseSteps.get()) // uNoiseSteps
+					.putInt(Config.Client.Advanced.Graphics.NoiseTexture.noiseDropoff.get()) // uNoiseDropoff
+					.putInt(Config.Client.Advanced.Graphics.Quality.ditherDhFade.get() ? 1 : 0) // uDitherDhRendering
+					.putInt(Config.Client.Advanced.Graphics.NoiseTexture.enableNoiseTexture.get() ? 1 : 0) // uNoiseEnabled
+					.get()
+				;
+				
+				this.fragUniformBuffer = BlazeUniformUtil.createBuffer("fragUniformBlock", uniformBufferSize, this.fragUniformBuffer);
+				GpuBufferSlice bufferSlice = new GpuBufferSlice(this.fragUniformBuffer, 0, uniformBufferSize);
+				
+				COMMAND_ENCODER.writeToBuffer(bufferSlice, buffer);
+				MemoryUtil.memFree(buffer);
+			}
+			
+			
+			
+			// render pass setup
+			{
+				profiler.popPush("rendering");
+				
+				// create a render pass
+				try (RenderPass renderPass = COMMAND_ENCODER.createRenderPass(
+					this::getRenderPassName,
+					BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.textureView,
+					/*optionalClearColorAsInt*/ OptionalInt.empty(),
+					BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.textureView,
+					/*optionalDepthValueAsDouble*/ OptionalDouble.empty())
+				)
+				{
+					LightMapWrapper lightMapWrapper = (LightMapWrapper) renderEventParam.lightmap;
+					BlazeTextureViewWrapper lightmapTextureViewWrapper = lightMapWrapper.getTextureViewWrapper();
+					renderPass.bindTexture("uLightMap", lightmapTextureViewWrapper.textureView, lightmapTextureViewWrapper.textureSampler);
+					
+					// set pipeline
+					renderPass.setPipeline(opaquePass ? this.opaquePipeline : this.transparentPipeline);
+					
+					// shared uniforms
+					renderPass.setUniform("fragUniformBlock", this.fragUniformBuffer);
+					renderPass.setUniform("vertSharedUniformBlock", this.vertSharedUniformBuffer);
+					
+					
+					
+					for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
+					{
+						LodBufferContainer bufferContainer = bufferContainers.get(lodIndex);
+						BlazeLodUniformBufferWrapper uniformWrapper = (BlazeLodUniformBufferWrapper) bufferContainer.uniformContainer;
+						
+						boolean columnBuilderDebugEnabled = Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugEnable.get();
+						if (columnBuilderDebugEnabled)
+						{
+							if (DhSectionPos.getDetailLevel(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugDetailLevel.get()
+								&& DhSectionPos.getX(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugXPos.get()
+								&& DhSectionPos.getZ(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugZPos.get())
+							{
+								int breakpoint = 0;
+							}
+							else
+							{
+								continue;
+							}
+						}
+						
+						renderPass.setUniform("vertUniqueUniformBlock", uniformWrapper.gpuBuffer);
+						
+						
+						
+						// render each buffer
+						IVertexBufferWrapper[] bufferWrapperList = opaquePass ? bufferContainer.vboOpaqueWrappers : bufferContainer.vboTransparentWrappers;
+						for (int i = 0; i < bufferWrapperList.length; i++)
+						{
+							BlazeVertexBufferWrapper bufferWrapper = (BlazeVertexBufferWrapper) bufferWrapperList[i];
+							if (!bufferWrapper.uploaded
+								|| bufferWrapper.vertexCount == 0)
+							{
+								continue;
+							}
+							
+							// fire render event
+							{
+								Vec3d camPos = renderEventParam.exactCameraPosition;
+								Vec3f modelPos = new Vec3f(
+									(float) (bufferContainer.minCornerBlockPos.getX() - camPos.x),
+									(float) (bufferContainer.minCornerBlockPos.getY() - camPos.y),
+									(float) (bufferContainer.minCornerBlockPos.getZ() - camPos.z));
+								ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, new DhApiBeforeBufferRenderEvent.EventParam(renderEventParam, modelPos));
+							}
+							
+							renderPass.setIndexBuffer(bufferWrapper.getIndexGpuBuffer(), VertexFormat.IndexType.INT);
+							renderPass.setVertexBuffer(0, bufferWrapper.vertexGpuBuffer); // vertex buffer can only be "0" lol
+							
+							if (!bufferWrapper.vertexGpuBuffer.isClosed())
+							{
+								renderPass.drawIndexed(
+									/*indexStart*/ 0,
+									/*firstIndex*/0,
+									/*indexCount*/bufferWrapper.indexCount,
+									/*instanceCount*/1);
+							}
+						}
+					}
+					
+				}
 			}
 		}
-		
-		profiler.pop();
 	}
 	private String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
 	private String getRenderPassName() { return "distantHorizons:McLodRenderer"; }

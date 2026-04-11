@@ -413,133 +413,133 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 		
 		
 		// render setup //
-		profiler.push("setup");
-		
-		this.init();
-		
-		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericRenderSetupEvent.class, renderEventParam);
-		
-		
-		boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
-		if (renderWireframe)
+		try (var setup_profile = profiler.push("setup"))
 		{
-			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
-			GLMC.disableFaceCulling();
-		}
-		else
-		{
-			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
-			GLMC.enableFaceCulling();
-		}
-		
-		GLMC.enableBlend();
-		GL32.glBlendEquation(GL32.GL_FUNC_ADD);
-		GLMC.glBlendFuncSeparate(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA, GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
-		
-		IDhApiGenericObjectShaderProgram shaderProgram = this.instancedRenderingAvailable ? this.instancedShaderProgram : this.directShaderProgram;
-		IDhApiGenericObjectShaderProgram shaderProgramOverride = OverrideInjector.INSTANCE.get(IDhApiGenericObjectShaderProgram.class);
-		if (shaderProgramOverride != null && shaderProgram.overrideThisFrame())
-		{
-			shaderProgram = shaderProgramOverride;
-		}
-		
-		shaderProgram.bind(renderEventParam);
-		shaderProgram.bindVertexBuffer(this.boxVertexBuffer.getId());
-		
-		this.boxIndexBuffer.bind();
-		
-		Vec3d camPos = MC_RENDER.getCameraExactPosition();
-		
-		
-		
-		// rendering //
-		
-		Collection<RenderableBoxGroup> boxList = this.boxGroupById.values();
-		for (RenderableBoxGroup boxGroup : boxList)
-		{
-			// validation //
 			
-			// shouldn't happen, but just in case
-			if (boxGroup == null)
+			this.init();
+			
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericRenderSetupEvent.class, renderEventParam);
+			
+			
+			boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
+			if (renderWireframe)
 			{
-				continue;
-			}
-			
-			// skip boxes that shouldn't render this pass
-			if (boxGroup.ssaoEnabled != renderingWithSsao)
-			{
-				continue;
-			}
-			
-			profiler.popPush("render prep");
-			boxGroup.preRender(renderEventParam); // called even if the group is inactive, so the group can be activate if desired
-
-			// ignore inactive groups
-			if (!boxGroup.active)
-			{
-				continue;
-			}
-			
-			// allow API users to cancel this object's rendering
-			boolean cancelRendering = ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericObjectRenderEvent.class, new DhApiBeforeGenericObjectRenderEvent.EventParam(renderEventParam, boxGroup));
-			if (cancelRendering)
-			{
-				continue;
-			}
-			
-			// update instanced data if needed
-			if (this.instancedRenderingAvailable)
-			{
-				boxGroup.tryUpdateInstancedDataAsync();	
-				
-				// skip groups that haven't been uploaded yet
-				if (boxGroup.vertexBufferContainer.getState() != GlGenericObjectVertexContainer.EState.RENDER)
-				{
-					continue;
-				}
-			}
-			
-			
-			
-			// render //
-			
-			profiler.popPush("rendering");
-			profiler.push(boxGroup.getResourceLocationNamespace());
-			profiler.push(boxGroup.getResourceLocationPath());
-			if (this.instancedRenderingAvailable)
-			{
-				this.renderBoxGroupInstanced(shaderProgram, renderEventParam, boxGroup, camPos, profiler);
+				GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_LINE);
+				GLMC.disableFaceCulling();
 			}
 			else
 			{
-				this.renderBoxGroupDirect(shaderProgram, renderEventParam, boxGroup, camPos, profiler);
+				GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
+				GLMC.enableFaceCulling();
 			}
-			profiler.pop(); // resource path
-			profiler.pop(); // resource namespace
 			
-			boxGroup.postRender(renderEventParam);
+			GLMC.enableBlend();
+			GL32.glBlendEquation(GL32.GL_FUNC_ADD);
+			GLMC.glBlendFuncSeparate(GL32.GL_SRC_ALPHA, GL32.GL_ONE_MINUS_SRC_ALPHA, GL32.GL_ONE, GL32.GL_ONE_MINUS_SRC_ALPHA);
+			
+			IDhApiGenericObjectShaderProgram shaderProgram = this.instancedRenderingAvailable ? this.instancedShaderProgram : this.directShaderProgram;
+			IDhApiGenericObjectShaderProgram shaderProgramOverride = OverrideInjector.INSTANCE.get(IDhApiGenericObjectShaderProgram.class);
+			if (shaderProgramOverride != null && shaderProgram.overrideThisFrame())
+			{
+				shaderProgram = shaderProgramOverride;
+			}
+			
+			shaderProgram.bind(renderEventParam);
+			shaderProgram.bindVertexBuffer(this.boxVertexBuffer.getId());
+			
+			this.boxIndexBuffer.bind();
+			
+			Vec3d camPos = MC_RENDER.getCameraExactPosition();
+			
+			
+			
+			// rendering //
+			
+			Collection<RenderableBoxGroup> boxList = this.boxGroupById.values();
+			for (RenderableBoxGroup boxGroup : boxList)
+			{
+				// validation //
+				
+				// shouldn't happen, but just in case
+				if (boxGroup == null)
+				{
+					continue;
+				}
+				
+				// skip boxes that shouldn't render this pass
+				if (boxGroup.ssaoEnabled != renderingWithSsao)
+				{
+					continue;
+				}
+				
+				profiler.popPush("render prep");
+				boxGroup.preRender(renderEventParam); // called even if the group is inactive, so the group can be activate if desired
+				
+				// ignore inactive groups
+				if (!boxGroup.active)
+				{
+					continue;
+				}
+				
+				// allow API users to cancel this object's rendering
+				boolean cancelRendering = ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericObjectRenderEvent.class, new DhApiBeforeGenericObjectRenderEvent.EventParam(renderEventParam, boxGroup));
+				if (cancelRendering)
+				{
+					continue;
+				}
+				
+				// update instanced data if needed
+				if (this.instancedRenderingAvailable)
+				{
+					boxGroup.tryUpdateInstancedDataAsync();
+					
+					// skip groups that haven't been uploaded yet
+					if (boxGroup.vertexBufferContainer.getState() != GlGenericObjectVertexContainer.EState.RENDER)
+					{
+						continue;
+					}
+				}
+				
+				
+				
+				// render //
+				
+				profiler.popPush("rendering");
+				try (IProfilerWrapper.IProfileBlock namespace_profile = profiler.push(boxGroup.getResourceLocationNamespace());
+					IProfilerWrapper.IProfileBlock location_profile = profiler.push(boxGroup.getResourceLocationPath()))
+				{
+					if (this.instancedRenderingAvailable)
+					{
+						this.renderBoxGroupInstanced(shaderProgram, renderEventParam, boxGroup, camPos, profiler);
+					}
+					else
+					{
+						this.renderBoxGroupDirect(shaderProgram, renderEventParam, boxGroup, camPos, profiler);
+					}
+				}
+				
+				boxGroup.postRender(renderEventParam);
+			}
+			
+			
+			
+			//==========//
+			// clean up //
+			//==========//
+			
+			profiler.popPush("cleanup");
+			
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericRenderCleanupEvent.class, renderEventParam);
+			
+			if (renderWireframe)
+			{
+				// default back to GL_FILL since all other rendering uses it 
+				GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
+				GLMC.enableFaceCulling();
+			}
+			
+			shaderProgram.unbind();
 		}
-		
-		
-		
-		//==========//
-		// clean up //
-		//==========//
-		
-		profiler.popPush("cleanup");
-		
-		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericRenderCleanupEvent.class, renderEventParam);
-		
-		if (renderWireframe)
-		{
-			// default back to GL_FILL since all other rendering uses it 
-			GL32.glPolygonMode(GL32.GL_FRONT_AND_BACK, GL32.GL_FILL);
-			GLMC.enableFaceCulling();
-		}
-		
-		shaderProgram.unbind();
-		
-		profiler.pop();
 	}
 	
 	//endregion
@@ -556,72 +556,71 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 			RenderableBoxGroup boxGroup, Vec3d camPos,
 			IProfilerWrapper profiler)
 	{
-		// update instance data //
-		
-		profiler.push("vertex setup");
-		
-		DhApiRenderableBoxGroupShading shading = boxGroup.shading;
-		if (shading == null)
+		try (var render_profile = profiler.push("vertex setup"))
 		{
-			shading = DEFAULT_SHADING;
-		}
-		
-		shaderProgram.fillIndirectUniformData(
+			
+			// update instance data //
+			DhApiRenderableBoxGroupShading shading = boxGroup.shading;
+			if (shading == null)
+			{
+				shading = DEFAULT_SHADING;
+			}
+			
+			shaderProgram.fillIndirectUniformData(
 				renderEventParam,
 				shading, boxGroup,
 				camPos);
-		
-		
-		
-		// Bind instance data //
-		profiler.popPush("binding");
-		
-		GlGenericObjectVertexContainer container = (GlGenericObjectVertexContainer)(boxGroup.vertexBufferContainer);
-		
-		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.color);
-		GL32.glEnableVertexAttribArray(1);
-		GL32.glVertexAttribPointer(1, 4, GL32.GL_FLOAT, false, 4 * Float.BYTES, 0);
-		this.vertexAttribDivisor(1, 1);
-		
-		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.scale);
-		GL32.glEnableVertexAttribArray(2);
-		this.vertexAttribDivisor(2, 1);
-		GL32.glVertexAttribPointer(2, 3, GL32.GL_FLOAT, false, 3 * Float.BYTES, 0);
-		
-		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.chunkPos);
-		GL32.glEnableVertexAttribArray(3);
-		this.vertexAttribDivisor(3, 1);
-		GL32.glVertexAttribIPointer(3, 3, GL32.GL_INT, 3 * Integer.BYTES, 0);
-		
-		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.subChunkPos);
-		GL32.glEnableVertexAttribArray(4);
-		this.vertexAttribDivisor(4, 1);
-		GL32.glVertexAttribPointer(4, 3, GL32.GL_FLOAT, false, 3 * Float.BYTES, 0);
-		
-		GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.material);
-		GL32.glEnableVertexAttribArray(5);
-		this.vertexAttribDivisor(5, 1);
-		GL32.glVertexAttribIPointer(5, 1, GL32.GL_BYTE, Byte.BYTES, 0);
-		
-		
-		// Draw instanced
-		profiler.popPush("render");
-		if (container.uploadedBoxCount > 0)
-		{
-			GL32.glDrawElementsInstanced(GL32.GL_TRIANGLES, BOX_INDICES.length, GL32.GL_UNSIGNED_INT, 0, container.uploadedBoxCount);
+			
+			
+			
+			// Bind instance data //
+			profiler.popPush("binding");
+			
+			GlGenericObjectVertexContainer container = (GlGenericObjectVertexContainer) (boxGroup.vertexBufferContainer);
+			
+			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.color);
+			GL32.glEnableVertexAttribArray(1);
+			GL32.glVertexAttribPointer(1, 4, GL32.GL_FLOAT, false, 4 * Float.BYTES, 0);
+			this.vertexAttribDivisor(1, 1);
+			
+			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.scale);
+			GL32.glEnableVertexAttribArray(2);
+			this.vertexAttribDivisor(2, 1);
+			GL32.glVertexAttribPointer(2, 3, GL32.GL_FLOAT, false, 3 * Float.BYTES, 0);
+			
+			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.chunkPos);
+			GL32.glEnableVertexAttribArray(3);
+			this.vertexAttribDivisor(3, 1);
+			GL32.glVertexAttribIPointer(3, 3, GL32.GL_INT, 3 * Integer.BYTES, 0);
+			
+			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.subChunkPos);
+			GL32.glEnableVertexAttribArray(4);
+			this.vertexAttribDivisor(4, 1);
+			GL32.glVertexAttribPointer(4, 3, GL32.GL_FLOAT, false, 3 * Float.BYTES, 0);
+			
+			GL32.glBindBuffer(GL32.GL_ARRAY_BUFFER, container.material);
+			GL32.glEnableVertexAttribArray(5);
+			this.vertexAttribDivisor(5, 1);
+			GL32.glVertexAttribIPointer(5, 1, GL32.GL_BYTE, Byte.BYTES, 0);
+			
+			
+			// Draw instanced
+			profiler.popPush("render");
+			if (container.uploadedBoxCount > 0)
+			{
+				GL32.glDrawElementsInstanced(GL32.GL_TRIANGLES, BOX_INDICES.length, GL32.GL_UNSIGNED_INT, 0, container.uploadedBoxCount);
+			}
+			
+			
+			// Clean up
+			profiler.popPush("cleanup");
+			
+			GL32.glDisableVertexAttribArray(1);
+			GL32.glDisableVertexAttribArray(2);
+			GL32.glDisableVertexAttribArray(3);
+			GL32.glDisableVertexAttribArray(4);
+			GL32.glDisableVertexAttribArray(5);
 		}
-		
-		
-		// Clean up
-		profiler.popPush("cleanup");
-		
-		GL32.glDisableVertexAttribArray(1);
-		GL32.glDisableVertexAttribArray(2);
-		GL32.glDisableVertexAttribArray(3);
-		GL32.glDisableVertexAttribArray(4);
-		GL32.glDisableVertexAttribArray(5);
-		
-		profiler.pop();
 	}
 	/** 
 	 * Clean way to handle both {@link GL33#glVertexAttribDivisor} and {@link ARBInstancedArrays#glVertexAttribDivisorARB}
@@ -689,8 +688,6 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 				break;
 			}
 		}
-		
-		profiler.pop();
 	}
 	
 	//endregion
