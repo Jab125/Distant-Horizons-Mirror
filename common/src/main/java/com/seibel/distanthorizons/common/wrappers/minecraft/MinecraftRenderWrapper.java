@@ -30,6 +30,7 @@ import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.ColorUtil;
@@ -40,6 +41,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import net.minecraft.client.renderer.FogRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
 #else
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
 #endif
@@ -96,6 +98,8 @@ import com.mojang.blaze3d.textures.GpuTexture;
 public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 {
 	public static final MinecraftRenderWrapper INSTANCE = new MinecraftRenderWrapper();
+	
+	private static final IOptifineAccessor OPTIFINE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
 	
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private static final Minecraft MC = Minecraft.getInstance();
@@ -364,7 +368,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public int getTargetFramebuffer()
 	{
 		// used so we can access the framebuffer shaders end up rendering to
-		if (AbstractOptifineAccessor.optifinePresent())
+		if (OPTIFINE_ACCESSOR != null)
 		{
 			return this.finalLevelFrameBufferId;
 		}
