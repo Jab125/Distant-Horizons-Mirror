@@ -43,7 +43,7 @@ public class GlQuadIndexBuffer extends GLIndexBuffer
 	
 	public GlQuadIndexBuffer() { super(false); }
 	
-	public void upload(int quadCount)
+	public void upload(ByteBuffer buffer, int quadCount)
 	{
 		if (quadCount < 0)
 		{
@@ -63,12 +63,8 @@ public class GlQuadIndexBuffer extends GLIndexBuffer
 		}
 		
 		this.glType = GL32.GL_UNSIGNED_INT;
-		ByteBuffer buffer = IndexBufferBuilder.createBuffer(quadCount);
-		this.bind();
 		super.uploadBuffer(buffer, EDhApiGpuUploadMethod.DATA,
 			this.indicesCount * GLEnums.getTypeSize(this.glType), GL32.GL_STATIC_DRAW);
-		
-		MemoryUtil.memFree(buffer);
 	}
 	
 	//endregion

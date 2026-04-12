@@ -22,15 +22,16 @@ package com.seibel.distanthorizons.common.render.openGl.glObject.buffer;
 import java.nio.ByteBuffer;
 
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
+import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.IndexBufferBuilder;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
-import com.seibel.distanthorizons.core.jar.EPlatform;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IVertexBufferWrapper;
 import org.lwjgl.opengl.GL32;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
+import org.lwjgl.system.MemoryUtil;
 
 /**
  * This is a container for a OpenGL
@@ -83,7 +84,10 @@ public class GLVertexBuffer extends GLBuffer implements IVertexBufferWrapper
 				int maxSize = LodQuadBuilder.getMaxBufferByteSize();
 				int maxVertexCount = maxSize / LodQuadBuilder.BYTES_PER_VERTEX;
 				int maxQuadCount = (maxVertexCount / 4);
-				GLOBAL_QUAD_IBO.upload(maxQuadCount);
+				
+				ByteBuffer buffer = IndexBufferBuilder.createBuffer(maxQuadCount);
+				GLOBAL_QUAD_IBO.upload(buffer, maxQuadCount);
+				MemoryUtil.memFree(buffer);
 			});
 		}
 	}
@@ -158,7 +162,7 @@ public class GLVertexBuffer extends GLBuffer implements IVertexBufferWrapper
 		this.quadIBO = new GlQuadIndexBuffer();
 		
 		int quadCount = (vertexCount / 4);
-		this.quadIBO.upload(quadCount);
+		this.quadIBO.upload(buffer, quadCount);
 	}
 	
 	//endregion

@@ -140,7 +140,7 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 	}
 	
 	@Override 
-	public void uploadIndexBuffer(ByteBuffer buffer, int vertexCount)
+	public void uploadIndexBuffer(ByteBuffer indexBuffer, int vertexCount)
 	{
 		int oldIndexCount = this.indexCount;
 		// 4 vertices per face, but 6 indices (IE 2 triangles) per face, aka need to multiply by 1.5
@@ -169,17 +169,12 @@ public class BlazeVertexBufferWrapper implements IVertexBufferWrapper
 				this.indexGpuBuffer.close();
 			}
 			
-			ByteBuffer indexBuffer = IndexBufferBuilder.createBuffer(this.vertexCount);
-			
 			int usage = GpuBuffer.USAGE_COPY_DST
 				| GpuBuffer.USAGE_INDEX;
 			this.indexGpuBuffer = GPU_DEVICE.createBuffer(BlazeVertexBufferWrapper::getIndexBufferName, usage, indexBuffer.capacity());
 			
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.indexGpuBuffer, /*offset*/ 0, indexBuffer.capacity());
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, indexBuffer);
-			
-			MemoryUtil.memFree(indexBuffer);
-			
 		}
 	}
 	private static String getIndexBufferName() { return "distantHorizons:LodIndexBuffer"; }
