@@ -691,7 +691,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		resourceLocation = Registry.BLOCK.getKey(this.blockState.getBlock());
 		#elif MC_VER <= MC_1_19_2
 		resourceLocation = registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY).getKey(this.blockState.getBlock());
-		#elif MC_VER <= MC_1_21_4
+		#elif MC_VER <= MC_1_21_1
 		resourceLocation = registryAccess.registryOrThrow(Registries.BLOCK).getKey(this.blockState.getBlock());
 		#else
 		resourceLocation = registryAccess.lookupOrThrow(Registries.BLOCK).getKey(this.blockState.getBlock());
@@ -792,7 +792,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 				#elif MC_VER <= MC_1_19_2
 				net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 				block = registryAccess.registryOrThrow(Registry.BLOCK_REGISTRY).get(resourceLocation);
-				#elif MC_VER <= MC_1_21_4
+				#elif MC_VER <= MC_1_21_1
 				net.minecraft.core.RegistryAccess registryAccess = level.registryAccess();
 				block = registryAccess.registryOrThrow(Registries.BLOCK).get(resourceLocation);
 				#else

@@ -232,11 +232,12 @@ public class BiomeWrapper implements IBiomeWrapper
 		resourceLocation = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getKey(this.biome);
 		#elif MC_VER <= MC_1_19_2
 		resourceLocation = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).getKey(this.biome.value());
-		#elif MC_VER <= MC_1_21_4
+		#elif MC_VER <= MC_1_21_1
 		resourceLocation = registryAccess.registryOrThrow(Registries.BIOME).getKey(this.biome.value());
 		#else
 		resourceLocation = registryAccess.lookupOrThrow(Registries.BIOME).getKey(this.biome.value());
 		#endif
+		
 		
 		if (resourceLocation == null)
 		{
@@ -362,7 +363,7 @@ public class BiomeWrapper implements IBiomeWrapper
 		Biome unwrappedBiome = registryAccess.registryOrThrow(Registry.BIOME_REGISTRY).get(resourceLocation);
 		success = (unwrappedBiome != null);
 		Holder<Biome> biome = new Holder.Direct<>(unwrappedBiome);
-		#elif MC_VER <= MC_1_21_4
+		#elif MC_VER <= MC_1_21_1
 		Biome unwrappedBiome = registryAccess.registryOrThrow(Registries.BIOME).get(resourceLocation);
 		success = (unwrappedBiome != null);
 		Holder<Biome> biome = new Holder.Direct<>(unwrappedBiome);
