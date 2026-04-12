@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.common.wrappers.minecraft;
 import java.io.File;
 
 import com.mojang.blaze3d.platform.Window;
+import com.seibel.distanthorizons.common.wrappers.gui.NativeDialogUtil;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
@@ -370,16 +371,27 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	public void crashMinecraft(String errorMessage, Throwable exception)
 	{
 		LOGGER.fatal(ModInfo.READABLE_NAME + " had the following error: [" + errorMessage + "]. Crashing Minecraft...", exception);
-		CrashReport report = new CrashReport(errorMessage, exception);
-		#if MC_VER < MC_1_20_4
-		Minecraft.crash(report);
-		#else
-		MINECRAFT.delayCrash(report);
-		#endif
+		
+		// Only crash once the renderer has been set up.
+		// If the renderer hasn't been set up yet crashing MC will
+		// cause a Blaze3D/UI error instead of the error we're trying to send.
+		executeOnRenderThread(() -> 
+		{
+			CrashReport report = new CrashReport(errorMessage, exception);
+			#if MC_VER < MC_1_20_4
+			Minecraft.crash(report);
+			#else
+			MINECRAFT.delayCrash(report);
+			#endif
+		});
 	}
 	
 	@Override
 	public void executeOnRenderThread(Runnable runnable) { MINECRAFT.execute(runnable); }
+	
+	@Override
+	public void showDialog(String title, String message, String dialogType, String iconType)
+	{ NativeDialogUtil.showDialog(title, message, dialogType, iconType); }
 	
 	//endregion
 	

@@ -21,10 +21,8 @@ import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
 import com.seibel.distanthorizons.core.render.renderer.StubDebugWireframeRenderer;
-import com.seibel.distanthorizons.core.util.NativeDialogUtil;
+import com.seibel.distanthorizons.common.wrappers.gui.NativeDialogUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
-import com.seibel.distanthorizons.core.util.threading.DhThreadFactory;
-import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
@@ -375,10 +373,10 @@ public abstract class AbstractModInitializer
 				renderApi = versionConstants.getDefaultRenderingApi();
 			}
 			
-			// Iris only supports nataive OpenGL
+			// Iris only supports native OpenGL
 			if (renderApi != EDhApiRenderApi.OPEN_GL)
 			{
-				String irisUnsupportedMessage = "Iris doesn't support DH when using the ["+EDhApiRenderApi.BLAZE_3D+"] rendering API, this will need to be fixed on Iris' end. As a temporary fix please change the rendering API to ["+EDhApiRenderApi.OPEN_GL+"] in DH's config file.";
+				String irisUnsupportedMessage = "Iris doesn't support DH when using the ["+EDhApiRenderApi.BLAZE_3D+"] rendering API, this will need to be fixed on Iris end. As a temporary fix please change the rendering API to ["+EDhApiRenderApi.OPEN_GL+"] in the DH config file.";
 				LOGGER.fatal(irisUnsupportedMessage);
 				NativeDialogUtil.showDialog(ModInfo.READABLE_NAME, irisUnsupportedMessage, "ok", "error");
 				
