@@ -19,7 +19,7 @@
 
 package com.seibel.distanthorizons.neoforge.mixins.client;
 
-#if MC_VER < MC_1_21_9
+#if MC_VER <= MC_1_21_11
 import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 
@@ -38,10 +38,6 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-
-#if MC_VER <= MC_1_21_10
-#else
-#endif
 
 @Mixin(ChunkSectionsToRender.class)
 public class MixinChunkSectionsToRender
