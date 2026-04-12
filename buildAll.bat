@@ -6,6 +6,7 @@
 echo ==================== Note: All build jars will be in the folder called 'buildAllJars' ====================
 mkdir buildAllJars
 del buildAllJars/*
+del build/forgix/*
 
 @rem Loop trough everything in the version properties folder
 for %%f in (versionProperties\*) do (
@@ -23,7 +24,7 @@ for %%f in (versionProperties\*) do (
     call .\gradlew.bat mergeJars -PmcVer="!version!"
 	
     echo ==================== Moving jar ====================
-    move build\merged\*.jar buildAllJars\
+    move build\forgix\*.jar buildAllJars\
 )
 
 endlocal

@@ -3,6 +3,7 @@
 echo "==================== Note: All build jars will be in the folder called 'buildAllJars' ===================="
 mkdir -p buildAllJars
 rm -rf buildAllJars/*
+rm -rf build/forgix/*
 
 # Loop trough everything in the version properties folder
 for d in versionProperties/*; do
@@ -24,5 +25,5 @@ for d in versionProperties/*; do
   if [ $? != 0 ]; then continue; fi
   
   echo "==================== Moving jar ===================="
-  mv build/merged/*.jar buildAllJars/
+  mv build/forgix/*.jar buildAllJars/
 done
