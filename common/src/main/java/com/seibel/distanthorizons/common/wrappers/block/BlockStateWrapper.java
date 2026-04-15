@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.wrappers.block;
 
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiBlockMaterial;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockStateWrapperCreatedEvent;
 import com.seibel.distanthorizons.common.wrappers.WrapperFactory;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
@@ -29,6 +30,7 @@ import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.BeaconBeamBlock;
@@ -89,7 +91,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
     public static final ConcurrentHashMap<String, BlockStateWrapper> WRAPPER_BY_RESOURCE_LOCATION = new ConcurrentHashMap<>();
 	
 	public static final String AIR_STRING = "AIR";
-	public static final BlockStateWrapper AIR = new BlockStateWrapper(null, null);
+	public static final BlockStateWrapper AIR = new BlockStateWrapper(null, null, null);
 	
 	public static final String DIRT_RESOURCE_LOCATION_STRING = "minecraft:dirt";
 	public static final String WATER_RESOURCE_LOCATION_STRING = "minecraft:water";
@@ -124,6 +126,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean isBeaconBlock; 
 	private final boolean isBeaconBaseBlock;
 	private final boolean allowsBeaconBeamPassage;
+	private final boolean isSolid;
+	private final boolean isLiquid;
 	/** null if this block can't tint beacons */
 	private final Color beaconTintColor; 
 	private final Color mapColor;
@@ -149,7 +153,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		}
 		else
 		{
-			BlockStateWrapper newWrapper = new BlockStateWrapper(blockState, levelWrapper);
+			BlockStateWrapper newWrapper = createNewWrapper(blockState, levelWrapper);
 			WRAPPER_BY_BLOCK_STATE.put(blockState, newWrapper);
 			return newWrapper;
 		}
@@ -175,15 +179,53 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		}
 	}
 	
-	private BlockStateWrapper(@Nullable BlockState blockState, ILevelWrapper levelWrapper)
+	private static BlockStateWrapper createNewWrapper(@Nullable BlockState blockState, ILevelWrapper levelWrapper)
+	{
+		// create a wrapper specifically for the API event to use
+		BlockStateWrapper apiWrapper = new BlockStateWrapper(blockState, levelWrapper, null);
+		DhApiBlockStateWrapperCreatedEvent.EventParam eventParam = new DhApiBlockStateWrapperCreatedEvent.EventParam(apiWrapper);
+		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBlockStateWrapperCreatedEvent.class, eventParam);
+		
+		if (!eventParam.getOverridesSet())
+		{
+			// no changes needed, use the existing object
+			return apiWrapper;
+		}
+		
+		// create a new wrapper using whatever overrides the API user set
+		BlockStateWrapper returnWrapper = new BlockStateWrapper(blockState, levelWrapper, eventParam);
+		return returnWrapper;
+	}
+	private BlockStateWrapper(@Nullable BlockState blockState, ILevelWrapper levelWrapper, @Nullable DhApiBlockStateWrapperCreatedEvent.EventParam overrideEventParam)
 	{
 		this.blockState = blockState;
 		this.serialString = this.serialize(levelWrapper);
 		this.hashCode = Objects.hash(this.serialString);
-		this.blockMaterialId = this.calculateEDhApiBlockMaterialId().index;
-		this.opacity = this.calculateOpacity();
 		
-		String lowercaseSerial = this.serialString.toLowerCase();
+		// allow overriding if present
+		if (overrideEventParam != null 
+			&& overrideEventParam.getBlockMaterial() != null)
+		{
+			this.blockMaterialId = overrideEventParam.getBlockMaterial().index;
+		}
+		else
+		{
+			// no API override, use the base logic
+			this.blockMaterialId = this.calculateEDhApiBlockMaterialId().index;
+		}
+		
+		// allow overriding if present 
+		if (overrideEventParam != null 
+			&& overrideEventParam.getOpacity() != null)
+		{
+			this.opacity = overrideEventParam.getOpacity();
+		}
+		else
+		{
+			this.opacity = this.calculateOpacity();
+		}
+		
+		String lowerCaseSerial = this.serialString.toLowerCase();
 		
 		
 		
@@ -204,7 +246,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		for (int i = 0; i < oldBeaconBaseBlockNameList.size(); i++)
 		{
 			String baseBlockName = oldBeaconBaseBlockNameList.get(i);
-			if (lowercaseSerial.contains(baseBlockName))
+			if (lowerCaseSerial.contains(baseBlockName))
 			{
 				isBeaconBaseBlock = true;
 				break;
@@ -232,7 +274,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		#endif
 		
 		// beacon block
-		this.isBeaconBlock = lowercaseSerial.contains("minecraft:beacon");
+		this.isBeaconBlock = lowerCaseSerial.contains("minecraft:beacon");
 		
 		
 		// beacon tint color
@@ -265,12 +307,12 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			boolean canOcclude = this.getCanOcclude();
 			boolean propagatesSkyLightDown = this.getPropagatesSkyLightDown();
 			
-			if (lowercaseSerial.contains("minecraft:bedrock"))
+			if (lowerCaseSerial.contains("minecraft:bedrock"))
 			{
 				// bedrock is a special case fully opaque block that does allow beacons through
 				allowsBeaconBeamPassage = true;
 			}
-			else if (lowercaseSerial.contains("minecraft:tinted_glass"))
+			else if (lowerCaseSerial.contains("minecraft:tinted_glass"))
 			{
 				// tinted glass is a special case where it isn't fully opaque,
 				// but should block beacons
@@ -296,14 +338,17 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		this.allowsBeaconBeamPassage = allowsBeaconBeamPassage;
 		
 		
-		int mcColor = 0;
+		// map color
 		if (this.blockState != null)
 		{
+			int mcColor = 0;
+			
 			#if MC_VER < MC_1_20_1
 			mcColor = this.blockState.getMaterial().getColor().col;
 	        #else
 			mcColor = this.blockState.getMapColor(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).col;
             #endif
+			
 			this.mapColor = ColorUtil.toColorObjRGB(mcColor);
 		}
 		else
@@ -311,7 +356,39 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			this.mapColor = new Color(0,0,0,0);
 		}
 		
-		//LOGGER.trace("Created BlockStateWrapper ["+this.serialString+"] for ["+blockState+"] with material ID ["+this.EDhApiBlockMaterialId+"]");
+		
+		// is solid
+		if (this.isAir()
+			|| this.blockState == null) // "== null" isn't necessary since its handled in isAir() but is here to prevent intellij from complaining
+		{
+			this.isSolid = false;
+		}
+		else
+		{
+	        #if MC_VER < MC_1_20_1
+			this.blockIsSolid = this.blockState.getMaterial().isSolid();
+	        #else
+			this.isSolid = !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
+            #endif
+		}
+		
+		// is liquid
+		if (this.isAir()
+			|| this.blockState == null) // == null isn't necessary since its handled in isAir() but is here to prevent intellij from complaining
+		{
+			this.isLiquid = false;
+		}
+		else
+		{
+	        #if MC_VER < MC_1_20_1
+			this.isLiquid = this.blockState.getMaterial().isLiquid() || !this.blockState.getFluidState().isEmpty();
+	        #else
+			this.isLiquid = !this.blockState.getFluidState().isEmpty();
+	        #endif
+		}
+		
+		
+		
 	}
 	
 	//endregion
@@ -558,7 +635,6 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	
 	
 	
-	
 	@Override
 	public int getLightEmission() { return (this.blockState != null) ? this.blockState.getLightEmission() : 0; }
 	
@@ -594,48 +670,10 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public boolean isAir() { return this.isAir(this.blockState); }
 	public boolean isAir(BlockState blockState) { return blockState == null || blockState.isAir(); }
 	
-	private Boolean blockIsSolid = null;
 	@Override
-	public boolean isSolid()
-	{
-		if (this.isAir() 
-			|| this.blockState == null) // == null isn't necessary since its handled in isAir() but is here to prevent intellij from complaining
-		{
-			return false;
-		}
-		
-		// cached since getCollisionShape() is a dictionary lookup that allocates objects
-		// and this call is used in a high traffic location
-		if (this.blockIsSolid != null)
-		{
-			return this.blockIsSolid;
-		}
-		
-		
-        #if MC_VER < MC_1_20_1
-		this.blockIsSolid = this.blockState.getMaterial().isSolid();
-        #else
-		this.blockIsSolid = !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
-        #endif
-		return this.blockIsSolid;
-	}
-	
+	public boolean isSolid() { return this.isSolid; }
 	@Override
-	public boolean isLiquid()
-	{
-		if (this.isAir()
-			|| this.blockState == null) // == null isn't necessary since its handled in isAir() but is here to prevent intellij from complaining
-		{
-			return false;
-		}
-		
-        #if MC_VER < MC_1_20_1
-		return this.blockState.getMaterial().isLiquid() || !this.blockState.getFluidState().isEmpty();
-        #else
-		return !this.blockState.getFluidState().isEmpty();
-        #endif
-	}
-	
+	public boolean isLiquid() { return this.isLiquid; }
 	@Override
 	public boolean isBeaconBlock() { return this.isBeaconBlock; }
 	@Override
@@ -847,7 +885,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 					foundState = block.defaultBlockState();
 				}
 				
-				foundWrapper = new BlockStateWrapper(foundState, levelWrapper);
+				foundWrapper = createNewWrapper(foundState, levelWrapper);
 				return foundWrapper;
 			}
 			catch (Exception e)
