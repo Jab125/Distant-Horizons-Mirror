@@ -17,7 +17,7 @@ import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.IDhGenericObjectVertexBufferContainer;
 import com.seibel.distanthorizons.core.render.renderer.RenderableBoxGroup;
-import com.seibel.distanthorizons.core.util.ColorUtil;
+import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;

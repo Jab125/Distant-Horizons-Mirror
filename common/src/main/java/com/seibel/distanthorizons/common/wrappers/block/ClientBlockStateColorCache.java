@@ -19,13 +19,17 @@
 
 package com.seibel.distanthorizons.common.wrappers.block;
 
+import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
+import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockColorOverrideEvent;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.FullDataSourceV2;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPosMutable;
-import com.seibel.distanthorizons.core.util.ColorUtil;
+import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.core.Direction;
@@ -187,8 +191,9 @@ public class ClientBlockStateColorCache
 		};
 	
 	// these are threadlocals since AbstractDhTintGetter use local variables to handle color queries
-	private static final ThreadLocal<TintWithoutLevelOverrider> TintWithoutLevelOverrideGetter = ThreadLocal.withInitial(() -> new TintWithoutLevelOverrider());
-	private static final ThreadLocal<TintGetterOverride> TintOverrideGetter = ThreadLocal.withInitial(() -> new TintGetterOverride());
+	private static final ThreadLocal<TintWithoutLevelOverrider> TintWithoutLevelOverrideGetter = ThreadLocal.withInitial(TintWithoutLevelOverrider::new);
+	private static final ThreadLocal<TintGetterOverride> TintOverrideGetter = ThreadLocal.withInitial(TintGetterOverride::new);
+	private static final ThreadLocal<DhApiBlockColorOverrideEvent.EventParam> ColorOverrideEventParamGetter = ThreadLocal.withInitial(DhApiBlockColorOverrideEvent.EventParam::new);
 	
 	//endregion
 	
@@ -514,36 +519,33 @@ public class ClientBlockStateColorCache
 	public int getColor(BiomeWrapper biomeWrapper, FullDataSourceV2 fullDataSource, DhBlockPos blockPos)
 	{
 		// only get the tint if the block needs to be tinted
-		if (!this.needPostTinting)
-		{
-			return this.baseColor;
-		}
-		
-		// don't try tinting blocks that don't support our method of tint getting
-		if (BROKEN_BLOCK_STATES.contains(this.blockState))
-		{
-			return this.baseColor;
-		}
-		
-		
-		// attempt to get the tint
 		int tintColor = AbstractDhTintGetter.INVALID_COLOR;
-		try
+		if (this.needPostTinting)
 		{
-			// try to use the fast tint getter logic first
-			if (!BLOCK_STATES_THAT_NEED_LEVEL.contains(this.blockState))
+			// don't try tinting blocks that don't support our method of tint getting
+			if (BROKEN_BLOCK_STATES.contains(this.blockState))
 			{
-				try
+				return this.baseColor;
+			}
+			
+			
+			// attempt to get the tint
+			try
+			{
+				// try to use the fast tint getter logic first
+				if (!BLOCK_STATES_THAT_NEED_LEVEL.contains(this.blockState))
 				{
-					TintWithoutLevelOverrider tintOverride = TintWithoutLevelOverrideGetter.get();
-					tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
-					
-					// try using DH's cached tint values first if possible
-					tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
-					if (tintColor == AbstractDhTintGetter.INVALID_COLOR)
+					try
 					{
-						// one or more tint values weren't calculated,
-						// we need MC's color resolver
+						TintWithoutLevelOverrider tintOverride = TintWithoutLevelOverrideGetter.get();
+						tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
+						
+						// try using DH's cached tint values first if possible
+						tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
+						if (tintColor == AbstractDhTintGetter.INVALID_COLOR)
+						{
+							// one or more tint values weren't calculated,
+							// we need MC's color resolver
 						#if MC_VER <= MC_1_21_11
 						tintColor = Minecraft.getInstance()
 								.getBlockColors()
@@ -552,53 +554,53 @@ public class ClientBlockStateColorCache
 										McObjectConverter.Convert(blockPos),
 										this.tintIndex);
 						#else
-						BlockTintSource tintSource = Minecraft.getInstance()
-							.getBlockColors()
-							.getTintSource(this.blockState, this.tintIndex);
-						// a tint source may be null for blocks that don't actually need tinting
-						// in that case the base color should be sufficient
-						// Example: cherry blossom leaves
-						if (tintSource != null)
-						{
-							BlockPos mcPos = McObjectConverter.Convert(blockPos);
-							tintColor = tintSource.colorInWorld(this.blockState, tintOverride, mcPos);
+							BlockTintSource tintSource = Minecraft.getInstance()
+								.getBlockColors()
+								.getTintSource(this.blockState, this.tintIndex);
+							// a tint source may be null for blocks that don't actually need tinting
+							// in that case the base color should be sufficient
+							// Example: cherry blossom leaves
+							if (tintSource != null)
+							{
+								BlockPos mcPos = McObjectConverter.Convert(blockPos);
+								tintColor = tintSource.colorInWorld(this.blockState, tintOverride, mcPos);
+								if (tintColor == -1)
+								{
+									tintColor = tintSource.colorAsTerrainParticle(this.blockState, tintOverride, mcPos);
+								}
+							}
+							
 							if (tintColor == -1)
 							{
-								tintColor = tintSource.colorAsTerrainParticle(this.blockState, tintOverride, mcPos);
+								// no color found, use the base color
+								tintColor = AbstractDhTintGetter.INVALID_COLOR;
 							}
-						}
-						
-						if (tintColor == -1)
-						{
-							// no color found, use the base color
-							tintColor = AbstractDhTintGetter.INVALID_COLOR;
-						}
-						
-						// save this color to speed up future queries
-						TintWithoutLevelOverrider.setStaticColor(this.blockStateWrapper, biomeWrapper, tintColor);
-						// try to get the blended color with this new information
-						tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
+							
+							// save this color to speed up future queries
+							TintWithoutLevelOverrider.setStaticColor(this.blockStateWrapper, biomeWrapper, tintColor);
+							// try to get the blended color with this new information
+							tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
 						#endif
+						}
 					}
-				}
-				catch (Exception e)
-				{
+					catch (Exception e)
+					{
 					#if MC_VER <= MC_1_21_11
 					// this exception generally occurs if the tint requires other blocks besides itself
 					LOGGER.debug("Unable to use ["+ TintWithoutLevelOverrider.class.getSimpleName()+"] to get the block tint for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: [" + e.getMessage() + "]. Attempting to use backup method...", e);
 					BLOCK_STATES_THAT_NEED_LEVEL.add(this.blockState);
 					#else
-					// only display the error once per block/biome type to reduce log spam
-					if (!BROKEN_BLOCK_STATES.contains(this.blockState))
-					{
-						LOGGER.warn("Failed to get block color for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: ["+e.getMessage() + "]. Note: future errors for this block/biome will be ignored.", e);
-						BROKEN_BLOCK_STATES.add(this.blockState);
-					}
+						// only display the error once per block/biome type to reduce log spam
+						if (!BROKEN_BLOCK_STATES.contains(this.blockState))
+						{
+							LOGGER.warn("Failed to get block color for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: [" + e.getMessage() + "]. Note: future errors for this block/biome will be ignored.", e);
+							BROKEN_BLOCK_STATES.add(this.blockState);
+						}
 					#endif
+					}
 				}
-			}
-			
-			// level-specific logic is only needed for MC 1.21.11 and older
+				
+				// level-specific logic is only needed for MC 1.21.11 and older
 			#if MC_VER <= MC_1_21_11
 			// use the level logic only if requested
 			if (BLOCK_STATES_THAT_NEED_LEVEL.contains(this.blockState))
@@ -621,28 +623,48 @@ public class ClientBlockStateColorCache
 				}
 			}
 			#endif
-		}
-		catch (Exception e)
-		{
-			// only display the error once per block/biome type to reduce log spam
-			if (!BROKEN_BLOCK_STATES.contains(this.blockState))
+			}
+			catch (Exception e)
 			{
-				LOGGER.warn("Failed to get block color for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: ["+e.getMessage() + "]. Note: future errors for this block/biome will be ignored.", e);
-				BROKEN_BLOCK_STATES.add(this.blockState);
+				// only display the error once per block/biome type to reduce log spam
+				if (!BROKEN_BLOCK_STATES.contains(this.blockState))
+				{
+					LOGGER.warn("Failed to get block color for block: [" + this.blockState + "] and biome: [" + biomeWrapper + "] at pos: " + blockPos + ". Error: [" + e.getMessage() + "]. Note: future errors for this block/biome will be ignored.", e);
+					BROKEN_BLOCK_STATES.add(this.blockState);
+				}
 			}
 		}
 		
 		
-		
+		int returnColor;
 		if (tintColor != AbstractDhTintGetter.INVALID_COLOR)
 		{
-			return ColorUtil.multiplyARGBwithRGB(this.baseColor, tintColor);
+			returnColor = ColorUtil.multiplyARGBwithRGB(this.baseColor, tintColor);
 		}
 		else
 		{
 			// unable to get the tinted color, use the base color instead
-			return this.baseColor;
+			returnColor = this.baseColor;
 		}
+		
+		
+		// only fire an API event if needed
+		// (this is done to reduce GC pressure and speed up color getting)
+		if (this.blockStateWrapper.allowApiColorOverride())
+		{
+			DhApiBlockColorOverrideEvent.EventParam eventParam = ColorOverrideEventParamGetter.get();
+			eventParam.update(
+				this.clientLevelWrapper,
+				this.blockStateWrapper, returnColor,
+				blockPos.getX(), blockPos.getY(), blockPos.getZ()
+			);
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiBlockColorOverrideEvent.class, eventParam);
+			
+			// let the API user override this color
+			returnColor = eventParam.getColorAsInt();
+		}
+		
+		return returnColor;
 	}
 	
 	

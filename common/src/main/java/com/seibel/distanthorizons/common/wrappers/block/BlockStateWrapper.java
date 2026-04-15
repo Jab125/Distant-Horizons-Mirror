@@ -25,7 +25,7 @@ import com.seibel.distanthorizons.common.wrappers.WrapperFactory;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.util.ColorUtil;
+import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 
@@ -128,6 +128,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean allowsBeaconBeamPassage;
 	private final boolean isSolid;
 	private final boolean isLiquid;
+	private final boolean allowApiColorOverride;
 	/** null if this block can't tint beacons */
 	private final Color beaconTintColor; 
 	private final Color mapColor;
@@ -223,6 +224,17 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		else
 		{
 			this.opacity = this.calculateOpacity();
+		}
+		
+		// allow overriding if present 
+		if (overrideEventParam != null 
+			&& overrideEventParam.getAllowApiColorOverride() != null)
+		{
+			this.allowApiColorOverride = overrideEventParam.getAllowApiColorOverride();
+		}
+		else
+		{
+			this.allowApiColorOverride = false;
 		}
 		
 		String lowerCaseSerial = this.serialString.toLowerCase();
@@ -682,6 +694,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public boolean isBeaconTintBlock() { return this.beaconTintColor != null; }
 	@Override
 	public boolean allowsBeaconBeamPassage() { return this.allowsBeaconBeamPassage; }
+	@Override
+	public boolean allowApiColorOverride() { return this.allowApiColorOverride; }
 	
 	@Override
 	public Color getMapColor() { return this.mapColor; }
