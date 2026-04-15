@@ -387,31 +387,26 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		
 		
-		// needs to be fired after all the textures have been created/bound
-		boolean clearTextures = !ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeTextureClearEvent.class, renderParams);
-		if (clearTextures)
+		GL32.glClearDepth(1.0);
+		
+		float[] clearColorValues = new float[4];
+		GL32.glGetFloatv(GL32.GL_COLOR_CLEAR_VALUE, clearColorValues);
+		GL32.glClearColor(clearColorValues[0], clearColorValues[1], clearColorValues[2], 1.0f);
+		
+		if (this.usingMcFramebuffer 
+			&& framebufferOverride == null)
 		{
-			GL32.glClearDepth(1.0);
+			//// Due to using MC/Optifine's framebuffer we need to re-bind the depth texture,
+			//// otherwise we'll be writing to MC/Optifine's depth texture which causes rendering issues
+			//this.framebuffer.addDepthAttachment(this.depthTexture.getTextureId(), EDhDepthBufferFormat.DEPTH32F.isCombinedStencil());
 			
-			float[] clearColorValues = new float[4];
-			GL32.glGetFloatv(GL32.GL_COLOR_CLEAR_VALUE, clearColorValues);
-			GL32.glClearColor(clearColorValues[0], clearColorValues[1], clearColorValues[2], 1.0f);
 			
-			if (this.usingMcFramebuffer 
-				&& framebufferOverride == null)
-			{
-				//// Due to using MC/Optifine's framebuffer we need to re-bind the depth texture,
-				//// otherwise we'll be writing to MC/Optifine's depth texture which causes rendering issues
-				//this.framebuffer.addDepthAttachment(this.depthTexture.getTextureId(), EDhDepthBufferFormat.DEPTH32F.isCombinedStencil());
-				
-				
-				// don't clear the color texture, that removes the sky 
-				GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
-			}
-			else if (firstPass)
-			{
-				GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
-			}
+			// don't clear the color texture, that removes the sky 
+			GL32.glClear(GL32.GL_DEPTH_BUFFER_BIT);
+		}
+		else if (firstPass)
+		{
+			GL32.glClear(GL32.GL_COLOR_BUFFER_BIT | GL32.GL_DEPTH_BUFFER_BIT);
 		}
 		
 	}

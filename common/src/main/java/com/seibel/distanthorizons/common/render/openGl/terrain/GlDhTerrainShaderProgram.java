@@ -296,8 +296,6 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		// rendering //
 		//===========//
 		
-		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeRenderPassEvent.class, renderEventParam);
-		
 		if (IRIS_ACCESSOR != null)
 		{
 			// done to fix a bug with Iris where face culling isn't properly set or reverted in the MC state manager
