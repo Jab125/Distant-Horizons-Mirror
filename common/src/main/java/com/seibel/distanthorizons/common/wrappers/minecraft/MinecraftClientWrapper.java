@@ -20,15 +20,20 @@
 package com.seibel.distanthorizons.common.wrappers.minecraft;
 
 import java.io.File;
+import java.util.Arrays;
 
 #if MC_VER > MC_1_12_2
 import com.mojang.blaze3d.platform.Window;
 #endif
 import com.seibel.distanthorizons.common.wrappers.gui.NativeDialogUtil;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
+import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IImmersivePortalsAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
@@ -48,14 +53,20 @@ import net.minecraft.profiler.Profiler;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.world.DimensionType;
+import net.minecraft.world.WorldServer;
+import net.minecraftforge.common.DimensionManager;
 #else
 import net.minecraft.CrashReport;
 import net.minecraft.client.CloudStatus;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.core.BlockPos;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.util.profiling.ProfilerFiller;
 import net.minecraft.world.level.ChunkPos;
+import net.minecraft.world.level.Level;
 #endif
 
 import org.jetbrains.annotations.Nullable;
@@ -72,6 +83,20 @@ import net.minecraft.util.profiling.Profiler;
 #if MC_VER <= MC_1_21_10 && MC_VER > MC_1_12_2
 import net.minecraft.client.GraphicsStatus;
 #else
+#endif
+
+#if  MC_VER <= MC_1_12_2
+import net.minecraft.util.ResourceLocation;
+#elif  MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#else
+import net.minecraft.resources.Identifier;
+#endif
+
+#if  MC_VER > MC_1_19_2
+import net.minecraft.core.registries.Registries;
+#elif MC_VER > MC_1_12_2
+import net.minecraft.core.Registry;
 #endif
 
 
@@ -94,6 +119,11 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	
 	
 	private ProfilerWrapper profilerWrapper;
+	
+	// Need to classload this field later because otherwise it will be null even when Immersive Portals is present.
+	public static class Late {
+		private static final IImmersivePortalsAccessor IMMERSIVE_PORTALS = ModAccessorInjector.INSTANCE.get(IImmersivePortalsAccessor.class);
+	}
 	
 	
 	
@@ -232,6 +262,12 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 			return new DhBlockPos(0, 0, 0);	
 		}
 		
+		if (Late.IMMERSIVE_PORTALS != null)
+		{
+			DhBlockPos pos = Late.IMMERSIVE_PORTALS.getOriginalPlayerBlockPos();
+			if (pos != null) return pos;
+		}
+		
 		#if MC_VER <= MC_1_12_2
 		BlockPos playerPos = player.getPosition();
 		#else
@@ -253,7 +289,13 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 			return new DhChunkPos(0, 0);
 		}
 		
-		#if MC_VER <= MC_1_12_2
+		if (Late.IMMERSIVE_PORTALS != null)
+		{
+			DhChunkPos pos = Late.IMMERSIVE_PORTALS.getOriginalPlayerChunkPos();
+			if (pos != null) return pos;
+		}
+		
+        #if MC_VER <= MC_1_12_2
 		ChunkPos playerPos = new ChunkPos(player.getPosition());
         #elif MC_VER < MC_1_17_1
         ChunkPos playerPos = new ChunkPos(player.blockPosition());
@@ -285,6 +327,11 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 	@Nullable
 	public IClientLevelWrapper getWrappedClientLevel(boolean bypassLevelKeyManager)
 	{
+		if (!bypassLevelKeyManager && Late.IMMERSIVE_PORTALS != null)
+		{
+			IClientLevelWrapper level = Late.IMMERSIVE_PORTALS.getOriginalClientLevelWrapper();
+			if (level != null) return level;
+		}
 		#if MC_VER <= MC_1_12_2
 		WorldClient level = MINECRAFT.world;
 		#else
@@ -581,6 +628,44 @@ public class MinecraftClientWrapper implements IMinecraftClientWrapper, IMinecra
 			return MINECRAFT.getSingleplayerServer().getPlayerCount();
 			#endif
 		}
+	}
+	
+	@Override
+	public IServerLevelWrapper getWrappedServerLevel(String levelKey)
+	{
+		if (!hasSinglePlayerServer()) return null;
+		#if  MC_VER <= MC_1_12_2
+		int dimensionID;
+		try
+		{
+			dimensionID = Integer.parseInt(levelKey);
+        }
+		catch (NumberFormatException ignored)
+		{
+			return null;
+		}
+		#else
+		#if  MC_VER <= MC_1_21_10
+		ResourceLocation levelID = ResourceLocation.tryParse(levelKey);
+		#else
+		Identifier levelID = Identifier.tryParse(levelKey);
+		#endif
+		if (levelID == null) return null;
+		
+		#if  MC_VER > MC_1_19_2
+		ResourceKey<Level> resourceKey = ResourceKey.create(Registries.DIMENSION, levelID);
+		#else
+		ResourceKey<Level> resourceKey = ResourceKey.create(Registry.DIMENSION_REGISTRY, levelID);
+		#endif
+		
+		#endif
+		
+		#if  MC_VER <= MC_1_12_2
+		WorldServer level = MINECRAFT.getIntegratedServer().getWorld(dimensionID);
+		#else
+		ServerLevel level = MINECRAFT.getSingleplayerServer().getLevel(resourceKey);
+		#endif
+		return ServerLevelWrapper.getWrapper(level);
 	}
 	
 	//endregion

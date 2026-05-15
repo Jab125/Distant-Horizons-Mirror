@@ -20,7 +20,6 @@
 package com.seibel.distanthorizons.common.wrappers.minecraft;
 
 import java.awt.Color;
-import java.lang.invoke.MethodHandles;
 import java.util.concurrent.ConcurrentHashMap;
 
 #if MC_VER > MC_1_12_2
@@ -30,19 +29,25 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.seibel.distanthorizons.api.enums.config.EDhApiLodShading;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.config.Config;
 
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.coreapi.util.ColorUtil;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 
 #if MC_VER < MC_1_17_1
-#elif MC_VER < MC_1_21_6
+#elif MC_VER < MC_1_21_3
 import net.minecraft.client.renderer.FogRenderer;
 import com.mojang.blaze3d.systems.RenderSystem;
+#elif MC_VER < MC_1_21_6
+import com.seibel.distanthorizons.coreapi.util.ColorUtil;
+import net.minecraft.client.renderer.FogRenderer;
 #else
+import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import net.minecraft.client.renderer.fog.FogData;
 import net.minecraft.client.renderer.fog.FogRenderer;
 #endif
@@ -53,7 +58,6 @@ import org.joml.Vector3f;
 #else
 #endif
 
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.AbstractOptifineAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IDimensionTypeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
@@ -79,6 +83,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.Minecraft;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.joml.Vector4f;
 
 #if MC_VER <= MC_1_12_2
@@ -112,6 +117,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public static final MinecraftRenderWrapper INSTANCE = new MinecraftRenderWrapper();
 	
 	private static final IOptifineAccessor OPTIFINE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
+	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -526,9 +532,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
-	public ILightMapWrapper getLightmapWrapper(@NotNull ILevelWrapper level) { return this.lightmapByDimensionType.get(level.getDimensionType()); }
-	
-	@Override
 	public boolean isFogStateSpecial()
 	{
 		#if MC_VER <= MC_1_12_2
@@ -549,47 +552,90 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		#endif
 	}
 	
+	
+	
+	//==========//
+	// lightmap //
+	//==========//
+	//region
+	
+	@Override
+	public ILightMapWrapper getLightmapWrapper(@NotNull ILevelWrapper level) { return this.lightmapByDimensionType.get(level.getDimensionType()); }
+	
 	/** 
-	 * It's better to use {@link MinecraftRenderWrapper#setLightmapId(int, IClientLevelWrapper)} if possible,
+	 * It's better to use {@link MinecraftRenderWrapper#setLightmapId(int)} if possible,
 	 * however old MC versions don't support it.
 	 */
 	#if MC_VER > MC_1_12_2
-	public void updateLightmap(NativeImage lightPixels, IClientLevelWrapper level)
+	public void updateLightmap(NativeImage lightPixels)
 	{
+		IClientLevelWrapper clientLevel = getLightmapClientLevelWrapper();
+		if (clientLevel == null)
+		{
+			return;
+		}
+		
 		// Using ClientLevelWrapper as the key would be better, but we don't have a consistent way to create the same
 		// object for the same MC level and/or the same hash,
 		// so this will have to do for now
-		IDimensionTypeWrapper dimensionType = level.getDimensionType();
+		IDimensionTypeWrapper dimensionType = clientLevel.getDimensionType();
 		
 		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
 		wrapper.uploadLightmap(lightPixels);
 	}
 	#endif
 	
-	public void setLightmapId(int tetxureId, IClientLevelWrapper level)
+	public void setLightmapId(int textureId)
 	{
+		IClientLevelWrapper clientLevel = getLightmapClientLevelWrapper();
+		if (clientLevel == null)
+		{
+			return;
+		}
+		
 		// Using ClientLevelWrapper as the key would be better, but we don't have a consistent way to create the same
 		// object for the same MC level and/or the same hash,
 		// so this will have to do for now
-		IDimensionTypeWrapper dimensionType = level.getDimensionType();
+		IDimensionTypeWrapper dimensionType = clientLevel.getDimensionType();
 
 		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
-		wrapper.setLightmapId(tetxureId);
+		wrapper.setLightmapId(textureId);
 	}
 	
 	#if MC_VER <= MC_1_21_10
 	#else
-	public void setLightmapGpuTexture(GpuTexture gpuTexture, IClientLevelWrapper level)
+	public void setLightmapGpuTexture(GpuTexture gpuTexture)
 	{
+		IClientLevelWrapper clientLevel = getLightmapClientLevelWrapper();
+		if (clientLevel == null)
+		{
+			return;
+		}
+	
 		// Using ClientLevelWrapper as the key would be better, but we don't have a consistent way to create the same
 		// object for the same MC level and/or the same hash,
 		// so this will have to do for now
-		IDimensionTypeWrapper dimensionType = level.getDimensionType();
+		IDimensionTypeWrapper dimensionType = clientLevel.getDimensionType();
 
 		LightMapWrapper wrapper = this.lightmapByDimensionType.computeIfAbsent(dimensionType, (dimType) -> new LightMapWrapper());
 		wrapper.setLightmapGpuTexture(gpuTexture);
 	}
 	#endif
+	
+	private static @Nullable IClientLevelWrapper getLightmapClientLevelWrapper()
+	{
+		IClientLevelWrapper clientLevel = ClientApi.RENDER_STATE.clientLevelWrapper;
+		if (clientLevel == null)
+		{
+			clientLevel = MC_CLIENT.getWrappedClientLevel();
+		}
+		
+		return clientLevel;
+	}
+	
+	//endregion
+	
+	
 	
 	@Override
 	public float getShade(EDhDirection lodDirection)
