@@ -95,12 +95,19 @@ public class BlazeGenericObjectVertexContainer implements IDhGenericObjectVertex
 			this.uploadedBoxCount = boxCount;
 			
 			int vertexBufferSize = this.vertexBufferSize();
-			this.vertexBuffer = ByteBuffer.allocateDirect(vertexBufferSize);
-			this.vertexBuffer.order(ByteOrder.nativeOrder());
+			// FIX: Only allocate new Off-Heap RAM if the old buffer is too small!
+			if (this.vertexBuffer == null || this.vertexBuffer.capacity() < vertexBufferSize) 
+			{
+				this.vertexBuffer = ByteBuffer.allocateDirect(vertexBufferSize);
+				this.vertexBuffer.order(ByteOrder.nativeOrder());
+			}
 			
 			int indexBufferSize = this.indexBufferSize();
-			this.indexBuffer = ByteBuffer.allocateDirect(indexBufferSize);
-			this.indexBuffer.order(ByteOrder.nativeOrder());
+			if (this.indexBuffer == null || this.indexBuffer.capacity() < indexBufferSize)
+			{
+				this.indexBuffer = ByteBuffer.allocateDirect(indexBufferSize);
+				this.indexBuffer.order(ByteOrder.nativeOrder());
+			}
 		}
 		this.vertexBuffer.position(0);
 		this.indexBuffer.position(0);

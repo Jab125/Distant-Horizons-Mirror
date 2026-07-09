@@ -53,6 +53,7 @@ public class McObjectConverter
 	// matrix //
 	//========//
 	//region
+	public static final ThreadLocal<BlockPos.MutableBlockPos> MC_MUTABLE_POS = ThreadLocal.withInitial(BlockPos.MutableBlockPos::new);
 	
 	/** 4x4 float matrix converter */
 	public static DhMat4f convert(
