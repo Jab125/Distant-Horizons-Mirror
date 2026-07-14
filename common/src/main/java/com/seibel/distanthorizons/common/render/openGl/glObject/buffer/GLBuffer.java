@@ -116,7 +116,7 @@ public class GLBuffer implements AutoCloseable
 	//==============//
 	//region
 	
-	static { CLEANUP_THREAD.execute(() -> runPhantomReferenceCleanupLoop()); }
+	static { CLEANUP_THREAD.execute(GLBuffer::runPhantomReferenceCleanupLoop); }
 	
 	public GLBuffer(boolean isBufferStorage) { this.destroyOldAndCreate(isBufferStorage); }
 	
@@ -376,7 +376,11 @@ public class GLBuffer implements AutoCloseable
 		
 		int bbSize = bb.limit() - bb.position();
 		int target = this.getBufferBindingTarget();
-		if (this.size < bbSize || this.size > bbSize * BUFFER_SHRINK_TRIGGER)
+		
+		// FIX: Removed "|| this.size > bbSize * BUFFER_SHRINK_TRIGGER"
+		// We only want to allocate new VRAM if the buffer is too small. 
+		// Shrinking it constantly destroys buffers and causes off-heap memory spikes.
+		if (this.size < bbSize)
 		{
 			int newSize = (int) (bbSize * BUFFER_EXPANSION_MULTIPLIER);
 			if (newSize > maxExpansionSize)

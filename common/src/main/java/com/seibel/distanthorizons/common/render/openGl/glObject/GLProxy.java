@@ -220,7 +220,7 @@ public class GLProxy
 			if (vendor.contains("NVIDIA") || vendor.contains("GEFORCE"))
 			{
 				// NVIDIA card
-				this.preferredUploadMethod = this.bufferStorageSupported ? EDhApiGpuUploadMethod.BUFFER_STORAGE : EDhApiGpuUploadMethod.SUB_DATA;
+				this.preferredUploadMethod = EDhApiGpuUploadMethod.SUB_DATA;
 			}
 			else
 			{

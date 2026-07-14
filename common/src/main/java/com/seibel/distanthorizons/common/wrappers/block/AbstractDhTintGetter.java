@@ -1,11 +1,9 @@
 package com.seibel.distanthorizons.common.wrappers.block;
 #if MC_VER > MC_1_12_2
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dataObjects.BlockBiomeWrapperPair;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.FullDataSourceV2;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.DhSectionPos;
-import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPosMutable;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.FullDataPointUtil;
 
@@ -48,8 +46,13 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	private static final ConcurrentHashMap<String, Holder<Biome>> BIOME_BY_RESOURCE_STRING = new ConcurrentHashMap<>();
     #endif
 	
-	private static final ConcurrentHashMap<BlockBiomeWrapperPair, Integer> COLOR_BY_BLOCK_BIOME_PAIR = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<Long, Integer> COLOR_BY_BLOCK_BIOME_PAIR = new ConcurrentHashMap<>();
 	
+	private static long getCacheKey(BlockStateWrapper blockState, BiomeWrapper biome)
+	{
+		// Bit-pack the two hashcodes into a single 64-bit long
+		return ((long) blockState.hashCode() << 32) | (biome.hashCode() & 0xFFFFFFFFL);
+	}
 	
 	protected BiomeWrapper biomeWrapper;
 	protected BlockStateWrapper blockStateWrapper;
@@ -92,8 +95,7 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	@Override
 	public int getBlockTint(@NotNull BlockPos blockPos, @NotNull ColorResolver colorResolver)
 	{
-		DhBlockPosMutable mutableBlockPos = new DhBlockPosMutable(blockPos.getX(), blockPos.getY(), blockPos.getZ());
-		return this.tryGetBlockTint(mutableBlockPos, colorResolver);
+		return this.tryGetBlockTint(blockPos.getX(), blockPos.getY(), blockPos.getZ(), colorResolver);
 	}
 	
 	/**
@@ -105,10 +107,10 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	 *          will need to be called by MC's ColorResolver so we can
 	 *          populate the color cache.
 	 */
-	public int tryGetBlockTint(DhBlockPosMutable mutableBlockPos)
-	{ return this.tryGetBlockTint(mutableBlockPos, null); }
+	public int tryGetBlockTint(int bx, int by, int bz)
+	{ return this.tryGetBlockTint(bx,by,bz, null); }
 	
-	private int tryGetBlockTint(DhBlockPosMutable mutableBlockPos, @Nullable ColorResolver colorResolver)
+	private int tryGetBlockTint(int bx, int by, int bz, @Nullable ColorResolver colorResolver)
 	{
 		// determine how wide this data source is so we can determine
 		// if blending should be used
@@ -132,11 +134,11 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		int rollingGreen = 0;
 		int rollingBlue = 0;
 		
-		int xMin = mutableBlockPos.getX() - this.smoothingRadiusInBlocks;
-		int xMax = mutableBlockPos.getX() + this.smoothingRadiusInBlocks + 1; // +1 to account for the center block
+		int xMin = bx - this.smoothingRadiusInBlocks;
+		int xMax = bx + this.smoothingRadiusInBlocks + 1; // +1 to account for the center block
 		
-		int zMin = mutableBlockPos.getZ() - this.smoothingRadiusInBlocks;
-		int zMax = mutableBlockPos.getZ() + this.smoothingRadiusInBlocks + 1;
+		int zMin = bz - this.smoothingRadiusInBlocks;
+		int zMax = bz + this.smoothingRadiusInBlocks + 1;
 		
 		int levelMinY = this.clientLevelWrapper.getMinHeight();
 		
@@ -144,13 +146,10 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 		{
 			for (int z = zMin; z < zMax; z++)
 			{
-				mutableBlockPos.setX(x);
-				mutableBlockPos.setZ(z);
-				
 				// this can return the same position/datapoint for larger LODs duplicating work,
 				// however for small smoothing ranges that isn't a big deal and for large LODs
 				// we ignore smoothing anyway
-				long dataPoint = this.fullDataSource.getDataPointAtBlockPos(mutableBlockPos.getX(), mutableBlockPos.getY(), mutableBlockPos.getZ(), levelMinY);
+				long dataPoint = this.fullDataSource.getDataPointAtBlockPos(x, by, z, levelMinY);
 				if (dataPoint == FullDataPointUtil.EMPTY_DATA_POINT)
 				{
 					continue;
@@ -184,12 +183,11 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 			return this.tryGetClientBiomeColor(colorResolver, this.biomeWrapper);
 		}
 		
-		int colorInt = ColorUtil.argbToInt(
+		return ColorUtil.argbToInt(
 				255, // blending often ignores alpha, having it always 255 prevents multiplication issues later
 				rollingRed / dataPointCount,
 				rollingGreen / dataPointCount,
 				rollingBlue / dataPointCount);
-		return colorInt;
 	}
 	
 	/** 
@@ -198,10 +196,11 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	 */
 	private int tryGetClientBiomeColor(@Nullable ColorResolver colorResolver, BiomeWrapper biomeWrapper)
 	{
-		BlockBiomeWrapperPair pair = BlockBiomeWrapperPair.get(this.blockStateWrapper, biomeWrapper);
+		// FIX: Use a primitive long key to avoid Object Allocation
+		long key = getCacheKey(this.blockStateWrapper, biomeWrapper);
 		
 		// use the cached color if possible
-		Integer cachedColor = COLOR_BY_BLOCK_BIOME_PAIR.get(pair);
+		Integer cachedColor = COLOR_BY_BLOCK_BIOME_PAIR.get(key);
 		if (cachedColor != null)
 		{
 			return cachedColor;
@@ -215,9 +214,8 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 			return ClientBlockStateColorCache.INVALID_COLOR;
 		}
 		
-		
 		int color = colorResolver.getColor(unwrapClientBiome(biomeWrapper), 0, 0);
-		COLOR_BY_BLOCK_BIOME_PAIR.put(pair, color);
+		COLOR_BY_BLOCK_BIOME_PAIR.put(key, color);
 		return color;
 	}
 	
@@ -356,8 +354,8 @@ public abstract class AbstractDhTintGetter implements BlockAndTintGetter
 	 */
 	public static void setStaticColor(BlockStateWrapper blockStateWrapper, BiomeWrapper biomeWrapper, Integer colorInt)
 	{
-		BlockBiomeWrapperPair pair = BlockBiomeWrapperPair.get(blockStateWrapper, biomeWrapper);
-		COLOR_BY_BLOCK_BIOME_PAIR.put(pair, colorInt);
+		long key = getCacheKey(blockStateWrapper, biomeWrapper);
+		COLOR_BY_BLOCK_BIOME_PAIR.put(key, colorInt);
 	}
 	
 	public static void clear() { COLOR_BY_BLOCK_BIOME_PAIR.clear(); }

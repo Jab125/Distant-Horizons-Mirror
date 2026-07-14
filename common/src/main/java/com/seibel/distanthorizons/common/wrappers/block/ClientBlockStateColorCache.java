@@ -670,7 +670,7 @@ public class ClientBlockStateColorCache
 						tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
 						
 						// try using DH's cached tint values first if possible
-						tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
+						tintColor = tintOverride.tryGetBlockTint(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 						if (tintColor == ClientBlockStateColorCache.INVALID_COLOR)
 						{
 							// one or more tint values weren't calculated,
@@ -680,7 +680,7 @@ public class ClientBlockStateColorCache
 								.getBlockColors()
 								.getColor(this.blockState,
 										tintOverride, // tintOverride will save the result of this query to speed up future queries
-										McObjectConverter.convert(blockPos),
+										McObjectConverter.MC_MUTABLE_POS.get().set(blockPos.getX(), blockPos.getY(), blockPos.getZ()),
 										this.tintIndex);
 							#else
 							BlockTintSource tintSource = Minecraft.getInstance()
@@ -691,7 +691,7 @@ public class ClientBlockStateColorCache
 							// Example: cherry blossom leaves
 							if (tintSource != null)
 							{
-								BlockPos mcPos = McObjectConverter.convert(blockPos);
+								BlockPos mcPos = McObjectConverter.MC_MUTABLE_POS.get().set(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 								tintColor = tintSource.colorInWorld(this.blockState, tintOverride, mcPos);
 								if (tintColor == ClientBlockStateColorCache.INVALID_COLOR)
 								{
@@ -702,7 +702,7 @@ public class ClientBlockStateColorCache
 							// save this color to speed up future queries
 							TintWithoutLevelOverrider.setStaticColor(this.blockStateWrapper, biomeWrapper, tintColor);
 							// try to get the blended color with this new information
-							tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
+							tintColor = tintOverride.tryGetBlockTint(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 						#endif
 						}
 					}
@@ -736,14 +736,14 @@ public class ClientBlockStateColorCache
 					TintGetterOverride tintOverride = TintOverrideGetter.get();
 					tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
 					
-					tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
+					tintColor = tintOverride.tryGetBlockTint(blockPos.getX(), blockPos.getY(), blockPos.getZ());
 					if (tintColor == ClientBlockStateColorCache.INVALID_COLOR)
 					{
 						tintColor = Minecraft.getInstance()
 								.getBlockColors()
 								.getColor(this.blockState,
 										tintOverride,
-										McObjectConverter.convert(blockPos),
+										McObjectConverter.MC_MUTABLE_POS.get().set(blockPos.getX(), blockPos.getY(), blockPos.getZ()),
 										this.tintIndex);
 					}
 				}
