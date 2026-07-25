@@ -38,9 +38,6 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
-#if MC_VER <= MC_1_7_10
-import com.gtnewhorizon.gtnhlib.util.AboveHotbarHUD;
-#endif
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -53,6 +50,7 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.profiler.Profiler;
 #if MC_VER <= MC_1_7_10
+import com.gtnewhorizon.gtnhlib.util.AboveHotbarHUD;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.MathHelper;
 #else
