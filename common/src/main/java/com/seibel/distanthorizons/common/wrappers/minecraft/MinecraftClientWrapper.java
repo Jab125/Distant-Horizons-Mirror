@@ -38,6 +38,9 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSharedWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrapper;
+#if MC_VER <= MC_1_7_10
+import com.gtnewhorizon.gtnhlib.util.AboveHotbarHUD;
+#endif
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -437,7 +440,7 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 		}
 		
 		#if MC_VER <= MC_1_7_10
-		player.addChatMessage(new ChatComponentText(string));
+		AboveHotbarHUD.renderTextAboveHotbar("§f" + string, 60, true, true);
 		#elif MC_VER <= MC_1_12_2
 		MINECRAFT.ingameGUI.setOverlayMessage(string, /*animateColor*/false);
         #elif MC_VER < MC_1_19_2
