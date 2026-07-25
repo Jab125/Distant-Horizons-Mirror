@@ -50,6 +50,7 @@ import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.crash.CrashReport;
 import net.minecraft.profiler.Profiler;
 #if MC_VER <= MC_1_7_10
+import com.gtnewhorizon.gtnhlib.util.AboveHotbarHUD;
 import net.minecraft.util.ChatComponentText;
 import net.minecraft.util.MathHelper;
 #else
@@ -437,7 +438,7 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 		}
 		
 		#if MC_VER <= MC_1_7_10
-		player.addChatMessage(new ChatComponentText(string));
+		AboveHotbarHUD.renderTextAboveHotbar("§f" + string, 60, true, true);
 		#elif MC_VER <= MC_1_12_2
 		MINECRAFT.ingameGUI.setOverlayMessage(string, /*animateColor*/false);
         #elif MC_VER < MC_1_19_2
