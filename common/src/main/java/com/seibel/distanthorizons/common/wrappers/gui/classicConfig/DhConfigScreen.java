@@ -485,13 +485,13 @@ class DhConfigScreen extends DhScreen
 		
 		final ConfigGuiInfo configGuiInfo = ((ConfigGuiInfo) enumConfigEntry.guiValue);
 		
-		String translatableEnum = TRANSLATION_PREFIX + "enum." + enumClass.getSimpleName() + "." + enumConfigEntry.get().toString();
+		String translatableEnumPrefix = TRANSLATION_PREFIX + "enum." + enumClass.getSimpleName() + ".";
 		#if MC_VER <= MC_1_7_10
-		Function<Object, String> getEnumTranslatableFunc = (value) -> Translatable(translatableEnum);
+		Function<Object, String> getEnumTranslatableFunc = (value) -> Translatable(translatableEnumPrefix + value.toString());
 		#elif MC_VER <= MC_1_12_2
-		Function<Object, ITextComponent> getEnumTranslatableFunc = (value) -> Translatable(translatableEnum);
+		Function<Object, ITextComponent> getEnumTranslatableFunc = (value) -> Translatable(translatableEnumPrefix + value.toString());
 		#else
-		Function<Object, Component> getEnumTranslatableFunc = (value) -> Translatable(translatableEnum);
+		Function<Object, Component> getEnumTranslatableFunc = (value) -> Translatable(translatableEnumPrefix + value.toString());
 		#endif
 		
 		configGuiInfo.buttonOptionMap =
