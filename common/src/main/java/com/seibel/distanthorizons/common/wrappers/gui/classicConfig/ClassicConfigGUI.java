@@ -564,7 +564,9 @@ public class ClassicConfigGUI
 		#elif MC_VER <= MC_1_12_2
 		@Override
 		public void updatePosition(int slotIndex, int x, int y, float partialTicks) { }
-		
+		#endif
+
+		#if MC_VER <= MC_1_12_2
 		@Override
 		public boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY)
 		{ return false; /* handled in DhConfigScreen.mouseClicked */ }
