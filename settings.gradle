@@ -1,3 +1,7 @@
+plugins {
+    id 'org.gradle.toolchains.foojay-resolver-convention' version '1.0.0'
+}
+
 // Throw an error if the core sub-project wasn't cloned
 if (!file("./coreSubProjects/LICENSE.txt").exists()) {
     println('''
