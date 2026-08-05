@@ -96,7 +96,14 @@ public abstract class AbstractMinecraftSharedWrapper implements IMinecraftShared
 			return null;
 		}
 		
-		#if MC_VER <= MC_1_20_2
+		// pre-1.13 Minecraft has no getInstance()/getSingleplayerServer(); use the old getMinecraft()/getIntegratedServer() + tickTimeArray instead
+		#if MC_VER <= MC_1_12_2
+		if (Minecraft.getMinecraft().getIntegratedServer() == null)
+		{
+			return null;
+		}
+		return Minecraft.getMinecraft().getIntegratedServer().tickTimeArray;
+		#elif MC_VER <= MC_1_20_2
 		if (Minecraft.getInstance().getSingleplayerServer() == null)
 		{
 			return null;
