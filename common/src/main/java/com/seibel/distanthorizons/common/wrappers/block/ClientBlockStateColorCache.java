@@ -205,10 +205,11 @@ public class ClientBlockStateColorCache
 	
 	// these are threadlocals since AbstractDhTintGetter use local variables to handle color queries
 	#if MC_VER > MC_1_12_2
-	private static final ThreadLocal<TintWithoutLevelOverrider> TintWithoutLevelOverrideGetter = ThreadLocal.withInitial(TintWithoutLevelOverrider::new);
-	private static final ThreadLocal<TintGetterOverride> TintOverrideGetter = ThreadLocal.withInitial(TintGetterOverride::new);
+	private static final ThreadLocal<TintWithoutLevelOverrider> TINT_WITHOUT_LEVEL_OVERRIDE_THREAD_LOCAL = ThreadLocal.withInitial(TintWithoutLevelOverrider::new);
+	private static final ThreadLocal<TintGetterOverride> TINT_OVERRIDE_THREAD_LOCAL = ThreadLocal.withInitial(TintGetterOverride::new);
 	#endif
-	private static final ThreadLocal<DhApiBlockColorOverrideEvent.EventParam> ColorOverrideEventParamGetter = ThreadLocal.withInitial(DhApiBlockColorOverrideEvent.EventParam::new);
+	
+	private static final ThreadLocal<DhApiBlockColorOverrideEvent.EventParam> COLOR_OVERRIDE_EVENT_PARAM_THREAD_LOCAL = ThreadLocal.withInitial(DhApiBlockColorOverrideEvent.EventParam::new);
 	
 	//endregion
 	
@@ -666,7 +667,7 @@ public class ClientBlockStateColorCache
 				{
 					try
 					{					
-						TintWithoutLevelOverrider tintOverride = TintWithoutLevelOverrideGetter.get();
+						TintWithoutLevelOverrider tintOverride = TINT_WITHOUT_LEVEL_OVERRIDE_THREAD_LOCAL.get();
 						tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
 						
 						// try using DH's cached tint values first if possible
@@ -733,7 +734,7 @@ public class ClientBlockStateColorCache
 					// the level shouldn't be used all the time due to it breaking some blocks tinting
 					// specifically oceans don't render correctly
 					
-					TintGetterOverride tintOverride = TintOverrideGetter.get();
+					TintGetterOverride tintOverride = TINT_OVERRIDE_THREAD_LOCAL.get();
 					tintOverride.update(biomeWrapper, this.blockStateWrapper, fullDataSource, this.clientLevelWrapper);
 					
 					tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
@@ -781,10 +782,10 @@ public class ClientBlockStateColorCache
 			// (this is done to reduce GC pressure and speed up color getting)
 			&& this.blockStateWrapper.allowApiColorOverride())
 		{
-			DhApiBlockColorOverrideEvent.EventParam eventParam = ColorOverrideEventParamGetter.get();
+			DhApiBlockColorOverrideEvent.EventParam eventParam = COLOR_OVERRIDE_EVENT_PARAM_THREAD_LOCAL.get();
 			eventParam.update(
 				this.clientLevelWrapper, fullDataSource,
-				this.blockStateWrapper, biomeWrapper, returnColor, tintColor, baseColor,
+				this.blockStateWrapper, biomeWrapper, returnColor, tintColor, this.baseColor,
 				blockPos.getX(), blockPos.getY(), blockPos.getZ()
 			);
 			ApiEventInjector.INSTANCE.fireAllEvents(DhApiBlockColorOverrideEvent.class, eventParam);
