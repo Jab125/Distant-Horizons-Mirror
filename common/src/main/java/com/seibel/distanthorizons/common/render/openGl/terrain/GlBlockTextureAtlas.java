@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.common.render.openGl.terrain;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
 import com.seibel.distanthorizons.core.render.AbstractBlockTextureAtlas;
+import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import org.lwjgl.opengl.GL33;
 
 import java.nio.ByteBuffer;
@@ -136,7 +137,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 		
 		GL33.glBindTexture(GL33.GL_TEXTURE_2D, this.textureId);
 		
-		GL33.glPixelStorei(GL33.GL_UNPACK_ROW_LENGTH, BlockTextureRegistry.TILE_HEIGHT_AND_WIDTH);
+		GL33.glPixelStorei(GL33.GL_UNPACK_ROW_LENGTH, TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);
 		GL33.glPixelStorei(GL33.GL_UNPACK_SKIP_PIXELS, 0);
 		GL33.glPixelStorei(GL33.GL_UNPACK_SKIP_ROWS, 0);
 		GL33.glPixelStorei(GL33.GL_UNPACK_ALIGNMENT, 1);

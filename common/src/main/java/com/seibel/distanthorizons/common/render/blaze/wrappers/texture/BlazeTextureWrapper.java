@@ -26,6 +26,7 @@ import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.platform.NativeImage;
 #else
 import com.mojang.blaze3d.GpuFormat;
+import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import org.joml.Vector4f;
 #endif
 
@@ -101,7 +102,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	}
 	public static BlazeTextureWrapper createTextureAtlas(String name) 
 	{
-		int mipLevelCount = (int)Math.sqrt(BlockTextureRegistry.TILE_HEIGHT_AND_WIDTH);
+		int mipLevelCount = (int)Math.sqrt(TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);
 		mipLevelCount += 1;
 		
 		return new BlazeTextureWrapper(name, 

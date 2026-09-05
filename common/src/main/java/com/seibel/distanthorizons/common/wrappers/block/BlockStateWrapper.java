@@ -169,6 +169,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean isSolid;
 	private final boolean isLiquid;
 	private final boolean allowApiColorOverride;
+	private final boolean allowApiTextureOverride;
 	/** null if this block can't tint beacons */
 	private final Color beaconTintColor; 
 	private final Color mapColor;
@@ -359,6 +360,17 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			else
 			{
 				this.allowApiColorOverride = false;
+			}
+			
+			// allow overriding if present 
+			if (overrideEventParam != null
+				&& overrideEventParam.getAllowApiTextureOverride() != null)
+			{
+				this.allowApiTextureOverride = overrideEventParam.getAllowApiTextureOverride();
+			}
+			else
+			{
+				this.allowApiTextureOverride = false;
 			}
 		}
 		
@@ -1298,6 +1310,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	@Override public boolean isBeaconTintBlock() { return this.beaconTintColor != null; }
 	@Override public boolean allowsBeaconBeamPassage() { return this.allowsBeaconBeamPassage; }
 	@Override public boolean allowApiColorOverride() { return this.allowApiColorOverride; }
+	@Override public boolean allowApiTextureOverride() { return this.allowApiTextureOverride; }
 	@Override public boolean renderTexture() { return this.renderTexture; }
 	@Override public boolean useBottomTextureForSides() { return this.useBottomTextureForSides; }
 	@Override public boolean alwaysRasterizeTexture() { return this.alwaysRasterizeTexture; }

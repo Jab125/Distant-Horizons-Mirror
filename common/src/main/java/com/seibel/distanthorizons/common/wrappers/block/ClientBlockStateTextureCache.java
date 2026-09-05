@@ -19,12 +19,21 @@
 
 package com.seibel.distanthorizons.common.wrappers.block;
 
+import com.seibel.distanthorizons.api.enums.rendering.EDhApiDirection;
+import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
+import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockColorOverrideEvent;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockTextureOverrideEvent;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockFaceTexture;
+import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import com.seibel.distanthorizons.coreapi.util.MathUtil;
+import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +45,8 @@ import java.util.*;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 import javax.imageio.ImageIO;
 
 #if MC_VER < MC_1_21_5
@@ -64,6 +75,7 @@ import org.joml.Vector3fc;
  *
  * @see ClientBlockStateColorCache
  * @see BlockFaceTexture
+ * @see BlockTextureRegistry
  */
 public class ClientBlockStateTextureCache
 {
@@ -79,7 +91,7 @@ public class ClientBlockStateTextureCache
 	 * The resolution face textures are baked at. <br>
 	 * Sprites with a higher resolution (IE from resource packs) are down-sampled.
 	 */
-	public static final int TEXTURE_WIDTH_AND_HEIGHT = 16;
+	public static final int TEXTURE_WIDTH_AND_HEIGHT = TextureUtil.TEXTURE_WIDTH_AND_HEIGHT;
 	
 	/** The bake order */
 	private static final EDhDirection[] FACE_DIRECTIONS =
@@ -112,6 +124,9 @@ public class ClientBlockStateTextureCache
 	/** should end with a "/" */
 	private static final String TEST_TEXTURE_OUTPUT_FOLDER_PATH = "C:/Users/James_Seibel/Desktop/tex_output/";
 	
+	private static final ThreadLocal<DhApiBlockTextureOverrideEvent.EventParam> TEXTURE_OVERRIDE_EVENT_PARAM_THREAD_LOCAL = ThreadLocal.withInitial(DhApiBlockTextureOverrideEvent.EventParam::new);
+	
+	
 	
 	
 	//================//
@@ -123,20 +138,79 @@ public class ClientBlockStateTextureCache
 	{
 		BlockFaceTexture[] faceTextures = TEXTURES_BY_BLOCK_WRAPPER.computeIfAbsent(
 				blockStateWrapper,
-				(newBlockStateWrapper) ->
-				{
-					BlockFaceTexture[] blockFaceTextures = bakeAllFaceTextures(newBlockStateWrapper);
-					if (WRITE_TEXTURES_TO_FILE_FOR_DEBUGGING)
-					{
-						writeTopAndNorthTexturesToFile(newBlockStateWrapper, blockFaceTextures);
-					}
-					return blockFaceTextures;
-				});
+				ClientBlockStateTextureCache::computeFaceTextures);
 		return faceTextures[direction.faceIndex];
 	}
 	
 	/** Should be called whenever MC's textures change, IE when resource packs are swapped. */
 	public static void clearCache() { TEXTURES_BY_BLOCK_WRAPPER.clear(); }
+	
+	//endregion
+	
+	
+	
+	//============//
+	// API events //
+	//============//
+	//region
+	
+	private static BlockFaceTexture[] computeFaceTextures(BlockStateWrapper blockStateWrapper)
+	{
+		BlockFaceTexture[] blockFaceTextures = bakeAllFaceTextures(blockStateWrapper);
+		
+		// allow changing the texture if the API event is requested
+		// (this is done to reduce GC pressure and speed up color getting)
+		if (blockStateWrapper.allowApiColorOverride())
+		{
+			DhApiBlockTextureOverrideEvent.EventParam eventParam = TEXTURE_OVERRIDE_EVENT_PARAM_THREAD_LOCAL.get();
+			
+			for (int faceIndex = 0; faceIndex < FACE_DIRECTIONS.length; faceIndex++)
+			{
+				BlockFaceTexture blockFaceTexture = blockFaceTextures[faceIndex];
+				EDhDirection faceDirection = FACE_DIRECTIONS[faceIndex];
+				
+				eventParam.update(
+					blockStateWrapper,
+					faceDirection.getApiVersion(),
+					ClientBlockStateTextureCache::ApiTextureRegenFunc
+				);
+				ApiEventInjector.INSTANCE.fireAllEvents(DhApiBlockTextureOverrideEvent.class, eventParam);
+				
+				// let the API user change this texture
+				blockFaceTexture.updateFromApiEvent(eventParam);
+			}
+		}
+		
+		if (WRITE_TEXTURES_TO_FILE_FOR_DEBUGGING)
+		{
+			writeTopAndNorthTexturesToFile(blockStateWrapper, blockFaceTextures);
+		}
+		return blockFaceTextures;
+	}
+	
+	public static void ApiTextureRegenFunc(DhApiBlockTextureOverrideEvent.EventParam newEventParam, IDhApiBlockStateWrapper newApiBlockState, EDhApiDirection newApiDirection)
+	{
+		if (!(newApiBlockState instanceof BlockStateWrapper))
+		{
+			throw new ClassCastException("Invalid ["+ IDhApiBlockStateWrapper.class.getSimpleName()+"] value given. Block State wrapper object must be one given by the DH API (it can't be a custom implementation), specifically of type ["+ BlockStateWrapper.class.getName()+"].");
+		}
+		BlockStateWrapper newBlockState = (BlockStateWrapper) newApiBlockState;
+		
+		
+		BlockFaceTexture newFaceTexture = bakeFaceTexture(newBlockState, EDhDirection.fromApiVersion(newApiDirection));
+		for (int u = 0; u < TextureUtil.TEXTURE_WIDTH_AND_HEIGHT; u++)
+		{
+			for (int v = 0; v < TextureUtil.TEXTURE_WIDTH_AND_HEIGHT; v++)
+			{
+				int newColor = newFaceTexture.argbPixels[TextureUtil.getPixelIndex(u, v)];
+				int a = ColorUtil.getAlpha(newColor);
+				int r = ColorUtil.getRed(newColor);
+				int g = ColorUtil.getGreen(newColor);
+				int b = ColorUtil.getBlue(newColor);
+				newEventParam.setColor(u, v, a, r, g, b);
+			}
+		}
+	}
 	
 	//endregion
 	
@@ -180,9 +254,8 @@ public class ClientBlockStateTextureCache
 			
 			if (blockStateWrapper.isLiquid())
 			{
-				// liquids don't have models to rasterize, bake their sprite directly,
-				// tinting is needed for biome dependent water colors
-				BlockFaceTexture liquidTexture = bakeSpriteTexture(getParticleSprite(blockStateWrapper), true);
+				// liquids don't have models to rasterize, bake their sprite directly
+				BlockFaceTexture liquidTexture = bakeSpriteTexture(getParticleSprite(blockStateWrapper));
 				Arrays.fill(faceTextures, liquidTexture);
 				return faceTextures;
 			}
@@ -266,7 +339,7 @@ public class ClientBlockStateTextureCache
 					TextureAtlasSprite quadSprite = getQuadSprite(faceQuad);
 					boolean isQuadTinted = isQuadTinted(faceQuad);
 					
-					return bakeSpriteTexture(quadSprite, isQuadTinted);
+					return bakeSpriteTexture(quadSprite);
 				}
 			}
 			
@@ -290,7 +363,7 @@ public class ClientBlockStateTextureCache
 			// blocks without quads (IE blocks rendered via block entities like chests)
 			// fall back to their particle texture
 			TextureAtlasSprite particleSprite = getParticleSprite(blockStateWrapper);
-			return bakeSpriteTexture(particleSprite, false);
+			return bakeSpriteTexture(particleSprite);
 		}
 		
 		return createTextureByRasterizingQuads(blockStateWrapper, dhDirection, rasterQuadList);
@@ -354,16 +427,16 @@ public class ClientBlockStateTextureCache
 			// nothing is visible from this direction,
 			// fall back to the particle texture since LODs expect
 			// every face to be renderable
-			return bakeSpriteTexture(getParticleSprite(blockStateWrapper), false);
+			return bakeSpriteTexture(getParticleSprite(blockStateWrapper));
 		}
 		
 		//endregion
 		
-		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels, textureTinted);
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
 	}
 	
 	/** Copies the given sprite directly, used for blocks where rasterizing model quads isn't possible. */
-	private static BlockFaceTexture bakeSpriteTexture(@Nullable TextureAtlasSprite sprite, boolean tinted)
+	private static BlockFaceTexture bakeSpriteTexture(@Nullable TextureAtlasSprite sprite)
 	{
 		if (sprite == null)
 		{
@@ -385,10 +458,10 @@ public class ClientBlockStateTextureCache
 			{
 				int texelX = (u * spriteWidth) / TEXTURE_WIDTH_AND_HEIGHT;
 				int texelY = (v * spriteHeight) / TEXTURE_WIDTH_AND_HEIGHT;
-				pixels[(v * TEXTURE_WIDTH_AND_HEIGHT) + u] = TextureAtlasSpriteWrapper.getPixelARGB(sprite, 0, texelX, texelY);
+				pixels[TextureUtil.getPixelIndex(u,v)] = TextureAtlasSpriteWrapper.getPixelARGB(sprite, 0, texelX, texelY);
 			}
 		}
-		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels, tinted);
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
 	}
 	
 	//endregion
