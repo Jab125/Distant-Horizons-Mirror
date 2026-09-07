@@ -12,6 +12,7 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 
 import java.nio.ByteBuffer;
 import java.util.OptionalDouble;
@@ -26,7 +27,6 @@ import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.platform.NativeImage;
 #else
 import com.mojang.blaze3d.GpuFormat;
-import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import org.joml.Vector4f;
 #endif
 

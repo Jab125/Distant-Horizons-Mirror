@@ -50,9 +50,9 @@ public class TestCustomTextureEvent extends DhApiBlockTextureOverrideEvent
 		{
 			for (int v = 0; v < eventParam.getHeight(); v++)
 			{
-				int r = random.nextInt(0, 256);
-				int g = random.nextInt(0, 256);
-				int b = random.nextInt(0, 256);
+				int r = random.nextInt() % 256;
+				int g = random.nextInt() % 256;
+				int b = random.nextInt() % 256;
 				
 				eventParam.setColor(
 					u, v,
