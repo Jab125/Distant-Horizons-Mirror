@@ -73,6 +73,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	 * Should be sorted smallest to largest.
 	 */
 	private static final int[] SANITY_CHECK_DEPTHS = { 4, 8, 16 };
+	private static final int[] SANITY_CHECK_HEIGHTS = { 4, 8, 16, 32 };
 	
 	/** when marching down the world, this is how many blocks we should step at a time */
 	private static final int MARCH_STEP = 8;
@@ -148,12 +149,14 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		ArrayList<DhApiTerrainDataPoint> apiDataPoints = new ArrayList<>();
 		int width = pooledFullDataSource.getWidthInDataColumns();
 		
-		try(PhantomArrayListCheckout checkout = ARRAY_LIST_POOL.checkoutLongArrays(1))
+		try(PhantomArrayListCheckout checkout = ARRAY_LIST_POOL.checkoutLongArrays(3))
 		{
 			// we could probably get away with an int or short array,
 			// but the checkout didn't handle int arrays at the time of writing
 			// and I wanted to make sure we didn't hit any issues
 			LongArrayList heightmap = checkout.getLongArray(0, width * width);
+			LongArrayList tempHeightmap = checkout.getLongArray(1, width * width);
+			LongArrayList tempNeighborHeights = checkout.getLongArray(2, 8); // 3x3 minus the center
 			
 			
 			
@@ -189,6 +192,26 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 				}
 			}
 			
+			// necessary to clean up random water pockets on the surface
+			smoothUnderwaterSpikes(width, 
+				heightmap, 
+				tempHeightmap, tempNeighborHeights,
+				relativeSeaLevel, 8);
+			
+			// interp heights
+			for (int x = 0; x < width; x++)
+			{
+				for (int z = 0; z < width; z++)
+				{
+					long maxHeightLong = heightmap.getLong(x + width * z);
+					if (maxHeightLong == NO_HEIGHT_GENERATED)
+					{
+						maxHeightLong = interpHeightFromAdjacentValues(x, z, width, heightmap);
+						heightmap.set(x + width * z, maxHeightLong);
+					}
+				}
+			}
+			
 			//endregion
 			
 			
@@ -208,12 +231,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 					
 					
 					// surface height
-					long maxHeightLong = heightmap.getLong(x + width * z);
-					if (maxHeightLong == NO_HEIGHT_GENERATED)
-					{
-						maxHeightLong = interpHeightFromAdjacentValues(x, z, width, heightmap);
-					}
-					int surfaceHeight = (int) maxHeightLong;
+					int surfaceHeight = (int) heightmap.getLong(x + width * z);
 					
 					// water height
 					int waterHeight = NO_WATER_HEIGHT;
@@ -333,6 +351,8 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		pooledFullDataSource.setApiDataPointColumn(x, z, EDhApiWorldGenerationStep.SURFACE, apiDataPoints);
 	}
+	
+	
 	private static long interpHeightFromAdjacentValues(int x, int z, int width, LongArrayList heightmap)
 	{
 		long maxHeightLong;
@@ -357,6 +377,121 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		maxHeightLong = Math.round(interpolated);
 		return maxHeightLong;
+	}
+	
+	/**
+	 * Raises datapoints that are below sealevel and are significantly
+	 * different from the surrounding area. <Br>
+	 * This is done to fix issues where there are singular pockets of
+	 * water on the surface that don't match the actual terrain.
+	 *
+	 * @param maxDeviation how far in blocks a datapoint's height can differ from its
+	 *                      neighbors' median before it's considered a spike
+	 */
+	private static void smoothUnderwaterSpikes(
+		int width, 
+		LongArrayList heightmap, 
+		LongArrayList tempHeightmap, LongArrayList neighborHeights,
+		int relativeSeaLevel, int maxDeviation)
+	{
+		// snapshot the original heights so we don't accidentally
+		// sample against modified data
+		LongArrayList originalHeightmap = tempHeightmap; // rename for clarity
+		originalHeightmap.clear();
+		originalHeightmap.addAll(0, heightmap);
+		
+		neighborHeights.clear();
+		
+		for (int x = 0; x < width; x+=2)
+		{
+			for (int z = 0; z < width; z+=2)
+			{
+				long centerHeight = originalHeightmap.getLong(x + width * z);
+				if (centerHeight == NO_HEIGHT_GENERATED)
+				{
+					// shouldn't happen
+					// ignore anything that isn't generated
+					continue;
+				}
+				
+				if (centerHeight > relativeSeaLevel)
+				{
+					// Only worry about datapoints that drop below sea level.
+					// Smoothing out datapoints above sea level makes things look too smooth.
+					// But not smoothing datapoints below sea level cause sampling issues
+					// with caves/divots where the surface goes below sea level.
+					continue;
+				}
+				
+				
+				
+				// get neighbors //
+				//region
+				
+				int neighborCounts = 0;
+				for (int diffX = -2; diffX <= 2; diffX += 2)
+				{
+					for (int diffZ = -2; diffZ <= 2; diffZ += 2)
+					{
+						if (diffX == 0 
+							&& diffZ == 0)
+						{
+							// ignore the center
+							continue;
+						}
+						
+						int neighborX = x + diffX;
+						int neighborZ = z + diffZ;
+						if (neighborX < 0 || neighborX >= width 
+							|| neighborZ < 0 || neighborZ >= width)
+						{
+							// ignore points outside the heightmap
+							continue;
+						}
+						
+						long neighborVal = originalHeightmap.getLong(neighborX + width * neighborZ);
+						if (neighborVal == NO_HEIGHT_GENERATED)
+						{
+							// ignore ungenerated points
+							// shouldn't happen
+							continue;
+						}
+						
+						neighborHeights.add(neighborVal);
+						neighborCounts++;
+					}
+				}
+				
+				//endregion
+				
+				
+				if (neighborCounts == 0)
+				{
+					// shouldn't happen, but just in case
+					continue;
+				}
+				
+				neighborHeights.sort(Long::compare);
+				long medianHeight = neighborHeights.getLong(neighborCounts / 2);
+				
+				boolean centerIsLower = centerHeight < medianHeight;
+				if (!centerIsLower)
+				{
+					// only raise lower positions, don't drop higher ones
+					continue;
+				}
+				
+				
+				
+				// Only change the center height if it's significantly different
+				// to the surrounding median.
+				long centerDeviation = Math.abs(centerHeight - medianHeight);
+				if (centerDeviation > maxDeviation)
+				{
+					heightmap.set(x + width * z, medianHeight);
+				}
+			}
+		}
 	}
 	
 	//endregion
@@ -542,9 +677,9 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		// MC 26.2
 		
 		
-		//// 15.9 million // 37 sec
-		//// this is the most accurate but also the slowest (especially for extended height worlds)
-		//return findSurfaceHeightMarching(finalDensity, levelWrapper, blockX, blockZ, NO_HEIGHT_HINT);
+		// 15.9 million // 37 sec
+		// this is the most accurate but also the slowest (especially for extended height worlds)
+		return findSurfaceHeightMarching(finalDensity, levelWrapper, blockX, blockZ);
 		
 		
 		//// 3.3 million // 23 sec
@@ -552,18 +687,19 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		//return binarySearchSurfaceHeight(finalDensity, levelWrapper, blockX, blockZ);
 		
 		
-		// 5.3 million // 27 sec
-		// middle ground between binary search for best-case scenarios
-		// and marching for accuracy
-		int candidate = binarySearchSurfaceHeight(finalDensity, levelWrapper, blockX, blockZ);
-		
-		if (sanityCheckSurface(finalDensity, levelWrapper, blockX, blockZ, candidate))
-		{
-			return candidate;
-		}
-		
-		// fall back to the slower, anomaly-aware marching approach
-		return findSurfaceHeightMarching(finalDensity, levelWrapper, blockX, blockZ);
+		//// 5.3 million // 27 sec
+		//// middle ground between binary search for best-case scenarios
+		//// and marching for accuracy
+		//// can have issues with large caverns
+		//int candidate = binarySearchSurfaceHeight(finalDensity, levelWrapper, blockX, blockZ);
+		//
+		//if (sanityCheckSurface(finalDensity, levelWrapper, blockX, blockZ, candidate))
+		//{
+		//	return candidate;
+		//}
+		//
+		//// fall back to the slower, anomaly-aware marching approach
+		//return findSurfaceHeightMarching(finalDensity, levelWrapper, blockX, blockZ);
 	}
 	
 	/** 
@@ -633,6 +769,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		// should only happen on empty worlds (ie the end)
 		return levelWrapper.getMinHeight();
 	}
+	
 	private static int binaryFindSurfaceHeight(
 		DensityFunction finalDensity, 
 		int blockX, int blockZ, 
@@ -656,8 +793,9 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	
 	
 	/**
-	 * Checks a few positions below ths given height
-	 * to check for air.
+	 * Checks a few positions around the given height
+	 * to confirm it is the highest solid point. <Br><Br>
+	 * 
 	 * This is helpful for validating worlds with overhangs that would cause
 	 * the binary search to find the wrong solid point.
 	 */
@@ -665,9 +803,10 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		DensityFunction finalDensity, ILevelWrapper levelWrapper,
 		int blockX, int blockZ, int candidateSurfaceY)
 	{
-		int levelMinY = levelWrapper.getMinHeight();
 		int solidTopY = candidateSurfaceY - 1;
 		
+		// look below the point
+		int levelMinY = levelWrapper.getMinHeight();
 		for (int depth : SANITY_CHECK_DEPTHS)
 		{
 			int checkY = solidTopY - depth;
@@ -679,7 +818,26 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			if (!isNoiseSolidAtBlockPos(finalDensity, blockX, checkY, blockZ))
 			{
-				// there is air at this block pos
+				// there is empty space below us
+				return false;
+			}
+		}
+		
+		
+		// look above the point
+		int levelMaxY = levelWrapper.getMaxHeight();
+		for (int height : SANITY_CHECK_HEIGHTS)
+		{
+			int checkY = solidTopY + height;
+			if (checkY >= levelMaxY)
+			{
+				// no need to check above the world
+				break;
+			}
+			
+			if (isNoiseSolidAtBlockPos(finalDensity, blockX, checkY, blockZ))
+			{
+				// there is something solid above us
 				return false;
 			}
 		}
