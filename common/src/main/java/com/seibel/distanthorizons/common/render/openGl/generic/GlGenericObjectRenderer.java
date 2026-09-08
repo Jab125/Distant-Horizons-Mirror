@@ -196,7 +196,11 @@ public class GlGenericObjectRenderer implements IDhGenericRenderer
 		if (isMac)
 		{
 			LOGGER.warn("Generic rendering not supported by Mac. Clouds, beacons, and some other effects will be disabled.");
-			Config.Client.Advanced.Graphics.GenericRendering.enableGenericRendering.setApiValue(false);
+			Config.Client.Advanced.Graphics.GenericRendering.enableGenericRendering.setMcVersionOverrideValue(false);
+			// the following can't be enabled anyway, but manually turning
+			// them off helps make the UI look correct
+			Config.Client.Advanced.Graphics.GenericRendering.enableCloudRendering.setMcVersionOverrideValue(false);
+			Config.Client.Advanced.Graphics.GenericRendering.enableBeaconRendering.setMcVersionOverrideValue(false);
 			return;
 		}
 		
