@@ -57,6 +57,7 @@ repositories {
         url "https://jitpack.io"
 
         content {
+            excludeGroup "com.github.GTNewHorizons" // resolve GTNH mods with GTNH Maven
             excludeGroup "io.github.legacymoddingmc" // resolve UniMixins with GTNH Maven
         }
     }
@@ -451,6 +452,10 @@ if (isNotCommonProject) {
     shadowJar {
         configurations = [project.configurations.shadowMe]
         def librariesLocation = "DistantHorizons.libraries"
+
+        // Keep bundled FastUtil separate from versions supplied by other mods.
+        if (project.hasProperty("embed_fastutil") && embed_fastutil == "true")
+            relocate "it.unimi.dsi.fastutil", "${librariesLocation}.unimi.dsi.fastutil"
 
         // LZ4 compression
         relocate "net.jpountz", "${librariesLocation}.jpountz"
