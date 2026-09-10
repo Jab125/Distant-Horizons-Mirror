@@ -48,14 +48,13 @@ public class MixinRenderGlobal
 			RenderHelper.renderFade(true);
 		}
 	}
-
-	//TODO Fix
-/*    @Inject(
-        method = "sortAndRender",
-        at = @At(
-            value = "INVOKE",
-            target = "Lnet/minecraft/client/renderer/EntityRenderer;enableLightmap(D)V",
-	        shift = At.Shift.AFTER))
+	
+	@Inject(
+		method = "sortAndRender",
+		at = @At(
+			value = "INVOKE",
+			target = "Lnet/minecraft/client/renderer/EntityRenderer;enableLightmap(D)V",
+			shift = At.Shift.AFTER))
     void renderDeferredLodsDuringTranslucentSetup(
 	    EntityLivingBase p_72719_1_, int renderPass, double p_72719_3_,
 	    CallbackInfoReturnable<Integer> cir)
@@ -65,8 +64,6 @@ public class MixinRenderGlobal
 	    {
 		    RenderHelper.renderDeferredLods();
 	    }
-    }*/
-	
-	
-	
+    }
+
 }
