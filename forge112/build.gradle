@@ -44,7 +44,7 @@ task deleteResources(type: Delete) {
 
 processResources {
     dependsOn(copyCoreResources)
-    dependsOn(convertJsonToLang)
+    from(convertJsonToLang) { into 'assets/distanthorizons/lang' }
     // dependsOn(copyCommonLoaderResources)
 
     from(project(":common").file("src/main/resources/${gradle.ext.accessWidenerVersion}.distanthorizons_at.cfg")) {
@@ -63,5 +63,3 @@ sourcesJar {
     dependsOn commonSources
     from commonSources.archiveFile.map { zipTree(it) }
 }
-
-

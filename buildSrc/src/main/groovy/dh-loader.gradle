@@ -707,9 +707,13 @@ if (isNotCommonProject) {
         dependsOn(copyCoreResources)
 
         File inputDirectory = project.file("build/resources/main/assets/distanthorizons/lang")
-        File outputDirectory = inputDirectory
+        File outputDirectory = project.file("build/generated/legacyLang")
         inputs.dir(project(":core").file("src/main/resources/assets/distanthorizons/lang"))
+        inputs.property("minecraftVersion", gradle.ext.minecraft_version)
+        outputs.dir(outputDirectory)
         doLast {
+            project.delete(outputDirectory)
+            outputDirectory.mkdirs()
             fileTree(inputDirectory).matching { include "*.json" }.each { input ->
                 String locale = input.name.substring(0, input.name.length() - ".json".length())
                 if (gradle.ext.minecraft_version == "1.7.10") {
