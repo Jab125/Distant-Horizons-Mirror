@@ -47,6 +47,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.annotation.WillNotClose;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Consumer;
 
 #if MC_VER <= MC_26_2_0
@@ -71,7 +72,6 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	private final IServerLevelWrapper serverLevelWrapper;
 	
 	private static final PhantomArrayListPool ARRAY_LIST_POOL = new PhantomArrayListPool("TestWorldGen");
-	private static final ConcurrentHashMap<IBiomeWrapper, BlockCountPair> BIOME_TO_BLOCK_WRAPPER = new ConcurrentHashMap<>();
 	
 	/**
 	 * how far below the candidate height to check.
@@ -99,11 +99,14 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	private final IBlockStateWrapper iceBlock;
 	private final IBlockStateWrapper snowBlock;
 	
-	/** needed to generate chunks surfaces to determine biome block mappings */
-	@WillNotClose
-	private final DhChunkGenerator batchGenerator;
-	
 	private final GenParams genParams;
+	
+	/** 
+	 * I'd be nice to have this static so we could re-use data across worlds.
+	 * However, we don't know what settings each world will have, so
+	 * this information may not be valid and should be re-generated.
+	 */
+	private final ConcurrentHashMap<IBiomeWrapper, BlockCountPair> biomeToBlockWrapper = new ConcurrentHashMap<>();
 	
 	
 	
@@ -112,16 +115,15 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	//=============//
 	//region
 	
-	public DhRoughSurfaceGenerator(IServerLevelWrapper serverLevelWrapper, DhChunkGenerator batchGenerator)
+	public DhRoughSurfaceGenerator(IServerLevelWrapper serverLevelWrapper, DhChunkGenerator dhChunkGenerator)
 	{
 		this.serverLevelWrapper = serverLevelWrapper;
-		this.batchGenerator = batchGenerator;
 		
 		this.waterBlock = BlockStateWrapper.getWaterBlockStateWrapper(this.serverLevelWrapper);
 		this.iceBlock = BlockStateWrapper.getIceBlockStateWrapper(this.serverLevelWrapper);
 		this.snowBlock = BlockStateWrapper.getSnowBlockStateWrapper(this.serverLevelWrapper);
 		
-		this.genParams = new GenParams(this.serverLevelWrapper);
+		this.genParams = new GenParams(dhChunkGenerator, this.serverLevelWrapper);
 	}
 	
 	//endregion
@@ -512,7 +514,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		int blockX, int blockZ)
 	{
 		// use the existing mapping if available
-		BlockCountPair existingBlockCountPair = BIOME_TO_BLOCK_WRAPPER.get(biomeWrapper);
+		BlockCountPair existingBlockCountPair = this.biomeToBlockWrapper.get(biomeWrapper);
 		if (existingBlockCountPair != null)
 		{
 			return existingBlockCountPair.blockStateWrapper;
@@ -540,7 +542,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 				// 6 chunks wide mean we get 2 to 3 chunks of buffer around the target position,
 				// meaning we should have a decent sized dataset of what the biome would be like
 				6,
-				this.batchGenerator,
+				this.genParams.dhChunkGenerator,
 				EDhApiDistantGeneratorMode.SURFACE, EDhApiWorldGenerationStep.SURFACE,
 				(IChunkWrapper chunkWrapper) ->
 				{
@@ -558,7 +560,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 						}
 					}
 				});
-			this.batchGenerator.generateChunks(genEvent);
+			this.genParams.dhChunkGenerator.generateChunks(genEvent);
 		}
 		
 		//endregion
@@ -588,14 +590,14 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			
 			// add this biome/block
-			if (!BIOME_TO_BLOCK_WRAPPER.containsKey(biome))
+			if (!this.biomeToBlockWrapper.containsKey(biome))
 			{
-				BIOME_TO_BLOCK_WRAPPER.put(biome, newPair);
+				this.biomeToBlockWrapper.put(biome, newPair);
 			}
 			else
 			{
 				// replace the pair if it has a higher count than the previous best
-				BIOME_TO_BLOCK_WRAPPER.compute(biome, (IBiomeWrapper existingBiome, BlockCountPair existingPair) ->
+				this.biomeToBlockWrapper.compute(biome, (IBiomeWrapper existingBiome, BlockCountPair existingPair) ->
 				{
 					if (existingPair == null
 						|| existingPair.count < newPair.count)
@@ -618,10 +620,10 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			// if we didn't find enough blocks to normally consider this
 			// biome as "found"
 			// use whatever we did find as a base
-			BIOME_TO_BLOCK_WRAPPER.putIfAbsent(biomeWrapper, pair);
+			this.biomeToBlockWrapper.putIfAbsent(biomeWrapper, pair);
 		}
 		
-		BlockCountPair foundBlockPair = BIOME_TO_BLOCK_WRAPPER.get(biomeWrapper);
+		BlockCountPair foundBlockPair = this.biomeToBlockWrapper.get(biomeWrapper);
 		if (foundBlockPair != null)
 		{
 			return foundBlockPair.blockStateWrapper;
@@ -717,8 +719,16 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	//=====================//
 	//region
 	
-	private static int findSurfaceHeight(GenParams genParams, ILevelWrapper levelWrapper, int blockX, int blockZ)
+	private int findSurfaceHeight(GenParams genParams, ILevelWrapper levelWrapper, int blockX, int blockZ)
 	{
+		// super flat generates differently and
+		// must be handled separately
+		if (genParams.isSuperFlatWorld)
+		{
+			return findSuperFlatHeight(genParams, blockX, blockZ);
+		}
+		
+		
 		// stat notes:
 		// each are with 24 cores for DH
 		// 128 render distance
@@ -749,6 +759,47 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		//
 		//// fall back to the slower, anomaly-aware marching approach
 		//return findSurfaceHeightMarching(genParams, levelWrapper, blockX, blockZ);
+	}
+	
+	private static int findSuperFlatHeight(GenParams genParams, int blockX, int blockZ)
+	{
+		// if a height hasn't been found yet,
+		// calculate it from a couple of actually generated chunks
+		if (genParams.superFlatHeight == Integer.MIN_VALUE)
+		{
+			// this will fire on multiple threads the first time,
+			// but that isn't a big deal
+			
+			AtomicInteger heightSumRef = new AtomicInteger(0);
+			AtomicInteger heightCountRef = new AtomicInteger(0);
+			
+			// center pos shouldn't matter, but we'll do one at the requested position just in case
+			DhChunkPos chunkPos = new DhChunkPos(new DhBlockPos2D(blockX, blockZ));
+			ChunkGenEvent genEvent = new ChunkGenEvent(
+				chunkPos,
+				2,
+				genParams.dhChunkGenerator,
+				EDhApiDistantGeneratorMode.SURFACE, EDhApiWorldGenerationStep.SURFACE,
+				(IChunkWrapper chunkWrapper) ->
+				{
+					for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+					{
+						for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+						{
+							int height = chunkWrapper.getSolidHeightMapValue(x, z);
+							heightSumRef.addAndGet(height);
+							heightCountRef.incrementAndGet();
+						}
+					}
+				});
+			genParams.dhChunkGenerator.generateChunks(genEvent);
+			
+			int averageHeight = heightSumRef.get() / heightCountRef.get();
+			genParams.superFlatHeight = averageHeight;
+		}
+		
+		// using a cached value makes world gen very fast
+		return genParams.superFlatHeight;
 	}
 	
 	/** 
@@ -931,6 +982,10 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	
 	private static class GenParams
 	{
+		/** needed to generate chunks surfaces to determine biome block mappings */
+		@WillNotClose
+		public final DhChunkGenerator dhChunkGenerator;
+		
 		public ServerLevel serverLevel;
 		public RandomState randomState;
 		public ChunkGenerator chunkGenerator;
@@ -945,10 +1000,15 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		public DensitySampler.Bound density;
 		#endif
 		
+		public boolean isSuperFlatWorld;
+		public int superFlatHeight = Integer.MIN_VALUE;
 		
 		
-		public GenParams(IServerLevelWrapper serverLevelWrapper)
+		
+		public GenParams(DhChunkGenerator dhChunkGenerator, IServerLevelWrapper serverLevelWrapper)
 		{
+			this.dhChunkGenerator = dhChunkGenerator;
+			
 			this.serverLevel = ((ServerLevelWrapper)serverLevelWrapper).getWrappedMcObject();
 			this.randomState = this.serverLevel.getChunkSource().randomState();
 			this.chunkGenerator = this.serverLevel.getChunkSource().getGenerator();
@@ -956,6 +1016,12 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			this.relativeSeaLevel = serverLevelWrapper.getSeaLevel() - serverLevelWrapper.getMinHeight();
 			this.relativeMaxHeight = serverLevelWrapper.getMaxHeight() - serverLevelWrapper.getMinHeight();
+			
+			
+			this.isSuperFlatWorld = this.chunkGenerator
+				.getClass()
+				.equals(FlatLevelSource.class);
+			
 			
 			
 			// density setup //
