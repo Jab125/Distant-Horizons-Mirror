@@ -42,7 +42,8 @@ dependencies {
     // Iris
     if (rootProject.minecraft_version == "26.2") 
     {
-        dependencies { compileOnly(files('../run/client/mods/iris-fabric-1.11.4-snapshot+mc26.2-local.jar')) }
+		// TODO temporary fix until Iris releases a full build
+        dependencies { compileOnly(files('../run/client/mods/26.2 iris fabric/iris-fabric-1.11.4-snapshot+mc26.2-local.jar')) }
     }
     else
     {
