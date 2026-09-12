@@ -219,14 +219,14 @@ public class MixinLevelRenderer
 	
 	
 	
-	//================//
-	// MC 26.1 - 26.2 //
-	//================//
+	//===========//
+	// MC 26.1.2 //
+	//===========//
 	//region
 	
 	#if MC_VER <= MC_1_21_11
 	// see code above
-	#elif MC_VER <= MC_26_2_0
+	#elif MC_VER <= MC_26_1_2
 	@Inject(at = @At("HEAD"), method = "prepareChunkRenders")
 	private void prepareChunkRenders(final Matrix4fc modelViewMatrix, CallbackInfoReturnable<ChunkSectionsToRender> callback)
 	{
@@ -261,7 +261,7 @@ public class MixinLevelRenderer
 	//region
 	
 	#if MC_VER <= MC_26_2_0
-	// see code above
+	// handled in game renderer
 	#else
 	
 	@Inject(at = @At("HEAD"), method = "prepareTranslucents")

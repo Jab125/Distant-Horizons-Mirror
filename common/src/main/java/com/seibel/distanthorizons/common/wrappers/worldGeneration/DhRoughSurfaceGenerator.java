@@ -37,17 +37,14 @@ import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 import net.minecraft.core.Holder;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
 import net.minecraft.world.level.levelgen.*;
 
-import net.minecraft.world.level.levelgen.densityfunction.*;
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.WillNotClose;
-import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
@@ -56,8 +53,10 @@ import java.util.function.Consumer;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.core.QuartPos;
 #else
+import net.minecraft.world.level.levelgen.densityfunction.*;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
+import net.minecraft.util.context.ContextMap;
 #endif
 
 public class DhRoughSurfaceGenerator implements IRoughGenerator
