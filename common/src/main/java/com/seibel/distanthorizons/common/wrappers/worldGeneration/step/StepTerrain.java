@@ -19,10 +19,12 @@
 
 package com.seibel.distanthorizons.common.wrappers.worldGeneration.step;
 
-#if MC_VER <= MC_1_12_2
-
-#elif MC_VER <= MC_26_2_0 // replaced by StepTerrain
+#if MC_VER <= MC_26_2_0
+ // StepSurface used instead
+#else
 import java.util.ArrayList;
+import java.util.Objects;
+import java.util.Set;
 
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.DhChunkGenerator;
@@ -30,21 +32,24 @@ import com.seibel.distanthorizons.common.wrappers.worldGeneration.params.ThreadW
 
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.mimicObject.DhLitWorldGenRegion;
 import com.seibel.distanthorizons.core.util.gridList.ArrayGridList;
+import it.unimi.dsi.fastutil.objects.ObjectArraySet;
+import net.minecraft.core.Holder;
+import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.chunk.ChunkAccess;
-
-#if MC_VER >= MC_1_18_2
-import net.minecraft.world.level.levelgen.blending.Blender;
-#endif
 
 #if MC_VER <= MC_1_20_4
 import net.minecraft.world.level.chunk.ChunkStatus;
 #else
+import net.minecraft.world.level.chunk.LevelChunkSection;
+import net.minecraft.world.level.chunk.PalettedContainerRO;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
+import net.minecraft.world.level.levelgen.blending.Blender;
 #endif
 
-public final class StepNoise extends AbstractWorldGenStep
+
+public final class StepTerrain extends AbstractWorldGenStep
 {
-	private static final ChunkStatus STATUS = ChunkStatus.NOISE;
+	private static final ChunkStatus STATUS = ChunkStatus.TERRAIN;
 	
 	private final DhChunkGenerator dhChunkGen;
 	
@@ -54,7 +59,7 @@ public final class StepNoise extends AbstractWorldGenStep
 	// constructor //
 	//=============//
 	
-	public StepNoise(DhChunkGenerator dhChunkGen) { this.dhChunkGen = dhChunkGen; }
+	public StepTerrain(DhChunkGenerator dhChunkGen) { this.dhChunkGen = dhChunkGen; }
 	
 	
 	
@@ -75,39 +80,30 @@ public final class StepNoise extends AbstractWorldGenStep
 		{
 			ChunkAccess chunk = chunkWrapper.getChunk();
 			
-			#if MC_VER < MC_1_17_1
-			this.dhChunkGen.globalParams.generator.fillFromNoise(worldGenRegion, tParams.structFeatManager, chunk);
-			#elif MC_VER < MC_1_18_2
-			chunk = this.dhChunkGen.confirmFutureWasRunSynchronously(
-						this.dhChunkGen.globalParams.generator.fillFromNoise(
-							Runnable::run,
-							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
-							chunk));
-			#elif MC_VER < MC_1_19_2
-			chunk = this.dhChunkGen.confirmFutureWasRunSynchronously(
-						this.dhChunkGen.globalParams.generator.fillFromNoise(
-							Runnable::run, 
-							Blender.of(worldGenRegion),
-							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
-							chunk));
-			#elif MC_VER < MC_1_21_1
-			chunk = this.dhChunkGen.confirmFutureWasRunSynchronously(
-						this.dhChunkGen.globalParams.generator.fillFromNoise(
-							Runnable::run, 
-							Blender.of(worldGenRegion), 
-							this.dhChunkGen.globalParams.randomState,
-							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
-							chunk));
-			#else
-			chunk = this.dhChunkGen.confirmFutureWasRunSynchronously(
-						this.dhChunkGen.globalParams.generator.fillFromNoise(
-							Blender.of(worldGenRegion), 
-							this.dhChunkGen.globalParams.randomState,
-							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
-							chunk));
-			#endif
+			// get biomes
+			Set<Holder<Biome>> possibleBiomes = new ObjectArraySet<>();
+			{
+				for(LevelChunkSection section : chunk.getSections()) 
+				{
+					PalettedContainerRO<Holder<Biome>> biomePallet = section.getBiomes();
+					biomePallet.getAll(possibleBiomes::add);
+				}
+			}
+			
+			
+			this.dhChunkGen.globalParams.generator.buildTerrain(
+				chunk, 
+				Blender.of(worldGenRegion),
+				this.dhChunkGen.globalParams.randomState,
+				tParams.structFeatManager.forWorldGenRegion(worldGenRegion),
+				this.dhChunkGen.globalParams.biomeManager,
+				worldGenRegion,
+				possibleBiomes
+			);
 		}
 	}
+	
+	
 	
 }
 #endif

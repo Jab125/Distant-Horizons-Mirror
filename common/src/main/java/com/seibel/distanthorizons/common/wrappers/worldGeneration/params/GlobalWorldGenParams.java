@@ -166,8 +166,11 @@ public final class GlobalWorldGenParams
 		
 		#if MC_VER <= MC_1_12_2
 		this.generator = this.mcServerLevel.getChunkProvider().chunkGenerator;
-		#else
+		#elif MC_VER <= MC_26_2_0
 		this.structures = server.getStructureManager();
+		this.generator = this.mcServerLevel.getChunkSource().getGenerator();
+		#else
+		this.structures = server.getStructureTemplateManager();
 		this.generator = this.mcServerLevel.getChunkSource().getGenerator();
 		#endif
 		
