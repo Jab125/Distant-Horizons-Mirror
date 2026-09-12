@@ -48,6 +48,14 @@ import net.minecraft.client.renderer.texture.SpriteContents;
 public class TextureAtlasSpriteWrapper
 {
 	private static final IGregTechCommonAccessor GREG_TECH_ACCESSOR = ModAccessorInjector.INSTANCE.get(IGregTechCommonAccessor.class);
+
+	#if MC_VER <= MC_1_7_10
+	/**
+	 * 1.7.10 stores anisotropic sprites with an eight-pixel wrapping border on
+	 * every edge. The border is atlas padding, not part of the block texture.
+	 */
+	private static final int ANISOTROPIC_SPRITE_BORDER = 8;
+	#endif
 	
 	
 	
@@ -63,6 +71,12 @@ public class TextureAtlasSpriteWrapper
 			// missing texture sentinel (matches the pink "missing" color used elsewhere)
 			return ColorUtil.HOT_PINK;
 		}
+		if (sprite.useAnisotropicFiltering)
+		{
+			x += ANISOTROPIC_SPRITE_BORDER;
+			y += ANISOTROPIC_SPRITE_BORDER;
+		}
+
 		return spriteData[sprite.getIconWidth() * y + x];
 		#elif MC_VER <= MC_1_12_2
 		int[][] frameData = sprite.getFrameTextureData(frameIndex);
@@ -118,7 +132,11 @@ public class TextureAtlasSpriteWrapper
 	public static int getWidth(TextureAtlasSprite texture)
 	{
 		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		return texture.getIconWidth() - (texture.useAnisotropicFiltering ? ANISOTROPIC_SPRITE_BORDER * 2 : 0);
+		#else
 		return texture.getIconWidth();
+		#endif
         #elif MC_VER < MC_1_19_4
 		return texture.getWidth();
         #else
@@ -128,7 +146,11 @@ public class TextureAtlasSpriteWrapper
 	public static int getHeight(TextureAtlasSprite texture)
 	{
 		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		return texture.getIconHeight() - (texture.useAnisotropicFiltering ? ANISOTROPIC_SPRITE_BORDER * 2 : 0);
+		#else
 		return texture.getIconHeight();
+		#endif
         #elif MC_VER < MC_1_19_4
 		return texture.getHeight();
         #else
