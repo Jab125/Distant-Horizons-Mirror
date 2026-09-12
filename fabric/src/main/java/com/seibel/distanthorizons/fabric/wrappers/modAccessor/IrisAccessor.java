@@ -43,6 +43,9 @@ public class IrisAccessor implements IIrisAccessor
 	@Override
 	public boolean isRenderingShadowPass() { return IrisApi.getInstance().isRenderingShadowPass(); }
 	
+	@Override
+	public boolean isReverseZDuringShaders() { return IrisApi.getInstance().isReverseZDuringShaders(); }
+	
 }
 
 #endif

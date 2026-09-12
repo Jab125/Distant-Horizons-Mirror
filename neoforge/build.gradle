@@ -17,7 +17,14 @@ def addMod(path, enabled) {
 
 dependencies {
     // Iris
-    addMod("maven.modrinth:iris:${rootProject.neo_iris_version}", rootProject.neo_enable_iris)
+    if (rootProject.minecraft_version == "26.2")
+    {
+        dependencies { compileOnly(files('../run/client/mods/iris-fabric-1.11.4-snapshot+mc26.2-local.jar')) }
+    }
+    else
+    {
+        addMod("maven.modrinth:iris:${rootProject.neo_iris_version}", rootProject.neo_enable_iris)
+    }
 }
 
 

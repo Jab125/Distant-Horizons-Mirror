@@ -39,7 +39,8 @@ public class GlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	public EDhRenderDepth getRenderDepth() 
 	{
 		if (IRIS_ACCESSOR != null
-			&& IRIS_ACCESSOR.isShaderPackInUse())
+			&& IRIS_ACCESSOR.isShaderPackInUse()
+			&& !IRIS_ACCESSOR.isReverseZDuringShaders())
 		{
 			// reversed Z shouldn't be used when shaders are active
 			// in order to maintain legacy behavior

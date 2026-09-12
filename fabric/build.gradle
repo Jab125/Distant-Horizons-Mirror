@@ -40,7 +40,14 @@ dependencies {
     addMod("maven.modrinth:lithium:${rootProject.lithium_version}", rootProject.enable_lithium)
     
     // Iris
-    addMod("maven.modrinth:iris:${rootProject.iris_version}", rootProject.enable_iris)
+    if (rootProject.minecraft_version == "26.2") 
+    {
+        dependencies { compileOnly(files('../run/client/mods/iris-fabric-1.11.4-snapshot+mc26.2-local.jar')) }
+    }
+    else
+    {
+        addMod("maven.modrinth:iris:${rootProject.iris_version}", rootProject.enable_iris)
+    }
     
     // BCLib
     addMod("com.github.quiqueck:BCLib:${rootProject.bclib_version}", rootProject.enable_bclib)

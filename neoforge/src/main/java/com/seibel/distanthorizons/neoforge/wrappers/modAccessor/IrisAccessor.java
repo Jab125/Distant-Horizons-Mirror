@@ -70,6 +70,16 @@ public class IrisAccessor implements IIrisAccessor
 		#endif
 	}
 	
+	@Override
+	public boolean isReverseZDuringShaders()
+	{
+		#if MC_VER == MC_1_21_9 
+		return false; // Iris doesn't support this MC version
+		#else
+		return IrisApi.getInstance().isReverseZDuringShaders();
+		#endif
+	}
+	
 }
 
 #endif
