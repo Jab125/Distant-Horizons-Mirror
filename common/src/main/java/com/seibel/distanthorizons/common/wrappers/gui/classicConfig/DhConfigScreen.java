@@ -72,9 +72,14 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.Identifier;
 #endif
 
-import org.lwjgl.glfw.GLFW;
 #if MC_VER > MC_1_12_2
 import com.mojang.blaze3d.platform.InputConstants;
+#endif
+
+#if MC_VER <= MC_26_2_0
+import org.lwjgl.glfw.GLFW;
+#else
+import org.lwjgl.sdl.SDLKeycode;
 #endif
 
 import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.*;
@@ -479,10 +484,15 @@ class DhConfigScreen extends DhScreen
 					int startingIndex = enumList.indexOf(enumConfigEntry.get());
 					Enum<?> enumValue = enumList.get(startingIndex);
 					
+					boolean shiftPressed;
 					#if MC_VER <= MC_1_12_2
-					boolean shiftPressed = GuiScreen.isShiftKeyDown();
+					shiftPressed = GuiScreen.isShiftKeyDown();
+					#elif MC_VER <= MC_26_2_0
+					shiftPressed = InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_LEFT_SHIFT) 
+						|| InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_RIGHT_SHIFT);
 					#else
-					boolean shiftPressed = InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_LEFT_SHIFT) || InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_RIGHT_SHIFT);
+					shiftPressed = InputConstants.isKeyDown(InputConstants.KEY_LSHIFT)
+						|| InputConstants.isKeyDown(InputConstants.KEY_RSHIFT);
 					#endif
 					
 					// move forward or backwards depending on if the shift key is pressed

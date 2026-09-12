@@ -19,10 +19,15 @@
 
 package com.seibel.distanthorizons.common.render.openGl.glObject;
 
+#if MC_VER <= MC_26_2_0
+import org.lwjgl.glfw.GLFW;
+#else
+import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
+#endif
+
 import com.seibel.distanthorizons.api.enums.config.EDhApiGLErrorHandlingMode;
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
-import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -34,7 +39,6 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftCli
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.coreapi.ModInfo;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.opengl.GLCapabilities;
@@ -142,9 +146,8 @@ public class GLProxy
 			throw new IllegalStateException("[" + GLProxy.class.getSimpleName() + "] was created with the wrong Rendering API ["+RENDER_DEF.getRenderApi()+"]!"); 
 		}
 		
-		
 		// this must be created on minecraft's render context to work correctly
-		if (GLFW.glfwGetCurrentContext() == 0L)
+		if (!runningOnRenderThread())
 		{
 			String message = "[" + GLProxy.class.getSimpleName() + "] was created outside the render thread!";
 			IllegalStateException exception = new IllegalStateException(message);
@@ -271,8 +274,17 @@ public class GLProxy
 	
 	public static boolean runningOnRenderThread()
 	{
-		long currentContext = GLFW.glfwGetCurrentContext();
-		return currentContext != 0L; // if the context isn't null, it's the MC context
+		boolean isRenderThread;
+		
+		#if MC_VER <= MC_26_2_0
+		// if the context isn't null, it's the MC context
+		isRenderThread = (GLFW.glfwGetCurrentContext() != 0L);
+		#else
+		Thread thread = Thread.currentThread();
+		isRenderThread = thread.getName().toLowerCase().contains("render thread");
+		#endif
+		
+		return isRenderThread;
 	}
 	
 	//endregion

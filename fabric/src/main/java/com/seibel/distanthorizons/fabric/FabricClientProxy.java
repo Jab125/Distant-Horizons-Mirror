@@ -80,7 +80,10 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.phys.HitResult;
 
+#if MC_VER <= MC_26_2_0
 import org.lwjgl.glfw.GLFW;
+#else
+#endif
 
 /**
  * This handles all events sent to the client,
@@ -383,6 +386,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		HashSet<Integer> currentKeyDown = new HashSet<>();
 		
+		#if MC_VER <= MC_26_2_0
 		// Note: Minecraft's InputConstants are the same as GLFW Key values
 		for (int keyCode = GLFW.GLFW_KEY_0; keyCode <= GLFW.GLFW_KEY_LAST; keyCode++)
 		{
@@ -391,6 +395,16 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 				currentKeyDown.add(keyCode);
 			}
 		}
+		#else
+		// Note: Minecraft's InputConstants are NOT the same as SDL Key values
+		for (int keyCode = InputConstants.RELEASE; keyCode <= InputConstants.MOD_ALT; keyCode++)
+		{
+			if (InputConstants.isKeyDown(keyCode))
+			{
+				currentKeyDown.add(keyCode);
+			}
+		}
+		#endif
 		
 		// Diff and trigger events
 		for (int keyCode : currentKeyDown)
