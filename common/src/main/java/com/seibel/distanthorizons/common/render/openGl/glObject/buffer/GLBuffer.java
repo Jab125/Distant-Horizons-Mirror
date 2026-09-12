@@ -154,7 +154,7 @@ public class GLBuffer implements AutoCloseable
 		
 		// lock to prevent the render thread from accessing the buffer's ID
 		// while we are removing it
-		long writeStamp = renderStampLock.writeLock();
+		long writeStamp = this.renderStampLock.writeLock();
 		try
 		{
 			final int oldId = this.id;

@@ -6,7 +6,6 @@ public class BlazeTextureWrapper {}
 #else
 
 import com.seibel.distanthorizons.api.interfaces.render.IDhApiBlazeTextureWrapper;
-import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -17,16 +16,26 @@ import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import java.nio.ByteBuffer;
 import java.util.OptionalDouble;
 
+#if MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.textures.*;
+#else
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.device.GpuDevice;
+import com.mojang.blaze3d.systems.RenderSystem;
+import com.mojang.renderpearl.api.textures.*;
+#endif
 
 #if MC_VER <= MC_26_1_2
 import com.mojang.blaze3d.textures.TextureFormat;
 import com.mojang.blaze3d.platform.NativeImage;
-#else
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.GpuFormat;
+import org.joml.Vector4f;
+#else
+import com.mojang.renderpearl.api.GpuFormat;
 import org.joml.Vector4f;
 #endif
 
