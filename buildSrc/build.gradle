@@ -18,6 +18,6 @@ repositories {
 
 dependencies {
     implementation 'com.gradleup.shadow:shadow-gradle-plugin:9.6.1'
-    implementation 'xyz.wagyourtail.unimined:xyz.wagyourtail.unimined.gradle.plugin:1.4.38-kappa'
+    implementation 'xyz.wagyourtail.unimined:xyz.wagyourtail.unimined.gradle.plugin:1.4.18-kappa' // 1.4.38-kappa or newer is needed for MC 26.3 but breaks 1.21.11 and older
     implementation 'xyz.wagyourtail:manifold-gradle:1.0.0-SNAPSHOT'
 }
