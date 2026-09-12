@@ -27,8 +27,11 @@ import org.spongepowered.asm.mixin.Mixin;
 public class MixinGameRenderer {}
 
 #else
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.seibel.distanthorizons.common.commonMixins.MixinProjectionMatrixBufferCommon;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftClientWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
@@ -38,6 +41,7 @@ import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.state.OptionsRenderState;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+import net.minecraft.client.renderer.state.level.PlayerRenderState;
 import net.minecraft.util.profiling.ProfilerFiller;
 import org.joml.Matrix4f;
 import org.joml.Matrix4fc;
@@ -50,6 +54,7 @@ import org.spongepowered.asm.mixin.injection.callback.LocalCapture;
 @Mixin(GameRenderer.class)
 public class MixinGameRenderer
 {
+	#if MC_VER <= MC_26_2_0
 	// get the modified projection matrix right before it's uploaded to the GPU
 	@Inject(
 		method = "renderLevel",
@@ -73,18 +78,28 @@ public class MixinGameRenderer
 		final Matrix4fc modelViewMatrix,
 		final Matrix4f projectionMatrix,
 		final PoseStack poseStack)
-	{
-		#if MC_VER <= MC_26_1_2
-		#else
-		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, (ClientLevel)player.level());
 		
-		ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.convert(modelViewMatrix);
+	#else
+	
+	@Inject(method = "renderLevel", at = @At("HEAD"))
+	private void onRenderLevelStart(CallbackInfo ci) 
+	{
+		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(
+			ClientApi.RENDER_STATE.clientLevelWrapper, 
+			(ClientLevel)MinecraftClientWrapper.INSTANCE.getPlayer().level());
 		
 		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
 		
-		#endif
-		
-		ClientApi.RENDER_STATE.mcProjectionMatrix = McObjectConverter.convert(projectionMatrix);
+		MixinProjectionMatrixBufferCommon.inWorldRenderPass = true;
 	}
+	
+	@Inject(method = "renderLevel", at = @At("RETURN"))
+	private void onRenderLevelEnd(CallbackInfo ci) 
+	{ MixinProjectionMatrixBufferCommon.inWorldRenderPass = false; }
+	
+	#endif
+	
+	
+	
 }
 #endif

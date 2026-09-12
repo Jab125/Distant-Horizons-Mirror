@@ -304,7 +304,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 		#endif
 		
 		#if MC_VER <= MC_1_21_11
-		#else
+		#elif MC_VER <= MC_26_2_0
 		LevelRenderEvents.AFTER_TRANSLUCENT_TERRAIN.register((LevelRenderContext levelRenderContext) ->
 		{
 			ClientApi.INSTANCE.renderFadeTransparent();
@@ -314,6 +314,8 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 		{
 			ClientApi.INSTANCE.renderFadeOpaque();
 		});
+		#else
+		// fade transparency handled in MixinLevelRenderer
 		#endif
 		
 		//endregion

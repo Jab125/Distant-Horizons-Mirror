@@ -38,20 +38,16 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-#if MC_VER <= MC_1_21_10
-#else
-import com.mojang.blaze3d.textures.GpuSampler;
-#endif
-
 @Mixin(ChunkSectionsToRender.class)
 public class MixinChunkSectionsToRender
 {
 	
-	//===========//
-	// Pre MC 26 //
-	//===========//
-	#if MC_VER <= MC_1_21_11
+	//======================//
+	// MC 1.21.11 and older //
+	//======================//
 	//region
+	
+	#if MC_VER <= MC_1_21_11
 	
 	#if MC_VER <= MC_1_21_10
 	// needs to fire at HEAD with a lower than normal order (less than 1000)
@@ -78,16 +74,20 @@ public class MixinChunkSectionsToRender
 			ClientApi.INSTANCE.renderFadeTransparent();
 		}
 	}
+	
+	#endif
 	//endregion
-	#else
 	
 	
 	
-	//============//
-	// post MC 26 //
-	//============//
+	//====================//
+	// MC 26.1 or MC 26.2 //
+	//====================//
 	//region
 	
+	#if MC_VER <= MC_1_21_11
+	// see code above
+	#elif MC_VER <= MC_26_2_0
 	// needs to fire at HEAD with a lower than normal order (less than 1000)
 	// otherwise it will be canceled by Sodium
 	@Inject(at = @At("HEAD"), method = "renderGroup", order = 800)
@@ -111,8 +111,9 @@ public class MixinChunkSectionsToRender
 		}
 	}
 	
-	//endregion
 	#endif
+	
+	//endregion
 	
 	
 	

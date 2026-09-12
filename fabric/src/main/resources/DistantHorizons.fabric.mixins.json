@@ -24,6 +24,8 @@
     "client.MixinLightTexture",
     "client.MixinMinecraft",
     "client.MixinOptionsScreen",
+    "client.MixinSharedConstants",
+    "client.MixinProjectionMatrixBuffer",
     "client.MixinMain"
   ],
   "server": [],
