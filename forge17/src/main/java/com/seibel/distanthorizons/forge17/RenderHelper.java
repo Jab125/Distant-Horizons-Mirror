@@ -71,7 +71,6 @@ public class RenderHelper
 		{
 			LWJGL.glDisable(GL32.GL_ALPHA_TEST);
         }
-	    LWJGL.glClearColor(1, 1, 1, 0.0F);
        
         int oldActiveTex = LWJGL.glGetInteger(GL32.GL_ACTIVE_TEXTURE);
         int oldBoundTex = LWJGL.glGetInteger(GL32.GL_TEXTURE_BINDING_2D);
