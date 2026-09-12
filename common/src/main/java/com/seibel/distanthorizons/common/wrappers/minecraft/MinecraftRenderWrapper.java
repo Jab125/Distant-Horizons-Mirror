@@ -478,15 +478,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public int getRenderDistance()
 	{
 		#if MC_VER <= MC_1_12_2
-		
-		#if MC_VER <= MC_1_7_10
-		if (getAngelicaAccessor() != null)
-		{
-			// TODO why is there a "-2" here?
-			return MC.gameSettings.renderDistanceChunks - 2;
-		}
-		#endif
-		
 		return MC.gameSettings.renderDistanceChunks;
 		#elif MC_VER <= MC_1_17_1
 		return MC.options.renderDistance;
