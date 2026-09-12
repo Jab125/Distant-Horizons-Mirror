@@ -10,7 +10,7 @@ import net.coderbot.iris.rendertarget.IRenderTargetExt;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.shader.Framebuffer;
 
-import org.joml.Vector3d;
+import java.nio.FloatBuffer;
 
 import com.gtnewhorizons.angelica.config.AngelicaConfig;
 import com.gtnewhorizons.angelica.glsm.GLStateManager;
@@ -82,11 +82,16 @@ public class AngelicaAccessor implements IAngelicaAccessor
 	@Override
     public Color getFogColor() 
     {
-        Vector3d color = GLStateManager.getFogColor();
+        // Read the fog color buffer rather than GLStateManager.getFogColor(), which returns
+        // an org.joml.Vector3d. DH shades and relocates JOML, so calling that method would
+        // rewrite the descriptor in this class too and fail with a NoSuchMethodError against
+        // Angelica's un-relocated JOML. Angelica keeps this buffer in sync with the vector.
+        // Layout is (red, green, blue, alpha); the fog alpha isn't used here.
+        FloatBuffer fogColor = GLStateManager.getFogState().getFogColorBuffer();
         return new Color(
-            Math.max(0.0f, Math.min(1.0f, (float) color.x)),
-            Math.max(0.0f, Math.min(1.0f, (float) color.y)),
-            Math.max(0.0f, Math.min(1.0f, (float) color.z)));
+            Math.max(0.0f, Math.min(1.0f, fogColor.get(0))),
+            Math.max(0.0f, Math.min(1.0f, fogColor.get(1))),
+            Math.max(0.0f, Math.min(1.0f, fogColor.get(2))));
     }
 	
 	//endregion
