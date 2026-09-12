@@ -74,6 +74,8 @@ import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 #if MC_VER <= MC_1_21_10
 #else
 import net.minecraft.world.attribute.EnvironmentAttributes;
+import org.joml.Vector4f;
+import org.joml.Vector4fc;
 #endif
 
 
@@ -686,7 +688,7 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 			// default to white if there's an issue
 			return Color.WHITE;
 		}
-		#else
+		#elif MC_VER <= MC_26_2_0
 		int argbColor = 0;
 		try
 		{
@@ -700,6 +702,25 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 			{
 				this.cloudColorFailLogged = true;
 				LOGGER.warn("Failed to get cloud color for ["+this.getDhIdentifier()+"]. Int ["+argbColor+"], col ["+ColorUtil.toString(argbColor)+"], error: ["+e.getMessage()+"].", e);
+			}
+			
+			// default to white if there's an issue
+			return Color.WHITE;
+		}
+		#else
+		Vector4fc argbColor = new Vector4f();
+		try
+		{
+			argbColor = this.level.environmentAttributes().getValue(EnvironmentAttributes.CLOUD_COLOR, BlockPos.ZERO);
+			return new Color(argbColor.x(), argbColor.y(), argbColor.z(), 1.0f /* ignore alpha since DH clouds don't render correctly with transparency */);
+		}
+		catch (Exception e)
+		{
+			// extra logging is due to some mods returning weird values, this way we can track down the issue better
+			if (!this.cloudColorFailLogged)
+			{
+				this.cloudColorFailLogged = true;
+				LOGGER.warn("Failed to get cloud color for ["+this.getDhIdentifier()+"]. vec4 ["+argbColor+"], error: ["+e.getMessage()+"].", e);
 			}
 			
 			// default to white if there's an issue
