@@ -181,6 +181,26 @@ public class ClientBlockStateTextureCache
 			}
 		}
 		
+		// check if there are any invisible pixels in the texture
+		loopTest:
+		for (int faceIndex = 0; faceIndex < FACE_DIRECTIONS.length; faceIndex++)
+		{
+			BlockFaceTexture blockFaceTexture = blockFaceTextures[faceIndex];
+			for (int u = 0; u < TEXTURE_WIDTH_AND_HEIGHT; u++)
+			{
+				for (int v = 0; v < TEXTURE_WIDTH_AND_HEIGHT; v++)
+				{
+					int color = blockFaceTexture.argbPixels[TextureUtil.getPixelIndex(u, v)];
+					if (ColorUtil.getAlpha(color) == 0)
+					{
+						// this block has a transparent pixel
+						blockStateWrapper.renderOpacity = 0;
+						break loopTest;
+					}
+				}
+			}
+		}
+		
 		if (WRITE_TEXTURES_TO_FILE_FOR_DEBUGGING)
 		{
 			writeTopAndNorthTexturesToFile(blockStateWrapper, blockFaceTextures);

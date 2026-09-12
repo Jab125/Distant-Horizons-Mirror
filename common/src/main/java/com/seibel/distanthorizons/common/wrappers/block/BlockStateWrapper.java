@@ -31,6 +31,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrappe
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
+import com.seibel.distanthorizons.coreapi.util.StringUtil;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 #if MC_VER <= MC_1_12_2
 import net.minecraft.block.*;
@@ -982,6 +983,11 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		for (int i = 0; i < blockNameList.size(); i++)
 		{
 			String baseBlockName = blockNameList.get(i);
+			if (baseBlockName.trim().isEmpty())
+			{
+				continue;
+			}
+			
 			if (lowerCaseSerial.contains(baseBlockName))
 			{
 				blockMatches = true;
@@ -1254,6 +1260,18 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	
 	@Override
 	public int getOpacity() { return this.opacity; }
+	
+	public Integer renderOpacity = null;
+	@Override
+	public int getRenderOpacity() 
+	{
+		if (this.renderOpacity == null)
+		{
+			return this.opacity;
+		}
+		
+		return this.renderOpacity;
+	}
 	
 	@Override
 	public int getLightEmission() { return getLightEmission(this.blockState); }
