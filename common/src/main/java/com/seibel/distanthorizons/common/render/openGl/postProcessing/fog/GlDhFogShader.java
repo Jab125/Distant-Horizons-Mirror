@@ -29,10 +29,14 @@ import com.seibel.distanthorizons.common.render.openGl.postProcessing.GlScreenQu
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRenderer;
+import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.render.EDhDepthRange;
+import com.seibel.distanthorizons.core.render.EDhRenderDepth;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.util.math.DhMat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL30;
@@ -44,7 +48,7 @@ public class GlDhFogShader extends GlAbstractShaderRenderer
 	public static final GlDhFogShader INSTANCE = new GlDhFogShader();
 	
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
-	
+	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 	
 	
 	public int frameBuffer;
@@ -58,9 +62,12 @@ public class GlDhFogShader extends GlAbstractShaderRenderer
 	//==========//
 	//region
 	
-	public int uDepthMap;
+	public int uDhDepthTexture;
 	/** Inverted Model View Projection matrix */
 	public int uInvMvmProj;
+	
+	public int uIsReverseZDepth;
+	public int uDepthIsZeroToPositiveOne;
 	
 	// fog uniforms
 	public int uFogColor;
@@ -113,11 +120,11 @@ public class GlDhFogShader extends GlAbstractShaderRenderer
 			"vPosition"
 		);
 		
-		// all uniforms should be tryGet...
-		// because disabling fog can cause the GLSL to optimize out most (if not all) uniforms
-		
-		this.uDepthMap = this.shader.getUniformLocation("uDepthMap");
+		this.uDhDepthTexture = this.shader.getUniformLocation("uDhDepthTexture");
 		this.uInvMvmProj = this.shader.getUniformLocation("uInvMvmProj");
+		
+		this.uIsReverseZDepth = this.shader.getUniformLocation("uIsReverseZDepth");
+		this.uDepthIsZeroToPositiveOne = this.shader.getUniformLocation("uDepthIsZeroToPositiveOne");
 		
 		// Fog uniforms
 		this.uFogScale = this.shader.getUniformLocation("uFogScale");
@@ -167,6 +174,9 @@ public class GlDhFogShader extends GlAbstractShaderRenderer
 		int lodDrawDistance = Config.Client.Advanced.Graphics.Quality.lodChunkRenderDistanceRadius.get() * LodUtil.CHUNK_WIDTH;
 		
 		this.shader.setUniform(this.uInvMvmProj, this.inverseMvmProjMatrix);
+		
+		this.shader.setUniform(this.uIsReverseZDepth, (RENDER_DEF.getRenderDepth() == EDhRenderDepth.REVERSE_Z) ? 1 : 0);
+		this.shader.setUniform(this.uDepthIsZeroToPositiveOne, (RENDER_DEF.getDepthRange() == EDhDepthRange.ZERO_TO_POS_ONE) ? 1 : 0);
 		
 		
 		// Fog uniforms
@@ -239,7 +249,7 @@ public class GlDhFogShader extends GlAbstractShaderRenderer
 		
 		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
 		GLMC.glBindTexture(GlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
-		LWJGL.glUniform1i(this.uDepthMap, 0);
+		LWJGL.glUniform1i(this.uDhDepthTexture, 0);
 		
 		// this is necessary for MC 1.16 (IE Legacy OpenGL)
 		// otherwise the framebuffer isn't cleared correctly and the fog smears across the screen

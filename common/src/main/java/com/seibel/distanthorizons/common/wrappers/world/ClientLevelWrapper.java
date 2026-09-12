@@ -404,21 +404,8 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	@Override
 	public int getDirtBlockColor()
 	{
-		if (this.dirtBlockWrapper == null)
-		{
-			try
-			{
-				this.dirtBlockWrapper = (BlockStateWrapper) BlockStateWrapper.deserialize(BlockStateWrapper.DIRT_RESOURCE_LOCATION_STRING, this);
-			}
-			catch (IOException e)
-			{
-				// shouldn't happen, but just in case
-				LOGGER.warn("Unable to get dirt color with resource location ["+BlockStateWrapper.DIRT_RESOURCE_LOCATION_STRING+"] with level ["+this+"].", e);
-				return -1;
-			}
-		}
-		
-		return this.getBlockColor(DhBlockPos.ZERO, BiomeWrapper.EMPTY_WRAPPER, null, this.dirtBlockWrapper);
+		BlockStateWrapper dirtBlockWrapper = BlockStateWrapper.getDirtBlockStateWrapper(this);
+		return this.getBlockColor(DhBlockPos.ZERO, BiomeWrapper.EMPTY_WRAPPER, null, dirtBlockWrapper);
 	}
 	
 	@Override 
@@ -569,6 +556,16 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		this.dimMinHeight = this.level.getMinY();
         #endif
 		return this.dimMinHeight;
+	}
+	
+	@Override
+	public int getSeaLevel()
+	{
+		#if MC_VER <= MC_1_7_10
+		return 63;
+		#else
+		return this.level.getSeaLevel();
+		#endif
 	}
 	
 	@Override

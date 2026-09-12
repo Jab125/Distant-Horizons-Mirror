@@ -49,7 +49,7 @@ public class GLProxy
 {
 	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-	private static final AbstractDhRenderApiDefinition RENDER_API_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
+	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 	
 	
 	public static final DhLogger LOGGER;
@@ -130,9 +130,9 @@ public class GLProxy
 	
 	private GLProxy() throws IllegalStateException
 	{
-		if (RENDER_API_DEF.getRenderApi() != EDhApiRenderingApi.OPEN_GL)
+		if (RENDER_DEF.getRenderApi() != EDhApiRenderingApi.OPEN_GL)
 		{
-			throw new IllegalStateException("[" + GLProxy.class.getSimpleName() + "] was created with the wrong Rendering API ["+RENDER_API_DEF.getRenderApi()+"]!"); 
+			throw new IllegalStateException("[" + GLProxy.class.getSimpleName() + "] was created with the wrong Rendering API ["+RENDER_DEF.getRenderApi()+"]!");
 		}
 		
 		
@@ -174,7 +174,7 @@ public class GLProxy
 		
 		if (Config.Client.Advanced.Debugging.OpenGl.overrideVanillaGLLogger.get())
 		{
-			//TODO 
+			//TODO
 			//LWJGL.setupDebugCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.vanillaDebugMessageBuilder), true));
 		}
 		

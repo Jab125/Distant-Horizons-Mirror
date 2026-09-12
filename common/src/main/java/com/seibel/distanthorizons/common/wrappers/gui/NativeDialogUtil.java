@@ -61,6 +61,22 @@ public class NativeDialogUtil
 		// https://mfbridge.github.io/tinyfiledialogs/reference/messageBox.html
 		TinyFileDialogs.tinyfd_messageBox(title, message, dialogType, iconType, 1 /* ok/yes */);
 		#endif
-	}
+		}
+		 
+		/**
+		 * if we're using Java Swing for our UI
+		 * dialogs then AWT needs to be set to "false"
+		 * otherwise the AWT setting doesn't matter.
+		 */
+		public static boolean needsAwtHeadless()
+		{
+			#if MC_VER <= MC_1_12_2
+			return false;
+			#else
+			return true;
+			#endif
+		}
+		
+		
 	
 }

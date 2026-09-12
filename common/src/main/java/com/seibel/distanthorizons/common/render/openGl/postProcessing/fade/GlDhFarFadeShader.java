@@ -26,9 +26,11 @@ import com.seibel.distanthorizons.common.render.openGl.postProcessing.GlScreenQu
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRenderer;
+import com.seibel.distanthorizons.core.render.EDhDepthRange;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
+import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL30;
 
@@ -59,6 +61,7 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 	public int uStartFadeBlockDistance = -1;
 	public int uEndFadeBlockDistance = -1;
 	
+	public int uDepthIsZeroToPositiveOne = -1;
 	
 	
 	//=============//
@@ -89,6 +92,7 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 		this.uStartFadeBlockDistance = this.shader.tryGetUniformLocation("uStartFadeBlockDistance");
 		this.uEndFadeBlockDistance = this.shader.tryGetUniformLocation("uEndFadeBlockDistance");
 		
+		this.uDepthIsZeroToPositiveOne = this.shader.tryGetUniformLocation("uDepthIsZeroToPositiveOne");
 	}
 	
 	
@@ -109,6 +113,8 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 		
 		this.shader.setUniform(this.uStartFadeBlockDistance, fadeStartDistance);
 		this.shader.setUniform(this.uEndFadeBlockDistance, fadeEndDistance);
+		
+		this.shader.setUniform(this.uDepthIsZeroToPositiveOne, (RENDER_DEF.getDepthRange() == EDhDepthRange.ZERO_TO_POS_ONE) ? 1 : 0);
 		
 	}
 	
@@ -143,6 +149,14 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 		GLMC.disableDepthTest();
 		GLMC.disableBlend();
 		
+		// If we don't restore the textures some mods can break
+		int prevActiveTexture = LWJGL.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
+		int prevTexture0 = LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE1);
+		int prevTexture1 = LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE2);
+		int prevTexture2 = LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 		
 		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
 		GLMC.glBindTexture(depthTextureId);
@@ -158,6 +172,14 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 		
 		
 		GlScreenQuad.INSTANCE.render();
+		
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
+		GLMC.glBindTexture(prevTexture0);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE1);
+		GLMC.glBindTexture(prevTexture1);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE2);
+		GLMC.glBindTexture(prevTexture2);
+		GLMC.glActiveTexture(prevActiveTexture);
 	}
 	
 }

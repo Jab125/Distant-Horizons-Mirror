@@ -738,6 +738,12 @@ public record LWJGL3Service(
 		return GL11C.glIsTexture(texture);
 	}
 	
+	@Override
+	public void glBindSampler(int unit, int sampler)
+	{
+		GL44C.glBindSampler(unit, sampler);
+	}
+	
 	// ===================== FRAMEBUFFER OPERATIONS =====================
 
     @Override

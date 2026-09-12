@@ -216,13 +216,29 @@ public abstract class AbstractModInitializer
 		}
 	}
 	
-	@SuppressWarnings("unchecked")
+	/**
+	 * Adds the accessor if any of the given IDs are found. <br>
+	 * Can be used when a mod has multiple potential IDs. 
+	 */
+	protected <T extends IModAccessor> void tryCreateModCompatAccessor(String[] modIdArray, Class<? super T> accessorClass, Supplier<T> accessorConstructor)
+	{
+		IModChecker modChecker = SingletonInjector.INSTANCE.get(IModChecker.class);
+		if (modChecker.isModLoaded(modIdArray))
+		{
+			//noinspection unchecked
+			ModAccessorInjector.INSTANCE.bind((Class<? extends IModAccessor>) accessorClass, accessorConstructor.get());
+		}
+		else
+		{
+			LOGGER.debug("Skipping mod compatibility accessor for: ["+ String.join(", ", modIdArray)+"]");
+		}
+	}
 	protected <T extends IModAccessor> void tryCreateModCompatAccessor(String modId, Class<? super T> accessorClass, Supplier<T> accessorConstructor)
 	{
 		IModChecker modChecker = SingletonInjector.INSTANCE.get(IModChecker.class);
 		if (modChecker.isModLoaded(modId))
 		{
-			// logging is done internally
+			//noinspection unchecked
 			ModAccessorInjector.INSTANCE.bind((Class<? extends IModAccessor>) accessorClass, accessorConstructor.get());
 		}
 		else
@@ -532,6 +548,7 @@ public abstract class AbstractModInitializer
 	 */
 	private static void setUnsupportedConfigsBasedOnMcVersion()
 	{
+		// graphics/rendering
 		#if MC_VER <= MC_1_7_10
 		Config.Client.Advanced.Graphics.Experimental.renderingEngine.setMcVersionOverrideValue(EDhApiRenderingEngine.OPEN_GL);
 		Config.Common.WorldGenerator.distantGeneratorMode.setMcVersionOverrideValue(EDhApiDistantGeneratorMode.INTERNAL_SERVER);
@@ -542,8 +559,15 @@ public abstract class AbstractModInitializer
 		Config.Client.Advanced.Graphics.Experimental.renderingEngine.setMcVersionOverrideValue(EDhApiRenderingEngine.OPEN_GL);
 		Config.Client.Advanced.Graphics.Quality.vanillaFadeMode.setMcVersionOverrideValue(EDhApiMcRenderingFadeMode.NONE);
 		Config.Common.WorldGenerator.distantGeneratorMode.setMcVersionOverrideValue(EDhApiDistantGeneratorMode.INTERNAL_SERVER);
+		Config.Client.Advanced.Debugging.OpenGl.overrideVanillaGLLogger.setMcVersionOverrideValue(false);
 		#elif MC_VER <= MC_1_21_10
 		Config.Client.Advanced.Graphics.Experimental.renderingEngine.setMcVersionOverrideValue(EDhApiRenderingEngine.OPEN_GL);
+		#else
+		#endif
+		
+		// worldgen
+		#if MC_VER <= MC_1_18_2
+		Config.Common.WorldGenerator.enableFastSurfaceGenerator.setMcVersionOverrideValue(false);
 		#else
 		#endif
 	}

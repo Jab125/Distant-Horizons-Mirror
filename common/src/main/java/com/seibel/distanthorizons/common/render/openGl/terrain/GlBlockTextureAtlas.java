@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.common.render.openGl.terrain;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
 import com.seibel.distanthorizons.core.render.AbstractBlockTextureAtlas;
+import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
@@ -97,6 +98,8 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
 	}
 	
+	public int getTextureId() { return this.textureId; }
+	
 	//endregion
 	
 	
@@ -109,6 +112,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	public void bind()
 	{
 		LWJGL.glActiveTexture(GL13.GL_TEXTURE0 + GL_BOUND_INDEX);
+		LWJGL.glBindSampler(GL_BOUND_INDEX, 0); // MC's sampler is probably LINEAR instead of NEAREST, which causes the textures to render blurry
 		LWJGL.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
 		LWJGL.glActiveTexture(GL13.GL_TEXTURE0);
 	}
@@ -132,11 +136,11 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	@Override 
 	protected void beforeWriteToTexture()
 	{
-		uploadGlState.saveState();
+		this.uploadGlState.saveState();
 		
 		LWJGL.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
 		
-		LWJGL.glPixelStorei(GL11.GL_UNPACK_ROW_LENGTH, BlockTextureRegistry.TILE_HEIGHT_AND_WIDTH);
+		LWJGL.glPixelStorei(GL11.GL_UNPACK_ROW_LENGTH, TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);
 		LWJGL.glPixelStorei(GL11.GL_UNPACK_SKIP_PIXELS, 0);
 		LWJGL.glPixelStorei(GL11.GL_UNPACK_SKIP_ROWS, 0);
 		LWJGL.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);

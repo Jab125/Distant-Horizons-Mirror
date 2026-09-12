@@ -370,7 +370,7 @@ public class ClientBlockStateTextureCache
 		
 		//endregion
 		
-		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels, textureTinted);
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
 	}
 	#endif
 	
@@ -400,7 +400,7 @@ public class ClientBlockStateTextureCache
 				pixels[(v * TEXTURE_WIDTH_AND_HEIGHT) + u] = TextureAtlasSpriteWrapper.getPixelARGB(sprite, 0, texelX, texelY);
 			}
 		}
-		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels, tinted);
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
 	}
 	
 	//endregion

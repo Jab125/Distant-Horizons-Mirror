@@ -613,6 +613,9 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 	public void showDialog(String title, String message, String dialogType, String iconType)
 	{ NativeDialogUtil.showDialog(title, message, dialogType, iconType); }
 	
+	@Override
+	public boolean dialogNeedsAwtHeadless() { return NativeDialogUtil.needsAwtHeadless(); }
+	
 	//endregion
 	
 	

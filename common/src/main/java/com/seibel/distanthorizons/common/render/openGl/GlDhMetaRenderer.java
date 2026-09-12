@@ -19,11 +19,13 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
+import com.seibel.distanthorizons.core.render.EDhRenderDepth;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
+import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhMetaRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
@@ -50,6 +52,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
+	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 	
 	private static final IOptifineAccessor OPTIFINE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
 	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
@@ -122,11 +125,11 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		this.bindLightmap(renderParams.lightmap);
 		
-		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get()
-			&& irisShadersInactive())
+		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get())
 		{
 			GlBlockTextureAtlas.INSTANCE.uploadPendingTiles();
 			GlBlockTextureAtlas.INSTANCE.bind();
+			DhApiRenderProxy.getDhBlockRatioAtlasTextureGlId = GlBlockTextureAtlas.INSTANCE.getTextureId();
 		}
 	}
 	private void setGLState(
@@ -181,14 +184,21 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		// Enable depth test and depth mask
 		GLMC.enableDepthTest();
-		GLMC.glDepthFunc(GL11.GL_LESS);
+		if (RENDER_DEF.getRenderDepth() == EDhRenderDepth.FORWARD_Z)
+		{
+			GLMC.glDepthFunc(GL11.GL_LESS);
+		}
+		else
+		{
+			GLMC.glDepthFunc(GL11.GL_GREATER);
+		}
 		GLMC.enableDepthMask();
 		
 		// don't change the viewport size when Iris is rendering the shadow pass
 		// Iris has a custom shadowmap size, and changing the viewport will cause shadows to render
 		// incorrectly.
-		if (IRIS_ACCESSOR != null 
-			&& !IRIS_ACCESSOR.isRenderingShadowPass())
+		if (IRIS_ACCESSOR == null 
+			|| !IRIS_ACCESSOR.isRenderingShadowPass())
 		{
 			// This is required for MC versions 1.21.5+
 			// due to MC updating the lightmap by changing the viewport size
@@ -249,7 +259,8 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		boolean clearTextures = !ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeTextureClearEvent.class, renderEventParam);
 		if (clearTextures)
 		{
-			LWJGL.glClearDepth(1.0);
+			float clearDepth = RENDER_DEF.getRenderDepth().farDepth;
+			LWJGL.glClearDepth(clearDepth);
 			
 			float[] clearColorValues = new float[4];
 			LWJGL.glGetFloatv(GL11.GL_COLOR_CLEAR_VALUE, clearColorValues);
@@ -342,15 +353,20 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		IDhApiFramebuffer framebufferOverride = OverrideInjector.INSTANCE.get(IDhApiFramebuffer.class);
 		
 		
-		if (this.depthTexture != null)
-		{
-			this.depthTexture.destroy();
-		}
+		GlDhDepthTexture oldDepthTexture = this.depthTexture;
 		this.depthTexture = new GlDhDepthTexture(this.textureWidth, this.textureHeight, EGlDhDepthBufferFormat.DEPTH32F);
 		this.framebuffer.addDepthAttachment(this.depthTexture.getTextureId(), EGlDhDepthBufferFormat.DEPTH32F.isCombinedStencil());
 		if (framebufferOverride != null)
 		{
 			framebufferOverride.addDepthAttachment(this.depthTexture.getTextureId(), EGlDhDepthBufferFormat.DEPTH32F.isCombinedStencil());
+		}
+		// The old texture needs to be deleted after the new one is created to ensure
+		// GL creates a new depth texture ID.
+		// This is necessary to fix an Iris bug where it caches on the texture ID,
+		// but GL may return the same texture ID, preventing the new texture from being bound properly.
+		if (oldDepthTexture != null)
+		{
+			oldDepthTexture.destroy();
 		}
 		
 		
@@ -417,8 +433,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		GLMC.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE, GL11.GL_ZERO);
 		#endif
 		this.unbindLightmap();
-		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get()
-			&& irisShadersInactive())
+		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get())
 		{
 			GlBlockTextureAtlas.INSTANCE.unbind();
 		}
@@ -448,7 +463,8 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		
 		
-		LWJGL.glClearDepth(1.0);
+		float clearDepth = RENDER_DEF.getRenderDepth().farDepth;
+		LWJGL.glClearDepth(clearDepth);
 		
 		float[] clearColorValues = new float[4];
 		LWJGL.glGetFloatv(GL11.GL_COLOR_CLEAR_VALUE, clearColorValues);

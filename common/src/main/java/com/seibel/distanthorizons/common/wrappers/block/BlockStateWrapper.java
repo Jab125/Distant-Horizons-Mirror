@@ -119,14 +119,22 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	public static final String AIR_STRING = "AIR";
 	public static final BlockStateWrapper AIR = new BlockStateWrapper(null, null, null);
 	
-	public static final String DIRT_RESOURCE_LOCATION_STRING = "minecraft:dirt";
-	public static final String WATER_RESOURCE_LOCATION_STRING = "minecraft:water";
+	private static final String WATER_RESOURCE_LOCATION_STRING = "minecraft:water";
+	private static BlockStateWrapper waterBlock = null;
+	
+	private static final String DIRT_RESOURCE_LOCATION_STRING = "minecraft:dirt";
+	private static BlockStateWrapper dirtBlock = null;
+	
+	private static final String ICE_RESOURCE_LOCATION_STRING = "minecraft:ice";
+	private static BlockStateWrapper iceBlock = null;
+	
+	private static final String SNOW_RESOURCE_LOCATION_STRING = "minecraft:snow";
+	private static BlockStateWrapper snowBlock = null;
 	
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
 	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
 	public static ObjectOpenHashSet<IBlockStateWrapper> waterSubsurfaceReplacementBlocks = null;
 	public static ObjectOpenHashSet<IBlockStateWrapper> waterSurfaceReplacementBlocks = null;
-	public static IBlockStateWrapper waterBlock = null;
 	
 	/** keep track of broken blocks so we don't log every time */
 	#if MC_VER <= MC_1_7_10
@@ -169,6 +177,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean isSolid;
 	private final boolean isLiquid;
 	private final boolean allowApiColorOverride;
+	private final boolean allowApiTextureOverride;
 	/** null if this block can't tint beacons */
 	private final Color beaconTintColor; 
 	private final Color mapColor;
@@ -433,6 +442,17 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			else
 			{
 				this.allowApiColorOverride = false;
+			}
+			
+			// allow overriding if present 
+			if (overrideEventParam != null
+				&& overrideEventParam.getAllowApiTextureOverride() != null)
+			{
+				this.allowApiTextureOverride = overrideEventParam.getAllowApiTextureOverride();
+			}
+			else
+			{
+				this.allowApiTextureOverride = false;
 			}
 		}
 		
@@ -1158,7 +1178,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		return waterSubsurfaceReplacementBlocks;
 	}
-	public static IBlockStateWrapper getWaterBlockStateWrapper(ILevelWrapper levelWrapper)
+	
+	public static BlockStateWrapper getWaterBlockStateWrapper(ILevelWrapper levelWrapper)
 	{
 		// use the cached version if possible
 		if (waterBlock != null)
@@ -1166,9 +1187,66 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			return waterBlock;
 		}
 		
-		waterBlock = WrapperFactory.INSTANCE.deserializeBlockStateWrapperOrGetDefault("minecraft:water", levelWrapper);
+		waterBlock = BlockStateWrapper.deserializeOrDefault(WATER_RESOURCE_LOCATION_STRING, levelWrapper);
+		if (waterBlock.equals(AIR))
+		{
+			LOGGER.warn("Failed to deserialize ["+WATER_RESOURCE_LOCATION_STRING+"], issues may occur.");
+		}
+		
 		return waterBlock;
 	}
+	
+	public static BlockStateWrapper getDirtBlockStateWrapper(ILevelWrapper levelWrapper)
+	{
+		// use the cached version if possible
+		if (dirtBlock != null)
+		{
+			return dirtBlock;
+		}
+		
+		dirtBlock = BlockStateWrapper.deserializeOrDefault(DIRT_RESOURCE_LOCATION_STRING, levelWrapper);
+		if (dirtBlock.equals(AIR))
+		{
+			LOGGER.warn("Failed to deserialize ["+DIRT_RESOURCE_LOCATION_STRING+"], issues may occur.");
+		}
+		
+		return dirtBlock;
+	}
+	
+	public static BlockStateWrapper getIceBlockStateWrapper(ILevelWrapper levelWrapper)
+	{
+		// use the cached version if possible
+		if (iceBlock != null)
+		{
+			return iceBlock;
+		}
+		
+		iceBlock = BlockStateWrapper.deserializeOrDefault(ICE_RESOURCE_LOCATION_STRING, levelWrapper);
+		if (iceBlock.equals(AIR))
+		{
+			LOGGER.warn("Failed to deserialize ["+ICE_RESOURCE_LOCATION_STRING+"], issues may occur.");
+		}
+		
+		return iceBlock;
+	}
+	
+	public static BlockStateWrapper getSnowBlockStateWrapper(ILevelWrapper levelWrapper)
+	{
+		// use the cached version if possible
+		if (snowBlock != null)
+		{
+			return snowBlock;
+		}
+		
+		snowBlock = BlockStateWrapper.deserializeOrDefault(SNOW_RESOURCE_LOCATION_STRING, levelWrapper);
+		if (snowBlock.equals(AIR))
+		{
+			LOGGER.warn("Failed to deserialize ["+SNOW_RESOURCE_LOCATION_STRING+"], issues may occur.");
+		}
+		
+		return snowBlock;
+	}
+	
 	
 	//endregion
 	
@@ -1270,6 +1348,9 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		waterSurfaceReplacementBlocks = null;
 		waterSubsurfaceReplacementBlocks = null;
 		waterBlock = null;
+		dirtBlock = null;
+		iceBlock = null;
+		snowBlock = null;
 	}
 	
 	//endregion
@@ -1348,6 +1429,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	@Override public boolean isBeaconTintBlock() { return this.beaconTintColor != null; }
 	@Override public boolean allowsBeaconBeamPassage() { return this.allowsBeaconBeamPassage; }
 	@Override public boolean allowApiColorOverride() { return this.allowApiColorOverride; }
+	@Override public boolean allowApiTextureOverride() { return this.allowApiTextureOverride; }
 	@Override public boolean renderTexture() { return this.renderTexture; }
 	@Override public boolean useBottomTextureForSides() { return this.useBottomTextureForSides; }
 	@Override public boolean alwaysRasterizeTexture() { return this.alwaysRasterizeTexture; }
@@ -1426,9 +1508,21 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		#endif
 	}
 	
+	/** returns AIR if the given string can't be deserialized */
+	public static BlockStateWrapper deserializeOrDefault(String resourceStateString, ILevelWrapper levelWrapper)
+	{
+		try
+		{
+			return deserialize(resourceStateString, levelWrapper);
+		}
+		catch (IOException e)
+		{
+			return BlockStateWrapper.AIR;
+		}
+	}
 	
 	/** will only work if a level is currently loaded */
-	public static IBlockStateWrapper deserialize(String resourceStateString, ILevelWrapper levelWrapper) throws IOException
+	public static BlockStateWrapper deserialize(String resourceStateString, ILevelWrapper levelWrapper) throws IOException
 	{
 		// we need the final string for the concurrent hash map later
 		final String finalResourceStateString = resourceStateString;

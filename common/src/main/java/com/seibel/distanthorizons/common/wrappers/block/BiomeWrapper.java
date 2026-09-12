@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.common.wrappers.block;
 import java.io.IOException;
 import java.util.HashSet;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 
@@ -221,6 +222,21 @@ public class BiomeWrapper implements IBiomeWrapper
 	
 	@Override
 	public int hashCode() { return this.hashCode; }
+	
+	@Override
+	public boolean isColdBiome()
+	{
+		// https://minecraft.wiki/w/Biome#Temperature
+		#if MC_VER <= MC_1_7_10
+		return this.biome.temperature < 0.1f;
+		#elif MC_VER <= MC_1_12_2
+		return this.biome.getDefaultTemperature() < 0.1f;
+		#elif MC_VER < MC_1_18_2
+		return this.biome.getBaseTemperature() < 0.1f;
+		#else
+		return this.biome.value().getBaseTemperature() < 0.1f;
+		#endif
+	}
 	
 	@Override
 	public String getSerialString() { return this.serialString; }

@@ -29,6 +29,7 @@ import com.seibel.distanthorizons.core.render.AbstractBlockTextureAtlas;
 import com.seibel.distanthorizons.core.util.objects.pooling.PhantomArrayList.PhantomArrayListCheckout;
 import com.seibel.distanthorizons.core.util.objects.pooling.PhantomArrayList.PhantomArrayListPool;
 import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
+import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import org.lwjgl.opengl.GL32;
 
 import java.nio.ByteBuffer;
@@ -72,10 +73,10 @@ public class BlazeBlockTextureAtlas extends AbstractBlockTextureAtlas
 	//==================//
 	//region
 	
-	@Override 
-	protected void tryCreateOrResize(int width, int height) { textureWrapper.tryCreateOrResize(width, height); }
+	@Override
+	protected void tryCreateOrResize(int width, int height) { this.textureWrapper.tryCreateOrResize(width, height); }
 	
-	public IDhBlazeTexture getTextureWrapper() { return this.textureWrapper; }
+	public BlazeTextureWrapper getTextureWrapper() { return this.textureWrapper; }
 	
 	//endregion
 	
@@ -98,7 +99,7 @@ public class BlazeBlockTextureAtlas extends AbstractBlockTextureAtlas
 		}
 		
 		
-		int size = BlockTextureRegistry.TILE_HEIGHT_AND_WIDTH;
+		int size = TextureUtil.TEXTURE_WIDTH_AND_HEIGHT;
 		int mipLevel = 0;
 		ByteBuffer currentLevelData = pixelBuffer;
 		
@@ -115,7 +116,7 @@ public class BlazeBlockTextureAtlas extends AbstractBlockTextureAtlas
 					size  // height
 				);
 				
-				currentLevelData = generateNextMipLevel(currentLevelData, size, checkout);
+				currentLevelData = this.generateNextMipLevel(currentLevelData, size, checkout);
 				size /= 2;
 				mipLevel++;
 			}
@@ -157,9 +158,9 @@ public class BlazeBlockTextureAtlas extends AbstractBlockTextureAtlas
 					int sum =
 						// & 0xFF is to convert from signed byte to unsigned for averaging
 						(sourceData.get(index00 + channelIndex) & 0xFF) +
-						(sourceData.get(index10 + channelIndex) & 0xFF) +
-						(sourceData.get(index01 + channelIndex) & 0xFF) +
-						(sourceData.get(index11 + channelIndex) & 0xFF);
+							(sourceData.get(index10 + channelIndex) & 0xFF) +
+							(sourceData.get(index01 + channelIndex) & 0xFF) +
+							(sourceData.get(index11 + channelIndex) & 0xFF);
 					
 					mipData.put((byte) (sum / 4));
 				}

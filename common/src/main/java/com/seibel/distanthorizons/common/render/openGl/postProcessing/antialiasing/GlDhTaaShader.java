@@ -19,11 +19,13 @@
 
 package com.seibel.distanthorizons.common.render.openGl.postProcessing.antialiasing;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
 import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.GlScreenQuad;
 import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRenderer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
+import com.seibel.distanthorizons.core.render.EDhDepthRange;
 import com.seibel.distanthorizons.core.render.EDhRenderDepth;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.math.DhMat4f;
@@ -68,7 +70,7 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 	public int uViewWidth;
 	public int uViewHeight;
 	
-	public int uIsReverseZDepth;
+	public int uDepthIsZeroToPositiveOne;
 	
 	public int uCurrentColorSampler;
 	public int uCurrentDepthSampler;
@@ -109,7 +111,7 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 		this.uViewWidth = this.shader.getUniformLocation("uViewWidth");
 		this.uViewHeight = this.shader.getUniformLocation("uViewHeight");
 		
-		this.uIsReverseZDepth = this.shader.getUniformLocation("uIsReverseZDepth");
+		this.uDepthIsZeroToPositiveOne = this.shader.getUniformLocation("uDepthIsZeroToPositiveOne");
 		
 		this.uCurrentColorSampler = this.shader.getUniformLocation("uCurrentColorSampler");
 		this.uCurrentDepthSampler = this.shader.getUniformLocation("uCurrentDepthSampler");
@@ -158,8 +160,7 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 			this.shader.setUniform(this.uViewWidth, (float) width);
 			this.shader.setUniform(this.uViewHeight, (float) height);
 			
-			// TODO should be is Vulkan
-			this.shader.setUniform(this.uIsReverseZDepth, 0);//(RENDER_API_DEF.getRenderDepth() == EDhRenderDepth.REVERSE_Z) ? 1 : 0);
+			this.shader.setUniform(this.uDepthIsZeroToPositiveOne, (RENDER_DEF.getDepthRange() == EDhDepthRange.ZERO_TO_POS_ONE) ? 1 : 0);
 		}
 	}
 	

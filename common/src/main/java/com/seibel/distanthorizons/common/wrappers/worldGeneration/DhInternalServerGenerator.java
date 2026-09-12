@@ -66,7 +66,7 @@ import java.util.function.Function;
 import java.lang.reflect.Field;
 #endif
 
-public class InternalServerGenerator
+public class DhInternalServerGenerator
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder()
 			.name("LOD World Gen - Internal Server")
@@ -138,7 +138,7 @@ public class InternalServerGenerator
 	// constructor //
 	//=============//
 	
-	public InternalServerGenerator(GlobalWorldGenParams params, IDhServerLevel dhServerLevel)
+	public DhInternalServerGenerator(GlobalWorldGenParams params, IDhServerLevel dhServerLevel)
 	{
 		this.params = params;
 		this.dhServerLevel = dhServerLevel;
@@ -224,7 +224,7 @@ public class InternalServerGenerator
 	// generation //
 	//============//
 	
-	public void generateChunksViaInternalServer(GenerationEvent genEvent)
+	public void generateChunksViaInternalServer(ChunkGenEvent genEvent)
 	{
 		this.runValidation();
 		
@@ -241,7 +241,7 @@ public class InternalServerGenerator
 			#endif
 			
 			{
-				Iterator<ChunkPos> chunkPosIterator = ChunkPosGenStream.getIterator(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 0);
+				Iterator<ChunkPos> chunkPosIterator = ChunkPosGenStream.getIterator(genEvent.minChunkPos.getX(), genEvent.minChunkPos.getZ(), genEvent.widthInChunks, 0);
 				while (chunkPosIterator.hasNext())
 				{
 					ChunkPos chunkPos = chunkPosIterator.next();
@@ -346,7 +346,7 @@ public class InternalServerGenerator
 			// release all chunks from the server to prevent out of memory issues.
 			// on versions <= 1.12.2 each release also covers that chunk's neighbors,
 			// which were acquired in requestChunkFromServerAsync.
-			Iterator<ChunkPos> chunkPosIterator = ChunkPosGenStream.getIterator(genEvent.minPos.getX(), genEvent.minPos.getZ(), genEvent.widthInChunks, 0);
+			Iterator<ChunkPos> chunkPosIterator = ChunkPosGenStream.getIterator(genEvent.minChunkPos.getX(), genEvent.minChunkPos.getZ(), genEvent.widthInChunks, 0);
 			while (chunkPosIterator.hasNext())
 			{
 				ChunkPos chunkPos = chunkPosIterator.next();
@@ -453,15 +453,15 @@ public class InternalServerGenerator
 				#if MC_VER <= MC_1_12_2
 				// a new generation event may have picked this pos back up during the delay,
 				// in which case its update events should stay ignored
-				if (!InternalServerGenerator.this.chunkRefCountIsZero(chunkPos))
+				if (!DhInternalServerGenerator.this.chunkRefCountIsZero(chunkPos))
 				{
 					return;
 				}
 				#endif
 				
-				if (InternalServerGenerator.this.updateManager != null)
+				if (DhInternalServerGenerator.this.updateManager != null)
 				{
-					InternalServerGenerator.this.updateManager.removePosToIgnore(chunkPos);
+					DhInternalServerGenerator.this.updateManager.removePosToIgnore(chunkPos);
 				}
 			}
 		}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
@@ -698,9 +698,9 @@ public class InternalServerGenerator
 					@Override
 					public void run()
 					{
-						if (InternalServerGenerator.this.updateManager != null)
+						if (DhInternalServerGenerator.this.updateManager != null)
 						{
-							InternalServerGenerator.this.updateManager.removePosToIgnore(McObjectConverter.convert(chunkPos));
+							DhInternalServerGenerator.this.updateManager.removePosToIgnore(McObjectConverter.convert(chunkPos));
 						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
