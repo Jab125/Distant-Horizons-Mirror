@@ -41,6 +41,11 @@ def writePreprocessorDefinitions() {
         sb.append("DEV_BUILD=\n")
     }
 
+    if (rootProject.enableRenderDocInjection)
+    {
+        sb.append("INJECT_RENDER_DOC=\n")
+    }
+    
     new File(rootDir, "build.properties").text = sb.toString()
 }
 writePreprocessorDefinitions()

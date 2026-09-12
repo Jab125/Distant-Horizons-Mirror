@@ -24,7 +24,7 @@
     "client.MixinLightTexture",
     "client.MixinMinecraft",
     "client.MixinOptionsScreen",
-    "client.MixinSharedConstants"
+    "client.MixinMain"
   ],
   "server": [],
   "injectors": {
