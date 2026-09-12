@@ -121,8 +121,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		this.bindLightmap(renderParams.lightmap);
 		
-		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get()
-			&& irisShadersInactive())
+		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get())
 		{
 			GlBlockTextureAtlas.INSTANCE.uploadPendingTiles();
 			GlBlockTextureAtlas.INSTANCE.bind();
@@ -431,8 +430,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		GLMC.glBlendFuncSeparate(GL33.GL_SRC_ALPHA, GL33.GL_ONE, GL33.GL_ONE, GL33.GL_ZERO);
 		#endif
 		this.unbindLightmap();
-		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get()
-			&& irisShadersInactive())
+		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get())
 		{
 			GlBlockTextureAtlas.INSTANCE.unbind();
 		}
