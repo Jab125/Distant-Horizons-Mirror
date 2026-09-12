@@ -23,8 +23,10 @@ package com.seibel.distanthorizons.common.wrappers.minecraft;
 import net.minecraft.client.renderer.GlStateManager;
 #elif MC_VER < MC_1_21_5
 import com.mojang.blaze3d.platform.GlStateManager;
-#else
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.opengl.GlStateManager;
+#else
+import com.mojang.renderpearl.backend.opengl.GlStateManager;
 #endif
 
 import com.seibel.distanthorizons.core.jar.EPlatform;

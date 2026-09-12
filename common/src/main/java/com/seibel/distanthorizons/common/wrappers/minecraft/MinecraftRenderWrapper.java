@@ -96,6 +96,7 @@ import net.minecraft.world.phys.Vec3;
 import net.minecraft.client.Minecraft;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.jetbrains.annotations.NotNull;
+import org.joml.Vector3fc;
 import org.joml.Vector4f;
 
 #if MC_VER <= MC_1_12_2
@@ -109,15 +110,20 @@ import org.lwjgl.opengl.GL15;
 import net.minecraft.world.level.material.FogType;
 #endif
 
-#if MC_VER >= MC_1_21_5
+#if MC_VER <= MC_1_21_4
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.opengl.GlTexture;
 #else
+import com.mojang.renderpearl.backend.opengl.GlTexture;
 #endif
 
 #if MC_VER <= MC_1_21_10
-#else
+#elif MC_VER <= MC_26_2_0
 import net.minecraft.world.attribute.EnvironmentAttributes;
 import com.mojang.blaze3d.textures.GpuTexture;
+#else
+import net.minecraft.world.attribute.EnvironmentAttributes;
+import com.mojang.renderpearl.api.textures.GpuTexture;
 #endif
 
 /**
@@ -414,9 +420,12 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			#elif MC_VER <= MC_26_1_2
 			int argbColor = MC.level.environmentAttributes().getValue(EnvironmentAttributes.SKY_COLOR, MC.gameRenderer.getMainCamera().position());
 			return new Color(ColorUtil.getRed(argbColor), ColorUtil.getGreen(argbColor), ColorUtil.getBlue(argbColor), 255 /* ignore alpha since DH clouds don't render correctly with transparency */);
-			#else
+			#elif MC_VER <= MC_26_2_0
 			int argbColor = MC.level.environmentAttributes().getValue(EnvironmentAttributes.SKY_COLOR, MC.gameRenderer.mainCamera().position());
 			return new Color(ColorUtil.getRed(argbColor), ColorUtil.getGreen(argbColor), ColorUtil.getBlue(argbColor), 255 /* ignore alpha since DH clouds don't render correctly with transparency */);
+			#else
+			Vector3fc argbColor = MC.level.environmentAttributes().getValue(EnvironmentAttributes.SKY_COLOR, MC.gameRenderer.mainCamera().position());
+			return new Color(argbColor.x(), argbColor.y(), argbColor.z(), 1.0f /* ignore alpha since DH clouds don't render correctly with transparency */);
 			#endif
 		}
 		else

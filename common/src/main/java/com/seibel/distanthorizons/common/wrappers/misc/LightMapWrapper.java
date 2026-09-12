@@ -23,9 +23,8 @@ package com.seibel.distanthorizons.common.wrappers.misc;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 #endif
-import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
+
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
-import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -37,9 +36,12 @@ import java.nio.ByteBuffer;
 #endif
 
 #if MC_VER <= MC_1_21_10
-#else
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.textures.GpuTexture;
+#else
+import com.mojang.renderpearl.api.textures.GpuTexture;
 #endif
+
 
 public class LightMapWrapper implements ILightMapWrapper
 {
