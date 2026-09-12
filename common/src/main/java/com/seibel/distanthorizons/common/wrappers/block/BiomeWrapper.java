@@ -186,7 +186,9 @@ public class BiomeWrapper implements IBiomeWrapper
 	public boolean isColdBiome()
 	{
 		// https://minecraft.wiki/w/Biome#Temperature
-		#if MC_VER < MC_1_18_2
+		#if MC_VER <= MC_1_12_2
+		return this.biome.isSnowyBiome();
+		#elif MC_VER < MC_1_18_2
 		return this.biome.getBaseTemperature() < 0.1f;
 		#else
 		return this.biome.value().getBaseTemperature() < 0.1f;

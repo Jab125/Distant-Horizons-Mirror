@@ -61,7 +61,10 @@ public class LightMapWrapper implements ILightMapWrapper
 	private GpuTexture gpuTexture = null;
 	#endif
 	
+	#if MC_VER <= MC_1_21_10
+	#else
 	private final BlazeTextureViewWrapper lightmapTextureWrapper = new BlazeTextureViewWrapper();
+	#endif
 	
 	
 	//==============//
@@ -143,7 +146,10 @@ public class LightMapWrapper implements ILightMapWrapper
 	//==============//
 	//region
 	
+	#if MC_VER <= MC_1_21_10
+	#else
 	public BlazeTextureViewWrapper getTextureViewWrapper() { return this.lightmapTextureWrapper; }
+	#endif
 	
 	public int getOpenGlId() { return this.textureId; }
 	
