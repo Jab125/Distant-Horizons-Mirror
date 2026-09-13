@@ -69,10 +69,10 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAc
 
 #if MC_VER <= MC_1_12_2
 import net.minecraft.client.renderer.entity.RenderManager;
+import net.minecraft.client.shader.Framebuffer;
 #if MC_VER <= MC_1_7_10
 import com.seibel.distanthorizons.common.backports.Camera;
 import net.minecraft.block.Block;
-import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.potion.Potion;
 import net.minecraft.util.MathHelper;
 import net.minecraft.util.Vec3;
@@ -602,8 +602,8 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		final Framebuffer framebuffer = Minecraft.getMinecraft().getFramebuffer();
 		return framebuffer.depthBuffer;
 		#elif MC_VER <= MC_1_12_2
-		//1.12.2 is using renderbuffer instead of framebuffer for depth texture
-		return -1;
+		final Framebuffer framebuffer = Minecraft.getMinecraft().getFramebuffer();
+		return framebuffer.depthBuffer;
 		#elif MC_VER < MC_1_21_5
 		return this.getRenderTarget().getDepthTextureId();
 		#else

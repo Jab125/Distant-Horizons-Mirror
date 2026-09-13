@@ -13,6 +13,7 @@
     ],
     "client": [
         "client.MixinEntityRenderer",
+        "client.MixinFramebuffer",
         "client.MixinMinecraft",
         "client.MixinNetHandlerPlayClient",
         "client.MixinOptionsScreen",

@@ -40,6 +40,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSende
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import net.minecraft.client.Minecraft;
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraftforge.client.event.RenderGameOverlayEvent;
@@ -193,12 +194,20 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	{
 		if (event.type.equals(TickEvent.RenderTickEvent.Type.RENDER))
 		{
+			boolean framebufferMixinWasEnabled = MixinFlags.framebufferMixinEnabled;
+			MixinFlags.framebufferMixinEnabled = true;
 			try
 			{
-				// should generally only need to be set once per game session
-				// allows DH to render directly to Optifine's level frame buffer,
-				// allowing better shader support
-				MinecraftRenderWrapper.INSTANCE.finalLevelFrameBufferId = LWJGL.glGetInteger(GL30.GL_FRAMEBUFFER_BINDING);
+				if (!framebufferMixinWasEnabled)
+				{
+					// The splash screen may have created MC's main framebuffer before our redirect was enabled.
+					// Rebuild it once after the first real render tick so the depth attachment becomes a texture.
+					Framebuffer framebuffer = Minecraft.getMinecraft().getFramebuffer();
+					if (framebuffer != null)
+					{
+						framebuffer.createBindFramebuffer(framebuffer.framebufferWidth, framebuffer.framebufferHeight);
+					}
+				}
 			}
 			catch (Exception | Error e)
 			{
