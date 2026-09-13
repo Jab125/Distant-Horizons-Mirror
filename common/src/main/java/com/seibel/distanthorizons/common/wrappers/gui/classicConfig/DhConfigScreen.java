@@ -513,12 +513,25 @@ class DhConfigScreen extends DhScreen
 					while (index != startingIndex)
 					{
 						enumValue = enumList.get(index);
-						if (!AnnotationUtil.doesEnumHaveAnnotation(enumValue, DisallowSelectingViaConfigGui.class))
+						
+						// does enum have ignore attribute?
+						boolean selectable = !AnnotationUtil.doesEnumHaveAnnotation(enumValue, DisallowSelectingViaConfigGui.class);
+						if (selectable)
 						{
-							// this enum shouldn't be selectable via the UI,
-							// skip it
+							// does this enum have a show function?
+							ConfigEntry.IShowEnumOptionFunc showEnumFunc = enumConfigEntry.getShowEnumOptionFunc();
+							if (showEnumFunc != null)
+							{
+								selectable = showEnumFunc.shouldShowEnum(enumValue);
+							}
+						}
+						
+						if (selectable)
+						{
+							// this enum is a valid option
 							break;
 						}
+						
 						
 						// move forward or backwards depending on if the shift key is pressed
 						index = shiftPressed ? index - 1 : index + 1;
