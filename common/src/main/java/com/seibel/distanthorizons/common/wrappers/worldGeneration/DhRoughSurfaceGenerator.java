@@ -511,11 +511,11 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	 * May change as more chunks are generated.
 	 */
 	private IBlockStateWrapper getSurfaceBlockState(
-		IBiomeWrapper biomeWrapper,
+		IBiomeWrapper desiredBiomeWrapper,
 		int blockX, int blockZ)
 	{
 		// use the existing mapping if available
-		BlockCountPair existingBlockCountPair = this.biomeToBlockWrapper.get(biomeWrapper);
+		BlockCountPair existingBlockCountPair = this.biomeToBlockWrapper.get(desiredBiomeWrapper);
 		if (existingBlockCountPair != null)
 		{
 			return existingBlockCountPair.blockStateWrapper;
@@ -539,14 +539,14 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			// subtract 2 from each chunk pos so the target chunk is near the center
 			DhChunkPos genMinChunkPos = new DhChunkPos(
-				centerChunkPos.getX() - 2,
-				centerChunkPos.getZ() - 2);
+				centerChunkPos.getX() - 1,
+				centerChunkPos.getZ() - 1);
 			
 			ChunkGenEvent genEvent = new ChunkGenEvent(
 				genMinChunkPos,
-				// 6 chunks wide mean we get 2 to 3 chunks of buffer around the target position,
-				// meaning we should have a decent sized dataset of what the biome would be like
-				6, // TODO might want to lower this back down to 4, 6 can be quite slow to startup
+				// 4 chunks wide mean we get 1 to 2 chunks of buffer around the target position
+				// hopefully this is enough to get a decent example of what the target chunk looks like
+				4,
 				this.genParams.dhChunkGenerator,
 				EDhApiDistantGeneratorMode.SURFACE, EDhApiWorldGenerationStep.SURFACE,
 				/*loadChunksFromDisk*/ false,
@@ -622,24 +622,28 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 					return existingPair;
 				});
 			}
-			
-			return newPair.blockStateWrapper;
+		}
+		
+		existingBlockCountPair = this.biomeToBlockWrapper.get(desiredBiomeWrapper);
+		if (existingBlockCountPair != null)
+		{
+			return existingBlockCountPair.blockStateWrapper;
 		}
 		
 		//endregion
 		
 		
 		
-		BlockCountPair pair = getMostCommonBlockForBiomeFromMap(biomeBlockCounts, biomeWrapper);
+		BlockCountPair pair = getMostCommonBlockForBiomeFromMap(biomeBlockCounts, desiredBiomeWrapper);
 		if (pair != null)
 		{
 			// if we didn't find enough blocks to normally consider this
 			// biome as "found"
 			// use whatever we did find as a base
-			this.biomeToBlockWrapper.putIfAbsent(biomeWrapper, pair);
+			this.biomeToBlockWrapper.putIfAbsent(desiredBiomeWrapper, pair);
 		}
 		
-		BlockCountPair foundBlockPair = this.biomeToBlockWrapper.get(biomeWrapper);
+		BlockCountPair foundBlockPair = this.biomeToBlockWrapper.get(desiredBiomeWrapper);
 		if (foundBlockPair != null)
 		{
 			return foundBlockPair.blockStateWrapper;
@@ -651,7 +655,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		if (fallbackBlockRef.get() != null)
 		{
 			pair = new BlockCountPair(fallbackBlockRef.get(), 1);
-			this.biomeToBlockWrapper.putIfAbsent(biomeWrapper, pair);
+			this.biomeToBlockWrapper.putIfAbsent(desiredBiomeWrapper, pair);
 			return pair.blockStateWrapper;
 		}
 		
@@ -662,7 +666,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		{
 			BlockStateWrapper dirtBlock = BlockStateWrapper.getDirtBlockStateWrapper(this.serverLevelWrapper);
 			pair = new BlockCountPair(dirtBlock, 0);
-			this.biomeToBlockWrapper.putIfAbsent(biomeWrapper, pair);
+			this.biomeToBlockWrapper.putIfAbsent(desiredBiomeWrapper, pair);
 			return pair.blockStateWrapper;
 		}
 	}
