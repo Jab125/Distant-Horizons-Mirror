@@ -34,7 +34,12 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-#if MC_VER <= MC_26_2_0
+#if MC_VER <= MC_1_21_10
+import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.textures.GpuSampler;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;

@@ -11,7 +11,7 @@ public class MixinIrisFrameBuffer
 
 #else
 
-#if MC_VER <= MC_1_20_4
+#if MC_VER <= MC_1_20_2
 import net.coderbot.iris.gl.IrisRenderSystem;
 #else
 import net.irisshaders.iris.gl.IrisRenderSystem;
