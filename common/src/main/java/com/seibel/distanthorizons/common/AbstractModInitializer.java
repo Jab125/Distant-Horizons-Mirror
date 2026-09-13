@@ -510,7 +510,7 @@ public abstract class AbstractModInitializer
 			
 			LOGGER.info("Found ["+numberOfC2meThreads+"] C2ME threads. DH needs to use at least the same number of threads as C2ME to prevent issues with Chunky.");
 			
-			if (Config.Common.MultiThreading.useC2meThreadCount.get())
+			if (chunkyPresent)
 			{
 				Config.Common.MultiThreading.numberOfThreads.setApiValue(numberOfC2meThreads);
 				Config.Common.MultiThreading.threadRunTimeRatio.setApiValue(1.0); // C2ME threads have 100% uptime, so should we
