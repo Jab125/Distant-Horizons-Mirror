@@ -53,6 +53,7 @@ public final class ChunkGenEvent
 	public final int widthInChunks;
 	public final EDhApiWorldGenerationStep targetGenerationStep;
 	public final EDhApiDistantGeneratorMode generatorMode;
+	public final boolean loadChunksFromDisk;
 	public final CompletableFuture<Void> future;
 	public final Consumer<IChunkWrapper> resultConsumer;
 	
@@ -63,8 +64,9 @@ public final class ChunkGenEvent
 	//=============//
 	
 	public ChunkGenEvent(
-			DhChunkPos minChunkPos, int widthInChunks, DhChunkGenerator generationGroup,
-			EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep targetGenerationStep, Consumer<IChunkWrapper> resultConsumer)
+		DhChunkPos minChunkPos, int widthInChunks, DhChunkGenerator generationGroup,
+		EDhApiDistantGeneratorMode generatorMode, EDhApiWorldGenerationStep targetGenerationStep, boolean loadChunksFromDisk,
+		Consumer<IChunkWrapper> resultConsumer)
 	{
 		this.id = DEBUG_ID_REF.getAndIncrement();
 		
@@ -72,6 +74,7 @@ public final class ChunkGenEvent
 		this.widthInChunks = widthInChunks;
 		this.targetGenerationStep = targetGenerationStep;
 		this.generatorMode = generatorMode;
+		this.loadChunksFromDisk = loadChunksFromDisk;
 		
 		#if MC_VER > MC_1_12_2
 		this.threadedParam = ThreadWorldGenParams.getOrMake(generationGroup.globalParams);
@@ -94,8 +97,8 @@ public final class ChunkGenEvent
 		ExecutorService worldGeneratorThreadPool)
 	{
 		ChunkGenEvent genEvent = new ChunkGenEvent(minPos, widthInChunks, 
-			genEnvironment, generatorMode, 
-			target, resultConsumer);
+			genEnvironment, generatorMode, target, /*loadChunksFromDisk*/true,
+			resultConsumer);
 		
 		try
 		{

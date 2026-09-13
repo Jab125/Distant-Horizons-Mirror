@@ -48,6 +48,7 @@ import javax.annotation.WillNotClose;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
 
 #if MC_VER <= MC_26_2_0
@@ -529,34 +530,47 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		//=======================//
 		//region
 		
+		AtomicReference<IBlockStateWrapper> fallbackBlockRef = new AtomicReference<IBlockStateWrapper>(null);
+		
 		HashMap<IBiomeWrapper, HashMap<IBlockStateWrapper, Integer>> biomeBlockCounts = new HashMap<>();
 		{
-			DhChunkPos chunkPos = new DhChunkPos(new DhBlockPos2D(blockX, blockZ));
+			DhBlockPos2D centerBlockPos = new DhBlockPos2D(blockX, blockZ);
+			DhChunkPos centerChunkPos = new DhChunkPos(centerBlockPos);
+			
 			// subtract 2 from each chunk pos so the target chunk is near the center
-			chunkPos = new DhChunkPos(
-				chunkPos.getX() - 2,
-				chunkPos.getZ() - 2);
+			DhChunkPos genMinChunkPos = new DhChunkPos(
+				centerChunkPos.getX() - 2,
+				centerChunkPos.getZ() - 2);
 			
 			ChunkGenEvent genEvent = new ChunkGenEvent(
-				chunkPos,
+				genMinChunkPos,
 				// 6 chunks wide mean we get 2 to 3 chunks of buffer around the target position,
 				// meaning we should have a decent sized dataset of what the biome would be like
-				6,
+				6, // TODO might want to lower this back down to 4, 6 can be quite slow to startup
 				this.genParams.dhChunkGenerator,
 				EDhApiDistantGeneratorMode.SURFACE, EDhApiWorldGenerationStep.SURFACE,
+				/*loadChunksFromDisk*/ false,
 				(IChunkWrapper chunkWrapper) ->
 				{
-					for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+					for (int relX = 0; relX < LodUtil.CHUNK_WIDTH; relX++)
 					{
-						for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+						for (int relZ = 0; relZ < LodUtil.CHUNK_WIDTH; relZ++)
 						{
-							int height = chunkWrapper.getSolidHeightMapValue(x, z);
+							int height = chunkWrapper.getSolidHeightMapValue(relX, relZ);
 							
-							IBiomeWrapper biome = chunkWrapper.getBiome(x, height, z);
-							IBlockStateWrapper block = chunkWrapper.getBlockState(x, height, z);
+							IBiomeWrapper biome = chunkWrapper.getBiome(relX, height, relZ);
+							IBlockStateWrapper block = chunkWrapper.getBlockState(relX, height, relZ);
 							
 							HashMap<IBlockStateWrapper, Integer> blockCounts = biomeBlockCounts.computeIfAbsent(biome, b -> new HashMap<>());
 							blockCounts.merge(block, 1, Integer::sum);
+							
+							// fallback in the off chance that every biome the chunk generates is invalid
+							if (fallbackBlockRef.get() == null
+								&& chunkWrapper.getChunkPos().equals(centerChunkPos)
+								&& chunkWrapper.getChunkPos().contains(centerBlockPos))
+							{
+								fallbackBlockRef.set(block);
+							}
 						}
 					}
 				});
@@ -608,6 +622,8 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 					return existingPair;
 				});
 			}
+			
+			return newPair.blockStateWrapper;
 		}
 		
 		//endregion
@@ -629,10 +645,26 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			return foundBlockPair.blockStateWrapper;
 		}
 		
+		// if nothing was found that likely means the biomes in the chunk are corrupted
+		// and/or invalid, just return the block in the exact center of
+		// the generated area
+		if (fallbackBlockRef.get() != null)
+		{
+			pair = new BlockCountPair(fallbackBlockRef.get(), 1);
+			this.biomeToBlockWrapper.putIfAbsent(biomeWrapper, pair);
+			return pair.blockStateWrapper;
+		}
+		
+		
 		// if no blocks were found for this biome at all
 		// (first off: how?)
 		// use dirt as a sane base
-		return BlockStateWrapper.getDirtBlockStateWrapper(this.serverLevelWrapper);
+		{
+			BlockStateWrapper dirtBlock = BlockStateWrapper.getDirtBlockStateWrapper(this.serverLevelWrapper);
+			pair = new BlockCountPair(dirtBlock, 0);
+			this.biomeToBlockWrapper.putIfAbsent(biomeWrapper, pair);
+			return pair.blockStateWrapper;
+		}
 	}
 	
 	@Nullable
@@ -719,7 +751,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	//=====================//
 	//region
 	
-	private int findSurfaceHeight(GenParams genParams, ILevelWrapper levelWrapper, int blockX, int blockZ)
+	private static int findSurfaceHeight(GenParams genParams, ILevelWrapper levelWrapper, int blockX, int blockZ)
 	{
 		// super flat generates differently and
 		// must be handled separately
@@ -780,6 +812,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 				2,
 				genParams.dhChunkGenerator,
 				EDhApiDistantGeneratorMode.SURFACE, EDhApiWorldGenerationStep.SURFACE,
+				/*loadChunksFromDisk*/ false,
 				(IChunkWrapper chunkWrapper) ->
 				{
 					for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)

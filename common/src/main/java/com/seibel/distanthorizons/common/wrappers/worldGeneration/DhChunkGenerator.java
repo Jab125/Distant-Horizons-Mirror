@@ -397,7 +397,7 @@ public final class DhChunkGenerator implements IChunkGenerator
 			CompletableFuture<ChunkWrapper> getExistingChunkFuture
 				// running async allows file IO to run in parallel when C2ME is present
 				= this.chunkFileReader.createEmptyOrPreExistingChunkWrapperAsync(
-					dhChunkPos.getX(), dhChunkPos.getZ(),
+					dhChunkPos.getX(), dhChunkPos.getZ(), genEvent.loadChunksFromDisk,
 					chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, chunkWrappersByDhPos);
 			
 			readFutureByDhChunkPos.put(dhChunkPos, getExistingChunkFuture);
