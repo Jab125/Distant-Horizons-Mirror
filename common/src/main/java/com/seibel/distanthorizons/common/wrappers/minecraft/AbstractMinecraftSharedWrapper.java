@@ -27,6 +27,9 @@ import net.minecraft.core.Registry;
 
 public abstract class AbstractMinecraftSharedWrapper implements IMinecraftSharedWrapper
 {
+	public static boolean supportsSurfaceGeneration = false;
+	
+	
 	
 	@Nullable
 	#if MC_VER <= MC_1_12_2
@@ -119,6 +122,10 @@ public abstract class AbstractMinecraftSharedWrapper implements IMinecraftShared
 		return Minecraft.getInstance().getSingleplayerServer().getTickTimesNanos();
 		#endif
 	}
+	
+	
+	@Override
+	public boolean supportsSurfaceGeneration() { return supportsSurfaceGeneration; }
 	
 	
 	

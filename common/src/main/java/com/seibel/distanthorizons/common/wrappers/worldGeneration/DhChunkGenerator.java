@@ -23,6 +23,7 @@ package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 import com.google.common.collect.ImmutableMap;
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiGeneratorPlan;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiWorldGenerationStep;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
@@ -327,7 +328,7 @@ public final class DhChunkGenerator implements IChunkGenerator
 		{
 			LOGGER.error("Too many exceptions in Batching World Generator! Disabling the generator.");
 			this.unknownExceptionCount = 0;
-			Config.Common.WorldGenerator.enableDistantGeneration.set(false);
+			Config.Common.WorldGenerator.generatorPlan.set(EDhApiGeneratorPlan.DISABLED);
 		}
 	}
 	
