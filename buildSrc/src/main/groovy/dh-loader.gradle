@@ -206,7 +206,7 @@ configurations {
     coreProjects
     shadowMe.extendsFrom(coreProjects)
     implementation.extendsFrom(shadowMe)
-    
+
     common
     implementation.extendsFrom(common)
 
@@ -343,7 +343,7 @@ if (isNotCommonProject) {
 
         // XZ compression
         relocate "org.tukaani", "${librariesLocation}.tukaani"
-        
+
         transform(NativeTransformer) {
             rootDir = project.rootDir
             matchFiles { it.contains("libzstd-jni") && !it.contains("aix/ppc64") }
@@ -437,7 +437,6 @@ if (isNotCommonProject) {
             runTask.jvmArgs(
                 "-Dio.netty.leakDetection.level=advanced",
                 // TODO only use for modern java versions
-                "-XX:+UseZGC",
                 // TODO don't use for even more modern-er java versions
                 //"-XX:+ZGenerational",
                 rootProject.minecraftMemoryJavaArg,
@@ -473,6 +472,7 @@ if (isNotCommonProject) {
             }
         }
         
+
         tasks.jar.finalizedBy(tasks.named("remapJar"))
     }
 }
