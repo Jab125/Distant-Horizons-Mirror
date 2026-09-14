@@ -111,8 +111,8 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	}
 	public static BlazeTextureWrapper createTextureAtlas(String name) 
 	{
-		//int mipLevelCount = (int)Math.sqrt(TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);
-		//mipLevelCount += 1;
+		int mipLevelCount = (int)Math.sqrt(TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);
+		mipLevelCount += 1;
 		
 		return new BlazeTextureWrapper(name, 
 			#if MC_VER <= MC_26_1_2 TextureFormat.RGBA8,  
@@ -121,7 +121,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 			// nearest filtering keeps the blocky look and prevents
 			// texels bleeding between adjacent tiles in the grid
 			FilterMode.NEAREST,
-			1, //mipLevelCount,
+			mipLevelCount,
 			// as of James testing on 07-11-2026 with MC 26.1.2
 			// using a higher Anisotropy than 1 caused the distant textures to look grainier
 			// so we're leaving it at 1 for now
