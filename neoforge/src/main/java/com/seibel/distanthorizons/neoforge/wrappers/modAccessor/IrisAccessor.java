@@ -24,51 +24,26 @@ package com.seibel.distanthorizons.neoforge.wrappers.modAccessor;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 
-#if MC_VER != MC_1_21_9 
 import net.irisshaders.iris.Iris;
 import net.irisshaders.iris.api.v0.IrisApi;
-#endif
 
 public class IrisAccessor implements IIrisAccessor
 {
 	public IrisAccessor()
 	{
-		#if MC_VER == MC_1_21_11
-		throw new UnsupportedOperationException("Iris isn't supported on this version of DH. When this version of DH was created Iris wasn't available for Neoforge yet.");
-		#endif
+
 	}
 	
 	
 	
 	@Override
-	public String getModName() 
-	{
-		#if MC_VER == MC_1_21_9 
-		return "iris"; // Iris doesn't support this MC version
-		#else
-		return Iris.MODID;
-		#endif
-	}
+	public String getModName() { return Iris.MODID;}
 	
 	@Override
-	public boolean isShaderPackInUse() 
-	{
-		#if MC_VER == MC_1_21_9 
-		return true; // Iris doesn't support this MC version
-		#else
-		return IrisApi.getInstance().isShaderPackInUse();
-		#endif
-	}
+	public boolean isShaderPackInUse() { return IrisApi.getInstance().isShaderPackInUse(); }
 	
 	@Override
-	public boolean isRenderingShadowPass() 
-	{
-		#if MC_VER == MC_1_21_9 
-		return false; // Iris doesn't support this MC version
-		#else
-		return IrisApi.getInstance().isRenderingShadowPass();
-		#endif
-	}
+	public boolean isRenderingShadowPass() { return IrisApi.getInstance().isRenderingShadowPass(); }
 	
 	@Override
 	public boolean isReverseZDuringShaders()
@@ -79,7 +54,6 @@ public class IrisAccessor implements IIrisAccessor
 		// only supported on Iris for MC 26.2 and newer
 		return IrisApi.getInstance().isReverseZDuringShaders();
 		#endif
-		
 	}
 	
 }
