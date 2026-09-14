@@ -25,7 +25,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.*;
 
 public class GlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 {
-	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
+	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class); 
 	
 	
 	
@@ -39,11 +39,12 @@ public class GlDhRenderApiDefinition extends AbstractDhRenderApiDefinition
 	public EDhRenderDepth getRenderDepth() 
 	{
 		if (IRIS_ACCESSOR != null
-			&& IRIS_ACCESSOR.isShaderPackInUse())
+			&& IRIS_ACCESSOR.isShaderPackInUse()
+			&& !IRIS_ACCESSOR.isReverseZDuringShaders())
 		{
 			// reversed Z shouldn't be used when shaders are active
 			// in order to maintain legacy behavior
-			return EDhRenderDepth.FORWARD_Z;
+			return EDhRenderDepth.FORWARD_Z; 
 		}
 		
 		// reverse Z is better behavior going forward because it prevents

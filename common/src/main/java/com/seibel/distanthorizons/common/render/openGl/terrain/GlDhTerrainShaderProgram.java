@@ -255,11 +255,12 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		}
 		this.setUniform(this.uEarthRadius, curveRatio);
 		
+		
 		if (Config.Client.Advanced.Graphics.enableAntiAliasing.get()
 			&&
 			(
 				IRIS_ACCESSOR == null
-					|| !IRIS_ACCESSOR.isShaderPackInUse()
+				|| !IRIS_ACCESSOR.isShaderPackInUse()
 			)
 		)
 		{

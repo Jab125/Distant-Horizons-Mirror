@@ -29,17 +29,15 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.config.IConfigGui;
 import com.seibel.distanthorizons.core.wrapperInterfaces.config.ILangWrapper;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import net.minecraft.client.Minecraft;
-#if MC_VER <= MC_1_12_2
-import net.minecraft.client.gui.*;
 #if MC_VER <= MC_1_7_10
+import net.minecraft.client.gui.*;
 import net.minecraft.util.EnumChatFormatting;
-#endif
-#if MC_VER > MC_1_7_10
+#elif MC_VER <= MC_1_12_2
+import net.minecraft.client.gui.*;
 import net.minecraft.client.renderer.Tessellator;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextFormatting;
-#endif
 #else
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.gui.Font;
@@ -77,9 +75,13 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.resources.Identifier;
 #endif
 
-#if MC_VER > MC_1_12_2
-import org.lwjgl.glfw.GLFW;
+#if MC_VER <= MC_1_12_2
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.glfw.GLFW;
+#else
+import com.mojang.blaze3d.platform.InputConstants;
+import org.lwjgl.sdl.SDLKeycode;
 #endif
 
 import static com.seibel.distanthorizons.common.wrappers.gui.GuiHelper.*;
@@ -508,10 +510,15 @@ class DhConfigScreen extends DhScreen
 					int startingIndex = enumList.indexOf(enumConfigEntry.get());
 					Enum<?> enumValue = enumList.get(startingIndex);
 					
+					boolean shiftPressed;
 					#if MC_VER <= MC_1_12_2
-					boolean shiftPressed = GuiScreen.isShiftKeyDown();
+					shiftPressed = GuiScreen.isShiftKeyDown();
+					#elif MC_VER <= MC_26_2_0
+					shiftPressed = InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_LEFT_SHIFT) 
+						|| InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_RIGHT_SHIFT);
 					#else
-					boolean shiftPressed = InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_LEFT_SHIFT) || InputConstants.isKeyDown(MC_CLIENT.getGlfwWindowId(), GLFW.GLFW_KEY_RIGHT_SHIFT);
+					shiftPressed = InputConstants.isKeyDown(InputConstants.KEY_LSHIFT)
+						|| InputConstants.isKeyDown(InputConstants.KEY_RSHIFT);
 					#endif
 					
 					// move forward or backwards depending on if the shift key is pressed
@@ -532,12 +539,25 @@ class DhConfigScreen extends DhScreen
 					while (index != startingIndex)
 					{
 						enumValue = enumList.get(index);
-						if (!AnnotationUtil.doesEnumHaveAnnotation(enumValue, DisallowSelectingViaConfigGui.class))
+						
+						// does enum have ignore attribute?
+						boolean selectable = !AnnotationUtil.doesEnumHaveAnnotation(enumValue, DisallowSelectingViaConfigGui.class);
+						if (selectable)
 						{
-							// this enum shouldn't be selectable via the UI,
-							// skip it
+							// does this enum have a show function?
+							ConfigEntry.IShowEnumOptionFunc showEnumFunc = enumConfigEntry.getShowEnumOptionFunc();
+							if (showEnumFunc != null)
+							{
+								selectable = showEnumFunc.shouldShowEnum(enumValue);
+							}
+						}
+						
+						if (selectable)
+						{
+							// this enum is a valid option
 							break;
 						}
+						
 						
 						// move forward or backwards depending on if the shift key is pressed
 						index = shiftPressed ? index - 1 : index + 1;

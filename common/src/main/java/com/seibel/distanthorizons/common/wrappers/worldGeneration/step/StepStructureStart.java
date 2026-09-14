@@ -101,8 +101,8 @@ public final class StepStructureStart extends AbstractWorldGenStep
 					this.dhChunkGen.globalParams.worldSeed);
 			#elif MC_VER <= MC_1_21_3
 			this.dhChunkGen.globalParams.generator.createStructures(this.dhChunkGen.globalParams.registry,
-				this.dhChunkGen.globalParams.mcServerLevel.getChunkSource().getGeneratorState(),
-				tParams.structFeatManager, chunk, this.dhChunkGen.globalParams.structures);
+					this.dhChunkGen.globalParams.mcServerLevel.getChunkSource().getGeneratorState(),
+					tParams.structFeatManager, chunk, this.dhChunkGen.globalParams.structures);
 			#else
 			this.dhChunkGen.globalParams.generator.createStructures(this.dhChunkGen.globalParams.registry,
 					this.dhChunkGen.globalParams.mcServerLevel.getChunkSource().getGeneratorState(),

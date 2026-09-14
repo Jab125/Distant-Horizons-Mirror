@@ -64,6 +64,7 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 	public int uDepthIsZeroToPositiveOne = -1;
 	
 	
+	
 	//=============//
 	// constructor //
 	//=============//

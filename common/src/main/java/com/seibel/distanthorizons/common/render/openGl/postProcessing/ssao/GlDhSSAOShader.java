@@ -50,6 +50,7 @@ public class GlDhSSAOShader extends GlAbstractShaderRenderer
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 	
+	
 	public int frameBuffer;
 	
 	private DhMat4f projection;

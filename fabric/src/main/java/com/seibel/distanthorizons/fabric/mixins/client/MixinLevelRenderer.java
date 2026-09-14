@@ -59,7 +59,7 @@ import org.joml.Matrix4fc;
 import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-#else
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.buffers.GpuBufferSlice;
 import com.mojang.blaze3d.resource.GraphicsResourceAllocator;
 import net.minecraft.client.DeltaTracker;
@@ -69,9 +69,13 @@ import org.joml.Vector4f;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
+#elif MC_VER <= MC_26_3_0
+import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
+import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 #endif
 
 
+import com.mojang.blaze3d.systems.RenderSystem;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
@@ -89,6 +93,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 
 
@@ -214,15 +219,14 @@ public class MixinLevelRenderer
 	
 	
 	
-	//============//
-	// post MC 26 //
-	//============//
+	//===========//
+	// MC 26.1.2 //
+	//===========//
 	//region
 	
 	#if MC_VER <= MC_1_21_11
-	#else
-	
-	#if MC_VER <= MC_26_1_2
+	// see code above
+	#elif MC_VER <= MC_26_1_2
 	@Inject(at = @At("HEAD"), method = "prepareChunkRenders")
 	private void prepareChunkRenders(final Matrix4fc modelViewMatrix, CallbackInfoReturnable<ChunkSectionsToRender> callback)
 	{
@@ -245,10 +249,48 @@ public class MixinLevelRenderer
 		
 	}
 	
-    #else
 	#endif
 	
+	//endregion
+	
+	
+	
+	//==============//
+	// MC 26.3 plus //
+	//==============//
+	//region
+	
+	#if MC_VER <= MC_26_2_0
+	// handled in game renderer
+	#else
+	
+	@Inject(at = @At("HEAD"), method = "prepareTranslucents")
+	private void executeOutline(
+		CallbackInfo callback)
+	
+	{
+		ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.convert(RenderSystem.getModelViewStack());
+		
+		ClientApi.RENDER_STATE.canRenderOrThrow();
+		ClientApi.INSTANCE.renderLods();
+	}
+	
+	@Inject(at = @At("HEAD"), method = "executeOutline")
+	private void executeOutline(
+		final FeatureRenderDispatcher.PreparedFrame featureFrame,
+		CallbackInfo callback)
+	{ ClientApi.INSTANCE.renderFadeOpaque(); }
+	
+	// improved transparency is necessary since the normal transparent pass is in the same renderPass
+	// preventing us from adding our own render pass inbetween
+	@Inject(at = @At("HEAD"), method = "executeOit")
+	private void executeOit(
+		final ChunkSectionsToRender chunkSectionsToRender, final FeatureRenderDispatcher.PreparedFrame featureFrame,
+		CallbackInfo callback)
+	{ ClientApi.INSTANCE.renderFadeTransparent(); }
+	
 	#endif
+	
 	//endregion
 	
 	

@@ -204,33 +204,13 @@ public class BiomeWrapper implements IBiomeWrapper
 	}
 	
 	@Override
-	public boolean equals(Object obj)
-	{
-		if (this == obj)
-		{
-			return true;
-		}
-		else if (obj == null || this.getClass() != obj.getClass())
-		{
-			return false;
-		}
-		
-		BiomeWrapper that = (BiomeWrapper) obj;
-		// the serialized value is used so we can test the contents instead of the references
-		return Objects.equals(this.getSerialString(), that.getSerialString());
-	}
-	
-	@Override
-	public int hashCode() { return this.hashCode; }
-	
-	@Override
 	public boolean isColdBiome()
 	{
 		// https://minecraft.wiki/w/Biome#Temperature
 		#if MC_VER <= MC_1_7_10
 		return this.biome.temperature < 0.1f;
 		#elif MC_VER <= MC_1_12_2
-		return this.biome.getDefaultTemperature() < 0.1f;
+		return this.biome.isSnowyBiome();
 		#elif MC_VER < MC_1_18_2
 		return this.biome.getBaseTemperature() < 0.1f;
 		#else
@@ -243,9 +223,6 @@ public class BiomeWrapper implements IBiomeWrapper
 	
 	@Override
 	public Object getWrappedMcObject() { return this.biome; }
-	
-	@Override
-	public String toString() { return this.getSerialString(); }
 	
 	//endregion
 	
@@ -524,6 +501,37 @@ public class BiomeWrapper implements IBiomeWrapper
 	
 	//endregion
 	
+	
+	
+	//================//
+	// base overrides //
+	//================//
+	//region
+	
+	@Override
+	public boolean equals(Object obj)
+	{
+		if (this == obj)
+		{
+			return true;
+		}
+		else if (obj == null || this.getClass() != obj.getClass())
+		{
+			return false;
+		}
+		
+		BiomeWrapper that = (BiomeWrapper) obj;
+		// the serialized value is used so we can test the contents instead of the references
+		return Objects.equals(this.getSerialString(), that.getSerialString());
+	}
+	
+	@Override
+	public int hashCode() { return this.hashCode; }
+	
+	@Override
+	public String toString() { return this.getSerialString(); }
+	
+	//endregion
 	
 	
 }

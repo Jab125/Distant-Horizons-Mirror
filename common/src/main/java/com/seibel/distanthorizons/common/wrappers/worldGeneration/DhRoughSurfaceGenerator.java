@@ -17,6 +17,7 @@ import com.seibel.distanthorizons.api.objects.data.DhApiTerrainDataPoint;
 import com.seibel.distanthorizons.api.objects.data.IDhApiFullDataSource;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
+import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
@@ -35,44 +36,54 @@ import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import it.unimi.dsi.fastutil.longs.LongArrayList;
 
 import net.minecraft.core.Holder;
-import net.minecraft.core.QuartPos;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.biome.Biome;
 import net.minecraft.world.level.biome.BiomeSource;
 import net.minecraft.world.level.chunk.ChunkGenerator;
-import net.minecraft.world.level.levelgen.DensityFunction;
-import net.minecraft.world.level.levelgen.RandomState;
+import net.minecraft.world.level.levelgen.*;
 
 import org.jetbrains.annotations.Nullable;
 
 import javax.annotation.WillNotClose;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Consumer;
+
+#if MC_VER <= MC_26_2_0
+import net.minecraft.world.level.levelgen.DensityFunction;
+import net.minecraft.core.QuartPos;
+#else
+import net.minecraft.world.level.levelgen.densityfunction.*;
+import com.mojang.datafixers.util.Pair;
+import net.minecraft.core.BlockPos;
+import net.minecraft.util.context.ContextMap;
+#endif
 
 public class DhRoughSurfaceGenerator implements IRoughGenerator
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder()
-		.name("LOD World Gen - Rough Surface")
-		.fileLevelConfig(Config.Common.Logging.logWorldGenEventToFile)
-		.build();
+			.name("LOD World Gen - Rough Surface")
+			.fileLevelConfig(Config.Common.Logging.logWorldGenEventToFile)
+			.build();
 	
 	
 	
 	private final IServerLevelWrapper serverLevelWrapper;
 	
 	private static final PhantomArrayListPool ARRAY_LIST_POOL = new PhantomArrayListPool("TestWorldGen");
-	private static final ConcurrentHashMap<IBiomeWrapper, BlockCountPair> BIOME_TO_BLOCK_WRAPPER = new ConcurrentHashMap<>();
 	
 	/**
 	 * how far below the candidate height to check.
 	 * By default MC samples noise on a 4x8x4 grid (source: BuilderB0y),
 	 * so sampling 8 and 8x2 points down respectively should give us
 	 * a pretty good guess if the datapoint is a small floating island or not. <br><br>
-	 *
+	 * 
 	 * Should be sorted smallest to largest.
 	 */
 	private static final int[] SANITY_CHECK_DEPTHS = { 4, 8, 16 };
+	private static final int[] SANITY_CHECK_HEIGHTS = { 4, 8, 16, 32 };
 	
 	/** when marching down the world, this is how many blocks we should step at a time */
 	private static final int MARCH_STEP = 8;
@@ -80,15 +91,23 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	private static final long NO_HEIGHT_GENERATED = Long.MIN_VALUE;
 	private static final int NO_WATER_HEIGHT = Integer.MIN_VALUE;
 	
+	/** measured in blocks */
+	private static final int MAX_UNDERWATER_HEIGHT_DEVIATION = 8;
+	
 	
 	// commonly used blocks cached for quick access
 	private final IBlockStateWrapper waterBlock;
 	private final IBlockStateWrapper iceBlock;
 	private final IBlockStateWrapper snowBlock;
 	
-	/** needed to generate chunks surfaces to determine biome block mappings */
-	@WillNotClose
-	private final DhChunkGenerator batchGenerator;
+	private final GenParams genParams;
+	
+	/** 
+	 * I'd be nice to have this static so we could re-use data across worlds.
+	 * However, we don't know what settings each world will have, so
+	 * this information may not be valid and should be re-generated.
+	 */
+	private final ConcurrentHashMap<IBiomeWrapper, BlockCountPair> biomeToBlockWrapper = new ConcurrentHashMap<>();
 	
 	
 	
@@ -97,14 +116,15 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	//=============//
 	//region
 	
-	public DhRoughSurfaceGenerator(IServerLevelWrapper serverLevelWrapper, DhChunkGenerator batchGenerator)
+	public DhRoughSurfaceGenerator(IServerLevelWrapper serverLevelWrapper, DhChunkGenerator dhChunkGenerator)
 	{
 		this.serverLevelWrapper = serverLevelWrapper;
-		this.batchGenerator = batchGenerator;
 		
 		this.waterBlock = BlockStateWrapper.getWaterBlockStateWrapper(this.serverLevelWrapper);
 		this.iceBlock = BlockStateWrapper.getIceBlockStateWrapper(this.serverLevelWrapper);
 		this.snowBlock = BlockStateWrapper.getSnowBlockStateWrapper(this.serverLevelWrapper);
+		
+		this.genParams = new GenParams(dhChunkGenerator, this.serverLevelWrapper);
 	}
 	
 	//endregion
@@ -124,36 +144,17 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		EDhApiDistantGeneratorMode generatorMode,
 		Consumer<IDhApiFullDataSource> resultConsumer)
 	{
-		//=====================//
-		// noise gen variables //
-		//=====================//
-		//region
-		
-		ServerLevel level = ((ServerLevel)this.serverLevelWrapper.getWrappedMcObject());
-		
-		RandomState randomState = level.getChunkSource().randomState();
-		DensityFunction finalDensity = randomState.router().finalDensity();
-		ChunkGenerator generator = level.getChunkSource().getGenerator();
-		BiomeSource biomeSource = generator.getBiomeSource();
-		
-		int relativeSeaLevel = this.serverLevelWrapper.getSeaLevel() - this.serverLevelWrapper.getMinHeight();
-		int relativeMaxHeight = this.serverLevelWrapper.getMaxHeight() - this.serverLevelWrapper.getMinHeight();
-		
-		//endregion
-		
-		
-		
-		
-		
 		ArrayList<DhApiTerrainDataPoint> apiDataPoints = new ArrayList<>();
 		int width = pooledFullDataSource.getWidthInDataColumns();
 		
-		try(PhantomArrayListCheckout checkout = ARRAY_LIST_POOL.checkoutLongArrays(1))
+		try(PhantomArrayListCheckout checkout = ARRAY_LIST_POOL.checkoutLongArrays(3))
 		{
 			// we could probably get away with an int or short array,
 			// but the checkout didn't handle int arrays at the time of writing
 			// and I wanted to make sure we didn't hit any issues
 			LongArrayList heightmap = checkout.getLongArray(0, width * width);
+			LongArrayList tempHeightmap = checkout.getLongArray(1, width * width);
+			LongArrayList tempNeighborHeights = checkout.getLongArray(2, 8); // 3x3 minus the center
 			
 			
 			
@@ -182,10 +183,31 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 					int blockX = chunkPosMinX * 16 + (x * BitShiftUtil.powerOfTwo(detailLevel));
 					int blockZ = chunkPosMinZ * 16 + (z * BitShiftUtil.powerOfTwo(detailLevel));
 					
-					int maxHeight = findSurfaceHeight(finalDensity, this.serverLevelWrapper, blockX, blockZ);
+					int maxHeight = findSurfaceHeight(this.genParams, this.serverLevelWrapper, blockX, blockZ);
 					maxHeight -= this.serverLevelWrapper.getMinHeight(); // convert to level relative position
 					
 					heightmap.set(x + width * z, maxHeight);
+				}
+			}
+			
+			// necessary to clean up random water pockets on the surface
+			smoothUnderwaterSpikes(width, 
+				heightmap, 
+				tempHeightmap, tempNeighborHeights,
+				this.genParams.relativeSeaLevel,
+				MAX_UNDERWATER_HEIGHT_DEVIATION);
+			
+			// interp heights
+			for (int x = 0; x < width; x++)
+			{
+				for (int z = 0; z < width; z++)
+				{
+					long maxHeightLong = heightmap.getLong(x + width * z);
+					if (maxHeightLong == NO_HEIGHT_GENERATED)
+					{
+						maxHeightLong = interpHeightFromAdjacentValues(x, z, width, heightmap);
+						heightmap.set(x + width * z, maxHeightLong);
+					}
 				}
 			}
 			
@@ -208,42 +230,40 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 					
 					
 					// surface height
-					long maxHeightLong = heightmap.getLong(x + width * z);
-					if (maxHeightLong == NO_HEIGHT_GENERATED)
-					{
-						maxHeightLong = interpHeightFromAdjacentValues(x, z, width, heightmap);
-					}
-					int surfaceHeight = (int) maxHeightLong;
+					int surfaceHeight = (int) heightmap.getLong(x + width * z);
 					
 					// water height
 					int waterHeight = NO_WATER_HEIGHT;
-					if (surfaceHeight < relativeSeaLevel)
+					if (surfaceHeight < this.genParams.relativeSeaLevel)
 					{
 						// if the surface is 
-						waterHeight = relativeSeaLevel;
+						waterHeight = this.genParams.relativeSeaLevel;
 					}
 					
 					
 					// biome
-					Holder<Biome> biomeHolder = biomeSource.getNoiseBiome(
-						QuartPos.fromBlock(blockX), // x
-						QuartPos.fromBlock(surfaceHeight), // y
-						QuartPos.fromBlock(blockZ), // z
-						randomState.sampler()
-					);
-					IBiomeWrapper biomeWrapper = BiomeWrapper.getBiomeWrapper(biomeHolder, this.serverLevelWrapper);
-					boolean isColdBiome = biomeHolder.value().getBaseTemperature() < 0.1f; // https://minecraft.wiki/w/Biome#Temperature
+					IBiomeWrapper biomeWrapper = getBiomeAtBlockPos(
+						this.genParams, this.serverLevelWrapper,
+						blockX,
+						surfaceHeight,
+						blockZ);
+					boolean isColdBiome = biomeWrapper.isColdBiome();
 					
 					
 					// surface block
 					IBlockStateWrapper surfaceBlock
 						= this.getSurfaceBlockState(
-						biomeWrapper,
-						blockX, blockZ);
+							biomeWrapper,
+							blockX, blockZ);
 					
 					
 					// populate datasource
-					this.populateApiDataPoints(pooledFullDataSource, apiDataPoints, waterHeight, surfaceHeight, isColdBiome, surfaceBlock, biomeWrapper, relativeMaxHeight, x, z);
+					this.populateApiDataPoints(
+						pooledFullDataSource, apiDataPoints, 
+						waterHeight, surfaceHeight, 
+						isColdBiome, surfaceBlock, biomeWrapper, 
+						this.genParams.relativeMaxHeight, 
+						x, z);
 				}
 			}
 		}
@@ -253,11 +273,11 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		resultConsumer.accept(pooledFullDataSource);
 	}
 	private void populateApiDataPoints(
-		IDhApiFullDataSource pooledFullDataSource, ArrayList<DhApiTerrainDataPoint> apiDataPoints,
-		int waterHeight, int surfaceHeight,
-		boolean isColdBiome,
-		IBlockStateWrapper surfaceBlock, IBiomeWrapper biomeWrapper,
-		int relativeMaxHeight,
+		IDhApiFullDataSource pooledFullDataSource, ArrayList<DhApiTerrainDataPoint> apiDataPoints, 
+		int waterHeight, int surfaceHeight, 
+		boolean isColdBiome, 
+		IBlockStateWrapper surfaceBlock, IBiomeWrapper biomeWrapper, 
+		int relativeMaxHeight, 
 		int x, int z)
 	{
 		// clear the pooled array before we start populating it
@@ -333,6 +353,8 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		pooledFullDataSource.setApiDataPointColumn(x, z, EDhApiWorldGenerationStep.SURFACE, apiDataPoints);
 	}
+	
+	
 	private static long interpHeightFromAdjacentValues(int x, int z, int width, LongArrayList heightmap)
 	{
 		long maxHeightLong;
@@ -359,6 +381,121 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		return maxHeightLong;
 	}
 	
+	/**
+	 * Raises datapoints that are below sealevel and are significantly
+	 * different from the surrounding area. <Br>
+	 * This is done to fix issues where there are singular pockets of
+	 * water on the surface that don't match the actual terrain.
+	 *
+	 * @param maxDeviation how far in blocks a datapoint's height can differ from its
+	 *                      neighbors' median before it's considered a spike
+	 */
+	private static void smoothUnderwaterSpikes(
+		int width, 
+		LongArrayList heightmap, 
+		LongArrayList tempHeightmap, LongArrayList neighborHeights,
+		int relativeSeaLevel, int maxDeviation)
+	{
+		// snapshot the original heights so we don't accidentally
+		// sample against modified data
+		LongArrayList originalHeightmap = tempHeightmap; // rename for clarity
+		originalHeightmap.clear();
+		originalHeightmap.addAll(0, heightmap);
+		
+		neighborHeights.clear();
+		
+		for (int x = 0; x < width; x+=2)
+		{
+			for (int z = 0; z < width; z+=2)
+			{
+				long centerHeight = originalHeightmap.getLong(x + width * z);
+				if (centerHeight == NO_HEIGHT_GENERATED)
+				{
+					// shouldn't happen
+					// ignore anything that isn't generated
+					continue;
+				}
+				
+				if (centerHeight > relativeSeaLevel)
+				{
+					// Only worry about datapoints that drop below sea level.
+					// Smoothing out datapoints above sea level makes things look too smooth.
+					// But not smoothing datapoints below sea level cause sampling issues
+					// with caves/divots where the surface goes below sea level.
+					continue;
+				}
+				
+				
+				
+				// get neighbors //
+				//region
+				
+				int neighborCounts = 0;
+				for (int diffX = -2; diffX <= 2; diffX += 2)
+				{
+					for (int diffZ = -2; diffZ <= 2; diffZ += 2)
+					{
+						if (diffX == 0 
+							&& diffZ == 0)
+						{
+							// ignore the center
+							continue;
+						}
+						
+						int neighborX = x + diffX;
+						int neighborZ = z + diffZ;
+						if (neighborX < 0 || neighborX >= width 
+							|| neighborZ < 0 || neighborZ >= width)
+						{
+							// ignore points outside the heightmap
+							continue;
+						}
+						
+						long neighborVal = originalHeightmap.getLong(neighborX + width * neighborZ);
+						if (neighborVal == NO_HEIGHT_GENERATED)
+						{
+							// ignore ungenerated points
+							// shouldn't happen
+							continue;
+						}
+						
+						neighborHeights.add(neighborVal);
+						neighborCounts++;
+					}
+				}
+				
+				//endregion
+				
+				
+				if (neighborCounts == 0)
+				{
+					// shouldn't happen, but just in case
+					continue;
+				}
+				
+				neighborHeights.sort(Long::compare);
+				long medianHeight = neighborHeights.getLong(neighborCounts / 2);
+				
+				boolean centerIsLower = centerHeight < medianHeight;
+				if (!centerIsLower)
+				{
+					// only raise lower positions, don't drop higher ones
+					continue;
+				}
+				
+				
+				
+				// Only change the center height if it's significantly different
+				// to the surrounding median.
+				long centerDeviation = Math.abs(centerHeight - medianHeight);
+				if (centerDeviation > maxDeviation)
+				{
+					heightmap.set(x + width * z, medianHeight);
+				}
+			}
+		}
+	}
+	
 	//endregion
 	
 	
@@ -374,11 +511,11 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	 * May change as more chunks are generated.
 	 */
 	private IBlockStateWrapper getSurfaceBlockState(
-		IBiomeWrapper biomeWrapper,
+		IBiomeWrapper desiredBiomeWrapper,
 		int blockX, int blockZ)
 	{
 		// use the existing mapping if available
-		BlockCountPair existingBlockCountPair = BIOME_TO_BLOCK_WRAPPER.get(biomeWrapper);
+		BlockCountPair existingBlockCountPair = this.biomeToBlockWrapper.get(desiredBiomeWrapper);
 		if (existingBlockCountPair != null)
 		{
 			return existingBlockCountPair.blockStateWrapper;
@@ -393,38 +530,51 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		//=======================//
 		//region
 		
+		AtomicReference<IBlockStateWrapper> fallbackBlockRef = new AtomicReference<IBlockStateWrapper>(null);
+		
 		HashMap<IBiomeWrapper, HashMap<IBlockStateWrapper, Integer>> biomeBlockCounts = new HashMap<>();
 		{
-			DhChunkPos chunkPos = new DhChunkPos(new DhBlockPos2D(blockX, blockZ));
+			DhBlockPos2D centerBlockPos = new DhBlockPos2D(blockX, blockZ);
+			DhChunkPos centerChunkPos = new DhChunkPos(centerBlockPos);
+			
 			// subtract 2 from each chunk pos so the target chunk is near the center
-			chunkPos = new DhChunkPos(
-				chunkPos.getX() - 2,
-				chunkPos.getZ() - 2);
+			DhChunkPos genMinChunkPos = new DhChunkPos(
+				centerChunkPos.getX() - 1,
+				centerChunkPos.getZ() - 1);
 			
 			ChunkGenEvent genEvent = new ChunkGenEvent(
-				chunkPos,
-				// 6 chunks wide mean we get 2 to 3 chunks of buffer around the target position,
-				// meaning we should have a decent sized dataset of what the biome would be like
-				6,
-				this.batchGenerator,
+				genMinChunkPos,
+				// 4 chunks wide mean we get 1 to 2 chunks of buffer around the target position
+				// hopefully this is enough to get a decent example of what the target chunk looks like
+				4,
+				this.genParams.dhChunkGenerator,
 				EDhApiDistantGeneratorMode.SURFACE, EDhApiWorldGenerationStep.SURFACE,
+				/*loadChunksFromDisk*/ false,
 				(IChunkWrapper chunkWrapper) ->
 				{
-					for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+					for (int relX = 0; relX < LodUtil.CHUNK_WIDTH; relX++)
 					{
-						for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+						for (int relZ = 0; relZ < LodUtil.CHUNK_WIDTH; relZ++)
 						{
-							int height = chunkWrapper.getSolidHeightMapValue(x, z);
+							int height = chunkWrapper.getSolidHeightMapValue(relX, relZ);
 							
-							IBiomeWrapper biome = chunkWrapper.getBiome(x, height, z);
-							IBlockStateWrapper block = chunkWrapper.getBlockState(x, height, z);
+							IBiomeWrapper biome = chunkWrapper.getBiome(relX, height, relZ);
+							IBlockStateWrapper block = chunkWrapper.getBlockState(relX, height, relZ);
 							
 							HashMap<IBlockStateWrapper, Integer> blockCounts = biomeBlockCounts.computeIfAbsent(biome, b -> new HashMap<>());
 							blockCounts.merge(block, 1, Integer::sum);
+							
+							// fallback in the off chance that every biome the chunk generates is invalid
+							if (fallbackBlockRef.get() == null
+								&& chunkWrapper.getChunkPos().equals(centerChunkPos)
+								&& chunkWrapper.getChunkPos().contains(centerBlockPos))
+							{
+								fallbackBlockRef.set(block);
+							}
 						}
 					}
 				});
-			this.batchGenerator.generateChunks(genEvent);
+			this.genParams.dhChunkGenerator.generateChunks(genEvent);
 		}
 		
 		//endregion
@@ -454,14 +604,14 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			
 			// add this biome/block
-			if (!BIOME_TO_BLOCK_WRAPPER.containsKey(biome))
+			if (!this.biomeToBlockWrapper.containsKey(biome))
 			{
-				BIOME_TO_BLOCK_WRAPPER.put(biome, newPair);
+				this.biomeToBlockWrapper.put(biome, newPair);
 			}
 			else
 			{
 				// replace the pair if it has a higher count than the previous best
-				BIOME_TO_BLOCK_WRAPPER.compute(biome, (IBiomeWrapper existingBiome, BlockCountPair existingPair) ->
+				this.biomeToBlockWrapper.compute(biome, (IBiomeWrapper existingBiome, BlockCountPair existingPair) ->
 				{
 					if (existingPair == null
 						|| existingPair.count < newPair.count)
@@ -474,29 +624,51 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			}
 		}
 		
+		existingBlockCountPair = this.biomeToBlockWrapper.get(desiredBiomeWrapper);
+		if (existingBlockCountPair != null)
+		{
+			return existingBlockCountPair.blockStateWrapper;
+		}
+		
 		//endregion
 		
 		
 		
-		BlockCountPair pair = getMostCommonBlockForBiomeFromMap(biomeBlockCounts, biomeWrapper);
+		BlockCountPair pair = getMostCommonBlockForBiomeFromMap(biomeBlockCounts, desiredBiomeWrapper);
 		if (pair != null)
 		{
 			// if we didn't find enough blocks to normally consider this
 			// biome as "found"
 			// use whatever we did find as a base
-			BIOME_TO_BLOCK_WRAPPER.putIfAbsent(biomeWrapper, pair);
+			this.biomeToBlockWrapper.putIfAbsent(desiredBiomeWrapper, pair);
 		}
 		
-		BlockCountPair foundBlockPair = BIOME_TO_BLOCK_WRAPPER.get(biomeWrapper);
+		BlockCountPair foundBlockPair = this.biomeToBlockWrapper.get(desiredBiomeWrapper);
 		if (foundBlockPair != null)
 		{
 			return foundBlockPair.blockStateWrapper;
 		}
 		
+		// if nothing was found that likely means the biomes in the chunk are corrupted
+		// and/or invalid, just return the block in the exact center of
+		// the generated area
+		if (fallbackBlockRef.get() != null)
+		{
+			pair = new BlockCountPair(fallbackBlockRef.get(), 1);
+			this.biomeToBlockWrapper.putIfAbsent(desiredBiomeWrapper, pair);
+			return pair.blockStateWrapper;
+		}
+		
+		
 		// if no blocks were found for this biome at all
 		// (first off: how?)
 		// use dirt as a sane base
-		return BlockStateWrapper.getDirtBlockStateWrapper(this.serverLevelWrapper);
+		{
+			BlockStateWrapper dirtBlock = BlockStateWrapper.getDirtBlockStateWrapper(this.serverLevelWrapper);
+			pair = new BlockCountPair(dirtBlock, 0);
+			this.biomeToBlockWrapper.putIfAbsent(desiredBiomeWrapper, pair);
+			return pair.blockStateWrapper;
+		}
 	}
 	
 	@Nullable
@@ -528,13 +700,71 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	
 	
 	
+	//=============//
+	// biome logic //
+	//=============//
+	//region
+	
+	private static IBiomeWrapper getBiomeAtBlockPos(
+		GenParams genParams, IServerLevelWrapper serverLevelWrapper,
+		int blockX, int blockY, int blockZ)
+	{
+		#if MC_VER <= MC_26_2_0
+		Holder<Biome> biomeHolder = genParams.biomeSource.getNoiseBiome(
+			QuartPos.fromBlock(blockX), // x
+			QuartPos.fromBlock(blockY), // y
+			QuartPos.fromBlock(blockZ), // z
+			genParams.randomState.sampler()
+		);
+		IBiomeWrapper biomeWrapper = BiomeWrapper.getBiomeWrapper(biomeHolder, serverLevelWrapper);
+		return biomeWrapper;
+		#else
+		Pair<BlockPos, Holder<Biome>> biomeHolderPair = genParams.biomeSource.findClosestBiome3d(
+			new BlockPos(blockX, blockY, blockZ),
+			1, // search Radius // only 1 should be necessary, but 
+			1, // sampleResolutionHorizontal,
+			1, // sampleResolutionVertical
+			(testBiomeHolder) -> true, // return any biome the source can give us
+			genParams.randomState,
+			genParams.serverLevel
+		);
+		
+		IBiomeWrapper biomeWrapper;
+		if (biomeHolderPair != null
+			&& biomeHolderPair.getSecond() != null)
+		{
+			biomeWrapper = BiomeWrapper.getBiomeWrapper(biomeHolderPair.getSecond(), serverLevelWrapper);
+		}
+		else
+		{
+			// if there's an issue we may want to return "plains" instead (that's MC's default biome)
+			// but for now this should work
+			biomeWrapper = BiomeWrapper.EMPTY_WRAPPER;
+		}
+		
+		return biomeWrapper;
+		#endif
+	}
+	
+	//endregion
+	
+	
+	
 	//=====================//
 	// noise surface logic //
 	//=====================//
 	//region
 	
-	private static int findSurfaceHeight(DensityFunction finalDensity, ILevelWrapper levelWrapper, int blockX, int blockZ)
+	private static int findSurfaceHeight(GenParams genParams, ILevelWrapper levelWrapper, int blockX, int blockZ)
 	{
+		// super flat generates differently and
+		// must be handled separately
+		if (genParams.isSuperFlatWorld)
+		{
+			return findSuperFlatHeight(genParams, blockX, blockZ);
+		}
+		
+		
 		// stat notes:
 		// each are with 24 cores for DH
 		// 128 render distance
@@ -542,36 +772,79 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		// MC 26.2
 		
 		
-		//// 15.9 million // 37 sec
-		//// this is the most accurate but also the slowest (especially for extended height worlds)
-		//return findSurfaceHeightMarching(finalDensity, levelWrapper, blockX, blockZ, NO_HEIGHT_HINT);
+		// 15.9 million // 37 sec
+		// this is the most accurate but also the slowest (especially for extended height worlds)
+		return findSurfaceHeightMarching(genParams, levelWrapper, blockX, blockZ);
 		
 		
 		//// 3.3 million // 23 sec
 		//// this is the fastest but most likely to have incorrect height if overhangs exist
-		//return binarySearchSurfaceHeight(finalDensity, levelWrapper, blockX, blockZ);
+		//return binarySearchSurfaceHeight(levelWrapper, blockX, blockZ);
 		
 		
-		// 5.3 million // 27 sec
-		// middle ground between binary search for best-case scenarios
-		// and marching for accuracy
-		int candidate = binarySearchSurfaceHeight(finalDensity, levelWrapper, blockX, blockZ);
-		
-		if (sanityCheckSurface(finalDensity, levelWrapper, blockX, blockZ, candidate))
-		{
-			return candidate;
-		}
-		
-		// fall back to the slower, anomaly-aware marching approach
-		return findSurfaceHeightMarching(finalDensity, levelWrapper, blockX, blockZ);
+		//// 5.3 million // 27 sec
+		//// middle ground between binary search for best-case scenarios
+		//// and marching for accuracy
+		//// can have issues with large caverns
+		//int candidate = binarySearchSurfaceHeight(levelWrapper, blockX, blockZ);
+		//
+		//if (sanityCheckSurface(levelWrapper, blockX, blockZ, candidate))
+		//{
+		//	return candidate;
+		//}
+		//
+		//// fall back to the slower, anomaly-aware marching approach
+		//return findSurfaceHeightMarching(genParams, levelWrapper, blockX, blockZ);
 	}
 	
-	/**
+	private static int findSuperFlatHeight(GenParams genParams, int blockX, int blockZ)
+	{
+		// if a height hasn't been found yet,
+		// calculate it from a couple of actually generated chunks
+		if (genParams.superFlatHeight == Integer.MIN_VALUE)
+		{
+			// this will fire on multiple threads the first time,
+			// but that isn't a big deal
+			
+			AtomicInteger heightSumRef = new AtomicInteger(0);
+			AtomicInteger heightCountRef = new AtomicInteger(0);
+			
+			// center pos shouldn't matter, but we'll do one at the requested position just in case
+			DhChunkPos chunkPos = new DhChunkPos(new DhBlockPos2D(blockX, blockZ));
+			ChunkGenEvent genEvent = new ChunkGenEvent(
+				chunkPos,
+				2,
+				genParams.dhChunkGenerator,
+				EDhApiDistantGeneratorMode.SURFACE, EDhApiWorldGenerationStep.SURFACE,
+				/*loadChunksFromDisk*/ false,
+				(IChunkWrapper chunkWrapper) ->
+				{
+					for (int x = 0; x < LodUtil.CHUNK_WIDTH; x++)
+					{
+						for (int z = 0; z < LodUtil.CHUNK_WIDTH; z++)
+						{
+							int height = chunkWrapper.getSolidHeightMapValue(x, z);
+							heightSumRef.addAndGet(height);
+							heightCountRef.incrementAndGet();
+						}
+					}
+				});
+			genParams.dhChunkGenerator.generateChunks(genEvent);
+			
+			int averageHeight = heightSumRef.get() / heightCountRef.get();
+			genParams.superFlatHeight = averageHeight;
+		}
+		
+		// using a cached value makes world gen very fast
+		return genParams.superFlatHeight;
+	}
+	
+	/** 
 	 * May behave strangely if the world has very large overhangs. <br>
 	 * But most don't so this is a very fast way to find the surface height.
 	 */
 	private static int binarySearchSurfaceHeight(
-		DensityFunction finalDensity,
+		GenParams genParams,
 		ILevelWrapper levelWrapper,
 		int blockX, int blockZ)
 	{
@@ -580,7 +853,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		
 		// just in case the max height is solid
-		if (isNoiseSolidAtBlockPos(finalDensity, blockX, nonSolidY, blockZ))
+		if (isNoiseSolidAtBlockPos(genParams, blockX, nonSolidY, blockZ))
 		{
 			return nonSolidY + 1;
 		}
@@ -590,7 +863,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		while (nonSolidY - solidY > 1)
 		{
 			int mid = (int)((nonSolidY / 2.0) + (solidY / 2.0));
-			if (isNoiseSolidAtBlockPos(finalDensity, blockX, mid, blockZ))
+			if (isNoiseSolidAtBlockPos(genParams, blockX, mid, blockZ))
 			{
 				solidY = mid;
 			}
@@ -600,12 +873,12 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			}
 		}
 		
-		return solidY + 1; // first air block above the ground, consistent with your existing convention
+		return solidY + 1;
 	}
 	
 	
 	private static int findSurfaceHeightMarching(
-		DensityFunction finalDensity,
+		GenParams genParams,
 		ILevelWrapper levelWrapper,
 		int blockX, int blockZ)
 	{
@@ -616,11 +889,11 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		while (y >= bottom)
 		{
-			if (isNoiseSolidAtBlockPos(finalDensity, blockX, y, blockZ))
+			if (isNoiseSolidAtBlockPos(genParams, blockX, y, blockZ))
 			{
 				return binaryFindSurfaceHeight(
-					finalDensity,
-					blockX, blockZ,
+					genParams,
+					blockX, blockZ, 
 					prevY, y) + 1;
 			}
 			else
@@ -633,15 +906,16 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		// should only happen on empty worlds (ie the end)
 		return levelWrapper.getMinHeight();
 	}
+	
 	private static int binaryFindSurfaceHeight(
-		DensityFunction finalDensity,
-		int blockX, int blockZ,
+		GenParams genParams, 
+		int blockX, int blockZ, 
 		int highNonSolidY, int lowSolidY)
 	{
 		while (highNonSolidY - lowSolidY > 1)
 		{
 			int mid = (int)((highNonSolidY / 2.0) + (lowSolidY / 2.0));
-			if (isNoiseSolidAtBlockPos(finalDensity, blockX, mid, blockZ))
+			if (isNoiseSolidAtBlockPos(genParams, blockX, mid, blockZ))
 			{
 				lowSolidY = mid;
 			}
@@ -656,18 +930,20 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	
 	
 	/**
-	 * Checks a few positions below ths given height
-	 * to check for air.
+	 * Checks a few positions around the given height
+	 * to confirm it is the highest solid point. <Br><Br>
+	 * 
 	 * This is helpful for validating worlds with overhangs that would cause
 	 * the binary search to find the wrong solid point.
 	 */
 	private static boolean sanityCheckSurface(
-		DensityFunction finalDensity, ILevelWrapper levelWrapper,
+		GenParams genParams, ILevelWrapper levelWrapper,
 		int blockX, int blockZ, int candidateSurfaceY)
 	{
-		int levelMinY = levelWrapper.getMinHeight();
 		int solidTopY = candidateSurfaceY - 1;
 		
+		// look below the point
+		int levelMinY = levelWrapper.getMinHeight();
 		for (int depth : SANITY_CHECK_DEPTHS)
 		{
 			int checkY = solidTopY - depth;
@@ -677,9 +953,28 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 				break;
 			}
 			
-			if (!isNoiseSolidAtBlockPos(finalDensity, blockX, checkY, blockZ))
+			if (!isNoiseSolidAtBlockPos(genParams, blockX, checkY, blockZ))
 			{
-				// there is air at this block pos
+				// there is empty space below us
+				return false;
+			}
+		}
+		
+		
+		// look above the point
+		int levelMaxY = levelWrapper.getMaxHeight();
+		for (int height : SANITY_CHECK_HEIGHTS)
+		{
+			int checkY = solidTopY + height;
+			if (checkY >= levelMaxY)
+			{
+				// no need to check above the world
+				break;
+			}
+			
+			if (isNoiseSolidAtBlockPos(genParams, blockX, checkY, blockZ))
+			{
+				// there is something solid above us
 				return false;
 			}
 		}
@@ -688,8 +983,15 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	}
 	
 	
-	private static boolean isNoiseSolidAtBlockPos(DensityFunction finalDensity, int blockX, int blockY, int blockZ)
-	{ return finalDensity.compute(new DensityFunction.SinglePointContext(blockX, blockY, blockZ)) > 0.0; }
+	private static boolean isNoiseSolidAtBlockPos(GenParams genParams, int blockX, int blockY, int blockZ)
+	{
+		#if MC_VER <= MC_26_2_0
+		return genParams.density
+			.compute(new DensityFunction.SinglePointContext(blockX, blockY, blockZ)) > 0.0;
+		#else
+		return genParams.density.sampleValue(blockX, blockY, blockZ) > 0.0;
+		#endif
+	}
 	
 	//endregion
 	
@@ -700,7 +1002,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	//================//
 	//region
 	
-	@Override
+	@Override 
 	public void close()
 	{
 		// nothing currently needed
@@ -714,6 +1016,78 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	// helper classes //
 	//================//
 	//region
+	
+	private static class GenParams
+	{
+		/** needed to generate chunks surfaces to determine biome block mappings */
+		@WillNotClose
+		public final DhChunkGenerator dhChunkGenerator;
+		
+		public ServerLevel serverLevel;
+		public RandomState randomState;
+		public ChunkGenerator chunkGenerator;
+		public BiomeSource biomeSource;
+		
+		public int relativeSeaLevel;
+		public int relativeMaxHeight;
+		
+		#if MC_VER <= MC_26_2_0
+		public DensityFunction density;
+		#else
+		public DensitySampler.Bound density;
+		#endif
+		
+		public boolean isSuperFlatWorld;
+		public int superFlatHeight = Integer.MIN_VALUE;
+		
+		
+		
+		public GenParams(DhChunkGenerator dhChunkGenerator, IServerLevelWrapper serverLevelWrapper)
+		{
+			this.dhChunkGenerator = dhChunkGenerator;
+			
+			this.serverLevel = ((ServerLevelWrapper)serverLevelWrapper).getWrappedMcObject();
+			this.randomState = this.serverLevel.getChunkSource().randomState();
+			this.chunkGenerator = this.serverLevel.getChunkSource().getGenerator();
+			this.biomeSource = this.chunkGenerator.getBiomeSource();
+			
+			this.relativeSeaLevel = serverLevelWrapper.getSeaLevel() - serverLevelWrapper.getMinHeight();
+			this.relativeMaxHeight = serverLevelWrapper.getMaxHeight() - serverLevelWrapper.getMinHeight();
+			
+			
+			this.isSuperFlatWorld = this.chunkGenerator
+				.getClass()
+				.equals(FlatLevelSource.class);
+			
+			
+			
+			// density setup //
+			//region
+			
+			#if MC_VER <= MC_26_2_0
+			
+			this.density = this.randomState.router().finalDensity();
+			
+			#else
+			
+			ContextMap samplerUserFields = ContextMap.builder()
+				.set(Beardifier.CONTEXT_KEY, Beardifier.EMPTY)
+				.build();
+			
+			DensitySamplerSet densitySamplers = this.randomState.samplersWithContext(
+				SamplerContext.builder()
+					.setUserFields(samplerUserFields)
+					.build()
+			);
+			
+			DensityFunction finalDensityFunc = this.randomState.router.finalDensity();
+			this.density = densitySamplers.get(finalDensityFunc);
+			
+			#endif
+			//endregion
+			
+		}
+	}
 	
 	private static class BlockCountPair
 	{

@@ -36,7 +36,9 @@ import org.lwjgl.opengl.GL30;
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
 /**
- * Copies {@link com.seibel.distanthorizons.core.render.renderer.LodRenderer}'s currently active color and depth texture to Minecraft's framebuffer. 
+ * Applies {@link com.seibel.distanthorizons.core.render.renderer.LodRenderer}'s 
+ * currently active color texture to Minecraft's framebuffer,
+ * ignoring any depth that wasn't drawn. 
  */
 public class GlDhApplyShader extends GlAbstractShaderRenderer
 {
@@ -45,6 +47,7 @@ public class GlDhApplyShader extends GlAbstractShaderRenderer
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
+	
 	
 	// uniforms
 	public int uSourceColorTexture;

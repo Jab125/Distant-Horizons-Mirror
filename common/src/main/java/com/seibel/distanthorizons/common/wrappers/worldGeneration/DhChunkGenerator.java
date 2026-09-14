@@ -60,13 +60,20 @@ import com.seibel.distanthorizons.coreapi.ModInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-#if MC_VER > MC_1_12_2
+#if MC_VER <= MC_1_12_2
+#elif MC_VER <= MC_26_2_0
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepBiomes;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepFeatures;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepNoise;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepStructureReference;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepStructureStart;
 import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepSurface;
+#else
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepBiomes;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepFeatures;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepStructureReference;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepStructureStart;
+import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepTerrain;
 #endif 
 
 #if MC_VER <= MC_1_12_2
@@ -145,12 +152,19 @@ public final class DhChunkGenerator implements IChunkGenerator
 	public final LinkedBlockingQueue<ChunkGenEvent> generationEventQueue = new LinkedBlockingQueue<>();
 	public final GlobalWorldGenParams globalParams;
 	
-	#if MC_VER > MC_1_12_2
+	#if MC_VER <= MC_1_12_2
+	#elif MC_VER <= MC_26_2_0
 	public final StepStructureStart stepStructureStart = new StepStructureStart(this);
 	public final StepStructureReference stepStructureReference = new StepStructureReference(this);
 	public final StepBiomes stepBiomes = new StepBiomes(this);
 	public final StepNoise stepNoise = new StepNoise(this);
 	public final StepSurface stepSurface = new StepSurface(this);
+	public final StepFeatures stepFeatures = new StepFeatures(this);
+	#else 
+	public final StepStructureStart stepStructureStart = new StepStructureStart(this);
+	public final StepStructureReference stepStructureReference = new StepStructureReference(this);
+	public final StepBiomes stepBiomes = new StepBiomes(this);
+	public final StepTerrain stepTerrain = new StepTerrain(this);
 	public final StepFeatures stepFeatures = new StepFeatures(this);
 	#endif
 	
@@ -177,8 +191,25 @@ public final class DhChunkGenerator implements IChunkGenerator
 		builder.put(EDhApiWorldGenerationStep.CARVERS, 0);
 		builder.put(EDhApiWorldGenerationStep.LIQUID_CARVERS, 0);
 		builder.put(EDhApiWorldGenerationStep.FEATURES, 0);
+		builder.put(EDhApiWorldGenerationStep.TERRAIN, 0);
 		builder.put(EDhApiWorldGenerationStep.LIGHT, 0);
 		WORLD_GEN_CHUNK_BORDER_NEEDED_BY_GEN_STEP = builder.build();
+		
+		// validate that all gen steps are populated
+		for (EDhApiWorldGenerationStep step : EDhApiWorldGenerationStep.values())
+		{
+			if (step.value < 0
+				|| step == EDhApiWorldGenerationStep.DOWN_SAMPLED)
+			{
+				// only check world gen steps that can be generated
+				continue;
+			}
+			
+			if (!WORLD_GEN_CHUNK_BORDER_NEEDED_BY_GEN_STEP.containsKey(step))
+			{
+				throw new IllegalStateException("World gen step ["+step+"] doesn't have a chunk border defined.");
+			}
+		}
 		
 		// in James' testing as of 2025-09-13 a border here of 2
 		// and a getChunkPosToGenerateStream() radius of 14 provided more accurate
@@ -365,7 +396,7 @@ public final class DhChunkGenerator implements IChunkGenerator
 			CompletableFuture<ChunkWrapper> getExistingChunkFuture
 				// running async allows file IO to run in parallel when C2ME is present
 				= this.chunkFileReader.createEmptyOrPreExistingChunkWrapperAsync(
-					dhChunkPos.getX(), dhChunkPos.getZ(),
+					dhChunkPos.getX(), dhChunkPos.getZ(), genEvent.loadChunksFromDisk,
 					chunkSkyLightingByDhPos, chunkBlockLightingByDhPos, chunkWrappersByDhPos);
 			
 			readFutureByDhChunkPos.put(dhChunkPos, getExistingChunkFuture);
@@ -654,6 +685,8 @@ public final class DhChunkGenerator implements IChunkGenerator
 				return;
 			}
 			
+			#if MC_VER <= MC_26_2_0
+			
 			throwIfThreadInterrupted();
 			this.stepNoise.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.NOISE));
 			if (step == EDhApiWorldGenerationStep.NOISE)
@@ -678,7 +711,19 @@ public final class DhChunkGenerator implements IChunkGenerator
 				ChunkAccess chunk = chunkWrapper.getChunk();
 				Heightmap.primeHeightmaps(chunk, ChunkStatus.CARVERS.heightmapsAfter());
 			}
-
+			
+			#else
+			// Surface and carvers were replaced with "terrain" 
+			
+			throwIfThreadInterrupted();
+			this.stepTerrain.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.TERRAIN));
+			if (step == EDhApiWorldGenerationStep.TERRAIN)
+			{
+				return;
+			}
+			
+			#endif
+			
 			throwIfThreadInterrupted();
 			this.stepFeatures.generateGroup(genEvent.threadedParam, region, GetCutoutFrom(chunkWrappersToGenerate, EDhApiWorldGenerationStep.FEATURES));
 		}
@@ -767,9 +812,9 @@ public final class DhChunkGenerator implements IChunkGenerator
 		ExecutorService worldGeneratorThreadPool, Consumer<IChunkWrapper> resultConsumer)
 	{
 		ChunkGenEvent genEvent = ChunkGenEvent.start(
-			new DhChunkPos(chunkPosMinX, chunkPosMinZ), chunkWidthCount, this,
-			generatorMode, targetStep, resultConsumer,
-			worldGeneratorThreadPool);
+				new DhChunkPos(chunkPosMinX, chunkPosMinZ), chunkWidthCount, this,
+				generatorMode, targetStep, resultConsumer, 
+				worldGeneratorThreadPool);
 		this.generationEventQueue.add(genEvent);
 		return genEvent.future;
 	}

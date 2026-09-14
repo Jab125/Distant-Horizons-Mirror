@@ -24,8 +24,6 @@ import com.mojang.blaze3d.platform.NativeImage;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 #endif
 #if MC_VER <= MC_1_7_10
-import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
-import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IRpleAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.texture.DynamicTexture;
 #endif
@@ -46,9 +44,12 @@ import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 #endif
 
 #if MC_VER <= MC_1_21_10
-#else
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.textures.GpuTexture;
+#else
+import com.mojang.renderpearl.api.textures.GpuTexture;
 #endif
+
 
 public class LightMapWrapper implements ILightMapWrapper
 {
@@ -70,7 +71,10 @@ public class LightMapWrapper implements ILightMapWrapper
 	private GpuTexture gpuTexture = null;
 	#endif
 	
+	#if MC_VER <= MC_1_21_10
+	#else
 	private final BlazeTextureViewWrapper lightmapTextureWrapper = new BlazeTextureViewWrapper();
+	#endif
 	
 	
 	
@@ -153,7 +157,10 @@ public class LightMapWrapper implements ILightMapWrapper
 	//==============//
 	//region
 	
+	#if MC_VER <= MC_1_21_10
+	#else
 	public BlazeTextureViewWrapper getTextureViewWrapper() { return this.lightmapTextureWrapper; }
+	#endif
 
 	#if MC_VER <= MC_1_7_10
 	public int getOpenGlId()

@@ -47,7 +47,6 @@ public class CommandInitializer
 			#endif
 			{ return "dh"; }
 			
-			
 			#if MC_VER <= MC_1_7_10
 			@Override
 			public String getCommandUsage(ICommandSender sender)
@@ -55,7 +54,11 @@ public class CommandInitializer
 			@Override
 			public String getUsage(ICommandSender sender)
 			#endif
-			{ return "/dh <debug|config|pregen>"; }
+			{
+				return DEBUG_CODEC_CRASH_MESSAGE
+						? "/dh <help|debug|config|crash|pregen>"
+						: "/dh <help|debug|config|pregen>";
+			}
 			
 			
 			#if MC_VER <= MC_1_7_10
@@ -72,19 +75,17 @@ public class CommandInitializer
 			{
 				if (args.length == 0)
 				{
-					if (DEBUG_CODEC_CRASH_MESSAGE)
-					{
-						AbstractDhCommand.sendMessage(sender, "Usage: /dh <debug|config|crash|pregen>");
-					}
-					else
-					{
-						AbstractDhCommand.sendMessage(sender, "Usage: /dh <debug|config|pregen>");
-					}
+					HelpCommand helpCommand = new HelpCommand();
+					helpCommand.execute(sender);
 					return;
 				}
 				
 				switch (args[0])
 				{
+					case "help":
+						HelpCommand helpCommand = new HelpCommand();
+						helpCommand.execute(sender);
+						break;
 					case "debug":
 						DebugCommand debugCommand = new DebugCommand();
 						debugCommand.execute(sender);
@@ -169,6 +170,7 @@ public class CommandInitializer
 				});
 		
 		builder.then(new ConfigCommand().buildCommand());
+		builder.then(new HelpCommand().buildCommand());
 		builder.then(new DebugCommand().buildCommand());
 		builder.then(new PregenCommand().buildCommand());
 		

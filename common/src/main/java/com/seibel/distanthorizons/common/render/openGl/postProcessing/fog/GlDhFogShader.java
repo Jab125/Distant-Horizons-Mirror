@@ -51,6 +51,7 @@ public class GlDhFogShader extends GlAbstractShaderRenderer
 	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 	
 	
+	
 	public int frameBuffer;
 	private DhMat4f inverseMvmProjMatrix; 
 	private DhApiFogRenderParam fogRenderParams;

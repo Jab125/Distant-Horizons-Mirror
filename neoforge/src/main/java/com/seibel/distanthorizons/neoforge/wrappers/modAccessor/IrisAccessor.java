@@ -31,7 +31,7 @@ public class IrisAccessor implements IIrisAccessor
 {
 	public IrisAccessor()
 	{
-		
+
 	}
 	
 	
@@ -48,7 +48,7 @@ public class IrisAccessor implements IIrisAccessor
 	@Override
 	public boolean isReverseZDuringShaders()
 	{
-		#if MC_VER <= MC_26_1_2
+		#if MC_VER <= MC_1_21_11
 		return false;
 		#else
 		// only supported on Iris for MC 26.2 and newer

@@ -105,12 +105,12 @@ public final class StepBiomes extends AbstractWorldGenStep
 					);
 			#else
 			chunk = this.dhChunkGen.confirmFutureWasRunSynchronously(
-				this.dhChunkGen.globalParams.generator.createBiomes(
-					this.dhChunkGen.globalParams.randomState,
-					Blender.of(worldGenRegion),
-					tParams.structFeatManager.forWorldGenRegion(worldGenRegion),
-					chunk)
-			);
+						this.dhChunkGen.globalParams.generator.createBiomes(
+							this.dhChunkGen.globalParams.randomState, 
+							Blender.of(worldGenRegion),
+							tParams.structFeatManager.forWorldGenRegion(worldGenRegion), 
+							chunk)
+					);
 			#endif
 		}
 	}

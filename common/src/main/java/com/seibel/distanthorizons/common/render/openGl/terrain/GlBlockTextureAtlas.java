@@ -71,7 +71,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	//==================//
 	//region
 	
-	@Override 
+	@Override
 	protected void tryCreateOrResize(int width, int height)
 	{
 		if (this.textureId != 0)
@@ -133,7 +133,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	//===========//
 	//region
 	
-	@Override 
+	@Override
 	protected void beforeWriteToTexture()
 	{
 		this.uploadGlState.saveState();
@@ -146,7 +146,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 		LWJGL.glPixelStorei(GL11.GL_UNPACK_ALIGNMENT, 1);
 	}
 	
-	@Override 
+	@Override
 	protected void writeToTexture(ByteBuffer pixelBuffer, int destinationX, int destinationY, int tileWidth, int tileHeight)
 	{
 		LWJGL.glTexSubImage2D(
@@ -195,7 +195,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 			this.textureBinding = LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 		}
 		
-		@Override 
+		@Override
 		public void close()
 		{
 			LWJGL.glBindTexture(GL11.GL_TEXTURE_2D, this.textureBinding);

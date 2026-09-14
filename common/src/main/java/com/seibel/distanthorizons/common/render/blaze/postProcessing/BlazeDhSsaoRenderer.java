@@ -34,6 +34,7 @@ import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeUnif
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.EDhDepthRange;
 import com.seibel.distanthorizons.core.render.EDhRenderDepth;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
@@ -42,18 +43,29 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRen
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhSsaoRenderer;
 
+#if MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.buffers.GpuBuffer;
 import com.mojang.blaze3d.pipeline.BlendFunction;
 import com.mojang.blaze3d.pipeline.RenderPipeline;
 import com.mojang.blaze3d.systems.CommandEncoder;
 import com.mojang.blaze3d.systems.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
+#else
+import com.mojang.renderpearl.api.buffers.GpuBuffer;
+import com.mojang.renderpearl.api.commands.CommandEncoder;
+import com.mojang.renderpearl.api.device.GpuDevice;
+import com.mojang.renderpearl.api.pipeline.BlendFunction;
+import com.mojang.renderpearl.api.pipeline.RenderPipeline;
+import com.mojang.blaze3d.systems.RenderSystem;
+#endif
 
 #if MC_VER <= MC_26_1_2
 import com.mojang.blaze3d.platform.DestFactor;
 import com.mojang.blaze3d.platform.SourceFactor;
-#else
+#elif MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.platform.BlendFactor;
+#else
+import com.mojang.renderpearl.api.pipeline.BlendFactor;
 #endif
 
 /** Renders SSAO to the DH LODs. */
@@ -62,7 +74,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build(); 
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-	private static final AbstractDhRenderApiDefinition RENDER_API_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
+	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 	
 	private static final GpuDevice GPU_DEVICE = RenderSystem.getDevice();
 	private static final CommandEncoder COMMAND_ENCODER = GPU_DEVICE.createCommandEncoder();
@@ -140,7 +152,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 		this.pipeline = pipelineBuilder.build();
 		
 		
-		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData("McSsao");
+		this.vboGpuBuffer = BlazePostProcessUtil.createAndUploadScreenVertexData("DhSsao");
 	}
 	
 	//endregion
@@ -157,7 +169,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 	{
 		this.tryInit();
 		
-		
+		// shouldn't happen, but just in case
 		if (BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
 			|| BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
@@ -191,7 +203,8 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 				.putMat4f(invertedProjMatrix)
 				.putMat4f(projMatrix)
 				
-				.putInt((RENDER_API_DEF.getRenderDepth() == EDhRenderDepth.REVERSE_Z) ? 1 : 0) // uIsReverseZDepth
+				.putInt((RENDER_DEF.getRenderDepth() == EDhRenderDepth.REVERSE_Z) ? 1 : 0) // uIsReverseZDepth
+				.putInt((RENDER_DEF.getDepthRange() == EDhDepthRange.ZERO_TO_POS_ONE) ? 1 : 0) // uDepthIsZeroToPositiveOne
 				.finishAndUpload()
 			;
 		}
@@ -213,6 +226,7 @@ public class BlazeDhSsaoRenderer implements IDhSsaoRenderer
 				.putInt(2) // uBlurRadius
 				.putFloat(nearClipPlane) // uNearClipPlane
 				.putFloat(farClipPlane) // uFarClipPlane
+				.putInt((RENDER_DEF.getRenderDepth() == EDhRenderDepth.REVERSE_Z) ? 1 : 0) // uIsReverseZDepth
 				.finishAndUpload()
 			;
 		}

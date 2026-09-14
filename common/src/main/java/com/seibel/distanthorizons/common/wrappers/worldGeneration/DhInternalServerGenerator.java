@@ -41,6 +41,9 @@ import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
 import net.minecraftforge.common.ForgeChunkManager;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.world.chunk.storage.AnvilChunkLoader;
+import net.minecraft.world.storage.ThreadedFileIOBase;
 #else
 import net.minecraft.server.level.ChunkHolder;
 import net.minecraft.server.level.ServerLevel;
@@ -101,9 +104,6 @@ public class DhInternalServerGenerator
 	 * but we want to avoid an endless loop.
 	 */
 	private static final int MAX_UNLOAD_DRAIN_ATTEMPT_COUNT = 100;
-	#endif
-	
-	#if MC_VER <= MC_1_12_2
 	#elif MC_VER < MC_1_21_5
 	private static final TicketType<ChunkPos> DH_SERVER_GEN_TICKET = TicketType.create("dh_server_gen_ticket", Comparator.comparingLong(ChunkPos::toLong));
 	#elif MC_VER < MC_1_21_9
@@ -122,9 +122,7 @@ public class DhInternalServerGenerator
 	private final Timer chunkSaveIgnoreTimer = TimerUtil.CreateTimer("ChunkSaveIgnoreTimer");
 	#if MC_VER <= MC_1_12_2
 	private final ForgeChunkManager.Ticket dhServerGenTicket;
-	#endif
 
-	#if MC_VER <= MC_1_12_2
 	/**
 	 * Older Minecraft needs neighboring chunks loaded.
 	 * This map tracks how many in-flight generation events currently need each chunk pos loaded.
@@ -704,7 +702,7 @@ public class DhInternalServerGenerator
 						}
 					}
 				}, MS_TO_IGNORE_CHUNK_AFTER_COMPLETION);
-
+				
 			}
 			catch (Exception e)
 			{

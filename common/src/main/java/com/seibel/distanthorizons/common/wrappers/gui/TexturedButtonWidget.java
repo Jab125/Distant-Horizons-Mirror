@@ -139,7 +139,7 @@ public class TexturedButtonWidget
 		// We don't pass in the text option since it will render (we normally pass it in for narration)
 		super(x, y, width, height, Component.empty(), pressAction, DEFAULT_NARRATION);
 		#endif
-	    
+
 		this.u = u;
 		this.v = v;
 		this.hoveredVOffset = hoveredVOffset;

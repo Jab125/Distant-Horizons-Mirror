@@ -51,7 +51,6 @@ repositories {
     maven { url "https://libraries.minecraft.net/" }
     mavenCentral()
     maven { url "https://repo.enonic.com/public/" }
-    maven { url "https://maven.parchmentmc.org" }
     maven { url "https://maven.architectury.dev" }
     maven {
         url "https://jitpack.io"
@@ -539,17 +538,23 @@ if (isNotCommonProject) {
             }
 
             // Shared run directory so all loaders use the same worlds
-            def isClient = runTask.name.toLowerCase().contains("client")
+            boolean isClient = runTask.name.toLowerCase().contains("client")
             runTask.workingDir = rootProject.file("run/${isClient ? 'client' : 'server'}")
 
-            // Minecraft automatically has G1GC args present,
-            // remove them so we can use ZGC instead
-            def filteredArgs = runTask.jvmArgs.findAll { arg ->
-                !arg.startsWith("-XX:+UseG1GC") &&
-                    !arg.startsWith("-XX:G1") &&
-                    !arg.startsWith("-XX:MaxGCPauseMillis")
+            boolean useZgc = (gradle.ext.java_version as Integer) >= 21;
+            boolean useZGenerational = (gradle.ext.java_version as Integer) >= 25;
+
+            if (useZgc)
+            {
+                // Minecraft automatically has G1GC args present,
+                // remove them so we can use ZGC instead
+                List<String> filteredArgs = runTask.jvmArgs.findAll { arg ->
+                    !arg.startsWith("-XX:+UseG1GC") &&
+                        !arg.startsWith("-XX:G1") &&
+                        !arg.startsWith("-XX:MaxGCPauseMillis")
+                }
+                runTask.jvmArgs = filteredArgs
             }
-            runTask.jvmArgs = filteredArgs
 
             if (project.name == "forge"
                 || project.name == "neoforge"
@@ -581,12 +586,28 @@ if (isNotCommonProject) {
             // JVM args
             runTask.jvmArgs(
                 "-Dio.netty.leakDetection.level=advanced",
-                // TODO only use for modern java versions
-                //"-XX:+UseZGC",
-                // TODO don't use for even more modern-er java versions
-                //"-XX:+ZGenerational",
                 rootProject.minecraftMemoryJavaArg,
+
+                // can be un-commented to confirm mixins are being applied
+                // https://github.com/SpongePowered/Mixin/wiki/Mixin-Java-System-Properties
+                //"-Dmixin.debug.export=true",
+                //"-Dmixin.debug.verbose=true",
             )
+
+            if (useZgc)
+            {
+                runTask.jvmArgs(
+                    "-XX:+UseZGC"
+                )
+
+                if (useZGenerational)
+                {
+                    runTask.jvmArgs(
+                        "-XX:+ZGenerational"
+                    )
+                }
+            }
+
             if (isClient) {
                 runTask.jvmArgs(
                     "-Dminecraft.api.auth.host=https://nope.invalid",

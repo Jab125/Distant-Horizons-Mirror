@@ -132,9 +132,8 @@ public class GLProxy
 	{
 		if (RENDER_DEF.getRenderApi() != EDhApiRenderingApi.OPEN_GL)
 		{
-			throw new IllegalStateException("[" + GLProxy.class.getSimpleName() + "] was created with the wrong Rendering API ["+RENDER_DEF.getRenderApi()+"]!");
+			throw new IllegalStateException("[" + GLProxy.class.getSimpleName() + "] was created with the wrong Rendering API ["+RENDER_DEF.getRenderApi()+"]!"); 
 		}
-		
 		
 		// this must be created on minecraft's render context to work correctly
 		if (!runningOnRenderThread())
@@ -275,7 +274,6 @@ public class GLProxy
 		#endif
 		
 		return isRenderThread;
-
 	}
 	
 	//endregion

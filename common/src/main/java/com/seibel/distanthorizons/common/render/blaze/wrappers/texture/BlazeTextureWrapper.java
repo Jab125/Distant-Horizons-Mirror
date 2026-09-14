@@ -339,7 +339,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	// wrapping //
 	//==========//
 	//region
-	@Override
+	@Override 
 	public Object getWrappedMcObject()
 	{
 		// Blaze textures have a few different objects needed for

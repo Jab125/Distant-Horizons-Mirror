@@ -116,6 +116,20 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	#endif
     public static final ConcurrentHashMap<String, BlockStateWrapper> WRAPPER_BY_RESOURCE_LOCATION = new ConcurrentHashMap<>();
 	
+	
+	/** keep track of broken blocks so we don't log every time */
+	#if MC_VER <= MC_1_7_10
+	private static final HashSet<String> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
+	#elif MC_VER <= MC_1_21_10
+	private static final HashSet<ResourceLocation> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
+	#else
+	private static final HashSet<Identifier> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
+	#endif
+	
+	
+	// static blocks //
+	//region
+	
 	public static final String AIR_STRING = "AIR";
 	public static final BlockStateWrapper AIR = new BlockStateWrapper(null, null, null);
 	
@@ -131,19 +145,13 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private static final String SNOW_RESOURCE_LOCATION_STRING = "minecraft:snow";
 	private static BlockStateWrapper snowBlock = null;
 	
-	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
-	public static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
-	public static ObjectOpenHashSet<IBlockStateWrapper> waterSubsurfaceReplacementBlocks = null;
-	public static ObjectOpenHashSet<IBlockStateWrapper> waterSurfaceReplacementBlocks = null;
+	//endregion
 	
-	/** keep track of broken blocks so we don't log every time */
-	#if MC_VER <= MC_1_7_10
-	private static final HashSet<String> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
-	#elif MC_VER <= MC_1_21_10
-	private static final HashSet<ResourceLocation> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
-	#else
-	private static final HashSet<Identifier> BROKEN_RESOURCE_LOCATIONS = new HashSet<>();
-	#endif
+	
+	private static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredBlocks = null;
+	private static ObjectOpenHashSet<IBlockStateWrapper> rendererIgnoredCaveBlocks = null;
+	private static ObjectOpenHashSet<IBlockStateWrapper> waterSubsurfaceReplacementBlocks = null;
+	private static ObjectOpenHashSet<IBlockStateWrapper> waterSurfaceReplacementBlocks = null;
 	
 	
 	
@@ -652,12 +660,14 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			}
 		}
 		
+		
 		// ice //
 		{
 			// ice block
 			this.isIceBlock = lowerCaseSerial.contains("minecraft:ice");
 			
 		}
+		
 	}
 
 	// static constructor helpers //
@@ -1179,6 +1189,15 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		return waterSubsurfaceReplacementBlocks;
 	}
 	
+	//endregion
+	
+	
+	
+	//======================//
+	// static block getters //
+	//======================//
+	//region
+	
 	public static BlockStateWrapper getWaterBlockStateWrapper(ILevelWrapper levelWrapper)
 	{
 		// use the cached version if possible
@@ -1246,7 +1265,6 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		return snowBlock;
 	}
-	
 	
 	//endregion
 	
@@ -1347,6 +1365,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		rendererIgnoredCaveBlocks = null;
 		waterSurfaceReplacementBlocks = null;
 		waterSubsurfaceReplacementBlocks = null;
+		
 		waterBlock = null;
 		dirtBlock = null;
 		iceBlock = null;

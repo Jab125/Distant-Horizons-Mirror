@@ -25,7 +25,6 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
-import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
 public abstract class GlAbstractShaderRenderer
 {
