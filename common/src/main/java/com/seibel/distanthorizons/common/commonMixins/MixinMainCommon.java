@@ -32,7 +32,7 @@ public class MixinMainCommon
 			System.load(renderDocDllPath);
 			LOGGER.info("Distant Horizons has successfully injected Render Doc for debugging.");
 		}
-		catch (Exception e)
+		catch (Throwable e) // UnsatisfiedLinkError is likely what will be thrown if the DLL is missing
 		{
 			LOGGER.error("Unable to inject RenderDoc from ["+renderDocDllPath+"]", e);
 		}
