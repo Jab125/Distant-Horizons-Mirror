@@ -28,8 +28,6 @@ import org.lwjgl.opengl.GL31;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.opengl.GL43;
-import org.lwjgl.opengl.GL45;
-import org.lwjgl.opengl.GL46;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.opengl.GLSync;
