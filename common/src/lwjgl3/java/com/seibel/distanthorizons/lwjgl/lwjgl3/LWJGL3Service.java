@@ -3,7 +3,6 @@ package com.seibel.distanthorizons.lwjgl.lwjgl3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.PointerBuffer;
-import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.APIUtil;
 import org.lwjgl.system.JNI;
@@ -28,6 +27,7 @@ public record LWJGL3Service(
 {
     private static final Logger LOGGER = LogManager.getLogger("DistantHorizons/LWJGL3Service");
     private static final LWJGL3DebugSupport debugSupport = new LWJGL3DebugSupport();
+	private static final Thread RENDER_THREAD = Thread.currentThread();
 
     // ===================== CAPABILITIES =====================
 	@Override
@@ -1104,6 +1104,6 @@ public record LWJGL3Service(
 	@Override
 	public boolean isRunningOnRenderThread()
 	{
-		return GLFW.glfwGetCurrentContext() != 0L;
+		return Thread.currentThread() == RENDER_THREAD;
 	}
 }
