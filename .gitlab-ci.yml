@@ -91,7 +91,7 @@ build:
     # this both runs the unit tests and assembles the code
     # (no separate clean: the container starts fresh, so build/ is already empty)
     - retry ./gradlew build -PmcVer="${MC_VER}" -PinfoGitCommit="${CI_COMMIT_SHA}" -PinfoGitBranch="${CI_COMMIT_BRANCH}" -PinfoBuildSource="GitLab CI (${CI_PIPELINE_ID})" --gradle-user-home cache/;
-    - cp ./cleanroom/build/libs/* ./fabric/build/libs/* ./forge/build/libs/* ./neoforge/build/libs/* ./build/forgix/* . || true
+    - cp ./fabric/build/libs/* ./forge17/build/libs/* ./forge112/build/libs/* ./forge/build/libs/* ./neoforge/build/libs/* ./build/forgix/* . || true
   artifacts:
     name: "NightlyBuild_${MC_VER}-${CI_COMMIT_SHORT_SHA}-${CI_COMMIT_TIMESTAMP}"
     paths:
