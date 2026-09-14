@@ -73,4 +73,12 @@ public class OculusAccessor implements IIrisAccessor
 		#endif
 	}
 	
+	@Override
+	public boolean isReverseZDuringShaders()
+	{
+		// Reverse Z isn't supported on Iris' end
+		// for these older versions of MC 
+		return false;
+	}
+	
 }

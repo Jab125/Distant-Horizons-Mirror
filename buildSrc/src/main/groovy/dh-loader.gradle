@@ -39,7 +39,7 @@ project.gradle.ext.getProperties().each { prop ->
 
 project.ext.lwjgl2Version = rootProject.hasProperty("lwjgl2_version") ? rootProject.lwjgl2_version : "2.9.3"
 project.ext.lwjgl3Version = rootProject.hasProperty("lwjgl3_version") ? rootProject.lwjgl3_version : "3.3.1"
-
+project.ext.needsDowngrade = (rootProject.java_version as Integer) < 17
 manifold {
     version = rootProject.manifold_version
 }
@@ -101,8 +101,6 @@ tasks.withType(JavaCompile).configureEach {
 }
 
 java {
-    sourceCompatibility = JavaVersion.VERSION_1_8
-    targetCompatibility = JavaVersion.VERSION_1_8
     withSourcesJar()
 }
 
@@ -513,8 +511,14 @@ if (isNotCommonProject) {
         def shadowedPaths = configurations.shadowMe.resolve().collect { it.path }.toSet()
         def loaderPaths = configurations.minecraftLibraries.resolve().collect { it.path }.toSet()
         tasks.withType(JavaExec).configureEach { runTask ->
+            runTask.javaLauncher.set(
+                javaToolchains.launcherFor {
+                    languageVersion = JavaLanguageVersion.of(rootProject.java_version)
+                }
+            )
+
             dependsOn(shadowJar)
-            if (project.name != "forge112" && project.name != "forge17") {
+            if (!needsDowngrade) {
                 classpath = files(shadowJar.archiveFile) + classpath.filter { file ->
                     file != shadowJar.archiveFile.get().asFile &&
                         !file.path.contains(project.buildDir.path) &&
@@ -524,7 +528,6 @@ if (isNotCommonProject) {
                         !(shadowedPaths.contains(file.path) && !loaderPaths.contains(file.path))
                 }
             } else {
-                // For forge(1.7.10 and 1.12.2), don't put shadow jar on app classpath.
                 dependsOn(tasks.named("shadeDowngradedApi"))
                 classpath = classpath.filter { file ->
                     !file.path.contains(project.buildDir.path) &&
@@ -565,7 +568,7 @@ if (isNotCommonProject) {
                     });
 
 
-                    def jarSource = project.name in ["forge112", "forge17"] ? tasks.named("shadeDowngradedApi").get().archiveFile : shadowJar.archiveFile
+                    def jarSource = needsDowngrade ? tasks.named("shadeDowngradedApi").get().archiveFile : shadowJar.archiveFile
 
                     // Copy shadow jar into mods folder so (Neo)Forge discovers it properly
                     copy {
@@ -747,7 +750,7 @@ if (isNotCommonProject) {
     downgradeJar.archiveClassifier.set(null)
     shadeDowngradedApi.archiveClassifier.set(null)
 
-    if (project.name == "forge112" || project.name == "forge17") {
+    if (needsDowngrade) {
         gradle.taskGraph.whenReady { graph ->
             if (graph.hasTask("${project.path}:runClient")) {
                 downgradeJar.inputFile.set(shadowJar.archiveFile)

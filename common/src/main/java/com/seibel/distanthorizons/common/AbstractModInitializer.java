@@ -5,11 +5,13 @@ import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.api.enums.config.quickOptions.EDhApiThreadPreset;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiTransparency;
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiGeneratorPlan;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeDhInitEvent;
 import com.seibel.distanthorizons.common.commands.CommandInitializer;
 import com.seibel.distanthorizons.common.wrappers.DependencySetup;
 import com.seibel.distanthorizons.common.wrappers.gui.DhDebugScreenEntry;
+import com.seibel.distanthorizons.common.wrappers.minecraft.AbstractMinecraftSharedWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftClientWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftServerWrapper;
 import com.seibel.distanthorizons.core.Initializer;
@@ -438,7 +440,7 @@ public abstract class AbstractModInitializer
 			LOGGER.warn(startingString + "[Chunky] "+ chunkyWarning);
 			
 			// don't allow for the possibility of DH and chunky to generate chunks at the same time
-			Config.Common.WorldGenerator.enableDistantGeneration.setApiValue(false);
+			Config.Common.WorldGenerator.generatorPlan.setApiValue(EDhApiGeneratorPlan.DISABLED);
 			Config.Common.LodBuilding.disableUnchangedChunkCheck.setApiValue(true);
 		}
 		
@@ -527,7 +529,7 @@ public abstract class AbstractModInitializer
 			
 			LOGGER.info("Found ["+numberOfC2meThreads+"] C2ME threads. DH needs to use at least the same number of threads as C2ME to prevent issues with Chunky.");
 			
-			if (Config.Common.MultiThreading.useC2meThreadCount.get())
+			if (chunkyPresent)
 			{
 				Config.Common.MultiThreading.numberOfThreads.setApiValue(numberOfC2meThreads);
 				Config.Common.MultiThreading.threadRunTimeRatio.setApiValue(1.0); // C2ME threads have 100% uptime, so should we
@@ -551,7 +553,7 @@ public abstract class AbstractModInitializer
 		// graphics/rendering
 		#if MC_VER <= MC_1_12_2
 		Config.Client.Advanced.Graphics.Experimental.renderingEngine.setMcVersionOverrideValue(EDhApiRenderingEngine.OPEN_GL);
-		Config.Common.WorldGenerator.distantGeneratorMode.setMcVersionOverrideValue(EDhApiDistantGeneratorMode.INTERNAL_SERVER);
+		Config.Common.WorldGenerator.chunkGeneratorMode.setMcVersionOverrideValue(EDhApiDistantGeneratorMode.INTERNAL_SERVER);
 		
 		// Disabled since it prevents the JVM from exiting in 1.7.10
 		Config.Client.Advanced.Debugging.OpenGl.overrideVanillaGLLogger.setMcVersionOverrideValue(false);
@@ -562,8 +564,9 @@ public abstract class AbstractModInitializer
 		
 		// worldgen
 		#if MC_VER <= MC_1_18_2
-		Config.Common.WorldGenerator.enableFastSurfaceGenerator.setMcVersionOverrideValue(false);
+		AbstractMinecraftSharedWrapper.supportsSurfaceGeneration = false;
 		#else
+		AbstractMinecraftSharedWrapper.supportsSurfaceGeneration = true;
 		#endif
 	}
 	

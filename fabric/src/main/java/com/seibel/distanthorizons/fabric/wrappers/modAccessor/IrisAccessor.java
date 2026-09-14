@@ -19,17 +19,17 @@
 
 package com.seibel.distanthorizons.fabric.wrappers.modAccessor;
 
-#if MC_VER >= MC_1_19_4
+#if MC_VER <= MC_1_18_2
+#else // MC_1_19_4 and newer
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 
 #if MC_VER <= MC_1_20_4
 import net.coderbot.iris.Iris;
-import net.irisshaders.iris.api.v0.IrisApi;
 #else
 import net.irisshaders.iris.Iris;
-import net.irisshaders.iris.api.v0.IrisApi;
 #endif
+import net.irisshaders.iris.api.v0.IrisApi;
 
 public class IrisAccessor implements IIrisAccessor
 {
@@ -41,6 +41,17 @@ public class IrisAccessor implements IIrisAccessor
 	
 	@Override
 	public boolean isRenderingShadowPass() { return IrisApi.getInstance().isRenderingShadowPass(); }
+	
+	@Override
+	public boolean isReverseZDuringShaders()
+	{
+		#if MC_VER <= MC_26_1_2
+		return false;
+		#else
+		// only supported on Iris for MC 26.2 and newer
+		return IrisApi.getInstance().isReverseZDuringShaders();
+		#endif
+	}
 	
 }
 

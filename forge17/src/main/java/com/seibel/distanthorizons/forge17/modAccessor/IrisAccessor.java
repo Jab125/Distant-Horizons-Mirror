@@ -25,6 +25,12 @@ public class IrisAccessor implements IIrisAccessor
             .isRenderingShadowPass();
     }
 	
+	@Override
+	public boolean isReverseZDuringShaders()
+	{
+		return false;
+	}
+	
 	
 	
 }
