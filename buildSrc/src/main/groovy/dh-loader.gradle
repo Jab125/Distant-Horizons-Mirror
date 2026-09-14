@@ -396,17 +396,23 @@ if (isNotCommonProject) {
             }
 
             // Shared run directory so all loaders use the same worlds
-            def isClient = runTask.name.toLowerCase().contains("client")
+            boolean isClient = runTask.name.toLowerCase().contains("client")
             runTask.workingDir = rootProject.file("run/${isClient ? 'client' : 'server'}")
 
-            // Minecraft automatically has G1GC args present,
-            // remove them so we can use ZGC instead
-            def filteredArgs = runTask.jvmArgs.findAll { arg ->
-                !arg.startsWith("-XX:+UseG1GC") &&
-                !arg.startsWith("-XX:G1") &&
-                !arg.startsWith("-XX:MaxGCPauseMillis")
+            boolean useZgc = (gradle.ext.java_version as Integer) >= 21;
+            boolean useZGenerational = (gradle.ext.java_version as Integer) >= 25;
+            
+            if (useZgc) 
+            {
+                // Minecraft automatically has G1GC args present,
+                // remove them so we can use ZGC instead
+                List<String> filteredArgs = runTask.jvmArgs.findAll { arg ->
+                    !arg.startsWith("-XX:+UseG1GC") &&
+                        !arg.startsWith("-XX:G1") &&
+                        !arg.startsWith("-XX:MaxGCPauseMillis")
+                }
+                runTask.jvmArgs = filteredArgs
             }
-            runTask.jvmArgs = filteredArgs
 
             if(project.name == "forge" 
                 || project.name == "neoforge" 
@@ -416,7 +422,7 @@ if (isNotCommonProject) {
                 doFirst {
                     def modsDir = rootProject.file("run/${isClient ? 'client' : 'server'}/mods")
                     modsDir.mkdirs()
-                
+
                     // Remove any stale DH jars before copying the fresh one
                     modsDir.listFiles()?.each({ file ->
                         if (file.name.startsWith(rootProject.mod_name))
@@ -424,7 +430,7 @@ if (isNotCommonProject) {
                             file.delete()
                         }
                     });
-                
+
                     // Copy shadow jar into mods folder so (Neo)Forge discovers it properly
                     copy {
                         from shadowJar.archiveFile
@@ -432,13 +438,10 @@ if (isNotCommonProject) {
                     }
                 }
             }
-            
+
             // JVM args
             runTask.jvmArgs(
                 "-Dio.netty.leakDetection.level=advanced",
-                // TODO only use for modern java versions
-                // TODO don't use for even more modern-er java versions
-                //"-XX:+ZGenerational",
                 rootProject.minecraftMemoryJavaArg,
 
                 // can be un-commented to confirm mixins are being applied
@@ -446,8 +449,22 @@ if (isNotCommonProject) {
                 //"-Dmixin.debug.export=true",
                 //"-Dmixin.debug.verbose=true",
             )
-            if (isClient) 
+            
+            if (useZgc)
             {
+                runTask.jvmArgs(
+                    "-XX:+UseZGC"
+                )
+                
+                if (useZGenerational)
+                {
+                    runTask.jvmArgs(
+                        "-XX:+ZGenerational"
+                    )
+                }
+            }
+            
+            if (isClient) {
                 runTask.jvmArgs(
                     "-Dminecraft.api.auth.host=https://nope.invalid",
                     "-Dminecraft.api.account.host=https://nope.invalid",
@@ -459,19 +476,18 @@ if (isNotCommonProject) {
                     "--username", "Dev",
                     // "--renderDebugLabels" is a Mojang command to show render names in RenderDoc
                     "--renderDebugLabels"
-                    )
-                
+                )
+
                 // enabling tracy causes constant memory growth so it isn't always desired
                 if (rootProject.minecraftEnableTracy == "true")
                 {
                     // "--tracy" is a Mojang command to allow individual frames to be debugged using Tracy https://github.com/wolfpld/tracy/releases/tag/v0.13.1
                     runTask.args("--tracy")
                 }
-                
-                
+
+
             }
         }
-        
 
         tasks.jar.finalizedBy(tasks.named("remapJar"))
     }
@@ -571,10 +587,10 @@ if (isNotCommonProject) {
         from fileTree(project(":core").file("src/main/resources"))
         into project.file("build/resources/main")
     }
-    
+
     tasks.register("convertJsonToLang") {
         dependsOn(copyCoreResources)
-        
+
         File input = project.file("build/resources/main/assets/distanthorizons/lang/en_us.json")
         File output = project.file("build/resources/main/assets/distanthorizons/lang/en_us.lang")
         inputs.file(input)
