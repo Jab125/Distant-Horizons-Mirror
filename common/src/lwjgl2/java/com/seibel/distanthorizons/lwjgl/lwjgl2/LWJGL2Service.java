@@ -11,6 +11,7 @@ import com.seibel.distanthorizons.lwjgl.EGLExtension;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.APPLEVertexArrayObject;
 import org.lwjgl.opengl.ARBBufferStorage;
 import org.lwjgl.opengl.ARBTimerQuery;
@@ -27,6 +28,9 @@ import org.lwjgl.opengl.GL31;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.opengl.GL43;
+import org.lwjgl.opengl.GL45;
+import org.lwjgl.opengl.GL46;
+import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.GLContext;
 import org.lwjgl.opengl.GLSync;
 import org.lwjgl.opengl.KHRDebug;
@@ -1406,6 +1410,19 @@ public record LWJGL2Service(
 	{
 		long address = MemoryUtilities.memAddress(buffer) + offset;
 		return MemoryUtilities.memByteBuffer(address, capacity);
+	}
+	
+	@Override
+	public boolean isRunningOnRenderThread()
+	{
+		try
+		{
+			return Display.getDrawable().isCurrent();
+		}
+		catch (LWJGLException e)
+		{
+			return false;
+		}
 	}
 	
 }

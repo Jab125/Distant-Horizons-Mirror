@@ -3,6 +3,7 @@ package com.seibel.distanthorizons.lwjgl.lwjgl3;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.PointerBuffer;
+import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.*;
 import org.lwjgl.system.APIUtil;
 import org.lwjgl.system.JNI;
@@ -29,9 +30,7 @@ public record LWJGL3Service(
     private static final LWJGL3DebugSupport debugSupport = new LWJGL3DebugSupport();
 
     // ===================== CAPABILITIES =====================
-
-
-    @Override
+	@Override
     public boolean isOpenGLVersionSupported(int major, int minor) {
         GLCapabilities caps = GL.getCapabilities();
         return switch (major * 10 + minor) {
@@ -1101,4 +1100,10 @@ public record LWJGL3Service(
     public ByteBuffer memSlice(ByteBuffer buffer, int offset, int capacity) {
         return MemoryUtil.memSlice(buffer, offset, capacity);
     }
+	
+	@Override
+	public boolean isRunningOnRenderThread()
+	{
+		return GLFW.glfwGetCurrentContext() != 0L;
+	}
 }

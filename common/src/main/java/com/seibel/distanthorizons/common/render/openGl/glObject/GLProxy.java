@@ -265,16 +265,17 @@ public class GLProxy
 	
 	public static boolean runningOnRenderThread()
 	{
-		// GL.getCapabilities() reads the per-thread GLCapabilities slot LWJGL sets when a context is
-		// made current, and throws RuntimeException if no OpenGL context on that thread
-		try
-		{
-			return LWJGL.isOpenGLVersionSupported(3,3);
-		}
-		catch (RuntimeException e)
-		{
-			return false;
-		}
+		boolean isRenderThread;
+		
+		#if MC_VER <= MC_26_2_0
+		isRenderThread = LWJGL.isRunningOnRenderThread();
+		#else
+		Thread thread = Thread.currentThread();
+		isRenderThread = thread.getName().toLowerCase().contains("render thread");
+		#endif
+		
+		return isRenderThread;
+
 	}
 	
 	//endregion
