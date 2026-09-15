@@ -547,6 +547,11 @@ public abstract class AbstractModInitializer
 		// worldgen
 		#if MC_VER <= MC_1_18_2
 		AbstractMinecraftSharedWrapper.supportsSurfaceGeneration = false;
+		EDhApiGeneratorPlan genPlan = Config.Common.WorldGenerator.generatorPlan.getTrueValue();
+		if (genPlan.surfaceGenEnabled)
+		{
+			Config.Common.WorldGenerator.generatorPlan.set(EDhApiGeneratorPlan.CHUNKS_ONLY);
+		}
 		#else
 		AbstractMinecraftSharedWrapper.supportsSurfaceGeneration = true;
 		#endif
