@@ -28,29 +28,38 @@ public class MixinChunkSectionsToRender
 { /* rendering before was handled via Fabric API events */ }
 #else
 
-import com.mojang.blaze3d.textures.GpuSampler;
-import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
-import com.seibel.distanthorizons.core.api.internal.ClientApi;
-import net.minecraft.client.Minecraft;
-import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
+#if MC_VER <= MC_1_21_10
+import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+#elif MC_VER <= MC_26_2_0
+import com.mojang.blaze3d.textures.GpuSampler;
+import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
+import com.seibel.distanthorizons.core.api.internal.ClientApi;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
+#else
+#endif
+
 @Mixin(ChunkSectionsToRender.class)
 public class MixinChunkSectionsToRender
 {
 	
-	//============//
-	// post MC 26 //
-	//============//
+	//====================//
+	// MC 26.1 or MC 26.2 //
+	//====================//
 	//region
 	
 	#if MC_VER <= MC_1_21_11
-	#else
-	
+	// see code above
+	#elif MC_VER <= MC_26_2_0
 	// needs to fire at HEAD with a lower than normal order (less than 1000)
 	// otherwise it will be canceled by Sodium
 	@Inject(at = @At("HEAD"), method = "renderGroup", order = 800)
@@ -74,8 +83,9 @@ public class MixinChunkSectionsToRender
 		}
 	}
 	
-	//endregion
 	#endif
+	
+	//endregion
 	
 	
 	

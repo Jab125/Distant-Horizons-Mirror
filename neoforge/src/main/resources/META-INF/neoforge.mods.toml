@@ -15,6 +15,7 @@ issueTrackerURL = "${issues}"
     displayURL = "${homepage}"
     description = "${description}" #//mandatory. The description text for the mod
     logoFile = "assets/distanthorizons/logo.png"
+    iconFile = "assets/distanthorizons/logo.png" #// needed for MC 26.3 and newer
     catalogueImageIcon = "assets/distanthorizons/icon.png"
     credits = "Massive thanks to all the developers for their hard work to bring Distant Horizons to where it is today. - James"
     #// if not set defaults to "false"
