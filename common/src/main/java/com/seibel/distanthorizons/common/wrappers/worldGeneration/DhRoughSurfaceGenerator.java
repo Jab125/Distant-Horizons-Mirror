@@ -1055,9 +1055,16 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			this.relativeMaxHeight = serverLevelWrapper.getMaxHeight() - serverLevelWrapper.getMinHeight();
 			
 			
+			// superflat worlds don't have the noise functions we normally use
 			this.isSuperFlatWorld = this.chunkGenerator
 				.getClass()
 				.equals(FlatLevelSource.class);
+			
+			// the nether can't have a surface generated 
+			if (serverLevelWrapper.hasCeiling())
+			{
+				this.isSuperFlatWorld = true;
+			}
 			
 			
 			
