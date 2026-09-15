@@ -61,7 +61,7 @@ import java.util.function.Consumer;
  * If you are looking for the real start of the mod
  * check out the ClientProxy.
  */
-@Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION)
+@Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, acceptableRemoteVersions = "*")
 public class CleanroomMain extends AbstractModInitializer
 {
 	public static final boolean IS_QUARK_LOADED = Loader.isModLoaded("quark");
