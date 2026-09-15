@@ -80,6 +80,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IImmersiveP
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 #if MC_VER <= MC_1_12_2
+import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fluids.IFluidBlock;
@@ -554,8 +555,8 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public int getGlDepthTextureId()
 	{
 		#if MC_VER <= MC_1_12_2
-		//1.12.2 is using renderbuffer instead of framebuffer for depth texture
-		return -1;
+		final Framebuffer framebuffer = Minecraft.getMinecraft().getFramebuffer();
+		return framebuffer.depthBuffer;
 		#elif MC_VER < MC_1_21_5
 		return this.getRenderTarget().getDepthTextureId();
 		#else
