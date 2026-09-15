@@ -400,7 +400,6 @@ if (isNotCommonProject) {
             runTask.workingDir = rootProject.file("run/${isClient ? 'client' : 'server'}")
 
             boolean useZgc = (gradle.ext.java_version as Integer) >= 21;
-            boolean useZGenerational = (gradle.ext.java_version as Integer) >= 25;
             
             if (useZgc) 
             {
@@ -455,13 +454,6 @@ if (isNotCommonProject) {
                 runTask.jvmArgs(
                     "-XX:+UseZGC"
                 )
-                
-                if (useZGenerational)
-                {
-                    runTask.jvmArgs(
-                        "-XX:+ZGenerational"
-                    )
-                }
             }
             
             if (isClient) {
