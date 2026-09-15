@@ -81,6 +81,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 	#if MC_VER <= MC_1_12_2
 	private int previousBoundTextureId;
 	private int previousDepthFunc;
+	private final float[] previousClearDepth = new float[1];
 	#endif
 	
 	
@@ -139,6 +140,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		#if MC_VER <= MC_1_12_2
 		this.previousBoundTextureId = GLMC.getActiveTexture();
 		this.previousDepthFunc = GLMC.getActiveDepthFunc();
+		GL33.glGetFloatv(GL33.GL_DEPTH_CLEAR_VALUE, this.previousClearDepth);
 		#endif
 		
 		// view sizes are used in a few places and
@@ -427,6 +429,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		// Restore GL states that 1.12.2 vanilla expects
 		#if MC_VER <= MC_1_12_2
 		GLMC.glDepthFunc(previousDepthFunc);
+		GL33.glClearDepth(this.previousClearDepth[0]);
 		GLMC.glBlendFuncSeparate(GL33.GL_SRC_ALPHA, GL33.GL_ONE, GL33.GL_ONE, GL33.GL_ZERO);
 		#endif
 		this.unbindLightmap();
