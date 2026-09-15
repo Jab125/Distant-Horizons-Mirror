@@ -26,6 +26,39 @@ import java.util.Map;
 
 public class DistantHorizonsLoadingPlugin implements IFMLLoadingPlugin
 {
+	static
+	{
+		isCleanroomEnviroment();
+	}
+	
+	// We must do it this way since forge refuses to load our mod -> classic dependency doesn't work
+	private static void isCleanroomEnviroment()
+	{
+		// If it's java 8 we are running forge, Cleanroom has hard dependency on java 25
+		if (Integer.parseInt(System.getProperty("java.version").split("\\.")[1]) == 8)
+		{
+			final String message = "\n"
+				+"=================================================================\n"
+				+"=================================================================\n"
+				+"=================================================================\n"
+				+"\n"
+				+ " Distant Horizons (Cleanroom build) cannot run here.\n"
+				+ " Fix: Switch this instance to Cleanroom if you want to play with DH (or wait for Forge release that is WIP).\n"
+				+ " https://cleanroommc.com/\n"
+				+ "\n"
+				+ "=================================================================\n"
+				+ "=================================================================\n"
+				+ "=================================================================\n";
+			
+			System.err.println(message);
+			
+			// Print at end of log so user sees it
+			CleanroomErrorReporter.printOnShutdown(message);
+			
+			throw new RuntimeException("Distant Horizons: wrong loader/Java version, see message above.");
+		}
+	}
+	
 	@Override
 	public @Nullable String[] getASMTransformerClass()
 	{
