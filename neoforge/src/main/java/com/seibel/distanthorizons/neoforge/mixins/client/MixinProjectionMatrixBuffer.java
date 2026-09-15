@@ -28,10 +28,7 @@ public class MixinProjectionMatrixBuffer {}
 
 #else
 
-import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
-import com.seibel.distanthorizons.common.commonMixins.MixinProjectionMatrixBufferCommon;
 import net.minecraft.client.renderer.ProjectionMatrixBuffer;
-import org.joml.Matrix4f;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -39,6 +36,9 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 #if MC_VER <= MC_26_2_0
 #else
+import com.seibel.distanthorizons.common.commonMixins.MixinProjectionMatrixBufferCommon;
+import com.mojang.renderpearl.api.buffers.GpuBufferSlice;
+import org.joml.Matrix4f;
 #endif
 
 @Mixin(ProjectionMatrixBuffer.class)
