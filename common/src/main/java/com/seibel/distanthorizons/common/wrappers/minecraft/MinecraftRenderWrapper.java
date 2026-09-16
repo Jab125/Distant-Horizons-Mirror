@@ -137,7 +137,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 {
 	public static final MinecraftRenderWrapper INSTANCE = new MinecraftRenderWrapper();
 	
-	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	private static final IOptifineAccessor OPTIFINE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
@@ -153,6 +152,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	private static class DelayedAccessors
 	{
 		public static final IImmersivePortalsAccessor IMMERSIVE_PORTALS = ModAccessorInjector.INSTANCE.get(IImmersivePortalsAccessor.class);
+		private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	}
 	
 	/**
@@ -559,15 +559,14 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	{
 		#if MC_VER <= MC_1_12_2
 		final Framebuffer framebuffer = MC.getFramebuffer();
-		if (IRIS_ACCESSOR != null)
+		if (DelayedAccessors.IRIS_ACCESSOR != null)
 		{
-			int depthId = IRIS_ACCESSOR.getFramebufferDepthTextureId(framebuffer);
-			if (depthId != -1)
-			{
-				return depthId;
-			}
+			return DelayedAccessors.IRIS_ACCESSOR.getFramebufferDepthTextureId(framebuffer);
 		}
-		return ((IFramebufferDepthTexture) framebuffer).distantHorizons$getDistantHorizonsDepthTexture();
+		else
+		{
+			return ((IFramebufferDepthTexture) framebuffer).distantHorizons$getDistantHorizonsDepthTexture();
+		}
 		#elif MC_VER < MC_1_21_5
 		return this.getRenderTarget().getDepthTextureId();
 		#else
