@@ -81,6 +81,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccess
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 #if MC_VER <= MC_1_12_2
+import com.seibel.distanthorizons.common.commonMixins.IFramebufferDepthTexture;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.util.math.BlockPos;
@@ -566,7 +567,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 				return depthId;
 			}
 		}
-		return framebuffer.depthBuffer;
+		return ((IFramebufferDepthTexture) framebuffer).distantHorizons$getDistantHorizonsDepthTexture();
 		#elif MC_VER < MC_1_21_5
 		return this.getRenderTarget().getDepthTextureId();
 		#else
