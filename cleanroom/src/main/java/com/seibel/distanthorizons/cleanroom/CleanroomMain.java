@@ -217,6 +217,12 @@ public class CleanroomMain extends AbstractModInitializer
 				int finalReturnColor = calculateColorFromTexture(ThermalDynamics.getThermalDynamicDuctTexture(blockState), ClientBlockStateColorCache.EColorMode.Default);
 				event.value.setColor(ColorUtil.getRed(finalReturnColor), ColorUtil.getGreen(finalReturnColor), ColorUtil.getBlue(finalReturnColor));
 			}
+			else if (IS_IMMERSIVERAILRAODING_LOADED && (blockState.toString().equals("immersiverailroading:block_rail") || blockState.toString().equals("immersiverailroading:block_rail_gag")))
+			{
+				IBlockState plankState = Blocks.PLANKS.getDefaultState().withProperty(BlockPlanks.VARIANT, BlockPlanks.EnumType.DARK_OAK);
+				int finalReturnColor = calculateColorFromTexture(Minecraft.getMinecraft().getBlockRendererDispatcher().getBlockModelShapes().getTexture(plankState), ClientBlockStateColorCache.EColorMode.Default);
+				event.value.setColor(ColorUtil.getRed(finalReturnColor), ColorUtil.getGreen(finalReturnColor), ColorUtil.getBlue(finalReturnColor));
+			}
 			
 		}
 		
