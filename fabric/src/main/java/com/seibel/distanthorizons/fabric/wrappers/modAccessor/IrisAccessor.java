@@ -49,6 +49,12 @@ public class IrisAccessor implements IIrisAccessor
 		#endif
 	}
 	
+	@Override
+	public int getFramebufferDepthTextureId(Object framebuffer)
+	{
+		return -1;
+	}
+	
 }
 
 #endif

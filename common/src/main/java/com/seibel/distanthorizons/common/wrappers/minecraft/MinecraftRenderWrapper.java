@@ -77,6 +77,7 @@ import com.seibel.distanthorizons.core.util.math.DhVec3d;
 import com.seibel.distanthorizons.core.util.math.DhVec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IImmersivePortalsAccessor;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 #if MC_VER <= MC_1_12_2
@@ -135,6 +136,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 {
 	public static final MinecraftRenderWrapper INSTANCE = new MinecraftRenderWrapper();
 	
+	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	private static final IOptifineAccessor OPTIFINE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
 	
@@ -153,7 +155,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	/**
-	 * In the case of immersive portals multiple levels may be active at once, causing conflicting lightmaps. <br> 
+	 * In the case of immersive portals multiple levels may be active at once, causing conflicting lightmaps. <br>
 	 * Requiring the use of multiple {@link LightMapWrapper}.
 	 */
 	public ConcurrentHashMap<IDimensionTypeWrapper, LightMapWrapper> lightmapByDimensionType = new ConcurrentHashMap<>();
@@ -197,8 +199,8 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	/**
-	 * Unless you really need to know if the player is blind, 
-	 * use {@link MinecraftRenderWrapper#isFogStateSpecial()} or {@link IMinecraftRenderWrapper#isFogStateSpecial()} instead 
+	 * Unless you really need to know if the player is blind,
+	 * use {@link MinecraftRenderWrapper#isFogStateSpecial()} or {@link IMinecraftRenderWrapper#isFogStateSpecial()} instead
 	 */
 	@Override
 	public boolean playerHasBlindingEffect()
@@ -292,10 +294,10 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		float[] colorValues = new float[4];
 		GL15.glGetFloatv(GL15.GL_FOG_COLOR, colorValues);
 		return new Color(
-				Math.max(0f, Math.min(colorValues[0], 1f)), // r
-				Math.max(0f, Math.min(colorValues[1], 1f)), // g
-				Math.max(0f, Math.min(colorValues[2], 1f)), // b
-				Math.max(0f, Math.min(colorValues[3], 1f))  // a
+			Math.max(0f, Math.min(colorValues[0], 1f)), // r
+			Math.max(0f, Math.min(colorValues[1], 1f)), // g
+			Math.max(0f, Math.min(colorValues[2], 1f)), // b
+			Math.max(0f, Math.min(colorValues[3], 1f))  // a
 		);
 		#elif MC_VER < MC_1_21_3
 		FogRenderer.setupColor(MC.gameRenderer.getMainCamera(), partialTicks, MC.level, 1, MC.gameRenderer.getDarkenWorldAmount(partialTicks));
@@ -555,7 +557,15 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public int getGlDepthTextureId()
 	{
 		#if MC_VER <= MC_1_12_2
-		final Framebuffer framebuffer = Minecraft.getMinecraft().getFramebuffer();
+		final Framebuffer framebuffer = MC.getFramebuffer();
+		if (IRIS_ACCESSOR != null)
+		{
+			int depthId = IRIS_ACCESSOR.getFramebufferDepthTextureId(framebuffer);
+			if (depthId != -1)
+			{
+				return depthId;
+			}
+		}
 		return framebuffer.depthBuffer;
 		#elif MC_VER < MC_1_21_5
 		return this.getRenderTarget().getDepthTextureId();
@@ -646,8 +656,8 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		#if MC_VER <= MC_1_12_2
 		BlockPos blockPos = new BlockPos(MC.getRenderViewEntity().getPositionEyes(MC.getRenderPartialTicks()));
 		IBlockState fluidState = MC.getRenderViewEntity().world.getBlockState(blockPos);
-		return this.playerHasBlindingEffect() 
-			|| fluidState.getMaterial().isLiquid() 
+		return this.playerHasBlindingEffect()
+			|| fluidState.getMaterial().isLiquid()
 			|| fluidState.getBlock() instanceof IFluidBlock;
 		
 		#elif MC_VER < MC_1_17_1
@@ -771,7 +781,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		wrapper.uploadLightmap(lightPixels);
 	}
 	#endif
-	
 	public void setLightmapId(int textureId)
 	{
 		IClientLevelWrapper clientLevel = getLightmapClientLevelWrapper();

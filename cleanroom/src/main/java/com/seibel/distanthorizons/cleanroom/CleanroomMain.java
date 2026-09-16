@@ -25,6 +25,7 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockCo
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockStateWrapperCreatedEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockTextureOverrideEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
+import com.seibel.distanthorizons.cleanroom.modAccessor.IrisAccessor;
 import com.seibel.distanthorizons.cleanroom.modAccessor.ModChecker;
 import com.seibel.distanthorizons.cleanroom.modCompat.quark.Quark;
 import com.seibel.distanthorizons.cleanroom.modCompat.sereneseasons.SereneSeasons;
@@ -35,6 +36,7 @@ import com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateColorCac
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSender;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
@@ -122,7 +124,7 @@ public class CleanroomMain extends AbstractModInitializer
 	@Override
 	protected void initializeModCompat()
 	{
-		
+		this.tryCreateModCompatAccessor("actinium", IIrisAccessor.class, IrisAccessor::new);
 	}
 	
 /*	@Override

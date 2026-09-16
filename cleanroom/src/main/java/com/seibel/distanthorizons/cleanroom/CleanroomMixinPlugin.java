@@ -40,11 +40,26 @@ public class CleanroomMixinPlugin implements IMixinConfigPlugin
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName)
 	{
-/*		return switch (mixinClassName.split("\\.")[5]) {
-			case "mist" -> Loader.isModLoaded("mist");
-			default -> true;	
-		};*/
-		return true;
+		switch (mixinClassName.split("\\.")[6])
+		{
+			case "MixinFramebuffer":
+				return !isIrisLoaded();
+			default:
+				return true;
+		}
+	}
+	
+	private boolean isIrisLoaded()
+	{
+		try
+		{
+			Class.forName("net.irisshaders.iris.api.v0.IrisApi", false, CleanroomMixinPlugin.class.getClassLoader());
+			return true;
+		}
+		catch (ClassNotFoundException e)
+		{
+			return false;
+		}
 	}
 	
 	@Override public String getRefMapperConfig() { return null; }
