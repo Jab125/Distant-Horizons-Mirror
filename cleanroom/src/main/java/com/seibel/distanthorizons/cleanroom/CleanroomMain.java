@@ -23,6 +23,7 @@ import cofh.thermaldynamics.block.BlockDuct;
 import com.seibel.distanthorizons.api.DhApi;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockColorOverrideEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockStateWrapperCreatedEvent;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockTextureOverrideEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 import com.seibel.distanthorizons.cleanroom.modAccessor.ModChecker;
 import com.seibel.distanthorizons.cleanroom.modCompat.quark.Quark;
@@ -30,17 +31,18 @@ import com.seibel.distanthorizons.cleanroom.modCompat.sereneseasons.SereneSeason
 import com.seibel.distanthorizons.cleanroom.modCompat.thermaldynamics.ThermalDynamics;
 import com.seibel.distanthorizons.common.AbstractModInitializer;
 import com.seibel.distanthorizons.common.commands.CommandInitializer;
+import com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateColorCache;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSender;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModChecker;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
-import net.minecraft.block.Block;
-import net.minecraft.block.BlockBush;
-import net.minecraft.block.BlockGrass;
-import net.minecraft.block.BlockLeaves;
+import net.minecraft.block.*;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.TextureAtlasSprite;
+import net.minecraft.init.Blocks;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.biome.Biome;
 import net.minecraftforge.common.ForgeChunkManager;
@@ -55,6 +57,8 @@ import vazkii.quark.client.feature.GreenerGrass;
 
 
 import java.util.function.Consumer;
+
+import static com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateColorCache.calculateColorFromTexture;
 
 /**
  * Initialize and setup the Mod. <br>
@@ -97,6 +101,7 @@ public class CleanroomMain extends AbstractModInitializer
 		
 		DhApi.events.bind(DhApiBlockStateWrapperCreatedEvent.class, new BlockWrapperCreated());
 		DhApi.events.bind(DhApiBlockColorOverrideEvent.class, new BlockColorOverrider());
+		DhApi.events.bind(DhApiBlockTextureOverrideEvent.class, new BlockTextureOverrider());
 	}
 	
 	@Override
@@ -209,7 +214,7 @@ public class CleanroomMain extends AbstractModInitializer
 			}
 			else if (IS_THERMAL_DYNAMICS_LOADED && block instanceof BlockDuct)
 			{
-				int finalReturnColor = ThermalDynamics.getThermalDynamicDuctColor(blockState);
+				int finalReturnColor = calculateColorFromTexture(ThermalDynamics.getThermalDynamicDuctTexture(blockState), ClientBlockStateColorCache.EColorMode.Default);
 				event.value.setColor(ColorUtil.getRed(finalReturnColor), ColorUtil.getGreen(finalReturnColor), ColorUtil.getBlue(finalReturnColor));
 			}
 			
@@ -243,6 +248,62 @@ public class CleanroomMain extends AbstractModInitializer
 				event.value.setAllowApiColorOverride(true);
 			}
 			
+		}
+		
+	}
+	
+	public static class BlockTextureOverrider extends DhApiBlockTextureOverrideEvent
+	{
+		@Override
+		public void onBlockTextureOverridden(DhApiEventParam<EventParam> event)
+		{
+			EventParam param = event.value;
+			IBlockState blockState = (IBlockState) param.getBlockStateWrapper().getWrappedMcObject();
+			Block block = blockState.getBlock();
+			
+			if (IS_THERMAL_DYNAMICS_LOADED && block instanceof BlockDuct)
+			{
+				TextureAtlasSprite sprite = ThermalDynamics.getThermalDynamicDuctTexture(blockState);
+				copySpriteIntoEventParam(sprite, param);
+			}
+		}
+		
+		private static void copySpriteIntoEventParam(TextureAtlasSprite sprite, EventParam param)
+		{
+			if (sprite == null)
+			{
+				return;
+			}
+			
+			int destWidth = param.getWidth();
+			int destHeight = param.getHeight();
+			int spriteWidth = sprite.getIconWidth();
+			int spriteHeight = sprite.getIconHeight();
+			if (spriteWidth <= 0 || spriteHeight <= 0)
+			{
+				return;
+			}
+			
+			int[][] frameData = sprite.getFrameTextureData(0);
+			int[] pixels = frameData[0];
+			
+			for (int u = 0; u < destWidth; u++)
+			{
+				for (int v = 0; v < destHeight; v++)
+				{
+					int texelX = (u * spriteWidth) / destWidth;
+					int texelY = (v * spriteHeight) / destHeight;
+					
+					int packed = pixels[(texelY * spriteWidth) + texelX];
+					
+					int a = (packed >>> 24) & 0xFF;
+					int r = packed & 0xFF;
+					int g = (packed >>> 8) & 0xFF;
+					int b = (packed >>> 16) & 0xFF;
+					
+					param.setColor(u, v, a, r, g, b);
+				}
+			}
 		}
 		
 	}
