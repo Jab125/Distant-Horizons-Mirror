@@ -27,7 +27,9 @@ import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
+import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.logging.f3.F3Screen;
@@ -58,6 +60,7 @@ import org.jetbrains.annotations.NotNull;
 import org.lwjgl.glfw.GLFW;
 import org.lwjgl.opengl.GL33;
 
+import java.util.Arrays;
 import java.util.concurrent.AbstractExecutorService;
 
 public class CleanroomClientProxy implements AbstractModInitializer.IEventProxy
@@ -84,6 +87,21 @@ public class CleanroomClientProxy implements AbstractModInitializer.IEventProxy
 	}
 	
 	
+	@SubscribeEvent
+	public void onWorldLoad(WorldEvent.Load event)
+	{
+		if (event.getWorld().isRemote)
+		{
+			if (!Arrays.asList(Config.Client.Advanced.Graphics.Texture.blocksDontUseSideTextureCsv.get().split(",")).contains("grass"))
+			{
+				String message = "\n" + MinecraftTextFormat.ORANGE + "Distant Horizons: `grass` entry in `blocksDontUseSideTextureCsv` not found." + MinecraftTextFormat.CLEAR_FORMATTING + "\n" +
+					"This will cause grass blocks with LOD textures enabled render incorrectly." + "\n" +
+					"It is recommended to add `grass` into the blocksDontUseSideTextureCsv entry. \n(Graphics->LOD Textures->Blocks Don't Use Side Textures) or delete your config file to let it regenerate";
+				ClientApi.INSTANCE.queueFastChatMessage(message);
+			}
+		}
+	}
+	
 	//==============//
 	// chunk events //
 	//==============//
@@ -109,7 +127,7 @@ public class CleanroomClientProxy implements AbstractModInitializer.IEventProxy
 				{
 					Chunk chunk = level.getChunk(event.getPos());
 					SharedApi.INSTANCE.applyChunkUpdate(
-						new ChunkWrapper(chunk, wrappedLevel), 
+						new ChunkWrapper(chunk, wrappedLevel),
 						wrappedLevel,
 						true
 					);
@@ -137,7 +155,7 @@ public class CleanroomClientProxy implements AbstractModInitializer.IEventProxy
 				{
 					Chunk chunk = level.getChunk(event.getPos());
 					SharedApi.INSTANCE.applyChunkUpdate(
-						new ChunkWrapper(chunk, wrappedLevel), 
+						new ChunkWrapper(chunk, wrappedLevel),
 						wrappedLevel,
 						true
 					);
@@ -145,7 +163,7 @@ public class CleanroomClientProxy implements AbstractModInitializer.IEventProxy
 			}
 		}
 	}
-
+	
 	@SubscribeEvent
 	public void clientChunkLoadEvent(ChunkEvent.Load event)
 	{
@@ -212,16 +230,16 @@ public class CleanroomClientProxy implements AbstractModInitializer.IEventProxy
 			}
 			catch (Exception | Error e)
 			{
-				LOGGER.error("Unexpected error in afterLevelRenderEvent: "+e.getMessage(), e);
+				LOGGER.error("Unexpected error in afterLevelRenderEvent: " + e.getMessage(), e);
 			}
 		}
 	}
 	
 	@SubscribeEvent
-	public void onRenderOverlay(RenderGameOverlayEvent.Text event) 
+	public void onRenderOverlay(RenderGameOverlayEvent.Text event)
 	{
 		Minecraft mc = Minecraft.getMinecraft();
-		if (event.isCanceled() 
+		if (event.isCanceled()
 			|| !mc.gameSettings.showDebugInfo)
 		{
 			return;
