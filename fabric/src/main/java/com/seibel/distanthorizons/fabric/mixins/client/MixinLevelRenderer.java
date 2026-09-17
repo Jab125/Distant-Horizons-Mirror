@@ -265,7 +265,7 @@ public class MixinLevelRenderer
 	#else
 	
 	@Inject(at = @At("HEAD"), method = "prepareTranslucents")
-	private void executeOutline(
+	private void prepareTranslucents(
 		CallbackInfo callback)
 	
 	{
@@ -279,7 +279,10 @@ public class MixinLevelRenderer
 	private void executeOutline(
 		final FeatureRenderDispatcher.PreparedFrame featureFrame,
 		CallbackInfo callback)
-	{ ClientApi.INSTANCE.renderFadeOpaque(); }
+	{
+		ClientApi.INSTANCE.renderDeferredLodsForShaders();
+		ClientApi.INSTANCE.renderFadeOpaque(); 
+	}
 	
 	// improved transparency is necessary since the normal transparent pass is in the same renderPass
 	// preventing us from adding our own render pass inbetween
