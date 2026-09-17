@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.cleanroom.mixins.client;
 
 import com.seibel.distanthorizons.cleanroom.MixinFlags;
+import com.seibel.distanthorizons.common.commonMixins.IFramebufferDepthTexture;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;
 import net.minecraft.client.renderer.texture.TextureUtil;
@@ -22,7 +23,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import java.nio.IntBuffer;
 
 @Mixin(Framebuffer.class)
-public abstract class MixinFramebuffer
+public abstract class MixinFramebuffer implements IFramebufferDepthTexture
 {
 	@Shadow
 	public int framebufferTextureWidth;
@@ -38,10 +39,14 @@ public abstract class MixinFramebuffer
 	@Shadow
 	public int framebufferObject;
 	
-	@Shadow
-	public int depthBuffer;
+	@Unique
+	private int distantHorizons$depthTexture = -1;
 	
-	@Unique private int distantHorizons$oldDepthTextureToDelete = -1;
+	@Override
+	public int distantHorizons$getDistantHorizonsDepthTexture()
+	{
+		return this.distantHorizons$depthTexture;
+	}
 	
 	//========================//
 	// depth texture handling //
@@ -57,15 +62,15 @@ public abstract class MixinFramebuffer
 			return;
 		}
 		
-		this.depthBuffer = TextureUtil.glGenTextures();
-		
-		if (this.distantHorizons$oldDepthTextureToDelete > -1)
+		if (this.distantHorizons$depthTexture != -1)
 		{
-			GlStateManager.deleteTexture(this.distantHorizons$oldDepthTextureToDelete);
-			this.distantHorizons$oldDepthTextureToDelete = -1;
+			GlStateManager.deleteTexture(this.distantHorizons$depthTexture);
+			this.distantHorizons$depthTexture = -1;
 		}
 		
-		GlStateManager.bindTexture(depthBuffer);
+		this.distantHorizons$depthTexture = TextureUtil.glGenTextures();
+		
+		GlStateManager.bindTexture(this.distantHorizons$depthTexture);
 		
 		GL32.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST);
 		GL32.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
@@ -78,14 +83,15 @@ public abstract class MixinFramebuffer
 		}
 		else
 		{
-			GlStateManager.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL11.GL_DEPTH_COMPONENT, this.framebufferTextureWidth, this.framebufferTextureHeight, 0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (IntBuffer) null);
+			GlStateManager.glTexImage2D(GL11.GL_TEXTURE_2D, 0, GL14.GL_DEPTH_COMPONENT24, this.framebufferTextureWidth, this.framebufferTextureHeight, 0, GL11.GL_DEPTH_COMPONENT, GL11.GL_FLOAT, (IntBuffer) null);
 		}
 		OpenGlHelper.glBindFramebuffer(OpenGlHelper.GL_FRAMEBUFFER, this.framebufferObject);
-		OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, 3553, depthBuffer, 0);
+		OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, GL30.GL_DEPTH_ATTACHMENT, 3553, this.distantHorizons$depthTexture, 0);
 		if (stencilEnabled)
 		{
-			OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, GL30.GL_STENCIL_ATTACHMENT, 3553, depthBuffer, 0);
+			OpenGlHelper.glFramebufferTexture2D(OpenGlHelper.GL_FRAMEBUFFER, GL30.GL_STENCIL_ATTACHMENT, 3553, this.distantHorizons$depthTexture, 0);
 		}
+		GlStateManager.bindTexture(0);
 	}
 	
 	@Redirect(method = "createFramebuffer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/shader/Framebuffer;useDepth:Z", opcode = Opcodes.GETFIELD))
@@ -99,16 +105,19 @@ public abstract class MixinFramebuffer
 		return false;
 	}
 	
-	@Redirect(method = "deleteFramebuffer", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/OpenGlHelper;glDeleteRenderbuffers(I)V"))
-	private void deleteDepthTexture(int renderbuffer)
+	@Inject(method = "deleteFramebuffer", at = @At("HEAD"))
+	private void deleteDepthTexture(CallbackInfo ci)
 	{
 		if (!MixinFlags.framebufferMixinEnabled)
 		{
-			OpenGlHelper.glDeleteRenderbuffers(renderbuffer);
 			return;
 		}
 		
-		this.distantHorizons$oldDepthTextureToDelete = renderbuffer;
+		if (this.distantHorizons$depthTexture != -1)
+		{
+			GlStateManager.deleteTexture(this.distantHorizons$depthTexture);
+			this.distantHorizons$depthTexture = -1;
+		}
 	}
 	
 	//endregion

@@ -19,10 +19,11 @@
 
 package com.seibel.distanthorizons.cleanroom.mixins.client;
 
+import com.seibel.distanthorizons.cleanroom.CleanroomMain;
+import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.util.math.DhMat4f;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.RenderGlobal;
@@ -37,18 +38,25 @@ import org.lwjgl.opengl.GL30;
 import org.lwjgl.opengl.GL33;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
+import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import java.util.Arrays;
 import java.util.Objects;
 
+import static com.seibel.distanthorizons.cleanroom.RenderHelper.getModelViewMatrix;
+import static com.seibel.distanthorizons.cleanroom.RenderHelper.getProjectionMatrix;
+
 @Mixin(value = RenderGlobal.class, priority = 900)
 public class MixinRenderGlobal
 {
-	@Shadow private WorldClient world;
+	@Shadow
+	private WorldClient world;
 	
+	@Unique
 	private static final boolean DEBUG_GL_STATE = false;
 	
 	@Inject(method = "renderBlockLayer(Lnet/minecraft/util/BlockRenderLayer;DILnet/minecraft/entity/Entity;)I", at = @At("HEAD"), cancellable = true)
@@ -62,11 +70,11 @@ public class MixinRenderGlobal
 		
 		if (blockLayerIn == BlockRenderLayer.SOLID)
 		{
-			captureRenderState((float) partialTicks);
+			distantHorizons$captureRenderState((float) partialTicks);
 			
 			GLStateSnapshot before = DEBUG_GL_STATE ? GLStateSnapshot.capture() : null;
 			ClientApi.INSTANCE.renderLods();
-			unbindBuffers();
+			distantHorizons$unbindBuffers();
 			if (DEBUG_GL_STATE)
 			{
 				GLStateSnapshot after = GLStateSnapshot.capture();
@@ -75,16 +83,7 @@ public class MixinRenderGlobal
 		}
 		else if (blockLayerIn == BlockRenderLayer.TRANSLUCENT)
 		{
-			captureRenderState((float) partialTicks);
-			GLStateSnapshot before = DEBUG_GL_STATE ? GLStateSnapshot.capture() : null;
 			GlStateManager.depthMask(true); // Water will be rendered black otherwise
-			ClientApi.INSTANCE.renderDeferredLodsForShaders();
-			unbindBuffers();
-			if (DEBUG_GL_STATE)
-			{
-				GLStateSnapshot after = GLStateSnapshot.capture();
-				GLStateSnapshot.diffAndPrint("renderDeferredLodsForShaders() [TRANSLUCENT]", before, after);
-			}
 		}
 	}
 	
@@ -93,14 +92,22 @@ public class MixinRenderGlobal
 	{
 		if (blockLayerIn == BlockRenderLayer.SOLID)
 		{
-			captureRenderState((float) partialTicks);
-			
+			distantHorizons$captureRenderState((float) partialTicks);
 			GLStateSnapshot before = DEBUG_GL_STATE ? GLStateSnapshot.capture() : null;
 			
-			GL33.glDisable(GL11.GL_ALPHA_TEST);
+			if (CleanroomMain.IRIS_ACCESSOR == null)
+			{
+				GlStateManager.disableAlpha();
+			}
+			
 			ClientApi.INSTANCE.renderFadeOpaque();
-			GL33.glEnable(GL11.GL_ALPHA_TEST);
-			GL33.glDepthFunc(GL11.GL_LEQUAL);
+			
+			if (CleanroomMain.IRIS_ACCESSOR == null)
+			{
+				GlStateManager.enableAlpha();
+			}
+			
+			GlStateManager.depthFunc(GL11.GL_LEQUAL);
 			
 			if (DEBUG_GL_STATE)
 			{
@@ -110,14 +117,23 @@ public class MixinRenderGlobal
 		}
 		else if (blockLayerIn == BlockRenderLayer.TRANSLUCENT)
 		{
-			captureRenderState((float) partialTicks);
+			distantHorizons$captureRenderState((float) partialTicks);
 			GLStateSnapshot before = DEBUG_GL_STATE ? GLStateSnapshot.capture() : null;
 			
-			GlStateManager.disableAlpha();
+			if (CleanroomMain.IRIS_ACCESSOR == null)
+			{
+				GlStateManager.disableAlpha();
+			}
+			
 			ClientApi.INSTANCE.renderFadeTransparent();
-			GlStateManager.enableAlpha();
+			
+			if (CleanroomMain.IRIS_ACCESSOR == null)
+			{
+				GlStateManager.enableAlpha();
+			}
+			
 			GlStateManager.depthFunc(GL11.GL_LEQUAL);
-			GlStateManager.depthMask(false);
+			
 			if (DEBUG_GL_STATE)
 			{
 				GLStateSnapshot after = GLStateSnapshot.capture();
@@ -126,23 +142,39 @@ public class MixinRenderGlobal
 		}
 	}
 	
-	private void captureRenderState(float partialTicks)
+	@Inject(method = "renderBlockLayer(Lnet/minecraft/util/BlockRenderLayer;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/EntityRenderer;enableLightmap()V", shift = At.Shift.AFTER))
+	void renderDeferredLodsDuringTranslucentSetup(BlockRenderLayer blockLayerIn, CallbackInfo ci)
 	{
-		float[] mcProjMatrixRaw = new float[16];
-		GL33.glGetFloatv(GL11.GL_PROJECTION_MATRIX, mcProjMatrixRaw);
-		ClientApi.RENDER_STATE.mcProjectionMatrix = new DhMat4f(mcProjMatrixRaw);
-		ClientApi.RENDER_STATE.mcProjectionMatrix.transpose();
+		if (CleanroomMain.IRIS_ACCESSOR == null)
+		{
+			return;
+		}
 		
-		float[] mcModelViewRaw = new float[16];
-		GL33.glGetFloatv(GL11.GL_MODELVIEW_MATRIX, mcModelViewRaw);
-		ClientApi.RENDER_STATE.mcModelViewMatrix = new DhMat4f(mcModelViewRaw);
-		ClientApi.RENDER_STATE.mcModelViewMatrix.transpose();
+		if (blockLayerIn == BlockRenderLayer.TRANSLUCENT)
+		{
+			distantHorizons$captureRenderState(MinecraftRenderWrapper.INSTANCE.getPartialTickTime());
+			GLStateSnapshot before = DEBUG_GL_STATE ? GLStateSnapshot.capture() : null;
+			ClientApi.INSTANCE.renderDeferredLodsForShaders();
+			if (DEBUG_GL_STATE)
+			{
+				GLStateSnapshot after = GLStateSnapshot.capture();
+				GLStateSnapshot.diffAndPrint("renderDeferredLodsForShaders() [TRANSLUCENT]", before, after);
+			}
+		}
+	}
+	
+	@Unique
+	private void distantHorizons$captureRenderState(float partialTicks)
+	{
+		ClientApi.RENDER_STATE.mcModelViewMatrix = getModelViewMatrix();
+		ClientApi.RENDER_STATE.mcProjectionMatrix = getProjectionMatrix();
 		
 		ClientApi.RENDER_STATE.partialTickTime = partialTicks;
 		ClientApi.RENDER_STATE.clientLevelWrapper = ClientLevelWrapper.getWrapperIfDifferent(ClientApi.RENDER_STATE.clientLevelWrapper, this.world);
 	}
 	
-	private static void unbindBuffers()
+	@Unique
+	private static void distantHorizons$unbindBuffers()
 	{
 		//Some 1.12.2 rendering mods breaks if we don't unbind buffers
 		GL33.glBindVertexArray(0);

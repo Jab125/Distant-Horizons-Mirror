@@ -34,6 +34,7 @@ import com.seibel.distanthorizons.common.AbstractModInitializer;
 import com.seibel.distanthorizons.common.commands.CommandInitializer;
 import com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateColorCache;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSender;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
@@ -70,6 +71,8 @@ import static com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateC
 @Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, acceptableRemoteVersions = "*")
 public class CleanroomMain extends AbstractModInitializer
 {
+	public static IIrisAccessor IRIS_ACCESSOR;
+	
 	public static final boolean IS_QUARK_LOADED = Loader.isModLoaded("quark");
 	public static final boolean IS_FURENIKUSROADS_LOADED = Loader.isModLoaded("furenikusroads");
 	public static final boolean IS_IMMERSIVERAILRAODING_LOADED = Loader.isModLoaded("immersiverailroading");
@@ -125,6 +128,7 @@ public class CleanroomMain extends AbstractModInitializer
 	protected void initializeModCompat()
 	{
 		this.tryCreateModCompatAccessor("actinium", IIrisAccessor.class, IrisAccessor::new);
+		IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	}
 	
 /*	@Override
