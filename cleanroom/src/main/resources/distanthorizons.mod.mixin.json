@@ -1,11 +1,10 @@
 {
-    "required": false,
-    "package": "com.seibel.distanthorizons.cleanroom.mixins.mod",
-    "compatibilityLevel": "JAVA_8",
+    "package": "com.seibel.distanthorizons.cleanroom.mixins",
+    "required": true,
     "target": "@env(MOD)",
-    "mixins": [],
-    "minVersion": "0.8.7",
-    "plugin": "com.seibel.distanthorizons.cleanroom.CleanroomMixinPlugin",
+    "minVersion": "0.8.5",
+    "compatibilityLevel": "JAVA_8",
     "client": [
+        "client.MixinBloomEffectUtil"
     ]
 }

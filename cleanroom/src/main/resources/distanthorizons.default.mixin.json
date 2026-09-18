@@ -1,7 +1,6 @@
 {
   "required": true,
   "package": "com.seibel.distanthorizons.cleanroom.mixins",
-  "plugin": "com.seibel.distanthorizons.cleanroom.CleanroomMixinPlugin",
   "compatibilityLevel": "JAVA_8",
   "target": "@env(DEFAULT)",
   "mixins": [
@@ -14,7 +13,6 @@
   "client": [
     "client.MixinActiveRenderInfo",
     "client.MixinEntityRenderer",
-    "client.MixinFramebuffer",
     "client.MixinMinecraft",
     "client.MixinNetHandlerPlayClient",
     "client.MixinOptionsScreen",

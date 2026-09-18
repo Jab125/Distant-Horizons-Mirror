@@ -124,7 +124,7 @@ if (isNotCommonProject) {
             )
             if (project.name == "cleanroom") {
                 attributes(
-                    'MixinConfigs': "${mod_id}.default.mixin.json,${mod_id}.mod.mixin.json",
+                    'MixinConnector': 'com.seibel.distanthorizons.cleanroom.DistantHorizonsMixinConnector',
                     'FMLCorePlugin': 'com.seibel.distanthorizons.cleanroom.DistantHorizonsLoadingPlugin',
                     'FMLCorePluginContainsFMLMod': true,
                     'FMLAT': "${gradle.ext.accessWidenerVersion}.distanthorizons_at.cfg"
