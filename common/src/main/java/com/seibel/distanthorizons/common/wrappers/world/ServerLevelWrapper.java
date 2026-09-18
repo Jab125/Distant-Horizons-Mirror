@@ -273,9 +273,6 @@ public class ServerLevelWrapper implements IServerLevelWrapper
 	}
 	
 	@Override
-	public int getSeaLevel() { return this.level.getSeaLevel(); }
-	
-	@Override
 	public #if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif getWrappedMcObject() { return this.level; }
 	
 	@Override
