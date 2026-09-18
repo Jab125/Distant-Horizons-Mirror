@@ -17,7 +17,7 @@ repositories {
 }
 
 dependencies {
-    implementation 'com.gradleup.shadow:shadow-gradle-plugin:9.6.1'
+    implementation 'com.gradleup.shadow:shadow-gradle-plugin:9.0.0' // updating past 9.0.0 causes Fabric and Neoforge to compile to different binaries, causing Forgix to merge the files separately, breaking translation files.
     implementation 'xyz.wagyourtail.unimined:xyz.wagyourtail.unimined.gradle.plugin:1.4.41-kappa'
     implementation 'xyz.wagyourtail:manifold-gradle:1.0.0-SNAPSHOT'
 }
