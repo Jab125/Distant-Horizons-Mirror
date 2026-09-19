@@ -582,9 +582,9 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	{
 		#if MC_VER <= MC_1_12_2
 		final Framebuffer framebuffer = MC.getFramebuffer();
-		if (DelayedAccessors.IRIS_ACCESSOR != null)
+		if (DelayedAccessors.IRIS != null)
 		{
-			return DelayedAccessors.IRIS_ACCESSOR.getFramebufferDepthTextureId(framebuffer);
+			return DelayedAccessors.IRIS.getFramebufferDepthTextureId(framebuffer);
 		}
 		else
 		{
