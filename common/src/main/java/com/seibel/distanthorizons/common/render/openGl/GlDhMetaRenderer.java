@@ -30,6 +30,8 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.renderPass.IDhMe
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import org.jetbrains.annotations.Nullable;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL33;
 
 public class GlDhMetaRenderer implements IDhMetaRenderer
@@ -82,6 +84,12 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 	private int previousBoundTextureId;
 	private int previousDepthFunc;
 	private final float[] previousClearDepth = new float[1];
+	private boolean previousBlend;
+	private int previousBlendSrcRgb;
+	private int previousBlendDstRgb;
+	private int previousBlendSrcAlpha;
+	private int previousBlendDstAlpha;
+	private boolean previousDepthMask;
 	#endif
 	
 	
@@ -141,6 +149,12 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		this.previousBoundTextureId = GLMC.getActiveTexture();
 		this.previousDepthFunc = GLMC.getActiveDepthFunc();
 		GL33.glGetFloatv(GL33.GL_DEPTH_CLEAR_VALUE, this.previousClearDepth);
+		this.previousBlend = GL33.glGetBoolean(GL11.GL_BLEND);
+		this.previousBlendSrcRgb = GL33.glGetInteger(GL14.GL_BLEND_SRC_RGB);
+		this.previousBlendDstRgb = GL33.glGetInteger(GL14.GL_BLEND_DST_RGB);
+		this.previousBlendSrcAlpha = GL33.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
+		this.previousBlendDstAlpha = GL33.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+		this.previousDepthMask = GL33.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
 		#endif
 		
 		// view sizes are used in a few places and
@@ -430,7 +444,23 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		#if MC_VER <= MC_1_12_2
 		GLMC.glDepthFunc(previousDepthFunc);
 		GL33.glClearDepth(this.previousClearDepth[0]);
-		GLMC.glBlendFuncSeparate(GL33.GL_SRC_ALPHA, GL33.GL_ONE, GL33.GL_ONE, GL33.GL_ZERO);
+		GLMC.glBlendFuncSeparate(this.previousBlendSrcRgb, this.previousBlendDstRgb, this.previousBlendSrcAlpha, this.previousBlendDstAlpha);
+		if (this.previousBlend)
+		{
+			GLMC.enableBlend();
+		}
+		else
+		{
+			GLMC.disableBlend();
+		}
+		if (this.previousDepthMask)
+		{
+			GLMC.enableDepthMask();
+		}
+		else
+		{
+			GLMC.disableDepthMask();
+		}
 		#endif
 		this.unbindLightmap();
 		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get())
