@@ -15,6 +15,7 @@
         "client.MixinDebugScreenOverlay",
         "client.MixinFogRenderer",
         "client.MixinLevelRenderer",
+        "client.MixinOculusFrameBuffer",
         "client.MixinLightTexture",
         "client.MixinOptionsScreen"
     ],
