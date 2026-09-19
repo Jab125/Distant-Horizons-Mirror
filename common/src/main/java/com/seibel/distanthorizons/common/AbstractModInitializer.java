@@ -158,6 +158,7 @@ public abstract class AbstractModInitializer
 			MinecraftServerWrapper.INSTANCE.dedicatedServer = (DedicatedServer)server;
 			
 			this.initConfig();
+			setUnsupportedConfigsBasedOnMcVersion();
 			Initializer.postConfigInit();
 			this.postInit();
 			this.postServerInit();
