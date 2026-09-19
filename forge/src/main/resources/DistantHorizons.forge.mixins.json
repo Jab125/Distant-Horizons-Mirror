@@ -19,5 +19,6 @@
         "client.MixinLightTexture",
         "client.MixinOptionsScreen"
     ],
-    "server": []
+    "server": [],
+    "plugin": "com.seibel.distanthorizons.forge.mixins.ForgeMixinPlugin"
 }
