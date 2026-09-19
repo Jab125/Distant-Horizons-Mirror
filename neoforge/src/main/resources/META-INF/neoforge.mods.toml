@@ -42,3 +42,5 @@ issueTrackerURL = "${issues}"
     versionRange = "${neoforge_version_range}" 
     ordering = "NONE"
     side = "BOTH"
+
+${neoforge_dependencies}

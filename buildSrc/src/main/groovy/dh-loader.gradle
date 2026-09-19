@@ -548,7 +548,8 @@ if (isNotCommonProject) {
             fabric_incompatibility_list  : rootProject.fabric_incompatibility_list,
             fabric_recommend_list        : rootProject.fabric_recommend_list,
             neoforge_version_range       : rootProject.neoforge_version_range,
-            logo_path                    : "assets/distanthorizons/icon.png"
+            neoforge_dependencies        : rootProject.neoforge_dependencies,
+            logo_path                    : "assets/distanthorizons/icon.png",
         ]
 
         inputs.properties replaceProperties
