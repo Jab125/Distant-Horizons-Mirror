@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.common.wrappers.minecraft;
 import java.awt.Color;
 import java.util.concurrent.ConcurrentHashMap;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
 import org.jetbrains.annotations.Nullable;
 
@@ -152,7 +153,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	private static class DelayedAccessors
 	{
 		public static final IImmersivePortalsAccessor IMMERSIVE_PORTALS = ModAccessorInjector.INSTANCE.get(IImmersivePortalsAccessor.class);
-		private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
+		private static final IIrisAccessor IRIS = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	}
 	
 	/**
@@ -530,6 +531,28 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		return this.renderApi;
 	}
 	
+	@Override 
+	public EDhApiDepthDirection getMcDepthDirection()
+	{
+		if (DelayedAccessors.IRIS != null
+			&& DelayedAccessors.IRIS.isShaderPackInUse())
+		{
+			if (DelayedAccessors.IRIS.isReverseZDuringShaders())
+			{
+				return EDhApiDepthDirection.REVERSE_Z;
+			}
+			else
+			{
+				return EDhApiDepthDirection.FORWARD_Z;
+			}
+		}
+		
+		#if MC_VER <= MC_26_1_2
+		return EDhApiDepthDirection.FORWARD_Z;
+		#else
+		return EDhApiDepthDirection.REVERSE_Z;
+		#endif
+	}
 	
 	@Override
 	public int getTargetFramebuffer()

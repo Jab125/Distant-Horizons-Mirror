@@ -205,7 +205,7 @@ public class BlazeVanillaFadeRenderer implements IDhVanillaFadeRenderer
 				.putFloat(renderParams.clientLevelWrapper.getMaxHeight()) // uMaxLevelHeight
 				.putMat4f(inverseDhMvmProjMatrix) // uDhInvMvmProj
 				.putMat4f(inverseMcMvmProjMatrix) // uMcInvMvmProj
-				.putInt((RENDER_DEF.getDepthDirection() == EDhApiDepthDirection.REVERSE_Z) ? 1 : 0) // uIsReverseZDepth
+				.putInt((MC_RENDER.getMcDepthDirection() == EDhApiDepthDirection.REVERSE_Z) ? 1 : 0) // uIsMcReverseZDepth
 				.putInt((RENDER_DEF.getDepthRange() == EDhApiDepthRange.ZERO_TO_POS_ONE) ? 1 : 0) // uDepthIsZeroToPositiveOne
 				.finishAndUpload()
 			;
