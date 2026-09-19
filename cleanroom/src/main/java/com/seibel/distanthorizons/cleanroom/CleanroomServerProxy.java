@@ -20,39 +20,25 @@
 package com.seibel.distanthorizons.cleanroom;
 
 import com.seibel.distanthorizons.common.AbstractModInitializer;
-import com.seibel.distanthorizons.common.commands.CommandInitializer;
 import com.seibel.distanthorizons.common.commonMixins.MixinChunkMapCommon;
-import com.seibel.distanthorizons.common.util.ProxyUtil;
-import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.ServerPlayerWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.wrapperInterfaces.chunk.IChunkWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IPluginPacketSender;
-import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.World;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.world.ChunkDataEvent;
 import net.minecraftforge.event.world.ChunkEvent;
 import net.minecraftforge.event.world.WorldEvent;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.event.FMLServerAboutToStartEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
-
-import java.lang.reflect.Field;
-
-import static com.seibel.distanthorizons.cleanroom.CleanroomMain.instance;
 
 public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 {
@@ -63,7 +49,7 @@ public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 	private final ServerApi serverApi = ServerApi.INSTANCE;
 	private final boolean isDedicated;
 	
-	
+
 	
 	@Override
 	public void registerEvents()
@@ -117,9 +103,10 @@ public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void serverChunkLoadEvent(ChunkEvent.Load event)
 	{
-		ILevelWrapper levelWrapper = ProxyUtil.getLevelWrapper(GetEventLevel(event));
-		IChunkWrapper chunk = new ChunkWrapper(event.getChunk(), levelWrapper);
-		this.serverApi.serverChunkLoadEvent(chunk, levelWrapper);
+		if (event.getWorld() instanceof WorldServer worldServer)
+		{
+			MixinChunkMapCommon.onChunkSave(worldServer, event.getChunk());
+		}
 	}
 	
 	@SubscribeEvent
