@@ -4,15 +4,16 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftSha
 import java.util.Arrays;
 import org.jetbrains.annotations.Nullable;
 
-import net.minecraft.client.Minecraft;
-
 #if MC_VER > MC_1_12_2
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.level.Level;
+import net.minecraft.client.Minecraft;
 #endif
 
 #if MC_VER <= MC_1_12_2
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.common.FMLCommonHandler;
 #elif MC_VER <= MC_1_21_10
 import net.minecraft.resources.ResourceLocation;
 #else
@@ -93,19 +94,21 @@ public abstract class AbstractMinecraftSharedWrapper implements IMinecraftShared
 	}
 	private long @Nullable [] getServerTickTimesNano()
 	{
-		// currently this logic is only implemented for singleplayer servers
+		// currently this logic is only implemented for singleplayer servers (except 1.12.2 and lower)
+		#if MC_VER > MC_1_12_2
 		if (this.isDedicatedServer())
 		{
 			return null;
 		}
-		
+		#endif
 		
 		#if MC_VER <= MC_1_12_2
-		if (Minecraft.getMinecraft().getIntegratedServer() == null)
+		MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
+		if (server == null)
 		{
 			return null;
 		}
-		return Minecraft.getMinecraft().getIntegratedServer().tickTimeArray;
+		return server.tickTimeArray;
 		#elif MC_VER <= MC_1_20_2
 
 		if (Minecraft.getInstance().getSingleplayerServer() == null)
