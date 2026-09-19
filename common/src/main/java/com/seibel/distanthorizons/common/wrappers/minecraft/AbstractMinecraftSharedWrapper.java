@@ -89,8 +89,8 @@ public abstract class AbstractMinecraftSharedWrapper implements IMinecraftShared
 		
 		double avgMs = Arrays.stream(sortedNanoTicks).average().orElse(0) * 1e-6; // convert from Nano to Milli
 		
-		return avgMs < 10.0 // 20 ms is standard tick rate
-			&& p99Ms < 30.0;
+		return avgMs < 25.0 // 50 ms is standard tick rate
+			&& p99Ms < 50.0;
 	}
 	private long @Nullable [] getServerTickTimesNano()
 	{
