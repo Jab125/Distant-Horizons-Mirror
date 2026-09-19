@@ -49,7 +49,7 @@ public record LWJGL2Service(
 	VertexAttribIMode vertexAttribIMode,
 	Long2ObjectOpenHashMap<GLSync> syncObjects) implements ILWJGLService
 {
-	private static final Logger LOGGER = LogManager.getLogger("Celeritas/LWJGL2Service");
+	private static final Logger LOGGER = LogManager.getLogger("DistantHorizons/LWJGL2Service");
 	private static final LWJGL2DebugSupport debugSupport = new LWJGL2DebugSupport();
 	
 	private enum VAOMode

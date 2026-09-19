@@ -35,8 +35,14 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRender
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.lwjgl.EGLExtension;
 import org.lwjgl.opengl.GL11;
+
+#if MC_VER > MC_1_12_2
+import org.lwjgl.opengl.GLUtil;
+#endif
+
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
+import java.io.PrintStream;
 import java.util.Collections;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -173,8 +179,9 @@ public class GLProxy
 		
 		if (Config.Client.Advanced.Debugging.OpenGl.overrideVanillaGLLogger.get())
 		{
-			//TODO
-			//LWJGL.setupDebugCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.vanillaDebugMessageBuilder), true));
+			#if MC_VER > MC_1_12_2
+			GLUtil.setupDebugMessageCallback(new PrintStream(new GLMessageOutputStream(GLProxy::logMessage, this.vanillaDebugMessageBuilder), true));
+			#endif
 		}
 		
 		
