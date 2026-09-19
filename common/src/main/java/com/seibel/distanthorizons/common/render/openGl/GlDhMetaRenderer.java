@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.render.openGl;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiRenderPass;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiFramebuffer;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
@@ -19,7 +20,6 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
-import com.seibel.distanthorizons.core.render.EDhRenderDepth;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
@@ -182,7 +182,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		// Enable depth test and depth mask
 		GLMC.enableDepthTest();
-		if (RENDER_DEF.getRenderDepth() == EDhRenderDepth.FORWARD_Z)
+		if (RENDER_DEF.getDepthDirection() == EDhApiDepthDirection.FORWARD_Z)
 		{
 			GLMC.glDepthFunc(GL33.GL_LESS);
 		}
@@ -257,7 +257,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		boolean clearTextures = !ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeTextureClearEvent.class, renderEventParam);
 		if (clearTextures)
 		{
-			float clearDepth = RENDER_DEF.getRenderDepth().farDepth;
+			float clearDepth = RENDER_DEF.getDepthDirection().farDepth;
 			GL33.glClearDepth(clearDepth);
 			
 			float[] clearColorValues = new float[4];
@@ -463,7 +463,7 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		
 		
 		
-		float clearDepth = RENDER_DEF.getRenderDepth().farDepth;
+		float clearDepth = RENDER_DEF.getDepthDirection().farDepth;
 		GL33.glClearDepth(clearDepth);
 		
 		float[] clearColorValues = new float[4];
