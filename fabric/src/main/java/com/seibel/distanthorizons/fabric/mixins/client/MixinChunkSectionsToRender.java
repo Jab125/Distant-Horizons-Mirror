@@ -26,7 +26,10 @@ import org.spongepowered.asm.mixin.Mixin;
 @Mixin(Entity.class)
 public class MixinChunkSectionsToRender
 { /* rendering before was handled via Fabric API events */ }
+
+
 #elif MC_VER <= MC_26_2_0
+
 
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import org.spongepowered.asm.mixin.Mixin;
@@ -136,6 +139,7 @@ import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import net.minecraft.client.renderer.chunk.ChunkSectionLayerGroup;
 import org.spongepowered.asm.mixin.Mixin;
+import org.spongepowered.asm.mixin.Pseudo;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
@@ -146,6 +150,7 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
  * otherwise DH will be called in a different spot then Iris expects,
  * cuasing GL state issues.
  */
+@Pseudo
 @Mixin(net.caffeinemc.mods.sodium.client.util.SodiumChunkSection.class)
 public class MixinChunkSectionsToRender
 {
