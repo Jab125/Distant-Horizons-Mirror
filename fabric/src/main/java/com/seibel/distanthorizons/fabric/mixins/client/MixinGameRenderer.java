@@ -107,12 +107,12 @@ public class MixinGameRenderer
 		
 		ClientApi.RENDER_STATE.partialTickTime = MinecraftRenderWrapper.INSTANCE.getPartialTickTime();
 		
-		MixinProjectionMatrixBufferCommon.inWorldRenderPass = true;
+		MixinProjectionMatrixBufferCommon.getNewMvmMatrix = true;
 	}
 	
 	@Inject(method = "renderLevel", at = @At("RETURN"))
 	private void onRenderLevelEnd(CallbackInfo ci)
-	{ MixinProjectionMatrixBufferCommon.inWorldRenderPass = false; }
+	{ MixinProjectionMatrixBufferCommon.getNewMvmMatrix = false; }
 	
 	#endif
 	

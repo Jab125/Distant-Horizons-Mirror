@@ -18,16 +18,12 @@ public class MixinProjectionMatrixBufferCommon
 	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	
 	
-	public static boolean inWorldRenderPass = false;
+	/** if set to true we will record the next MVM matrix passed in */
+	public static boolean getNewMvmMatrix = false;
 	
 	
 	public static void onMatrixWrite(Matrix4f matrix)
 	{
-		// ignore writes if we aren't in the world render pass
-		if (!inWorldRenderPass)
-		{
-			return;
-		}
 		
 		if (IRIS_ACCESSOR != null
 			&& IRIS_ACCESSOR.isRenderingShadowPass())
@@ -36,6 +32,13 @@ public class MixinProjectionMatrixBufferCommon
 			// cause the frustum culling to run incorrectly, culling everything
 			return;
 		}
+		
+		// only get a new matrix if requested
+		if (!getNewMvmMatrix)
+		{
+			return;
+		}
+		
 		
 		
 		DhMat4f dhMatrix = McObjectConverter.convert(matrix);
@@ -47,7 +50,12 @@ public class MixinProjectionMatrixBufferCommon
 			return;
 		}
 		
+		
 		ClientApi.RENDER_STATE.mcProjectionMatrix = dhMatrix;
+		// Only get the first MVM matrix after requested.
+		// This is done to prevent issues with getting subsequent MVM matrices
+		// due to vanilla post-processing passes (ie glow). 
+		getNewMvmMatrix = false;
 	}
 	
 }
