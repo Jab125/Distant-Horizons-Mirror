@@ -542,13 +542,18 @@ if (isNotCommonProject) {
             compatible_forgemc_versions  : compatible_forgemc_versions,
             java_version                 : rootProject.java_version,
             quilt_contributors           : "{" + quilt_contributors.join(", ") + "}",
+            
             info_git_commit              : rootProject.infoGitBranch,
             info_git_branch              : rootProject.infoGitCommit,
             info_build_source            : rootProject.infoBuildSource,
+            
             fabric_incompatibility_list  : rootProject.fabric_incompatibility_list,
             fabric_recommend_list        : rootProject.fabric_recommend_list,
+            fabric_loader_version        : rootProject.fabric_loader_version,
+            
             neoforge_version_range       : rootProject.neoforge_version_range,
             neoforge_dependencies        : rootProject.neoforge_dependencies,
+            
             logo_path                    : "assets/distanthorizons/icon.png",
         ]
 
