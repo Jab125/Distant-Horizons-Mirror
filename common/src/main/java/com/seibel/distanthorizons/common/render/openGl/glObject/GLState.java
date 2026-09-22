@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.openGl.glObject;
 
 import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
+import org.lwjgl.opengl.GL;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.system.MemoryStack;
 
@@ -66,8 +67,9 @@ public class GLState implements AutoCloseable
 	public int cullMode;
 	/** Front-face polygon mode. Kept as polyMode for compatibility with existing callers. */
 	public int polyMode;
-	/** Back-face polygon mode; GL_POLYGON_MODE returns one value for each face. */
+	/** Back-face polygon mode in compatibility contexts; equal to polyMode in core contexts. */
 	public int polyModeBack;
+	private boolean separatePolygonModes;
 	
 	
 	
@@ -134,14 +136,17 @@ public class GLState implements AutoCloseable
 		GL33.glGetIntegerv(GL33.GL_VIEWPORT, this.view);
 		this.cull = GL33.glIsEnabled(GL33.GL_CULL_FACE);
 		this.cullMode = GL33.glGetInteger(GL33.GL_CULL_FACE_MODE);
-		// GL_POLYGON_MODE returns a pair: one mode for GL_FRONT and one for GL_BACK.
-		// glGetInteger() allocates space for only one GLint, so query into a two-element buffer.
+		// Compatibility contexts return front and back modes; core contexts return one.
+		// Reserve two slots for the query in either case, but only read the second
+		// value when the context actually has separate polygon modes.
+		this.separatePolygonModes = !GL.getCapabilities().OpenGL32
+				|| (GL33.glGetInteger(GL33.GL_CONTEXT_PROFILE_MASK) & GL33.GL_CONTEXT_COMPATIBILITY_PROFILE_BIT) != 0;
 		try (MemoryStack stack = MemoryStack.stackPush())
 		{
-			IntBuffer polyModes = stack.mallocInt(2);
+			IntBuffer polyModes = stack.callocInt(2);
 			GL33.glGetIntegerv(GL33.GL_POLYGON_MODE, polyModes);
 			this.polyMode = polyModes.get(0);
-			this.polyModeBack = polyModes.get(1);
+			this.polyModeBack = this.separatePolygonModes ? polyModes.get(1) : this.polyMode;
 		}
 	}
 	
@@ -260,7 +265,7 @@ public class GLState implements AutoCloseable
 			GLMC.disableFaceCulling();
 		}
 		GL33.glCullFace(this.cullMode);
-		if (this.polyMode == this.polyModeBack)
+		if (!this.separatePolygonModes || this.polyMode == this.polyModeBack)
 		{
 			GL33.glPolygonMode(GL33.GL_FRONT_AND_BACK, this.polyMode);
 		}
