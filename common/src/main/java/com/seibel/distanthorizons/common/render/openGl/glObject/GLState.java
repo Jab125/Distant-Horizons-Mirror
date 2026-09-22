@@ -22,6 +22,9 @@ package com.seibel.distanthorizons.common.render.openGl.glObject;
 import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import org.lwjgl.opengl.GL33;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.IntBuffer;
 
 public class GLState implements AutoCloseable
 {
@@ -128,7 +131,12 @@ public class GLState implements AutoCloseable
 		GL33.glGetIntegerv(GL33.GL_VIEWPORT, this.view);
 		this.cull = GL33.glIsEnabled(GL33.GL_CULL_FACE);
 		this.cullMode = GL33.glGetInteger(GL33.GL_CULL_FACE_MODE);
-		this.polyMode = GL33.glGetInteger(GL33.GL_POLYGON_MODE);
+		try (MemoryStack stack = MemoryStack.stackPush())
+		{
+			IntBuffer polyModes = stack.mallocInt(2);
+			GL33.glGetIntegerv(GL33.GL_POLYGON_MODE, polyModes);
+			this.polyMode = polyModes.get(0);
+		}
 	}
 	
 	@Override 
