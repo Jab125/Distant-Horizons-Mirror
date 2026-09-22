@@ -22,6 +22,9 @@ package com.seibel.distanthorizons.common.render.openGl.glObject;
 import com.seibel.distanthorizons.common.render.openGl.glObject.enums.GLEnums;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import org.lwjgl.opengl.GL33;
+import org.lwjgl.system.MemoryStack;
+
+import java.nio.IntBuffer;
 
 public class GLState implements AutoCloseable
 {
@@ -61,7 +64,10 @@ public class GLState implements AutoCloseable
 	public int[] view;
 	public boolean cull;
 	public int cullMode;
+	/** Front-face polygon mode. Kept as polyMode for compatibility with existing callers. */
 	public int polyMode;
+	/** Back-face polygon mode; GL_POLYGON_MODE returns one value for each face. */
+	public int polyModeBack;
 	
 	
 	
@@ -128,7 +134,15 @@ public class GLState implements AutoCloseable
 		GL33.glGetIntegerv(GL33.GL_VIEWPORT, this.view);
 		this.cull = GL33.glIsEnabled(GL33.GL_CULL_FACE);
 		this.cullMode = GL33.glGetInteger(GL33.GL_CULL_FACE_MODE);
-		this.polyMode = GL33.glGetInteger(GL33.GL_POLYGON_MODE);
+		// GL_POLYGON_MODE returns a pair: one mode for GL_FRONT and one for GL_BACK.
+		// glGetInteger() allocates space for only one GLint, so query into a two-element buffer.
+		try (MemoryStack stack = MemoryStack.stackPush())
+		{
+			IntBuffer polyModes = stack.mallocInt(2);
+			GL33.glGetIntegerv(GL33.GL_POLYGON_MODE, polyModes);
+			this.polyMode = polyModes.get(0);
+			this.polyModeBack = polyModes.get(1);
+		}
 	}
 	
 	@Override 
@@ -246,7 +260,15 @@ public class GLState implements AutoCloseable
 			GLMC.disableFaceCulling();
 		}
 		GL33.glCullFace(this.cullMode);
-		GL33.glPolygonMode(GL33.GL_FRONT_AND_BACK, this.polyMode);
+		if (this.polyMode == this.polyModeBack)
+		{
+			GL33.glPolygonMode(GL33.GL_FRONT_AND_BACK, this.polyMode);
+		}
+		else
+		{
+			GL33.glPolygonMode(GL33.GL_FRONT, this.polyMode);
+			GL33.glPolygonMode(GL33.GL_BACK, this.polyModeBack);
+		}
 	}
 	
 	@Override
@@ -264,7 +286,8 @@ public class GLState implements AutoCloseable
 			", stencilFunc=" + GLEnums.getString(this.stencilFunc) + ", stencilRef=" + this.stencilRef + ", stencilMask=" + this.stencilMask +
 			", view={x:" + this.view[0] + ", y:" + this.view[1] +
 			", w:" + this.view[2] + ", h:" + this.view[3] + "}" + ", cull=" + this.cull +
-			", cullMode=" + GLEnums.getString(this.cullMode) + ", polyMode=" + GLEnums.getString(this.polyMode) +
+			", cullMode=" + GLEnums.getString(this.cullMode) + ", polyModeFront=" + GLEnums.getString(this.polyMode) +
+			", polyModeBack=" + GLEnums.getString(this.polyModeBack) +
 			'}';
 	}
 	
