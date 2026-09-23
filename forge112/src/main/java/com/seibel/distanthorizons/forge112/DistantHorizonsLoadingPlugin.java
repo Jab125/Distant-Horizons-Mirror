@@ -71,31 +71,24 @@ public class DistantHorizonsLoadingPlugin implements IFMLLoadingPlugin, IEarlyMi
 	}
 	
 	@Override
-	public String[] getASMTransformerClass()
+	public @Nullable String[] getASMTransformerClass()
 	{
 		return new String[0];
 	}
-	
 	@Override
-	public String getModContainerClass()
+	public @Nullable String getModContainerClass()
 	{
 		return null;
 	}
-	
 	@Override
 	public @Nullable String getSetupClass()
 	{
 		return null;
 	}
-	
 	@Override
-	public void injectData(Map<String, Object> map)
-	{
-		
-	}
-	
+	public void injectData(Map<String, Object> data) { }
 	@Override
-	public String getAccessTransformerClass()
+	public @Nullable String getAccessTransformerClass()
 	{
 		return null;
 	}

@@ -20,7 +20,7 @@
 package com.seibel.distanthorizons.neoforge.wrappers.modAccessor;
 
 // 1.20.6 is the lowest version Iris supports Neoforge
-#if MC_VER >= MC_1_20_6 && MC_VER != MC_1_21_9
+#if MC_VER >= MC_1_20_6
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 

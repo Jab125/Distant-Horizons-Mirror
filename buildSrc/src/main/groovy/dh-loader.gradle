@@ -95,11 +95,13 @@ repositories {
 // ==================== Java Config ====================
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 17
+    options.release = rootProject.java_version as Integer
     options.encoding = "UTF-8"
 }
 
 java {
+    sourceCompatibility = JavaVersion.toVersion(gradle.ext.java_version as Integer)
+    targetCompatibility = JavaVersion.toVersion(gradle.ext.java_version as Integer)
     withSourcesJar()
 }
 
@@ -263,7 +265,7 @@ if (isNotCommonProject) {
 
 // ==================== LWJGL 2/3 Abstraction (common only) ====================
 // LWJGL is only resolved in :common via unimined; :core never touches it directly.
-// So the abstraction sourceSets/generation task live here, then get exposed to
+// So the abstraction sourceSets/generation task live here, then gets exposed to
 // loader subprojects through common's outgoing variants (they already consume
 // `common(project(":common"))` further down in this file).
 
@@ -566,7 +568,8 @@ if (isNotCommonProject) {
 
                     // Remove any stale DH jars before copying the fresh one
                     modsDir.listFiles()?.each({ file ->
-                        if (file.name.startsWith(rootProject.mod_name)) {
+                        if (file.name.startsWith(rootProject.mod_name)) 
+                        {
                             file.delete()
                         }
                     });
@@ -615,7 +618,8 @@ if (isNotCommonProject) {
                 )
 
                 // enabling tracy causes constant memory growth so it isn't always desired
-                if (rootProject.minecraftEnableTracy == "true") {
+                if (rootProject.minecraftEnableTracy == "true") 
+                {
                     // "--tracy" is a Mojang command to allow individual frames to be debugged using Tracy https://github.com/wolfpld/tracy/releases/tag/v0.13.1
                     runTask.args("--tracy")
                 }
