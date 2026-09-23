@@ -361,6 +361,7 @@ if (isNotCommonProject) {
 
         mergeServiceFiles()
     }
+    
     afterEvaluate {
         tasks.named("remapJar").configure {
             dependsOn(shadowJar)
