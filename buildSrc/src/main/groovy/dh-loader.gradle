@@ -95,13 +95,11 @@ repositories {
 // ==================== Java Config ====================
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = rootProject.java_version as Integer
+    options.release = 17 // LWJGL Service needs java 17, we will downgrade it with JVMDowngrader
     options.encoding = "UTF-8"
 }
 
 java {
-    sourceCompatibility = JavaVersion.toVersion(gradle.ext.java_version as Integer)
-    targetCompatibility = JavaVersion.toVersion(gradle.ext.java_version as Integer)
     withSourcesJar()
 }
 
@@ -545,6 +543,8 @@ if (isNotCommonProject) {
             runTask.workingDir = rootProject.file("run/${isClient ? 'client' : 'server'}")
 
             boolean useZgc = (gradle.ext.java_version as Integer) >= 21;
+            boolean useZGenerational = (gradle.ext.java_version as Integer) >= 21 && (gradle.ext.java_version as Integer) <= 22;
+            
             if (useZgc) 
             {
                 // Minecraft automatically has G1GC args present,
@@ -601,6 +601,13 @@ if (isNotCommonProject) {
                 runTask.jvmArgs(
                     "-XX:+UseZGC"
                 )
+            }
+            
+            if (useZGenerational)
+            {
+                runTask.jvmArgs(
+                    "-XX:+ZGenerational"
+                )    
             }
 
             if (isClient) {

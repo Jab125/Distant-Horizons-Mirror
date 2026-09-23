@@ -42,7 +42,9 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-public class CleanroomServerProxy implements AbstractModInitializer.IEventProxy
+import java.util.concurrent.TimeUnit;
+
+public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 {
 	private static final ForgePluginPacketSender PACKET_SENDER = (ForgePluginPacketSender) SingletonInjector.INSTANCE.get(IPluginPacketSender.class);
 	private static World GetEventLevel(WorldEvent e) { return e.getWorld(); }

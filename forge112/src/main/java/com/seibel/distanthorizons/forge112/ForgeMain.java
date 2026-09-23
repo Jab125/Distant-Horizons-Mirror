@@ -26,6 +26,7 @@ import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockSt
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockTextureOverrideEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiEventParam;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modLoader.IForgeMain;
+import com.seibel.distanthorizons.forge112.modAccessor.IrisAccessor;
 import com.seibel.distanthorizons.forge112.modAccessor.ModChecker;
 import com.seibel.distanthorizons.forge112.modCompat.quark.Quark;
 import com.seibel.distanthorizons.forge112.modCompat.sereneseasons.SereneSeasons;
@@ -71,8 +72,8 @@ import static com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateC
  * If you are looking for the real start of the mod
  * check out the ClientProxy.
  */
-@Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, acceptableRemoteVersions = "*", dependencies = "required-after:cleanroom@[0.6.0,);")
-public class CleanroomMain extends AbstractModInitializer implements IForgeMain
+@Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, acceptableRemoteVersions = "*", dependencies = "required-after:mixinbooter@[11.8,);")
+public class ForgeMain extends AbstractModInitializer implements IForgeMain
 {
 	public static IIrisAccessor IRIS_ACCESSOR;
 	

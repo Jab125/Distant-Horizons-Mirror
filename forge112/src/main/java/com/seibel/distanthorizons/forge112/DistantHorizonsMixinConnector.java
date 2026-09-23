@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.cleanroom;
+package com.seibel.distanthorizons.forge112;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,18 +13,18 @@ public class DistantHorizonsMixinConnector implements IMixinConnector
 	@Override
 	public void connect()
 	{
-		Mixins.addConfiguration("distanthorizons.default.mixin.json");
+		Mixins.addConfiguration("DistantHorizons.default.mixins.json");
 		if (ModDiscoverer.isModPresent("gregtech"))
 		{
-			Mixins.addConfiguration("distanthorizons.gregtech.mixin.json");
+			Mixins.addConfiguration("DistantHorizons.gregtech.mixins.json");
 		}
 		if (ModDiscoverer.isModPresent("lumenized"))
 		{
-			Mixins.addConfiguration("distanthorizons.lumenized.mixin.json");
+			Mixins.addConfiguration("DistantHorizons.lumenized.mixins.json");
 		}
 		if (!isIrisLoaded())
 		{
-			Mixins.addConfiguration("distanthorizons.iris.mixin.json");
+			Mixins.addConfiguration("DistantHorizons.iris.mixins.json");
 		}
 	}
 	

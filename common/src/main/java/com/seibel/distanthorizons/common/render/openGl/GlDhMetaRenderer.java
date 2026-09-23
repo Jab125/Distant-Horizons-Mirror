@@ -32,6 +32,7 @@ import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL30;
 
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
@@ -150,13 +151,13 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		#if MC_VER <= MC_1_12_2
 		this.previousBoundTextureId = GLMC.getActiveTexture();
 		this.previousDepthFunc = GLMC.getActiveDepthFunc();
-		LWJGL.glGetFloatv(GL33.GL_DEPTH_CLEAR_VALUE, this.previousClearDepth);
-		this.previousBlend = GL33.glGetBoolean(GL11.GL_BLEND);
-		this.previousBlendSrcRgb = GL33.glGetInteger(GL14.GL_BLEND_SRC_RGB);
-		this.previousBlendDstRgb = GL33.glGetInteger(GL14.GL_BLEND_DST_RGB);
-		this.previousBlendSrcAlpha = GL33.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
-		this.previousBlendDstAlpha = GL33.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
-		this.previousDepthMask = GL33.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
+		LWJGL.glGetFloatv(GL11.GL_DEPTH_CLEAR_VALUE, this.previousClearDepth);
+		this.previousBlend = LWJGL.glGetBoolean(GL11.GL_BLEND);
+		this.previousBlendSrcRgb = LWJGL.glGetInteger(GL14.GL_BLEND_SRC_RGB);
+		this.previousBlendDstRgb = LWJGL.glGetInteger(GL14.GL_BLEND_DST_RGB);
+		this.previousBlendSrcAlpha = LWJGL.glGetInteger(GL14.GL_BLEND_SRC_ALPHA);
+		this.previousBlendDstAlpha = LWJGL.glGetInteger(GL14.GL_BLEND_DST_ALPHA);
+		this.previousDepthMask = LWJGL.glGetBoolean(GL11.GL_DEPTH_WRITEMASK);
 		#endif
 		
 		// view sizes are used in a few places and

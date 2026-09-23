@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.cleanroom.mixins.client.lumenized;
+package com.seibel.distanthorizons.forge112.mixins.client.lumenized;
 
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import gregtech.client.utils.BloomEffectUtil;

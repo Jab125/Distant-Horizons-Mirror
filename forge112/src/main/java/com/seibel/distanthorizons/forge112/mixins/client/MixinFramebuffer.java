@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.forge112.mixins.client;
 
+import com.seibel.distanthorizons.common.commonMixins.IFramebufferDepthTexture;
 import com.seibel.distanthorizons.forge112.MixinFlags;
 import net.minecraft.client.renderer.GlStateManager;
 import net.minecraft.client.renderer.OpenGlHelper;

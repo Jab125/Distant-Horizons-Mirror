@@ -1,4 +1,4 @@
-package com.seibel.distanthorizons.cleanroom.mixins.client;
+package com.seibel.distanthorizons.forge112.mixins.client;
 
 import java.nio.FloatBuffer;
 
@@ -12,7 +12,7 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import com.seibel.distanthorizons.cleanroom.RenderHelper;
+import com.seibel.distanthorizons.forge112.RenderHelper;
 
 @Mixin(ActiveRenderInfo.class)
 public class MixinActiveRenderInfo

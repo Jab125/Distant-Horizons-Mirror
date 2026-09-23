@@ -1,5 +1,5 @@
 plugins {
-    id 'unimined-legacyforge'
+    id 'unimined-forge112'
 }
 
 repositories {
@@ -36,7 +36,7 @@ dependencies {
     
     addMod('curse.maven:lumenized-1234162:6734060', rootProject.enable_lumenized)
 	
-    implementation("zone.rong:mixinbooter:10.7")
+    implementation("zone.rong:mixinbooter:11.8")
 }
 
 // ==================== Tasks ====================
