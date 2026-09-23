@@ -85,7 +85,7 @@ public class McObjectConverter
 			matrix, 
 			FloatBuffer buffer)
 	{
-		#if MC_VER == MC_1_12_2
+		#if MC_VER <= MC_1_12_2
 		// JOML's Matrix4f.get(FloatBuffer) routes through MemUtilUnsafe in the newer JOML and segfaults on heap buffers, so put each entry manually.
 		buffer.put(bufferIndex(0, 0), matrix.m00());
 		buffer.put(bufferIndex(0, 1), matrix.m01());
