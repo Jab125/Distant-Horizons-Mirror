@@ -42,7 +42,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 
-import java.util.concurrent.TimeUnit;
 
 public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 {
@@ -87,9 +86,13 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void serverTickEvent(TickEvent.ServerTickEvent event)
 	{
-		if (event.phase == TickEvent.Phase.END)
+		if (event.phase == TickEvent.Phase.START)
 		{
-			ServerThreadTaskHandler.INSTANCE.runTasks(TimeUnit.MILLISECONDS.toNanos(15));
+			ServerThreadTaskHandler.INSTANCE.onTickStart();
+		}
+		else
+		{
+			ServerThreadTaskHandler.INSTANCE.runTasks();
 		}
 	}
 	
