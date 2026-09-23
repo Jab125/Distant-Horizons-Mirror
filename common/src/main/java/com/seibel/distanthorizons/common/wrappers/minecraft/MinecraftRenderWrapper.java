@@ -42,11 +42,6 @@ import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 
-#if MC_VER <= MC_1_12_2
-import com.seibel.distanthorizons.common.commonMixins.IFramebufferDepthTexture;
-#endif
-
-
 #if MC_VER < MC_1_17_1
 #elif MC_VER < MC_1_21_3
 import net.minecraft.client.renderer.FogRenderer;
@@ -84,6 +79,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccess
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IOptifineAccessor;
 
 #if MC_VER <= MC_1_12_2
+import com.seibel.distanthorizons.common.commonMixins.IFramebufferDepthTexture;
 import net.minecraft.client.renderer.entity.RenderManager;
 import net.minecraft.client.shader.Framebuffer;
 #if MC_VER <= MC_1_7_10
