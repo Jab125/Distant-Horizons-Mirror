@@ -728,16 +728,12 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public boolean isFogStateSpecial()
 	{
 		#if MC_VER <= MC_1_7_10
-		float partialTicks = this.getPartialTickTime();
-		
-		double x = MC.renderViewEntity.prevPosX + (MC.renderViewEntity.posX - MC.renderViewEntity.prevPosX) * partialTicks;
-		double y = MC.renderViewEntity.prevPosY + (MC.renderViewEntity.posY - MC.renderViewEntity.prevPosY) * partialTicks + MC.renderViewEntity.getEyeHeight();
-		double z = MC.renderViewEntity.prevPosZ + (MC.renderViewEntity.posZ - MC.renderViewEntity.prevPosZ) * partialTicks;
+		DhVec3d cameraPos = this.getCameraExactPosition();
 		
 		Block fluidBlock = MC.renderViewEntity.worldObj.getBlock(
-			MathHelper.floor_double(x), 
-			MathHelper.floor_double(y), 
-			MathHelper.floor_double(z));
+			MathHelper.floor_double(cameraPos.x),
+			MathHelper.floor_double(cameraPos.y),
+			MathHelper.floor_double(cameraPos.z));
 		
 		return this.playerHasBlindingEffect() 
 			|| fluidBlock.getMaterial().isLiquid() 
