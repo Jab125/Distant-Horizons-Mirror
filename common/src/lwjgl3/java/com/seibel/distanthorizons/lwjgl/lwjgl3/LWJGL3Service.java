@@ -19,6 +19,7 @@ import java.nio.*;
 /**
  * LWJGL3 implementation of {@link ILWJGLService}.
  */
+// TODO why is this a record?
 public record LWJGL3Service(
         VAOMode vaoMode,
         TimerQueryMode timerQueryMode,
@@ -29,11 +30,16 @@ public record LWJGL3Service(
     private static final LWJGL3DebugSupport debugSupport = new LWJGL3DebugSupport();
 	private static final Thread RENDER_THREAD = Thread.currentThread();
 
+	
+	
     // ===================== CAPABILITIES =====================
+	
 	@Override
-    public boolean isOpenGLVersionSupported(int major, int minor) {
+    public boolean isOpenGLVersionSupported(int major, int minor) 
+	{
         GLCapabilities caps = GL.getCapabilities();
-        return switch (major * 10 + minor) {
+        return switch (major * 10 + minor) 
+        {
             case 11 -> caps.OpenGL11;
             case 12 -> caps.OpenGL12;
             case 13 -> caps.OpenGL13;
@@ -57,9 +63,11 @@ public record LWJGL3Service(
     }
 
     @Override
-    public boolean isExtensionSupported(EGLExtension extension) {
+    public boolean isExtensionSupported(EGLExtension extension) 
+    {
         GLCapabilities caps = GL.getCapabilities();
-        return switch (extension) {
+        return switch (extension) 
+        {
             case ARB_buffer_storage -> caps.GL_ARB_buffer_storage;
             case ARB_multi_draw_indirect -> caps.GL_ARB_multi_draw_indirect;
             case ARB_draw_elements_base_vertex -> caps.GL_ARB_draw_elements_base_vertex;
@@ -85,6 +93,8 @@ public record LWJGL3Service(
         return Pointer.POINTER_SIZE;
     }
 
+	
+	
     // ===================== BUFFER OPERATIONS =====================
 
     @Override
@@ -186,34 +196,48 @@ public record LWJGL3Service(
 		GL43C.glBindVertexBuffer(bindingindex, buffer, offset, stride);
 	}
 	
-	private enum VAOMode {
-        CORE {
+	
+	
+	private enum VAOMode 
+	{
+        CORE 
+        {
             @Override public int gen() { return GL30C.glGenVertexArrays(); }
             @Override public void delete(int array) { GL30C.glDeleteVertexArrays(array); }
             @Override public void bind(int array) { GL30C.glBindVertexArray(array); }
         },
-        ARB {
+        ARB 
+	        {
             @Override public int gen() { return ARBVertexArrayObject.glGenVertexArrays(); }
             @Override public void delete(int array) { ARBVertexArrayObject.glDeleteVertexArrays(array); }
             @Override public void bind(int array) { ARBVertexArrayObject.glBindVertexArray(array); }
         },
-        APPLE {
-            @Override public int gen() {
-                try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+        APPLE 
+        {
+            @Override 
+            public int gen() 
+            {
+                try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) 
+                {
                     IntBuffer buf = stack.callocInt(1);
                     JNI.callPV(1, MemoryUtil.memAddress(buf), glGenVertexArraysAPPLE);
                     return buf.get(0);
                 }
             }
-            @Override public void delete(int array) {
-                try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) {
+            @Override 
+            public void delete(int array) 
+            {
+                try (org.lwjgl.system.MemoryStack stack = org.lwjgl.system.MemoryStack.stackPush()) 
+                {
                     IntBuffer buf = stack.ints(array);
                     JNI.callPV(1, MemoryUtil.memAddress(buf), glDeleteVertexArraysAPPLE);
                 }
             }
-            @Override public void bind(int array) { JNI.callV(array, glBindVertexArrayAPPLE); }
+            @Override 
+            public void bind(int array) { JNI.callV(array, glBindVertexArrayAPPLE); }
         },
-        NONE {
+        NONE 
+        {
             @Override public int gen() { throw new UnsupportedOperationException("VAO not supported"); }
             @Override public void delete(int array) { throw new UnsupportedOperationException("VAO not supported"); }
             @Override public void bind(int array) { throw new UnsupportedOperationException("VAO not supported"); }
@@ -233,52 +257,78 @@ public record LWJGL3Service(
     private static final long glDeleteVertexArraysAPPLE = GL.getFunctionProvider().getFunctionAddress("glDeleteVertexArraysAPPLE");
     private static final long glBindVertexArrayAPPLE = GL.getFunctionProvider().getFunctionAddress("glBindVertexArrayAPPLE");
 
-    public static LWJGL3Service create() {
+	
+	
+    public static LWJGL3Service create() 
+    {
         GLCapabilities caps = GL.getCapabilities();
 
         VAOMode vaoMode;
-
-        if (caps.OpenGL30) {
-            vaoMode = VAOMode.CORE;
-        } else if (caps.GL_ARB_vertex_array_object) {
-            vaoMode = VAOMode.ARB;
-        } else if (glBindVertexArrayAPPLE != 0) {
-            vaoMode = VAOMode.APPLE;
-        } else {
-            vaoMode = VAOMode.NONE;
-        }
+	    
+	    if (caps.OpenGL30)
+	    {
+		    vaoMode = VAOMode.CORE;
+	    }
+	    else if (caps.GL_ARB_vertex_array_object)
+	    {
+		    vaoMode = VAOMode.ARB;
+	    }
+	    else if (glBindVertexArrayAPPLE != 0)
+	    {
+		    vaoMode = VAOMode.APPLE;
+	    }
+	    else
+	    {
+		    vaoMode = VAOMode.NONE;
+	    }
 
         TimerQueryMode timerQueryMode;
 
-        if (caps.OpenGL33) {
-            timerQueryMode = TimerQueryMode.CORE;
-        } else if (caps.GL_ARB_timer_query) {
-            timerQueryMode = TimerQueryMode.ARB;
-        } else {
-            timerQueryMode = TimerQueryMode.NONE;
-            LOGGER.warn("ARB_timer_query extension not available - GPU profiling will be disabled");
+        if (caps.OpenGL33)
+        {
+	        timerQueryMode = TimerQueryMode.CORE;
+        }
+        else if (caps.GL_ARB_timer_query)
+        {
+	        timerQueryMode = TimerQueryMode.ARB;
+        }
+        else
+        {
+	        timerQueryMode = TimerQueryMode.NONE;
+	        LOGGER.warn("ARB_timer_query extension not available - GPU profiling will be disabled");
         }
 
         DebugMode debugMode;
 
-        if (caps.GL_KHR_debug || caps.OpenGL43) {
-            debugMode = DebugMode.KHR;
-        } else {
-            debugMode = DebugMode.NONE;
+        if (caps.GL_KHR_debug 
+	        || caps.OpenGL43)
+        {
+	        debugMode = DebugMode.KHR;
+        }
+        else
+        {
+	        debugMode = DebugMode.NONE;
         }
 
         VertexAttribIMode vertexAttribIMode;
-        if (caps.OpenGL30) {
-            vertexAttribIMode = VertexAttribIMode.CORE;
-        } else if (caps.GL_EXT_gpu_shader4) {
-            vertexAttribIMode = VertexAttribIMode.EXT;
-        } else {
-            vertexAttribIMode = VertexAttribIMode.NONE;
-        }
+	    if (caps.OpenGL30)
+	    {
+		    vertexAttribIMode = VertexAttribIMode.CORE;
+	    }
+	    else if (caps.GL_EXT_gpu_shader4)
+	    {
+		    vertexAttribIMode = VertexAttribIMode.EXT;
+	    }
+	    else
+	    {
+		    vertexAttribIMode = VertexAttribIMode.NONE;
+	    }
 
         return new LWJGL3Service(vaoMode, timerQueryMode, debugMode, vertexAttribIMode);
     }
 
+	
+	
     @Override
     public int glGenVertexArrays() {
         return vaoMode.gen();

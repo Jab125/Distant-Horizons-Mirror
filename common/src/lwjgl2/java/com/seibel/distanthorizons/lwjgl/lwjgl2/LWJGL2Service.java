@@ -42,6 +42,7 @@ import java.nio.IntBuffer;
 /**
  * LWJGL2 implementation of {@link ILWJGLService}.
  */
+// TODO why is this a record?
 public record LWJGL2Service(
 	VAOMode vaoMode,
 	TimerQueryMode timerQueryMode,
@@ -52,32 +53,34 @@ public record LWJGL2Service(
 	private static final Logger LOGGER = LogManager.getLogger("DistantHorizons/LWJGL2Service");
 	private static final LWJGL2DebugSupport debugSupport = new LWJGL2DebugSupport();
 	
+	
+	
 	private enum VAOMode
 	{
 		CORE
-			{
-				@Override public int gen() { return GL30.glGenVertexArrays(); }
-				@Override public void delete(int array) { GL30.glDeleteVertexArrays(array); }
-				@Override public void bind(int array) { GL30.glBindVertexArray(array); }
-			},
+		{
+			@Override public int gen() { return GL30.glGenVertexArrays(); }
+			@Override public void delete(int array) { GL30.glDeleteVertexArrays(array); }
+			@Override public void bind(int array) { GL30.glBindVertexArray(array); }
+		},
 		ARB
-			{
-				@Override public int gen() { return ARBVertexArrayObject.glGenVertexArrays(); }
-				@Override public void delete(int array) { ARBVertexArrayObject.glDeleteVertexArrays(array); }
-				@Override public void bind(int array) { ARBVertexArrayObject.glBindVertexArray(array); }
-			},
+		{
+			@Override public int gen() { return ARBVertexArrayObject.glGenVertexArrays(); }
+			@Override public void delete(int array) { ARBVertexArrayObject.glDeleteVertexArrays(array); }
+			@Override public void bind(int array) { ARBVertexArrayObject.glBindVertexArray(array); }
+		},
 		APPLE
-			{
-				@Override public int gen() { return APPLEVertexArrayObject.glGenVertexArraysAPPLE(); }
-				@Override public void delete(int array) { APPLEVertexArrayObject.glDeleteVertexArraysAPPLE(array); }
-				@Override public void bind(int array) { APPLEVertexArrayObject.glBindVertexArrayAPPLE(array); }
-			},
+		{
+			@Override public int gen() { return APPLEVertexArrayObject.glGenVertexArraysAPPLE(); }
+			@Override public void delete(int array) { APPLEVertexArrayObject.glDeleteVertexArraysAPPLE(array); }
+			@Override public void bind(int array) { APPLEVertexArrayObject.glBindVertexArrayAPPLE(array); }
+		},
 		NONE
-			{
-				@Override public int gen() { throw new UnsupportedOperationException("VAO not supported"); }
-				@Override public void delete(int array) { throw new UnsupportedOperationException("VAO not supported"); }
-				@Override public void bind(int array) { throw new UnsupportedOperationException("VAO not supported"); }
-			};
+		{
+			@Override public int gen() { throw new UnsupportedOperationException("VAO not supported"); }
+			@Override public void delete(int array) { throw new UnsupportedOperationException("VAO not supported"); }
+			@Override public void bind(int array) { throw new UnsupportedOperationException("VAO not supported"); }
+		};
 		
 		public abstract int gen();
 		public abstract void delete(int array);
@@ -87,20 +90,20 @@ public record LWJGL2Service(
 	private enum TimerQueryMode
 	{
 		CORE
-			{
-				@Override public void queryCounter(int id, int target) { GL33.glQueryCounter(id, target); }
-				@Override public long getQueryObjectui64(int id, int pname) { return GL33.glGetQueryObjectui64(id, pname); }
-			},
+		{
+			@Override public void queryCounter(int id, int target) { GL33.glQueryCounter(id, target); }
+			@Override public long getQueryObjectui64(int id, int pname) { return GL33.glGetQueryObjectui64(id, pname); }
+		},
 		ARB
-			{
-				@Override public void queryCounter(int id, int target) { ARBTimerQuery.glQueryCounter(id, target); }
-				@Override public long getQueryObjectui64(int id, int pname) { return ARBTimerQuery.glGetQueryObjectui64(id, pname); }
-			},
+		{
+			@Override public void queryCounter(int id, int target) { ARBTimerQuery.glQueryCounter(id, target); }
+			@Override public long getQueryObjectui64(int id, int pname) { return ARBTimerQuery.glGetQueryObjectui64(id, pname); }
+		},
 		NONE
-			{
-				@Override public void queryCounter(int id, int target) { /* no-op */ }
-				@Override public long getQueryObjectui64(int id, int pname) { return 0L; }
-			};
+		{
+			@Override public void queryCounter(int id, int target) { /* no-op */ }
+			@Override public long getQueryObjectui64(int id, int pname) { return 0L; }
+		};
 		
 		public abstract void queryCounter(int id, int target);
 		public abstract long getQueryObjectui64(int id, int pname);
@@ -109,17 +112,17 @@ public record LWJGL2Service(
 	private enum DebugMode
 	{
 		KHR
-			{
-				@Override public void objectLabel(int identifier, int name, CharSequence label) { KHRDebug.glObjectLabel(identifier, name, label); }
-				@Override public void pushDebugGroup(int source, int id, CharSequence message) { KHRDebug.glPushDebugGroup(source, id, message); }
-				@Override public void popDebugGroup() { KHRDebug.glPopDebugGroup(); }
-			},
+		{
+			@Override public void objectLabel(int identifier, int name, CharSequence label) { KHRDebug.glObjectLabel(identifier, name, label); }
+			@Override public void pushDebugGroup(int source, int id, CharSequence message) { KHRDebug.glPushDebugGroup(source, id, message); }
+			@Override public void popDebugGroup() { KHRDebug.glPopDebugGroup(); }
+		},
 		NONE
-			{
-				@Override public void objectLabel(int identifier, int name, CharSequence label) { /* no-op */ }
-				@Override public void pushDebugGroup(int source, int id, CharSequence message) { /* no-op */ }
-				@Override public void popDebugGroup() { /* no-op */ }
-			};
+		{
+			@Override public void objectLabel(int identifier, int name, CharSequence label) { /* no-op */ }
+			@Override public void pushDebugGroup(int source, int id, CharSequence message) { /* no-op */ }
+			@Override public void popDebugGroup() { /* no-op */ }
+		};
 		
 		public abstract void objectLabel(int identifier, int name, CharSequence label);
 		public abstract void pushDebugGroup(int source, int id, CharSequence message);
@@ -129,29 +132,34 @@ public record LWJGL2Service(
 	private enum VertexAttribIMode
 	{
 		CORE
+		{
+			@Override 
+			public void vertexAttribIPointer(int index, int size, int type, int stride, long pointer)
 			{
-				@Override public void vertexAttribIPointer(int index, int size, int type, int stride, long pointer)
-				{
-					GL30.glVertexAttribIPointer(index, size, type, stride, pointer);
-				}
-			},
+				GL30.glVertexAttribIPointer(index, size, type, stride, pointer);
+			}
+		},
 		EXT
+		{
+			@Override
+			public void vertexAttribIPointer(int index, int size, int type, int stride, long pointer)
 			{
-				@Override public void vertexAttribIPointer(int index, int size, int type, int stride, long pointer)
-				{
-					EXTGpuShader4.glVertexAttribIPointerEXT(index, size, type, stride, pointer);
-				}
-			},
+				EXTGpuShader4.glVertexAttribIPointerEXT(index, size, type, stride, pointer);
+			}
+		},
 		NONE
+		{
+			@Override 
+			public void vertexAttribIPointer(int index, int size, int type, int stride, long pointer)
 			{
-				@Override public void vertexAttribIPointer(int index, int size, int type, int stride, long pointer)
-				{
-					throw new UnsupportedOperationException("glVertexAttribIPointer not supported");
-				}
-			};
+				throw new UnsupportedOperationException("glVertexAttribIPointer not supported");
+			}
+		};
 		
 		public abstract void vertexAttribIPointer(int index, int size, int type, int stride, long pointer);
 	}
+	
+	
 	
 	public static LWJGL2Service create()
 	{
@@ -216,6 +224,9 @@ public record LWJGL2Service(
 		
 		return new LWJGL2Service(vaoMode, timerQueryMode, debugMode, vertexAttribIMode, new Long2ObjectOpenHashMap<>());
 	}
+	
+	
+	
 	
 	// ===================== CAPABILITIES =====================
 	

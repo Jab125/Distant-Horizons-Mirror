@@ -157,6 +157,7 @@ class DhConfigScreen extends DhScreen
 	public void updateScreen()
 	{
 		super.updateScreen();
+		
 		#if MC_VER <= MC_1_7_10
 		for (GuiTextField field : this.textFieldProcessors.keySet())
 		{
@@ -1192,6 +1193,7 @@ class DhConfigScreen extends DhScreen
 			if (entry.button instanceof GuiTextField field)
 			{
 				field.textboxKeyTyped(typedChar, keyCode);
+				
 				#if MC_VER <= MC_1_7_10
 				Predicate<String> processor = this.textFieldProcessors.get(field);
 				if (processor != null)
@@ -1208,6 +1210,7 @@ class DhConfigScreen extends DhScreen
 		#if MC_VER > MC_1_7_10 throws java.io.IOException #endif
 	{
 		super.handleMouseInput();
+		
 		#if MC_VER > MC_1_7_10
 		this.configListWidget.handleMouseInput();
 		#endif

@@ -150,19 +150,6 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	
 	private static final IOptifineAccessor OPTIFINE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IOptifineAccessor.class);
 	
-	private static IAngelicaAccessor angelicaAccessor = null;
-	
-	private static IAngelicaAccessor getAngelicaAccessor()
-	{
-		if (angelicaAccessor != null)
-		{
-			return angelicaAccessor;
-		}
-		
-		angelicaAccessor = ModAccessorInjector.INSTANCE.get(IAngelicaAccessor.class);
-		return angelicaAccessor;
-	}
-	
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	#if MC_VER <= MC_1_12_2
@@ -176,6 +163,7 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	{
 		public static final IImmersivePortalsAccessor IMMERSIVE_PORTALS = ModAccessorInjector.INSTANCE.get(IImmersivePortalsAccessor.class);
 		private static final IIrisAccessor IRIS = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
+		private static final IAngelicaAccessor ANGELICA = ModAccessorInjector.INSTANCE.get(IAngelicaAccessor.class);
 	}
 	
 	/**
@@ -336,10 +324,9 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 		#if MC_VER < MC_1_17_1
 		
 		#if MC_VER <= MC_1_7_10
-		IAngelicaAccessor accessor = getAngelicaAccessor();
-		if (accessor != null)
+		if (DelayedAccessors.ANGELICA != null)
 		{
-			return accessor.getFogColor();
+			return DelayedAccessors.ANGELICA.getFogColor();
 		}
 		#endif
 		
@@ -637,10 +624,9 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	public int getGlDepthTextureId()
 	{
 		#if MC_VER <= MC_1_7_10
-		IAngelicaAccessor accessor = getAngelicaAccessor();
-		if (accessor != null)
+		if (DelayedAccessors.ANGELICA != null)
 		{
-			return accessor.getDepthTextureId();
+			return DelayedAccessors.ANGELICA.getDepthTextureId();
 		}
 		
 		final Framebuffer framebuffer = Minecraft.getMinecraft().getFramebuffer();

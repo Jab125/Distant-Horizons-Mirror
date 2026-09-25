@@ -17,17 +17,16 @@ repositories {
 }
 
 dependencies {
-	// Updating past shadow 9.0.0 causes Fabric and Neoforge to compile to different binaries, 
-	// causing Forgix to merge the files separately, 
-	// breaking Neoforge's translation files.
-	// Note: this only seems to happen for MC versions between 1.21.1 and 1.21.11 (inclusive)
-	// this is probably due to how Unimined handles compiling, so additional checks
-	// may need to be done when updating Unimined.
     implementation 'com.gradleup.shadow:shadow-gradle-plugin:9.6.1'
-	
-    implementation 'xyz.wagyourtail.unimined:xyz.wagyourtail.unimined.gradle.plugin:1.4.41-kappa'
+    implementation 'xyz.wagyourtail.unimined:xyz.wagyourtail.unimined.gradle.plugin:1.4.43-kappa'
     implementation 'xyz.wagyourtail:manifold-gradle:1.0.0-SNAPSHOT'
-    implementation 'org.ow2.asm:asm:9.6'
-    implementation 'org.ow2.asm:asm-tree:9.6'
+    
+    // TODO why is ASM here? Commenting it out doesn't appear to break anything and there are
+    //      no ASM references in code
+    //implementation 'org.ow2.asm:asm:9.6'
+    //implementation 'org.ow2.asm:asm-tree:9.6'
+    
+    // TODO remove, this is known to cause issues on random Java versions and we don't *need*
+    //  anything from newer Java versions
     implementation 'xyz.wagyourtail.jvmdowngrader:xyz.wagyourtail.jvmdowngrader.gradle.plugin:1.3.6'
 }
