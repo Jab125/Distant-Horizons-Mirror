@@ -67,6 +67,7 @@ public class LightMapWrapper implements ILightMapWrapper
 	#endif
 	
 	
+	
 	//==============//
 	// constructors //
 	//==============//

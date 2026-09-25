@@ -25,12 +25,12 @@ import com.seibel.distanthorizons.common.wrappers.WrapperFactory;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import com.seibel.distanthorizons.core.util.LodUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
-import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 #if MC_VER <= MC_1_12_2
 import net.minecraft.block.*;
@@ -51,9 +51,9 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import java.awt.*;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Stream;
 import java.util.List;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Stream;
 
 import org.jetbrains.annotations.Nullable;
 
@@ -619,7 +619,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		boolean isLavaBlock;
 		#if MC_VER <= MC_1_12_2
-		isLavaBlock = blockState.getBlock() == Blocks.LAVA || blockState.getBlock() == Blocks.FLOWING_LAVA;
+		isLavaBlock = blockState.getBlock() == Blocks.LAVA 
+			|| blockState.getBlock() == Blocks.FLOWING_LAVA;
 		#else
 		isLavaBlock = blockState.is(Blocks.LAVA);
 		#endif
@@ -639,7 +640,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		
 		boolean isWaterBlock;
 	    #if MC_VER <= MC_1_12_2
-		isWaterBlock = blockState.getBlock() == Blocks.WATER || blockState.getBlock() == Blocks.FLOWING_WATER;
+		isWaterBlock = blockState.getBlock() == Blocks.WATER 
+			|| blockState.getBlock() == Blocks.FLOWING_WATER;
 		#else
 		isWaterBlock = blockState.is(Blocks.WATER);
 		#endif

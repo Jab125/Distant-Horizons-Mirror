@@ -663,6 +663,7 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 		ResourceKey<Level> dimensionKey = this.deserializeDimensionResourceKey(dimensionResourceLocation);
 		ServerLevel mcLevel = MINECRAFT.getSingleplayerServer().getLevel(dimensionKey);
 		#endif
+		
 		return ServerLevelWrapper.getWrapper(mcLevel);
 	}
 	

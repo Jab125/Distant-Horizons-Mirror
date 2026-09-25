@@ -527,9 +527,7 @@ public class ClassicConfigGUI
 		
 		@Override
 		public boolean mousePressed(int slotIndex, int mouseX, int mouseY, int mouseEvent, int relativeX, int relativeY)
-		{
-			return false; // handled in DhConfigScreen.mouseClicked
-		}
+		{ return false; /* handled in DhConfigScreen.mouseClicked */ }
 		
 		@Override
 		public void mouseReleased(int slotIndex, int x, int y, int mouseEvent, int relativeX, int relativeY) { }

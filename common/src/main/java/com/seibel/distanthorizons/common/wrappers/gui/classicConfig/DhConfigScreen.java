@@ -220,6 +220,7 @@ class DhConfigScreen extends DhScreen
 					}
 				},
 				#endif
+
 				// Add a title to the button
 				#if MC_VER <= MC_1_12_2
 				Translatable(ModInfo.ID + ".updater.title").getFormattedText()
@@ -601,9 +602,10 @@ class DhConfigScreen extends DhScreen
 				#else
 				Translatable("distanthorizons.general.reset").withStyle(ChatFormatting.RED),
 				#endif
-			resetButtonPosX, resetButtonPosZ,
-			ClassicConfigGUI.ConfigScreenConfigs.RESET_BUTTON_WIDTH, ClassicConfigGUI.ConfigScreenConfigs.RESET_BUTTON_HEIGHT,
-			btnAction);
+				resetButtonPosX, resetButtonPosZ,
+				ClassicConfigGUI.ConfigScreenConfigs.RESET_BUTTON_WIDTH, ClassicConfigGUI.ConfigScreenConfigs.RESET_BUTTON_HEIGHT,
+				btnAction
+			);
 			
 			
 			if (configEntry.mcVersionOverridePresent())
@@ -1083,31 +1085,43 @@ class DhConfigScreen extends DhScreen
 	{
 		super.mouseClicked(mouseX, mouseY, mouseButton);
 		
-		if (mouseY >= this.configListWidget.top && mouseY <= this.configListWidget.bottom)
+		if (mouseY >= this.configListWidget.top 
+			&& mouseY <= this.configListWidget.bottom)
 		{
 			for (ClassicConfigGUI.DhButtonEntry entry : this.configListWidget.children)
 			{
-				if (entry.button instanceof GuiButton btn && btn.visible)
+				if (entry.button instanceof GuiButton btn 
+					&& btn.visible)
 				{
 					if (btn.mousePressed(this.mc, mouseX, mouseY))
 					{
 						btn.playPressSound(this.mc.getSoundHandler());
+						
 						OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(btn);
-						if (handler != null) handler.pressed(btn);
+						if (handler != null) 
+						{
+							handler.pressed(btn);
+						}
 					}
 				}
-				else if (entry.button instanceof GuiTextField field && field.getVisible())
+				else if (entry.button instanceof GuiTextField field 
+					&& field.getVisible())
 				{
 					field.mouseClicked(mouseX, mouseY, mouseButton);
 				}
 				
-				if (entry.resetButton instanceof GuiButton reset && reset.visible)
+				if (entry.resetButton instanceof GuiButton reset 
+					&& reset.visible)
 				{
 					if (reset.mousePressed(this.mc, mouseX, mouseY))
 					{
 						reset.playPressSound(this.mc.getSoundHandler());
+						
 						OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(reset);
-						if (handler != null) handler.pressed(reset);
+						if (handler != null) 
+						{
+							handler.pressed(reset);
+						}
 					}
 				}
 			}

@@ -134,7 +134,10 @@ public class MixinVanillaFogCommon
 	{
 		#if MC_VER <= MC_1_12_2
 		Entity view = mc.getRenderViewEntity();
-		if (view == null) return true;
+		if (view == null)
+		{
+			 return true;
+		}
 		
 		IBlockState fluidState = mc.world.getBlockState(new BlockPos(view.getPositionEyes(mc.getRenderPartialTicks())));
 		boolean cameraNotInFluid = !(fluidState.getMaterial().isLiquid() || fluidState.getBlock() instanceof IFluidBlock);
@@ -143,11 +146,12 @@ public class MixinVanillaFogCommon
 		boolean cameraNotInFluid = fluidState.isEmpty();
 		#else
 		FogType fogTypes = camera.getFluidInCamera();
-		boolean cameraNotInFluid = fogTypes == FogType.NONE;
+		boolean cameraNotInFluid = (fogTypes == FogType.NONE);
 		#endif
 		
 		return cameraNotInFluid;
 	}
+	
 	
 	
 }

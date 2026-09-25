@@ -105,7 +105,10 @@ public class GuiHelper
 	}
 	
 	#if MC_VER <= MC_1_12_2
-	public static void SetY(GuiTextField textField, int y) { textField.y = y; }
+	public static void SetY(GuiTextField textField, int y) 
+	{ 
+		textField.y = y; 
+	}
 	#endif
 	
 	#if MC_VER <= MC_1_12_2
@@ -120,5 +123,7 @@ public class GuiHelper
 		widget.setY(y);
         #endif
 	}
+	
+	
 	
 }
