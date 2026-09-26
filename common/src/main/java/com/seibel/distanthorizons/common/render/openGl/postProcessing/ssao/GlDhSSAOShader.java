@@ -31,7 +31,10 @@ import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.math.DhMat4f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
-import org.lwjgl.opengl.GL33;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL30;
+
+import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
 /**
  * Draws the SSAO to a texture. <br><br>
@@ -138,12 +141,12 @@ public class GlDhSSAOShader extends GlAbstractShaderRenderer
 	@Override
 	protected void onRender()
 	{
-		GLMC.glBindFramebuffer(GL33.GL_FRAMEBUFFER, this.frameBuffer);
+		GLMC.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.frameBuffer);
 		GLMC.disableScissorTest();
 		GLMC.disableDepthTest();
 		GLMC.disableBlend();
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE0);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
 		GLMC.glBindTexture(GlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
 		
 		GlScreenQuad.INSTANCE.render();

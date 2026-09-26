@@ -42,7 +42,7 @@ public class BlazeDhMetaRenderer implements IDhMetaRenderer
 	//=============//
 	//region
 	
-	private BlazeDhMetaRenderer() 
+	private BlazeDhMetaRenderer()
 	{
 		AbstractDhRenderApiDefinition renderApiDefinition = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 		this.clearDepth = renderApiDefinition.getDepthDirection().farDepth;
@@ -103,7 +103,7 @@ public class BlazeDhMetaRenderer implements IDhMetaRenderer
 	//region
 	
 	@Override
-	public void clearDhDepthAndColorTextures(RenderParams renderParams) 
+	public void clearDhDepthAndColorTextures(RenderParams renderParams)
 	{
 		this.dhDepthTextureWrapper.clearDepth(this.clearDepth);
 		
@@ -118,7 +118,7 @@ public class BlazeDhMetaRenderer implements IDhMetaRenderer
 				color.getGreen(),
 				color.getBlue()
 			)
-		); 
+		);
 	}
 	
 	//endregion

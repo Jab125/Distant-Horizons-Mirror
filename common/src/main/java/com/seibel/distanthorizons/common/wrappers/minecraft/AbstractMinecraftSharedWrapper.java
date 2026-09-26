@@ -11,7 +11,10 @@ import net.minecraft.world.level.Level;
 import net.minecraft.client.Minecraft;
 #endif
 
-#if MC_VER <= MC_1_12_2
+#if MC_VER <= MC_1_7_10
+import net.minecraft.server.MinecraftServer;
+import cpw.mods.fml.common.FMLCommonHandler;
+#elif MC_VER <= MC_1_12_2
 import net.minecraft.server.MinecraftServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 #elif MC_VER <= MC_1_21_10

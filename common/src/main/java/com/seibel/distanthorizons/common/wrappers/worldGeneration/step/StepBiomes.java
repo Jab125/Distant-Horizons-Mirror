@@ -63,10 +63,10 @@ public final class StepBiomes extends AbstractWorldGenStep
 	@Override
 	public ChunkStatus getChunkStatus() { return STATUS; }
 	
-	@Override 
+	@Override
 	public void generateGroup(
-			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion, 
-			ArrayGridList<ChunkWrapper> chunkWrappers)
+		ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
+		ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
 		ArrayList<ChunkWrapper> chunksToGen = this.getChunkWrappersToGenerate(chunkWrappers);
 		for (ChunkWrapper chunkWrapper : chunksToGen)

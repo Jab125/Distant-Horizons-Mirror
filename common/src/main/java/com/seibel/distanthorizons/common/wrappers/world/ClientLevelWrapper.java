@@ -10,9 +10,8 @@ import com.seibel.distanthorizons.api.objects.data.IDhApiFullDataSource;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateColorCache;
-import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
-import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.common.wrappers.level.KeyedClientLevelManager;
+import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.fullData.sources.FullDataSourceV2;
@@ -33,7 +32,12 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapp
 
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import net.minecraft.client.Minecraft;
-#if MC_VER <= MC_1_12_2
+#if MC_VER <= MC_1_7_10
+import com.seibel.distanthorizons.common.backports.IBlockState;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.util.Vec3;
+import net.minecraft.world.WorldServer;
+#elif MC_VER <= MC_1_12_2
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.world.WorldServer;
 import net.minecraft.client.multiplayer.WorldClient;
@@ -115,11 +119,13 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	private final ClientLevel level;
 	private final ConcurrentHashMap<BlockState, ClientBlockStateColorCache> blockColorCacheByBlockState = new ConcurrentHashMap<>();
 	#endif
-	
-	
+
+
 	/** cached method reference to reduce GC overhead */
 	private final Function<
-		#if MC_VER <= MC_1_12_2 IBlockState #else BlockState #endif, 
+		#if MC_VER <= MC_1_12_2 IBlockState
+		#else BlockState
+		#endif,
 		ClientBlockStateColorCache> createCachedBlockColorCacheFunc
 			= (blockState) -> new ClientBlockStateColorCache(blockState, this);
 	
@@ -159,7 +165,9 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	
 	public static void tickCleanup()
 	{
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		WorldClient clientLevel = MINECRAFT.theWorld;
+		#elif MC_VER <= MC_1_12_2
 		WorldClient clientLevel = MINECRAFT.world;
 		#else
 		ClientLevel clientLevel = MINECRAFT.level;
@@ -334,18 +342,22 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 				return null;
 			}
 			
-			#if MC_VER <= MC_1_12_2
+			#if MC_VER <= MC_1_7_10
+			WorldServer[] serverLevels = MINECRAFT.getIntegratedServer().worldServers;
+			#elif MC_VER <= MC_1_12_2
 			WorldServer[] serverLevels = MINECRAFT.getIntegratedServer().worlds;
 			#else
 			Iterable<ServerLevel> serverLevels = MINECRAFT.getSingleplayerServer().getAllLevels();
 			#endif
-			
+
 			// attempt to find the server level with the same dimension type
 			// Note: this assumes only one level per dimension type, multiverse servers may not behave correctly
 			ServerLevelWrapper foundLevelWrapper = null;
 			for (#if MC_VER <= MC_1_12_2 WorldServer #else ServerLevel #endif serverLevel : serverLevels)
 			{
-				#if MC_VER <= MC_1_12_2
+				#if MC_VER <= MC_1_7_10
+				if (serverLevel.provider.dimensionId == this.level.provider.dimensionId)
+				#elif MC_VER <= MC_1_12_2
 				if (serverLevel.provider.getDimension() == this.level.provider.getDimension())
 				#else
 				if (serverLevel.dimension() == this.level.dimension())
@@ -414,7 +426,9 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 			return this.dimensionTypeWrapper;
 		}
 		
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		this.dimensionTypeWrapper = DimensionTypeWrapper.getDimensionTypeWrapper(this.level.provider.dimensionId);
+		#elif MC_VER <= MC_1_12_2
 		this.dimensionTypeWrapper = DimensionTypeWrapper.getDimensionTypeWrapper(this.level.provider.getDimensionType());
 		#elif MC_VER <= MC_1_21_10
 		this.dimensionTypeWrapper = DimensionTypeWrapper.getDimensionTypeWrapper(this.level.dimensionType());
@@ -423,7 +437,7 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		#endif
 		return this.dimensionTypeWrapper;
 	}
-	
+
 	private String dimensionName = null;
 	@Override
 	public String getDimensionName()
@@ -434,8 +448,10 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		{
 			return this.dimensionName;
 		}
-		
-		#if MC_VER <= MC_1_12_2
+
+		#if MC_VER <= MC_1_7_10
+		this.dimensionName = LegacyDimensionInfo.fullName(this.level.provider.dimensionId);
+		#elif MC_VER <= MC_1_12_2
 		this.dimensionName = this.level.provider.getDimensionType().getName() + ":" + this.level.provider.getDimension();
 		#elif MC_VER <= MC_1_21_10
 		this.dimensionName = this.level.dimension().location().toString();
@@ -474,7 +490,9 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 			return this.dimHasCeiling;
 		}
 		
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		this.dimHasCeiling = this.level.provider.isHellWorld;
+		#elif MC_VER <= MC_1_12_2
 		// 1.12.2 has no hasCeiling() - only the nether has a ceiling in vanilla
 		this.dimHasCeiling = this.level.provider.isNether();
 		#else
@@ -482,10 +500,10 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		#endif
 		return this.dimHasCeiling;
 	}
-	
+
 	private Boolean dimHasSkyLight = null;
 	@Override
-	public boolean hasSkyLight() 
+	public boolean hasSkyLight()
 	{
 		// cached since dimensionType() is a dictionary lookup that allocates objects
 		// and this call is used in a high traffic location
@@ -493,8 +511,10 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		{
 			return this.dimHasSkyLight;
 		}
-		
-		#if MC_VER <= MC_1_12_2
+
+		#if MC_VER <= MC_1_7_10
+		this.dimHasSkyLight = !this.level.provider.hasNoSky;
+		#elif MC_VER <= MC_1_12_2
 		this.dimHasSkyLight = this.level.provider.hasSkyLight();
 		#else
 		this.dimHasSkyLight = this.level.dimensionType().hasSkyLight();
@@ -579,20 +599,23 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		// cast to core objects //
 		//region
 		
-		if(!(blockStateWrapper instanceof IBlockStateWrapper coreBlockStateWrapper))
+		if(!(blockStateWrapper instanceof IBlockStateWrapper))
 		{
 			return DhApiResult.createFail("Unable to cast ["+blockStateWrapper.getClass()+"] to ["+IBlockStateWrapper.class+"]");
 		}
+		IBlockStateWrapper coreBlockStateWrapper = (IBlockStateWrapper)blockStateWrapper;
 		
-		if(!(biomeWrapper instanceof IBiomeWrapper coreBiomeWrapper))
+		if(!(biomeWrapper instanceof IBiomeWrapper))
 		{
 			return DhApiResult.createFail("Unable to cast ["+biomeWrapper.getClass()+"] to ["+IBiomeWrapper.class+"]");
 		}
+		IBiomeWrapper coreBiomeWrapper = (IBiomeWrapper) biomeWrapper;
 		
-		if(!(dataSource instanceof FullDataSourceV2 coreDataSource))
+		if(!(dataSource instanceof FullDataSourceV2))
 		{
 			return DhApiResult.createFail("Unable to cast ["+dataSource.getClass()+"] to ["+FullDataSourceV2.class+"]");
 		}
+		FullDataSourceV2 coreDataSource = (FullDataSourceV2) dataSource;
 		
 		//endregion
 		
@@ -632,8 +655,10 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	public Color getCloudColor(float tickDelta)
 	{
 		#if MC_VER < MC_1_21_3
-		
-		#if MC_VER <= MC_1_12_2
+
+		#if MC_VER <= MC_1_7_10
+		Vec3 colorVec3 = null;
+		#elif MC_VER <= MC_1_12_2
 		Vec3d colorVec3 = null;
 		#else
 		Vec3 colorVec3 = null;
@@ -641,12 +666,17 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 		try
 		{
 			#if MC_VER <= MC_1_12_2
+			// 1.7.10 and 1.12.2 both use the British spelling
 			colorVec3 = this.level.getCloudColour(tickDelta);
 			#else
 			colorVec3 = this.level.getCloudColor(tickDelta);
 			#endif
-			
+
+			#if MC_VER <= MC_1_7_10
+			return new Color((float)colorVec3.xCoord, (float)colorVec3.yCoord, (float)colorVec3.zCoord);
+			#else
 			return new Color((float)colorVec3.x, (float)colorVec3.y, (float)colorVec3.z);
+			#endif
 		}
 		catch (Exception e)
 		{
@@ -654,15 +684,19 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 			if (!this.cloudColorFailLogged)
 			{
 				this.cloudColorFailLogged = true;
-				
+
 				String colorString = "NULL";
 				if (colorVec3 != null)
 				{
+					#if MC_VER <= MC_1_7_10
+					colorString = "r["+(float)colorVec3.xCoord+"] g["+(float)colorVec3.yCoord+"] b["+(float)colorVec3.zCoord+"]";
+					#else
 					colorString = "r["+(float)colorVec3.x+"] g["+(float)colorVec3.y+"] b["+(float)colorVec3.z+"]";
+					#endif
 				}
 				LOGGER.warn("Failed to get cloud color for ["+this.getDhIdentifier()+"]. vec3 ["+colorString+"], error: ["+e.getMessage()+"].", e);
 			}
-			
+
 			// default to white if there's an issue
 			return Color.WHITE;
 		}

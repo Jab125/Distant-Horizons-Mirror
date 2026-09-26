@@ -27,7 +27,12 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.client.gui.components.Button;
 #endif
 
-#if MC_VER <= MC_1_12_2
+#if MC_VER <= MC_1_7_10
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiButton;
+import net.minecraft.client.renderer.OpenGlHelper;
+import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
+#elif MC_VER <= MC_1_12_2
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.renderer.GlStateManager;
@@ -62,6 +67,7 @@ import net.minecraft.client.renderer.RenderPipelines;
 
 #if MC_VER <= MC_1_12_2
 import net.minecraft.util.ResourceLocation;
+import org.lwjgl.opengl.GL11;
 #elif MC_VER <= MC_1_21_10
 import net.minecraft.resources.ResourceLocation;
 #else
@@ -133,7 +139,7 @@ public class TexturedButtonWidget
 		// We don't pass in the text option since it will render (we normally pass it in for narration)
 		super(x, y, width, height, Component.empty(), pressAction, DEFAULT_NARRATION);
 		#endif
-		
+
 		this.u = u;
 		this.v = v;
 		this.hoveredVOffset = hoveredVOffset;
@@ -155,7 +161,51 @@ public class TexturedButtonWidget
 	//===========//
 	//region
 	
-	#if MC_VER <= MC_1_12_2
+	#if MC_VER <= MC_1_7_10
+	@Override
+	public void drawButton(Minecraft mc, int mouseX, int mouseY)
+	{
+		if (this.visible)
+		{
+			this.hovered =
+				mouseX >= this.xPosition
+					&& mouseY >= this.yPosition
+					&& mouseX < this.xPosition + this.width
+					&& mouseY < this.yPosition + this.height;
+			int hoverState = this.getHoverState(this.hovered);
+			
+			LWJGL.glColor4f(1.0F, 1.0F, 1.0F, 1.0F);
+			LWJGL.glEnable(GL11.GL_BLEND);
+			OpenGlHelper.glBlendFunc(770, 771, 1, 0);
+			LWJGL.glBlendFunc(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA);
+			
+			if (this.renderBackground)
+			{
+				mc.getTextureManager().bindTexture(buttonTextures);
+				this.drawTexturedModalRect(
+					this.xPosition, this.yPosition,
+					0, 46 + hoverState * 20,
+					this.width / 2, this.height);
+				this.drawTexturedModalRect(
+					this.xPosition + this.width / 2, this.yPosition,
+					200 - this.width / 2, 46 + hoverState * 20,
+					this.width / 2, this.height);
+			}
+			
+			mc.getTextureManager().bindTexture(this.textureResourceLocation);
+			drawModalRectWithCustomSizedTexture(this.xPosition, this.yPosition, this.u, this.v + (this.hoveredVOffset * this.getIconHoverState(this.hovered)), this.width, this.height, this.textureWidth, this.textureHeight);
+		}
+	}
+	private int getIconHoverState(boolean mouseOver)
+	{
+		if (!this.enabled || mouseOver)
+		{
+			return 1;
+		}
+		return 0;
+	}
+	
+	#elif MC_VER <= MC_1_12_2
 	public void drawButton(Minecraft mc, int mouseX, int mouseY, float partialTicks)
 	{
 		if (this.visible)
@@ -372,10 +422,10 @@ public class TexturedButtonWidget
 		if (this.renderBackground)
 		{
 			matrices.blitSprite(
-				RenderPipelines.GUI_TEXTURED,
-				SPRITES.get(this.active, this.isHoveredOrFocused()),
-				this.getX(), this.getY(),
-				this.getWidth(), this.getHeight());
+					RenderPipelines.GUI_TEXTURED,
+					SPRITES.get(this.active, this.isHoveredOrFocused()),
+					this.getX(), this.getY(),
+					this.getWidth(), this.getHeight());
 		}
 		
 		// Renders the sprite
@@ -384,12 +434,12 @@ public class TexturedButtonWidget
 		else if (this.isHovered) { i = 1; }
 		
 		matrices.blit(
-			RenderPipelines.GUI_TEXTURED,
-			this.textureResourceLocation,
-			this.getX(), this.getY(),
-			this.u, this.v + (this.hoveredVOffset * i),
-			this.width, this.height,
-			this.textureWidth, this.textureHeight);
+				RenderPipelines.GUI_TEXTURED,
+				this.textureResourceLocation,
+				this.getX(), this.getY(),
+				this.u, this.v + (this.hoveredVOffset * i),
+				this.width, this.height,
+				this.textureWidth, this.textureHeight);
 	}
 	#endif
 	

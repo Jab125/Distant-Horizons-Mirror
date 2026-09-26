@@ -8,7 +8,6 @@ import com.seibel.distanthorizons.core.util.AnnotationUtil;
 
 #if MC_VER <= MC_1_12_2
 import net.minecraft.command.ICommandSender;
-import net.minecraft.util.text.TextComponentString;
 #else
 import com.mojang.brigadier.arguments.*;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
@@ -20,7 +19,6 @@ import static com.mojang.brigadier.arguments.IntegerArgumentType.integer;
 import static net.minecraft.commands.Commands.argument;
 import static net.minecraft.commands.Commands.literal;
 #endif
-
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -35,7 +33,7 @@ import java.util.function.ToIntBiFunction;
 /**
  * Command for managing config.
  */
-public class ConfigCommand extends AbstractCommand
+public class ConfigCommand extends AbstractDhCommand
 {
 	private static boolean isSelectableEnumValue(ConfigEntry<?> configEntry, Enum<?> enumValue)
 	{
@@ -71,11 +69,12 @@ public class ConfigCommand extends AbstractCommand
 		}
 		else throw new RuntimeException("Unsupported config type: " + type.getSimpleName());
 	}
+	
 	public void execute(ICommandSender sender, String[] args)
 	{
 		if (args.length < 2)
 		{
-			sender.sendMessage(new TextComponentString("Usage: /dh config <name> [value]"));
+			sendMessage(sender, "Usage: /dh config <name> [value]");
 			return;
 		}
 		
@@ -92,14 +91,14 @@ public class ConfigCommand extends AbstractCommand
 		
 		if (found == null)
 		{
-			sender.sendMessage(new TextComponentString("Unknown config: " + configName));
+			sendMessage(sender, "Unknown config: " + configName);
 			return;
 		}
 		
 		ConfigEntry<?> configEntry = (ConfigEntry<?>) found;
 		if (args.length == 2)
 		{
-			sender.sendMessage(new TextComponentString("Current value of " + configName + " is " + configEntry.get()));
+			sendMessage(sender, "Current value of " + configName + " is " + configEntry.get());
 		}
 		else
 		{
@@ -107,15 +106,14 @@ public class ConfigCommand extends AbstractCommand
 			try
 			{
 				setConfigValue(configEntry, value);
-				sender.sendMessage(new TextComponentString("Changed " + configName + " to " + value));
+				sendMessage(sender, "Changed " + configName + " to " + value);
 			}
 			catch (Exception e)
 			{
-				sender.sendMessage(new TextComponentString("Invalid value: " + value));
+				sendMessage(sender, "Invalid value: " + value);
 			}
 		}
 	}
-	
 	#else
 	
 	private static final List<CommandArgumentData<?>> commandArguments = Arrays.asList(

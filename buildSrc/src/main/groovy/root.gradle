@@ -51,3 +51,17 @@ def writePreprocessorDefinitions() {
     new File(rootDir, "build.properties").text = sb.toString()
 }
 writePreprocessorDefinitions()
+
+// TODO remove downgrading
+gradle.projectsEvaluated {
+    rootProject.subprojects.each {
+        if (it.tasks.findByName('remapJar') == null)
+        {
+            return
+        }
+        
+        it.tasks.downgradeJar.inputFile = it.tasks.remapJar.archiveFile
+        it.tasks.jar.finalizedBy(it.tasks.remapJar)
+        it.tasks.remapJar.finalizedBy(it.tasks.shadeDowngradedApi)
+    }
+}

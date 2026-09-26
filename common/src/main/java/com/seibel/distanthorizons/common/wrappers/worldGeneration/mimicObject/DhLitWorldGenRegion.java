@@ -96,7 +96,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 	private final List<ChunkAccess> chunkCacheList;
 	private final Long2ObjectOpenHashMap<ChunkAccess> chunkMap = new Long2ObjectOpenHashMap<ChunkAccess>();
 	
-	/** 
+	/**
 	 * Present to reduce the chance that we accidentally break underlying MC code that isn't thread safe, 
 	 * specifically: "it.unimi.dsi.fastutil.longs.Long2ObjectLinkedOpenHashMap.getAndMoveToFirst()"
 	 */
@@ -180,7 +180,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 		// TODO what do these "abs" positions mean?
 		int absX = Math.abs(chunkPos.getX() - sectionCoordX);
 		int absZ = Math.abs(chunkPos.getZ() - sectionCoordZ);
-		if (absX > this.writeRadius 
+		if (absX > this.writeRadius
 			|| absZ > this.writeRadius)
 		{
 			return false;
@@ -393,7 +393,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 			chunk = this.dhGetChunk(chunkX, chunkZ);
 		}
 		
-		if (chunk != null 
+		if (chunk != null
 			&& ChunkWrapper.getStatus(chunk).isOrAfter(chunkStatus))
 		{
 			return chunk;
@@ -430,7 +430,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 			}
 		}
 		
-		if (chunkStatus != ChunkStatus.EMPTY 
+		if (chunkStatus != ChunkStatus.EMPTY
 			&& chunkStatus != debugTriggeredForStatus)
 		{
 			// logger disabled since this doesn't seem to significantly harm anything
@@ -448,7 +448,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 	{
 		int xOffset = x - this.firstPos.getX();
 		int zOffset = z - this.firstPos.getZ();
-		return zOffset >= 0 && zOffset < this.size 
+		return zOffset >= 0 && zOffset < this.size
 			&& xOffset >= 0 && xOffset < this.size;
 	}
 	

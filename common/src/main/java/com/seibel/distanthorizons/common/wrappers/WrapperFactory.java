@@ -53,7 +53,16 @@ import it.unimi.dsi.fastutil.objects.ObjectOpenHashSet;
 import net.minecraft.core.Holder;
 #endif
 
-#if MC_VER <= MC_1_12_2
+#if MC_VER <= MC_1_7_10
+import com.seibel.distanthorizons.common.backports.FakeBlockState;
+import com.seibel.distanthorizons.common.backports.IBlockState;
+import net.minecraft.block.Block;
+import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.world.World;
+import net.minecraft.world.WorldServer;
+import net.minecraft.world.biome.BiomeGenBase;
+import net.minecraft.world.chunk.Chunk;
+#elif MC_VER <= MC_1_12_2
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.multiplayer.WorldClient;
 import net.minecraft.world.World;
@@ -120,7 +129,7 @@ public class WrapperFactory implements IWrapperFactory
 		}
 	}
 	
-	@Override 
+	@Override
 	public IRoughGenerator createRoughGenerator(IDhLevel targetLevel, IChunkGenerator batchChunkGenerator)
 	{
 		#if MC_VER <= MC_1_18_2
@@ -285,7 +294,7 @@ public class WrapperFactory implements IWrapperFactory
 		
 		boolean isClientSide;
 		#if MC_VER <= MC_1_12_2
-		isClientSide = !level.isRemote;
+		isClientSide = level.isRemote;
 		#else
 		isClientSide = level.isClientSide();
 		#endif
@@ -374,7 +383,15 @@ public class WrapperFactory implements IWrapperFactory
 		}
 		#endif
 		
-		#if MC_VER < MC_1_18_2
+		#if MC_VER <= MC_1_7_10
+		if (!(objectArray[0] instanceof BiomeGenBase))
+		{
+			throw new ClassCastException(createBiomeWrapperErrorMessage(objectArray));
+		}
+		
+		BiomeGenBase biome = (BiomeGenBase) objectArray[0];
+		return BiomeWrapper.getBiomeWrapper(biome, coreLevelWrapper);
+		#elif MC_VER < MC_1_18_2
 		if (!(objectArray[0] instanceof Biome))
 		{
 			throw new ClassCastException(createBiomeWrapperErrorMessage(objectArray));
@@ -400,7 +417,9 @@ public class WrapperFactory implements IWrapperFactory
 	{
 		String[] expectedClassNames;
 		
-		#if MC_VER < MC_1_18_2
+		#if MC_VER <= MC_1_7_10
+		expectedClassNames = new String[] { BiomeGenBase.class.getName() };
+		#elif MC_VER < MC_1_18_2
 		expectedClassNames = new String[] { Biome.class.getName() };
 		#else
 		expectedClassNames = new String[] { Holder.class.getName()+"<"+Biome.class.getName()+">" };
@@ -420,13 +439,31 @@ public class WrapperFactory implements IWrapperFactory
 		
 		
 		
+		#if MC_VER <= MC_1_7_10
+		if (objectArray.length != 3
+			&& objectArray.length != 1)
+		{
+			throw new ClassCastException(createBlockStateWrapperErrorMessage(objectArray));
+		}
+		#else
 		if (objectArray.length != 1)
 		{
 			throw new ClassCastException(createBlockStateWrapperErrorMessage(objectArray));
 		}
+		#endif
 		
 		boolean blockClassCorrect;
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		blockClassCorrect =
+			(
+				(objectArray[0] instanceof Block)
+				&& (objectArray[1] instanceof Integer)
+				&& (objectArray[2] instanceof Integer)
+			)
+			||
+			(objectArray[0] instanceof IBlockState)
+		;
+		#elif MC_VER <= MC_1_12_2
 		blockClassCorrect = (objectArray[0] instanceof IBlockState);
 		#else
 		blockClassCorrect = (objectArray[0] instanceof BlockState);
@@ -436,7 +473,23 @@ public class WrapperFactory implements IWrapperFactory
 			throw new ClassCastException(createBlockStateWrapperErrorMessage(objectArray));
 		}
 		
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		IBlockState fakeBlockState;
+		if (objectArray[0] instanceof IBlockState)
+		{
+			fakeBlockState = (IBlockState)objectArray[0];
+		}
+		else
+		{
+			fakeBlockState = new FakeBlockState(
+				(Block) objectArray[0], // block 
+				(Integer) objectArray[1], // meta 
+				(Integer) objectArray[2] // blockId
+			);
+		}
+		
+		return BlockStateWrapper.fromBlockState(fakeBlockState, coreLevelWrapper);
+		#elif MC_VER <= MC_1_12_2
 		IBlockState blockState = (IBlockState) objectArray[0];
 		return BlockStateWrapper.fromBlockState(blockState, coreLevelWrapper);
 		#else

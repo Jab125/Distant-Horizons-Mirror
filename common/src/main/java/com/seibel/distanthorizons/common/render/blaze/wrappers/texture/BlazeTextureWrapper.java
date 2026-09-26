@@ -72,10 +72,10 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	/** 1 is the default for no anisotropy */
 	private final int maxAnisotropy;
 	
-	/** 
+	/**
 	 * Setting this to true can be helpful for debugging in renderdoc
 	 * if we aren't planning on writing to the entire texture. <br><br>
-	 * 
+	 *
 	 * When initially created the texture may be filled with random garbage,
 	 * so zeroing it when resized allows us to see only the data
 	 * we want written.
@@ -89,8 +89,8 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	//==============//
 	//region
 	
-	public static BlazeTextureWrapper createDepth(String name) 
-	{ 
+	public static BlazeTextureWrapper createDepth(String name)
+	{
 		return new BlazeTextureWrapper(name, 
 			#if MC_VER <= MC_26_1_2 TextureFormat.DEPTH32,  
 			#else GpuFormat.D32_FLOAT,
@@ -99,7 +99,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 			1, 1,
 			false);
 	}
-	public static BlazeTextureWrapper createColor(String name) 
+	public static BlazeTextureWrapper createColor(String name)
 	{
 		return new BlazeTextureWrapper(name, 
 			#if MC_VER <= MC_26_1_2 TextureFormat.RGBA8,  
@@ -109,7 +109,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 			1, 1,
 			false);
 	}
-	public static BlazeTextureWrapper createTextureAtlas(String name) 
+	public static BlazeTextureWrapper createTextureAtlas(String name)
 	{
 		int mipLevelCount = (int)Math.sqrt(TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);
 		mipLevelCount += 1;
@@ -135,7 +135,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 		FilterMode samplerFilterMode,
 		int mipLevelCount, int maxAnisotropy,
 		boolean clearColorTextureOnResize
-		)
+	)
 	{
 		this.name = name;
 		this.textureFormat = textureFormat;
@@ -178,12 +178,12 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	//region
 	
 	public void writeToTexture(
-		ByteBuffer pixelBuffer, 
-		int destinationX, int destinationY, 
+		ByteBuffer pixelBuffer,
+		int destinationX, int destinationY,
 		int mipLevel,
 		int width, int height)
 	{
-		if (mipLevel < 0 
+		if (mipLevel < 0
 			|| mipLevel > this.mipLevelCount)
 		{
 			throw new IllegalArgumentException("Invalid mipLevel ["+mipLevel+"], must be >= 0 and < ["+this.mipLevelCount+"].");
@@ -218,7 +218,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	//=======//
 	//region
 	
-	/** 
+	/**
 	 * does nothing if the texture is already created and the correct size 
 	 * @return true if the texture was (re)created
 	 */
@@ -254,11 +254,11 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 		this.width = width;
 		this.height = height;
 		
-		int usage = 
+		int usage =
 			GpuTexture.USAGE_COPY_DST
-			| GpuTexture.USAGE_TEXTURE_BINDING
-			| GpuTexture.USAGE_COPY_SRC
-			| GpuTexture.USAGE_RENDER_ATTACHMENT;
+				| GpuTexture.USAGE_TEXTURE_BINDING
+				| GpuTexture.USAGE_COPY_SRC
+				| GpuTexture.USAGE_RENDER_ATTACHMENT;
 		
 		this.texture = GPU_DEVICE.createTexture(
 			this.name,
@@ -284,7 +284,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 			this.textureSampler = GPU_DEVICE.createSampler(
 				AddressMode.CLAMP_TO_EDGE, AddressMode.CLAMP_TO_EDGE, // U,V
 				this.samplerFilterMode, this.samplerFilterMode, // minFilter, magFilter
-				this.maxAnisotropy, 
+				this.maxAnisotropy,
 				OptionalDouble.empty() // maxLod
 			);
 		}
@@ -299,11 +299,11 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	//==========//
 	//region
 	
-	/** 
+	/**
 	 * Will throw an exception if not a color texture.
-	 * @see ColorUtil#argbToInt 
+	 * @see ColorUtil#argbToInt
 	 */
-	public void clearColor(int clearArgbColor) 
+	public void clearColor(int clearArgbColor)
 	{
 		if (this.texture != null)
 		{
@@ -323,7 +323,7 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 	}
 	
 	/** Will throw an exception if not a depth texture. */
-	public void clearDepth(float depth) 
+	public void clearDepth(float depth)
 	{
 		if (this.texture != null)
 		{

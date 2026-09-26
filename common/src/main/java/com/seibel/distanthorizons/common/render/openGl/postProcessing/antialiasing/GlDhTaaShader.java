@@ -28,7 +28,10 @@ import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.math.DhMat4f;
 import com.seibel.distanthorizons.core.util.math.DhVec3d;
-import org.lwjgl.opengl.GL33;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL30;
+
+import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
 public class GlDhTaaShader extends GlAbstractShaderRenderer
 {
@@ -190,22 +193,22 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 	@Override
 	protected void onRender()
 	{
-		GLMC.glBindFramebuffer(GL33.GL_FRAMEBUFFER, this.frameBuffer);
+		GLMC.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.frameBuffer);
 		GLMC.disableScissorTest();
 		GLMC.disableDepthTest();
 		GLMC.disableBlend();
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE0);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
 		GLMC.glBindTexture(GlDhMetaRenderer.INSTANCE.getActiveColorTextureId());
-		GL33.glUniform1i(this.uCurrentColorSampler, 0);
+		LWJGL.glUniform1i(this.uCurrentColorSampler, 0);
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE1);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE1);
 		GLMC.glBindTexture(GlDhMetaRenderer.INSTANCE.getActiveDepthTextureId());
-		GL33.glUniform1i(this.uCurrentDepthSampler, 1);
+		LWJGL.glUniform1i(this.uCurrentDepthSampler, 1);
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE2);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE2);
 		GLMC.glBindTexture(this.historyColorTextureId);
-		GL33.glUniform1i(this.uHistoryColorSampler, 2);
+		LWJGL.glUniform1i(this.uHistoryColorSampler, 2);
 		
 		GlScreenQuad.INSTANCE.render();
 	}

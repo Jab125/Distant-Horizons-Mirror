@@ -117,9 +117,9 @@ public class NeoforgeServerProxy implements AbstractModInitializer.IEventProxy
 	public void playerChangedDimensionEvent(PlayerEvent.PlayerChangedDimensionEvent event)
 	{
 		this.serverApi.serverPlayerLevelChangeEvent(
-				getServerPlayerWrapper(event),
-				getServerLevelWrapper(event.getFrom(), event),
-				getServerLevelWrapper(event.getTo(), event)
+			getServerPlayerWrapper(event),
+			getServerLevelWrapper(event.getFrom(), event),
+			getServerLevelWrapper(event.getTo(), event)
 		);
 	}
 	

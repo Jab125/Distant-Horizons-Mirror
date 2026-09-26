@@ -30,7 +30,11 @@ import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRend
 import com.seibel.distanthorizons.core.render.RenderParams;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import org.lwjgl.opengl.GL33;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL30;
+
+import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
 public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 {
@@ -90,7 +94,6 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 		this.uEndFadeBlockDistance = this.shader.tryGetUniformLocation("uEndFadeBlockDistance");
 		
 		this.uDepthIsZeroToPositiveOne = this.shader.tryGetUniformLocation("uDepthIsZeroToPositiveOne");
-		
 	}
 	
 	
@@ -142,40 +145,40 @@ public class GlDhFarFadeShader extends GlAbstractShaderRenderer
 		
 		
 		
-		GLMC.glBindFramebuffer(GL33.GL_FRAMEBUFFER, this.frameBuffer);
+		GLMC.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.frameBuffer);
 		GLMC.disableScissorTest();
 		GLMC.disableDepthTest();
 		GLMC.disableBlend();
 		
 		// If we don't restore the textures some mods can break
-		int prevActiveTexture = GL33.glGetInteger(GL33.GL_ACTIVE_TEXTURE);
-		GLMC.glActiveTexture(GL33.GL_TEXTURE0);
-		int prevTexture0 = GL33.glGetInteger(GL33.GL_TEXTURE_BINDING_2D);
-		GLMC.glActiveTexture(GL33.GL_TEXTURE1);
-		int prevTexture1 = GL33.glGetInteger(GL33.GL_TEXTURE_BINDING_2D);
-		GLMC.glActiveTexture(GL33.GL_TEXTURE2);
-		int prevTexture2 = GL33.glGetInteger(GL33.GL_TEXTURE_BINDING_2D);
+		int prevActiveTexture = LWJGL.glGetInteger(GL13.GL_ACTIVE_TEXTURE);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
+		int prevTexture0 = LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE1);
+		int prevTexture1 = LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE2);
+		int prevTexture2 = LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D);
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE0);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
 		GLMC.glBindTexture(depthTextureId);
-		GL33.glUniform1i(this.uDhDepthTexture, 0);
+		LWJGL.glUniform1i(this.uDhDepthTexture, 0);
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE1);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE1);
 		GLMC.glBindTexture(MC_RENDER.getGlColorTextureId());
-		GL33.glUniform1i(this.uMcColorTexture, 1);
+		LWJGL.glUniform1i(this.uMcColorTexture, 1);
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE2);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE2);
 		GLMC.glBindTexture(colorTextureId);
-		GL33.glUniform1i(this.uDhColorTexture, 2);
+		LWJGL.glUniform1i(this.uDhColorTexture, 2);
 		
 		
 		GlScreenQuad.INSTANCE.render();
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE0);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
 		GLMC.glBindTexture(prevTexture0);
-		GLMC.glActiveTexture(GL33.GL_TEXTURE1);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE1);
 		GLMC.glBindTexture(prevTexture1);
-		GLMC.glActiveTexture(GL33.GL_TEXTURE2);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE2);
 		GLMC.glBindTexture(prevTexture2);
 		GLMC.glActiveTexture(prevActiveTexture);
 	}

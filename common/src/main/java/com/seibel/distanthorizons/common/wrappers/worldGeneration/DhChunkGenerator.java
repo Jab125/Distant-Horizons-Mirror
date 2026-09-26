@@ -77,8 +77,6 @@ import com.seibel.distanthorizons.common.wrappers.worldGeneration.step.StepTerra
 #endif 
 
 #if MC_VER <= MC_1_12_2
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.common.ForgeChunkManager;
 #else
 import net.minecraft.world.level.ChunkPos;
 import net.minecraft.world.level.chunk.*;
@@ -110,14 +108,14 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 public final class DhChunkGenerator implements IChunkGenerator
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder()
-			.name("LOD World Gen")
-			.fileLevelConfig(Config.Common.Logging.logWorldGenEventToFile)
-			.build();
+		.name("LOD World Gen")
+		.fileLevelConfig(Config.Common.Logging.logWorldGenEventToFile)
+		.build();
 	
 	public static final DhLogger RATE_LIMITED_LOGGER = new DhLoggerBuilder()
-			.name("LOD World Gen")
-			.maxCountPerSecond(1)
-			.build();
+		.name("LOD World Gen")
+		.maxCountPerSecond(1)
+		.build();
 	
 	@NotNull
 	public static final ImmutableMap<EDhApiWorldGenerationStep, Integer> WORLD_GEN_CHUNK_BORDER_NEEDED_BY_GEN_STEP;
@@ -272,12 +270,12 @@ public final class DhChunkGenerator implements IChunkGenerator
 		if (!this.unsafeThreadingRecorded && !future.isDone())
 		{
 			LOGGER.warn(
-					"Unsafe MultiThreading in Distant Horizons Chunk Generator. \n" +
+				"Unsafe MultiThreading in Distant Horizons Chunk Generator. \n" +
 					"This can happen if world generation is run on one of Minecraft's thread pools " +
 					"instead of the thread DH provided. \n" +
 					"This can likely be ignored, however if world generator crashes occur " +
-					"setting DH's world generation thread count to 1 may improve stability. ", 
-					new RuntimeException("Incorrect thread pool use"));
+					"setting DH's world generation thread count to 1 may improve stability. ",
+				new RuntimeException("Incorrect thread pool use"));
 			this.unsafeThreadingRecorded = true;
 		}
 		

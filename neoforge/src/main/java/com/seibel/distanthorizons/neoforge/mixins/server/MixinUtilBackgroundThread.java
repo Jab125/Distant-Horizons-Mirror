@@ -41,7 +41,7 @@ import java.util.function.Supplier;
 /**
  * This is needed for DH's world gen so we can run
  * world gen on our own threads instead of using MC thread pools.
- * 
+ *
  * @see MixinTracingExecutor
  * @see RunOnThisThreadExecutorService
  */
@@ -67,7 +67,7 @@ public class MixinUtilBackgroundThread
 	#if MC_VER < MC_1_17_1
 	#elif MC_VER < MC_1_21_3
 	@Inject(method = "wrapThreadWithTaskName(Ljava/lang/String;Ljava/lang/Runnable;)Ljava/lang/Runnable;",
-			at = @At("HEAD"), cancellable = true)
+		at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskName(String string, Runnable r, CallbackInfoReturnable<Runnable> ci)
 	{
 		if (DhApi.isDhThread())
@@ -83,7 +83,7 @@ public class MixinUtilBackgroundThread
 	#if MC_VER < MC_1_18_2
 	#elif MC_VER < MC_1_21_3
 	@Inject(method = "wrapThreadWithTaskName(Ljava/lang/String;Ljava/util/function/Supplier;)Ljava/util/function/Supplier;",
-			at = @At("HEAD"), cancellable = true)
+		at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskNameForSupplier(String string, Supplier<?> r, CallbackInfoReturnable<Supplier<?>> ci)
 	{
 		if (DhApi.isDhThread())

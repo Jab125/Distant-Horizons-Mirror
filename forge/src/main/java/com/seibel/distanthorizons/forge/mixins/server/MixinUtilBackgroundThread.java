@@ -55,7 +55,7 @@ public class MixinUtilBackgroundThread
 	
 	#if MC_VER >= MC_1_17_1
 	@Inject(method = "wrapThreadWithTaskName(Ljava/lang/String;Ljava/lang/Runnable;)Ljava/lang/Runnable;",
-			at = @At("HEAD"), cancellable = true)
+		at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskName(String string, Runnable r, CallbackInfoReturnable<Runnable> ci)
 	{
 		if (DhApi.isDhThread())
@@ -68,7 +68,7 @@ public class MixinUtilBackgroundThread
 	
 	#if MC_VER >= MC_1_18_2
 	@Inject(method = "wrapThreadWithTaskName(Ljava/lang/String;Ljava/util/function/Supplier;)Ljava/util/function/Supplier;",
-			at = @At("HEAD"), cancellable = true)
+		at = @At("HEAD"), cancellable = true)
 	private static void overrideUtil$wrapThreadWithTaskNameForSupplier(String string, Supplier<?> r, CallbackInfoReturnable<Supplier<?>> ci)
 	{
 		if (DhApi.isDhThread())

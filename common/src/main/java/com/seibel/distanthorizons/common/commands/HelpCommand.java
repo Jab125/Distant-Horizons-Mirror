@@ -4,7 +4,6 @@ import static com.seibel.distanthorizons.core.network.messages.MessageRegistry.D
 
 #if MC_VER <= MC_1_12_2
 import net.minecraft.command.ICommandSender;
-import net.minecraft.util.text.TextComponentString;
 #else
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import net.minecraft.commands.CommandSourceStack;
@@ -13,7 +12,7 @@ import static net.minecraft.commands.Commands.literal;
 #endif
 
 
-public class HelpCommand extends AbstractCommand
+public class HelpCommand extends AbstractDhCommand
 {
 	private static String getHelpString()
 	{
@@ -63,7 +62,7 @@ public class HelpCommand extends AbstractCommand
 	#if MC_VER <= MC_1_12_2
 	public void execute(ICommandSender sender)
 	{
-		sender.sendMessage(new TextComponentString(getHelpString()));
+		sendMessage(sender, getHelpString());
 	}
 	#else
 	@Override

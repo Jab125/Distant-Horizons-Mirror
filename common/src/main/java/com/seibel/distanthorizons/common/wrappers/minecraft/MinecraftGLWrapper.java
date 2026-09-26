@@ -19,7 +19,8 @@
 
 package com.seibel.distanthorizons.common.wrappers.minecraft;
 
-#if MC_VER <= MC_1_12_2
+#if MC_VER <= MC_1_7_10
+#elif MC_VER <= MC_1_12_2
 import net.minecraft.client.renderer.GlStateManager;
 #elif MC_VER < MC_1_21_5
 import com.mojang.blaze3d.platform.GlStateManager;
@@ -33,12 +34,14 @@ import com.seibel.distanthorizons.core.jar.EPlatform;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
-import org.lwjgl.opengl.GL33;
+import org.lwjgl.opengl.GL11;
+
+import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
 
 /**
  * <b>Why does DH often call GL methods twice? </b><br> 
- * Once using the base {@link GL33} function and a second time using
+ * Once using the base {@link GL11} function and a second time using
  * Minecraft's {@link GlStateManager}?<br><br>
  *
  * <b>Answer: </b><br>
@@ -69,19 +72,23 @@ public class MinecraftGLWrapper
 	// scissor //
 	//region
 	
-	/** @see GL33#GL_SCISSOR_TEST */
+	/** @see GL11#GL_SCISSOR_TEST */
 	public void enableScissorTest()
 	{
-		GL33.glEnable(GL33.GL_SCISSOR_TEST);
-		#if MC_VER > MC_1_12_2
+		LWJGL.glEnable(GL11.GL_SCISSOR_TEST);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
+		#else
 		GlStateManager._enableScissorTest(); 
 		#endif
 	}
-	/** @see GL33#GL_SCISSOR_TEST */
+	/** @see GL11#GL_SCISSOR_TEST */
 	public void disableScissorTest()
 	{
-		GL33.glDisable(GL33.GL_SCISSOR_TEST);
-		#if MC_VER > MC_1_12_2
+		LWJGL.glDisable(GL11.GL_SCISSOR_TEST);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
+		#else
 		GlStateManager._disableScissorTest();
 		#endif
 	}
@@ -93,9 +100,9 @@ public class MinecraftGLWrapper
 	// stencil //
 	//region
 
-//	/** @see GL33#GL_SCISSOR_TEST */
+//	/** @see LWJGL#GL_SCISSOR_TEST */
 //	public void enableScissorTest() { GlStateManager._stencilFunc(); }
-//	/** @see GL33#GL_SCISSOR_TEST */
+//	/** @see LWJGL#GL_SCISSOR_TEST */
 //	public void disableScissorTest() { GlStateManager._disableScissorTest(); }
 	
 	//endregion
@@ -105,54 +112,59 @@ public class MinecraftGLWrapper
 	// depth //
 	//region
 	
-	/** @see GL33#GL_DEPTH_TEST */
+	/** @see GL11#GL_DEPTH_TEST */
 	public void enableDepthTest()
 	{
-		GL33.glEnable(GL33.GL_DEPTH_TEST);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glEnable(GL11.GL_DEPTH_TEST);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.enableDepth();
 		#else
 		GlStateManager._enableDepthTest(); 
 		#endif
 	}
-	/** @see GL33#GL_DEPTH_TEST */
+	/** @see GL11#GL_DEPTH_TEST */
 	public void disableDepthTest()
 	{
-		GL33.glDisable(GL33.GL_DEPTH_TEST);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glDisable(GL11.GL_DEPTH_TEST);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.disableDepth();
 		#else
 		GlStateManager._disableDepthTest(); 
 		#endif
 	}
-	
-	/** @see GL33#glDepthFunc(int)  */
+
+	/** @see GL11#glDepthFunc(int)  */
 	public void glDepthFunc(int func)
 	{
-		GL33.glDepthFunc(func);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glDepthFunc(func);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.depthFunc(func);
 		#else
 		GlStateManager._depthFunc(func); 
 		#endif
 	}
-	public int getActiveDepthFunc() { return GL33.glGetInteger(GL33.GL_DEPTH_FUNC); }
+	public int getActiveDepthFunc() { return LWJGL.glGetInteger(GL11.GL_DEPTH_FUNC); }
 	
-	/** @see GL33#glDepthMask(boolean) */
+	/** @see GL11#glDepthMask(boolean) */
 	public void enableDepthMask()
 	{
-		GL33.glDepthMask(true);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glDepthMask(true);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.depthMask(true);
 		#else
 		GlStateManager._depthMask(true);
 		#endif
 	}
-	/** @see GL33#glDepthMask(boolean) */
+	/** @see GL11#glDepthMask(boolean) */
 	public void disableDepthMask()
 	{
-		GL33.glDepthMask(false);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glDepthMask(false);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.depthMask(false);
 		#else
 		GlStateManager._depthMask(false); 
@@ -166,11 +178,12 @@ public class MinecraftGLWrapper
 	// blending //
 	//region
 	
-	/** @see GL33#GL_BLEND */
+	/** @see GL11#GL_BLEND */
 	public void enableBlend()
 	{
-		GL33.glEnable(GL33.GL_BLEND);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glEnable(GL11.GL_BLEND);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.enableBlend();
 		#elif MC_VER <= MC_26_1_2
 		GlStateManager._enableBlend();
@@ -178,11 +191,12 @@ public class MinecraftGLWrapper
 		GlStateManager._enableBlend(0);
 		#endif
 	}
-	/** @see GL33#GL_BLEND */
+	/** @see GL11#GL_BLEND */
 	public void disableBlend()
 	{
-		GL33.glDisable(GL33.GL_BLEND);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glDisable(GL11.GL_BLEND);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.disableBlend();
 		#elif MC_VER <= MC_26_1_2
 		GlStateManager._disableBlend();
@@ -191,21 +205,23 @@ public class MinecraftGLWrapper
 		#endif
 	}
 	
-	/** @see GL33#glBlendFunc */
+	/** @see GL11#glBlendFunc */
 	public void glBlendFunc(int sfactor, int dfactor)
 	{
-		GL33.glBlendFunc(sfactor, dfactor);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glBlendFunc(sfactor, dfactor);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.blendFunc(sfactor, dfactor);
 		#elif MC_VER < MC_1_21_5
 		GlStateManager._blendFunc(sfactor, dfactor);
 		#endif
 	}
-	/** @see GL33#glBlendFuncSeparate */
+	/** @see org.lwjgl.opengl.GL14#glBlendFuncSeparate */
 	public void glBlendFuncSeparate(int sfactorRGB, int dfactorRGB, int sfactorAlpha, int dfactorAlpha)
 	{
-		GL33.glBlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glBlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.tryBlendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
 		#else
 		GlStateManager._blendFuncSeparate(sfactorRGB, dfactorRGB, sfactorAlpha, dfactorAlpha);
@@ -219,10 +235,10 @@ public class MinecraftGLWrapper
 	// frame buffers //
 	//region
 	
-	/** @see GL33#glBindFramebuffer */
+	/** @see org.lwjgl.opengl.GL30#glBindFramebuffer */
 	public void glBindFramebuffer(int target, int framebuffer)
 	{
-		GL33.glBindFramebuffer(target, framebuffer);
+		LWJGL.glBindFramebuffer(target, framebuffer);
 		#if MC_VER > MC_1_12_2
 		GlStateManager._glBindFramebuffer(target, framebuffer);
 		#endif
@@ -235,14 +251,14 @@ public class MinecraftGLWrapper
 	// buffers //
 	//region
 	
-	/** @see GL33#glGenBuffers() */
+	/** @see org.lwjgl.opengl.GL15#glGenBuffers() */
 	public int glGenBuffers()
-	{ return GL33.glGenBuffers(); }
+	{ return LWJGL.glGenBuffers(); }
 	
-	/** @see GL33#glDeleteBuffers(int) */
+	/** @see org.lwjgl.opengl.GL15#glDeleteBuffers(int) */
 	public void glDeleteBuffers(int buffer)
 	{
-		GL33.glDeleteBuffers(buffer);
+		LWJGL.glDeleteBuffers(buffer);
 		
 		// MC's implementation has a bug where it will throw:
 		// GL_INVALID_OPERATION in glBufferData(immutable)
@@ -258,21 +274,23 @@ public class MinecraftGLWrapper
 	// culling //
 	//region
 	
-	/** @see GL33#GL_CULL_FACE */
+	/** @see GL11#GL_CULL_FACE */
 	public void enableFaceCulling()
 	{
-		GL33.glEnable(GL33.GL_CULL_FACE);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glEnable(GL11.GL_CULL_FACE);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.enableCull();
 		#else
 		GlStateManager._enableCull();
 		#endif
 	}
-	/** @see GL33#GL_CULL_FACE */
+	/** @see GL11#GL_CULL_FACE */
 	public void disableFaceCulling()
 	{
-		GL33.glDisable(GL33.GL_CULL_FACE);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glDisable(GL11.GL_CULL_FACE);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.disableCull();
 		#else
 		GlStateManager._disableCull();
@@ -286,45 +304,51 @@ public class MinecraftGLWrapper
 	// textures //
 	//region
 	
-	/** @see GL33#glGenTextures() */
+	/** @see GL11#glGenTextures() */
 	public int glGenTextures()
 	{
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		return LWJGL.glGenTextures();
+		#elif MC_VER <= MC_1_12_2
 		return GlStateManager.generateTexture();
 		#else
 		return GlStateManager._genTexture();
 		#endif
 	}
-	/** @see GL33#glDeleteTextures(int) */
+	/** @see GL11#glDeleteTextures(int) */
 	public void glDeleteTextures(int texture)
 	{
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		LWJGL.glDeleteTextures(texture);
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.deleteTexture(texture);
 		#else
 		GlStateManager._deleteTexture(texture);
 		#endif
 	}
 	
-	/** @see GL33#glActiveTexture(int) */
+	/** @see org.lwjgl.opengl.GL13#glActiveTexture(int) */
 	public void glActiveTexture(int textureId)
 	{
-		GL33.glActiveTexture(textureId);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glActiveTexture(textureId);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.setActiveTexture(textureId);
 		#else
 		GlStateManager._activeTexture(textureId);
 		#endif
 	}
-	public int getActiveTexture() { return GL33.glGetInteger(GL33.GL_TEXTURE_BINDING_2D); }
+	public int getActiveTexture() { return LWJGL.glGetInteger(GL11.GL_TEXTURE_BINDING_2D); }
 	
 	/**
-	 * Always binds to {@link GL33#GL_TEXTURE_2D}
-	 * @see GL33#glBindTexture(int, int)
+	 * Always binds to {@link GL11#GL_TEXTURE_2D}
+	 * @see GL11#glBindTexture(int, int)
 	 */
 	public void glBindTexture(int texture)
 	{
-		GL33.glBindTexture(GL33.GL_TEXTURE_2D, texture);
-		#if MC_VER <= MC_1_12_2
+		LWJGL.glBindTexture(GL11.GL_TEXTURE_2D, texture);
+		#if MC_VER <= MC_1_7_10
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.bindTexture(texture);
 		#else
 		GlStateManager._bindTexture(texture);
@@ -338,10 +362,12 @@ public class MinecraftGLWrapper
 	// viewport //
 	//region
 	
-	/** @see GL33#glViewport(int, int, int, int) */
+	/** @see GL11#glViewport(int, int, int, int) */
 	public void glViewport(int x, int y, int viewportWidth, int viewportHeight)
 	{
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		LWJGL.glViewport(x, y, viewportWidth, viewportHeight);
+		#elif MC_VER <= MC_1_12_2
 		GlStateManager.viewport(x, y, viewportWidth, viewportHeight);
 		#else
 		GlStateManager._viewport(x,y, viewportWidth, viewportHeight);

@@ -62,8 +62,8 @@ public final class StepStructureReference extends AbstractWorldGenStep
 	
 	@Override
 	public void generateGroup(
-			ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
-			ArrayGridList<ChunkWrapper> chunkWrappers)
+		ThreadWorldGenParams tParams, DhLitWorldGenRegion worldGenRegion,
+		ArrayGridList<ChunkWrapper> chunkWrappers)
 	{
 		ArrayList<ChunkWrapper> chunksToGen = this.getChunkWrappersToGenerate(chunkWrappers);
 		for (ChunkWrapper chunkWrapper : chunksToGen)

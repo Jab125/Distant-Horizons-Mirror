@@ -110,7 +110,7 @@ public class ForgeMain extends AbstractModInitializer
 		
 		#if MC_VER < MC_1_17_1
 		ModLoadingContext.get().registerExtensionPoint(ExtensionPoint.CONFIGGUIFACTORY,
-				() -> (client, parent) -> GetConfigScreen.getScreen(parent));
+			() -> (client, parent) -> GetConfigScreen.getScreen(parent));
 		#elif MC_VER >= MC_1_17_1 && MC_VER < MC_1_19_2
 		ModLoadingContext.get().registerExtensionPoint(ConfigGuiHandler.ConfigGuiFactory.class,
 				() -> new ConfigGuiHandler.ConfigGuiFactory((client, parent) -> GetConfigScreen.getScreen(parent)));

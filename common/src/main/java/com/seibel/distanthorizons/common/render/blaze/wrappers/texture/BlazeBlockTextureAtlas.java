@@ -158,9 +158,9 @@ public class BlazeBlockTextureAtlas extends AbstractBlockTextureAtlas
 					int sum =
 						// & 0xFF is to convert from signed byte to unsigned for averaging
 						(sourceData.get(index00 + channelIndex) & 0xFF) +
-						(sourceData.get(index10 + channelIndex) & 0xFF) +
-						(sourceData.get(index01 + channelIndex) & 0xFF) +
-						(sourceData.get(index11 + channelIndex) & 0xFF);
+							(sourceData.get(index10 + channelIndex) & 0xFF) +
+							(sourceData.get(index01 + channelIndex) & 0xFF) +
+							(sourceData.get(index11 + channelIndex) & 0xFF);
 					
 					mipData.put((byte) (sum / 4));
 				}

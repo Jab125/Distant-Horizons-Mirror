@@ -72,7 +72,7 @@ public class NeoforgeMain extends AbstractModInitializer
 	public NeoforgeMain(IEventBus eventBus)
 	{
 		// handles singleplayer, LAN, and connecting to a server
-		eventBus.addListener((FMLClientSetupEvent e) -> 
+		eventBus.addListener((FMLClientSetupEvent e) ->
 		{
 			this.onInitializeClient();
 			eventBus.addListener(this::registerNetworkingClientServer);
@@ -84,7 +84,7 @@ public class NeoforgeMain extends AbstractModInitializer
 		});
 		
 		// handles dedicated servers
-		eventBus.addListener((FMLDedicatedServerSetupEvent e) -> 
+		eventBus.addListener((FMLDedicatedServerSetupEvent e) ->
 		{
 			this.onInitializeServer();
 			eventBus.addListener(this::registerNetworkingServer);
@@ -98,12 +98,12 @@ public class NeoforgeMain extends AbstractModInitializer
 	//============//
 	
 	public void registerNetworkingClientServer(RegisterPayloadHandlersEvent event)
-	{ 
-		NeoforgePluginPacketSender.setPacketHandler(event, (IServerPlayerWrapper player, @NotNull AbstractNetworkMessage message) -> 
+	{
+		NeoforgePluginPacketSender.setPacketHandler(event, (IServerPlayerWrapper player, @NotNull AbstractNetworkMessage message) ->
 		{
 			ClientApi.INSTANCE.pluginMessageReceived(message);
 			ServerApi.INSTANCE.pluginMessageReceived(player, message);
-		}); 
+		});
 	}
 	public void registerNetworkingServer(RegisterPayloadHandlersEvent event)
 	{ NeoforgePluginPacketSender.setPacketHandler(event, ServerApi.INSTANCE::pluginMessageReceived); }
@@ -154,7 +154,7 @@ public class NeoforgeMain extends AbstractModInitializer
 				() -> new ConfigScreenHandler.ConfigScreenFactory((client, parent) -> GetConfigScreen.getScreen(parent)));
 		#else
 		ModLoadingContext.get().registerExtensionPoint(IConfigScreenFactory.class,
-				() -> (client, parent) -> GetConfigScreen.getScreen(parent));
+			() -> (client, parent) -> GetConfigScreen.getScreen(parent));
 		#endif
 		
 	}
@@ -170,7 +170,7 @@ public class NeoforgeMain extends AbstractModInitializer
 	{
 		// Just run the event handler, since there are no proper ClientLifecycleEvent for the client 
 		// to signify readiness other than FmlClientSetupEvent
-		eventHandler.run(); 
+		eventHandler.run();
 	}
 	
 	@Override

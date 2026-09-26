@@ -51,6 +51,8 @@ import java.util.function.Supplier;
 #if MC_VER > MC_1_12_2
 import com.mojang.brigadier.CommandDispatcher;
 import net.minecraft.commands.CommandSourceStack;
+#else
+import net.minecraft.command.ServerCommandManager;
 #endif
 
 /**
@@ -61,7 +63,10 @@ public abstract class AbstractModInitializer
 {
 	protected static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
+	#if MC_VER <= MC_1_12_2
+	#else
 	private CommandInitializer commandInitializer;
+	#endif
 	
 	
 	
@@ -148,7 +153,8 @@ public abstract class AbstractModInitializer
 		this.initializeModCompat();
 		
 		LOGGER.info(ModInfo.READABLE_NAME + " server Initialized, adding event subscribers...");
-		#if MC_VER > MC_1_12_2
+		#if MC_VER <= MC_1_12_2
+		#else
 		this.commandInitializer = new CommandInitializer();
 		this.subscribeRegisterCommandsEvent(dispatcher -> { this.commandInitializer.initCommands(dispatcher); });
 		#endif
@@ -162,14 +168,19 @@ public abstract class AbstractModInitializer
 			Initializer.postConfigInit();
 			this.postInit();
 			this.postServerInit();
-			#if MC_VER > MC_1_12_2
+			
+			#if MC_VER <= MC_1_12_2
+			((ServerCommandManager) server.getCommandManager()).registerCommand(CommandInitializer.initCommands());
+			#else
 			this.commandInitializer.onServerReady();
 			#endif
 			
 			this.checkForUpdates();
 			
 			String serverFolderPath;
-			#if MC_VER <= MC_1_12_2
+			#if MC_VER <= MC_1_7_10
+			serverFolderPath = "."; // equivalent to new MC's "server.getDataDirectory()"
+			#elif MC_VER <= MC_1_12_2
 			serverFolderPath = server.getDataDirectory() + "";
 			#else
 			serverFolderPath = server.getServerDirectory() + "";
@@ -237,6 +248,12 @@ public abstract class AbstractModInitializer
 		{
 			LOGGER.debug("Skipping mod compatibility accessor for: ["+modId+"]");
 		}
+	}
+	@SuppressWarnings("unchecked")
+	protected <T extends IModAccessor> void addModCompatAccessor(Class<? super T> accessorClass, Supplier<T> accessorConstructor)
+	{
+		// logging is done internally
+		ModAccessorInjector.INSTANCE.bind((Class<? extends IModAccessor>) accessorClass, accessorConstructor.get());
 	}
 	
 	private void initConfig()
@@ -537,7 +554,11 @@ public abstract class AbstractModInitializer
 		// graphics/rendering
 		#if MC_VER <= MC_1_12_2
 		Config.Client.Advanced.Graphics.Experimental.renderingEngine.setMcVersionOverrideValue(EDhApiRenderingEngine.OPEN_GL);
+		Config.Common.WorldGenerator.generatorPlan.setMcVersionOverrideValue(EDhApiGeneratorPlan.CHUNKS_ONLY);
 		Config.Common.WorldGenerator.chunkGeneratorMode.setMcVersionOverrideValue(EDhApiDistantGeneratorMode.INTERNAL_SERVER);
+		
+		// Disabled since it prevents the JVM from exiting in 1.7.10
+		Config.Client.Advanced.Debugging.OpenGl.overrideVanillaGLLogger.setMcVersionOverrideValue(false);
 		#elif MC_VER <= MC_1_21_10
 		Config.Client.Advanced.Graphics.Experimental.renderingEngine.setMcVersionOverrideValue(EDhApiRenderingEngine.OPEN_GL);
 		#else
@@ -554,9 +575,6 @@ public abstract class AbstractModInitializer
 		#else
 		AbstractMinecraftSharedWrapper.supportsSurfaceGeneration = true;
 		#endif
-		
-		
-		
 	}
 	
 	/**

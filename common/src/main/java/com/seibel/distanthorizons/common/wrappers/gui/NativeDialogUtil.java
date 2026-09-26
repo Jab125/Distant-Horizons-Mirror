@@ -1,6 +1,8 @@
 package com.seibel.distanthorizons.common.wrappers.gui;
 
-#if MC_VER <= MC_26_2_0
+#if MC_VER <= MC_1_12_2
+import javax.swing.JOptionPane;
+#elif MC_VER <= MC_26_2_0
 import org.lwjgl.util.tinyfd.TinyFileDialogs;
 #else
 import javax.swing.*;
@@ -32,8 +34,7 @@ public class NativeDialogUtil
 		message = message.replaceAll(unsafeCharsRegex, "");
 		
 		#if MC_VER <= MC_1_12_2
-		// https://mfbridge.github.io/tinyfiledialogs/reference/messageBox.html
-		TinyFileDialogs.tinyfd_messageBox(title, message, dialogType, iconType, 1 /* ok/yes */);
+		jSwingDialog(title, message, iconType);
 		#elif MC_VER <= MC_1_21_11
 		TinyFileDialogs.tinyfd_messageBox(title, message, dialogType, iconType, false);
 		#elif MC_VER <= MC_26_2_0
@@ -43,6 +44,13 @@ public class NativeDialogUtil
 		// Java swing is being used because MC removed TinyFileDialogs in MC 26.3.0.
 		// This is known not to work on Mac, so if that becomes an issue in the future
 		// we may want to look into embedding our own copy of TinyFileDialogs.
+		jSwingDialog(title, message, iconType);
+		#endif
+	}
+
+	#if MC_VER <= MC_1_12_2 || MC_VER >= MC_26_3_0
+	private static void jSwingDialog(String title, String message, String iconType)
+	{
 		int messageType;
 		switch (iconType)
 		{
@@ -50,7 +58,7 @@ public class NativeDialogUtil
 				messageType = JOptionPane.ERROR_MESSAGE;
 				break;
 			case "warning":
-				messageType= JOptionPane.WARNING_MESSAGE;
+				messageType = JOptionPane.WARNING_MESSAGE;
 				break;
 			case "info":
 				messageType = JOptionPane.INFORMATION_MESSAGE;
@@ -61,10 +69,11 @@ public class NativeDialogUtil
 			default:
 				messageType = JOptionPane.PLAIN_MESSAGE;
 				break;
-		};
+		}
 		JOptionPane.showConfirmDialog(null, message, title, JOptionPane.DEFAULT_OPTION, messageType);
-		#endif
 	}
+	#endif
+	
 	
 	/** 
 	 * if we're using Java Swing for our UI

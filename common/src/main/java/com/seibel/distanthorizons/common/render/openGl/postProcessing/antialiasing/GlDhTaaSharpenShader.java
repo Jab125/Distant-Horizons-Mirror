@@ -25,7 +25,12 @@ import com.seibel.distanthorizons.common.render.openGl.postProcessing.GlScreenQu
 import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRenderer;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.render.RenderParams;
-import org.lwjgl.opengl.GL33;
+import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL13;
+import org.lwjgl.opengl.GL14;
+import org.lwjgl.opengl.GL30;
+
+import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
 /**
  * 
@@ -89,9 +94,9 @@ public class GlDhTaaSharpenShader extends GlAbstractShaderRenderer
 		this.shader.setUniform(this.uViewHeight, (float) height);
 		this.shader.setUniform(this.uCasAmount, 0.3f);
 		
-		GLMC.glActiveTexture(GL33.GL_TEXTURE0);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0);
 		GLMC.glBindTexture(GlDhTaaShader.INSTANCE.outputColorTextureId);
-		GL33.glUniform1i(this.uCurrentColorSampler, 0);
+		LWJGL.glUniform1i(this.uCurrentColorSampler, 0);
 		
 	}
 	
@@ -105,8 +110,8 @@ public class GlDhTaaSharpenShader extends GlAbstractShaderRenderer
 	protected void onRender()
 	{
 		GLMC.enableBlend();
-		GL33.glBlendEquation(GL33.GL_FUNC_ADD);
-		GLMC.glBlendFuncSeparate(GL33.GL_SRC_ALPHA, GL33.GL_ONE_MINUS_SRC_ALPHA, GL33.GL_ONE, GL33.GL_ONE_MINUS_SRC_ALPHA);
+		LWJGL.glBlendEquation(GL14.GL_FUNC_ADD);
+		GLMC.glBlendFuncSeparate(GL11.GL_SRC_ALPHA, GL11.GL_ONE_MINUS_SRC_ALPHA, GL11.GL_ONE, GL11.GL_ONE_MINUS_SRC_ALPHA);
 		
 		// Depth testing must be disabled otherwise this application shader won't apply anything.
 		// setting this isn't necessary in vanilla, but some mods may change this, requiring it to be set manually, 
@@ -115,12 +120,12 @@ public class GlDhTaaSharpenShader extends GlAbstractShaderRenderer
 		
 		
 		// apply the rendered AntiAliasing to DH's framebuffer
-		GLMC.glBindFramebuffer(GL33.GL_READ_FRAMEBUFFER, GlDhTaaShader.INSTANCE.frameBuffer);
-		GLMC.glBindFramebuffer(GL33.GL_DRAW_FRAMEBUFFER, GlDhMetaRenderer.INSTANCE.getActiveFramebufferId());
+		GLMC.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, GlDhTaaShader.INSTANCE.frameBuffer);
+		GLMC.glBindFramebuffer(GL30.GL_DRAW_FRAMEBUFFER, GlDhMetaRenderer.INSTANCE.getActiveFramebufferId());
 		
 		GlScreenQuad.INSTANCE.render();
 		
-		GLMC.glBindFramebuffer(GL33.GL_READ_FRAMEBUFFER, 0);
+		GLMC.glBindFramebuffer(GL30.GL_READ_FRAMEBUFFER, 0);
 	}
 	
 }

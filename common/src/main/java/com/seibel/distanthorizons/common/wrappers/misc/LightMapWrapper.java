@@ -23,15 +23,23 @@ package com.seibel.distanthorizons.common.wrappers.misc;
 import com.mojang.blaze3d.platform.NativeImage;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 #endif
-
+#if MC_VER <= MC_1_7_10
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.DynamicTexture;
+#endif
+import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeTextureViewWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.ILightMapWrapper;
 import com.seibel.distanthorizons.core.logging.DhLogger;
-import org.lwjgl.opengl.GL33;
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IRpleAccessor;
+import org.lwjgl.opengl.GL11;
 
-#if MC_VER < MC_1_21_3
 import java.nio.ByteBuffer;
+
+import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
+#if MC_VER < MC_1_21_3
 #else
 #endif
 
@@ -48,9 +56,11 @@ public class LightMapWrapper implements ILightMapWrapper
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
+	private static final IRpleAccessor RPLE_ACCESSOR = ModAccessorInjector.INSTANCE.get(IRpleAccessor.class);
+	
 	/**
 	 * which texture index IE 0,1,2... the lightmap will be bound to. <Br> 
-	 * Related to but different from {@link GL33#GL_TEXTURE0}.
+	 * Related to but different from {@link org.lwjgl.opengl.GL13#GL_TEXTURE0}.
 	 */
 	public static final int GL_BOUND_INDEX = 0;
 	
@@ -101,7 +111,7 @@ public class LightMapWrapper implements ILightMapWrapper
 		
 		// getActiveTexture() may return textures that aren't valid and attempting to bind them will
 		// throw a GL error in MC 1.21.1
-		if (GL33.glIsTexture(currentTexture))
+		if (LWJGL.glIsTexture(currentTexture))
 		{
 			GLMC.glBindTexture(currentTexture);
 		}
@@ -114,8 +124,8 @@ public class LightMapWrapper implements ILightMapWrapper
 		#if MC_VER < MC_1_21_3
 		this.textureId = GLMC.glGenTextures();
 		GLMC.glBindTexture(this.textureId);
-		GL33.glTexImage2D(GL33.GL_TEXTURE_2D, 0, image.format().glFormat(), image.getWidth(), image.getHeight(),
-				0, image.format().glFormat(), GL33.GL_UNSIGNED_BYTE, (ByteBuffer) null);
+		LWJGL.glTexImage2D(GL11.GL_TEXTURE_2D, 0, image.format().glFormat(), image.getWidth(), image.getHeight(),
+				0, image.format().glFormat(), GL11.GL_UNSIGNED_BYTE, (ByteBuffer) null);
 		#else
 		throw new UnsupportedOperationException("setLightmapId should be used for MC versions after 1.21.3");
 		#endif
@@ -151,8 +161,24 @@ public class LightMapWrapper implements ILightMapWrapper
 	#else
 	public BlazeTextureViewWrapper getTextureViewWrapper() { return this.lightmapTextureWrapper; }
 	#endif
-	
+
+	#if MC_VER <= MC_1_7_10
+	public int getOpenGlId()
+	{
+		// On 1.7.10 nothing wires up setLightmapId(), so query MC directly each time.
+		
+		// RPLE (the colored-lighting mod) replaces the vanilla lightmap, so check that first.
+		if (RPLE_ACCESSOR != null)
+		{
+			return RPLE_ACCESSOR.getLightmapTextureId();
+		}
+		
+		DynamicTexture lightmapTexture = Minecraft.getMinecraft().entityRenderer.lightmapTexture;
+		return lightmapTexture.getGlTextureId();
+	}
+	#else
 	public int getOpenGlId() { return this.textureId; }
+	#endif
 	
 	//endregion
 	
