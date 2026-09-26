@@ -60,6 +60,7 @@ import org.lwjgl.PointerBuffer;
  * so custom codecs can be used if necessary.
  * </p>
  */
+@SuppressWarnings({ "removal" })
 public final class MemoryUtilities // full "utilities" name is to prevent conflicting with LWGJL's MemoryUtil class
 {
 
