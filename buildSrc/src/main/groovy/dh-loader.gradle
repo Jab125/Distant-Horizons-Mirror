@@ -203,6 +203,8 @@ unimined.minecraft(sourceSets.main, true) {
     }
 }
 
+boolean isLegacyLwjgl = ["1.7.10", "1.12.2"].contains(gradle.ext.minecraft_version)
+
 if (isNotCommonProject) {
     // Mixin remapping and common project wiring
     unimined.minecraft(sourceSets.main, true) {
@@ -217,19 +219,18 @@ if (isNotCommonProject) {
         }
     }
 
-    def lwjglVariant = ["1.7.10", "1.12.2"].contains(gradle.ext.minecraft_version) ? "lwjgl2" : "lwjgl3"
+    String lwjglVersion = isLegacyLwjgl ? "lwjgl2" : "lwjgl3"
 
     tasks.withType(JavaCompile).configureEach {
         source(project(":common").sourceSets.main.allSource)
         source(project(":common").sourceSets.lwjglCommon.allSource)
-        source(project(":common").sourceSets."${lwjglVariant}".allSource)
+        source(project(":common").sourceSets."${lwjglVersion}".allSource)
     }
     
     dependencies {
         implementation(project(":common"))
     }
 
-    def isLegacyLwjgl = ["1.7.10", "1.12.2"].contains(gradle.ext.minecraft_version)
     if (isLegacyLwjgl) {
         def lwjgl3Classes = files(project(":common").sourceSets.lwjgl3.output.classesDirs)
         lwjgl3Classes.builtBy(project(":common").tasks.named("compileLwjgl3Java"))
@@ -248,7 +249,7 @@ if (isNotCommonProject) {
     }
 } else {
     unimined.minecraft {
-        if (["1.7.10", "1.12.2"].contains(gradle.ext.minecraft_version)) {
+        if (isLegacyLwjgl) {
             minecraftForge {
                 loader gradle.ext.forge_version
                 accessTransformer project.file("src/main/resources/${gradle.ext.accessWidenerVersion}.distanthorizons_at.cfg")
@@ -303,6 +304,7 @@ if (!isNotCommonProject) {
         dependsOn(generateAbstractionLayer)
     }
 
+	// remove manifold compiling for LWJGL
     tasks.matching { it.name in ["compileLwjglCommonJava", "compileLwjgl2Java", "compileLwjgl3Java"] }.configureEach {
         doFirst {
             options.compilerArgs.removeAll { it.toString().contains('-Xplugin:Manifold') }
