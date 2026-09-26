@@ -441,7 +441,6 @@ public abstract class AbstractModInitializer
 			LOGGER.warn(startingString + "[Chunky] "+ chunkyWarning);
 			
 			// don't allow for the possibility of DH and chunky to generate chunks at the same time
-			Config.Common.WorldGenerator.generatorPlan.setApiValue(EDhApiGeneratorPlan.DISABLED, ModInfo.READABLE_NAME + " / Chunky");
 			Config.Common.LodBuilding.disableUnchangedChunkCheck.setApiValue(true, ModInfo.READABLE_NAME + " / Chunky");
 		}
 		
