@@ -19,6 +19,8 @@
 
 package com.seibel.distanthorizons.neoforge.wrappers.modAccessor;
 
+import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.AbstractChunkyAccessor;
+
 #if MC_VER <= MC_1_18_2
 import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiGeneratorPlan;
 import com.seibel.distanthorizons.core.config.Config;
