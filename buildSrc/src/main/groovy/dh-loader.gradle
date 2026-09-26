@@ -97,6 +97,9 @@ repositories {
 tasks.withType(JavaCompile).configureEach {
     options.release = 17 // LWJGL Service needs java 17, we will downgrade it with JVMDowngrader
     options.encoding = "UTF-8"
+    
+    // silence the "java 8 is deprecated" javac compiler warnings
+    options.compilerArgs << '-Xlint:-options'
 }
 
 java {
