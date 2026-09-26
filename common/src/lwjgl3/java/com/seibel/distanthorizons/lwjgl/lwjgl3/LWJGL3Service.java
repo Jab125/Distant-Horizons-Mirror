@@ -20,72 +20,87 @@ import java.nio.*;
  * LWJGL3 implementation of {@link ILWJGLService}.
  */
 // TODO why is this a record?
-public record LWJGL3Service(
-        VAOMode vaoMode,
-        TimerQueryMode timerQueryMode,
-        DebugMode debugMode,
-        VertexAttribIMode vertexAttribIMode) implements ILWJGLService
+public class LWJGL3Service implements ILWJGLService
 {
     private static final Logger LOGGER = LogManager.getLogger("DistantHorizons/LWJGL3Service");
     private static final LWJGL3DebugSupport debugSupport = new LWJGL3DebugSupport();
 	private static final Thread RENDER_THREAD = Thread.currentThread();
-
+	
+	private final VAOMode vaoMode;
+	private final TimerQueryMode timerQueryMode;
+	private final DebugMode debugMode;
+	private final VertexAttribIMode vertexAttribIMode;
+	
+	private LWJGL3Service(
+		VAOMode vaoMode, 
+		TimerQueryMode timerQueryMode, 
+		DebugMode debugMode, 
+		VertexAttribIMode vertexAttribIMode) 
+	{
+		this.vaoMode = vaoMode;
+		this.timerQueryMode = timerQueryMode;
+		this.debugMode = debugMode;
+		this.vertexAttribIMode = vertexAttribIMode;
+	}
 	
 	
-    // ===================== CAPABILITIES =====================
+	
+	// ===================== CAPABILITIES =====================
 	
 	@Override
     public boolean isOpenGLVersionSupported(int major, int minor) 
 	{
         GLCapabilities caps = GL.getCapabilities();
-        return switch (major * 10 + minor) 
+        switch (major * 10 + minor) 
         {
-            case 11 -> caps.OpenGL11;
-            case 12 -> caps.OpenGL12;
-            case 13 -> caps.OpenGL13;
-            case 14 -> caps.OpenGL14;
-            case 15 -> caps.OpenGL15;
-            case 20 -> caps.OpenGL20;
-            case 21 -> caps.OpenGL21;
-            case 30 -> caps.OpenGL30;
-            case 31 -> caps.OpenGL31;
-            case 32 -> caps.OpenGL32;
-            case 33 -> caps.OpenGL33;
-            case 40 -> caps.OpenGL40;
-            case 41 -> caps.OpenGL41;
-            case 42 -> caps.OpenGL42;
-            case 43 -> caps.OpenGL43;
-            case 44 -> caps.OpenGL44;
-            case 45 -> caps.OpenGL45;
-            case 46 -> caps.OpenGL46;
-            default -> false;
-        };
+            case 11: return caps.OpenGL11;
+            case 12: return caps.OpenGL12;
+            case 13: return caps.OpenGL13;
+            case 14: return caps.OpenGL14;
+            case 15: return caps.OpenGL15;
+            case 20: return caps.OpenGL20;
+            case 21: return caps.OpenGL21;
+            case 30: return caps.OpenGL30;
+            case 31: return caps.OpenGL31;
+            case 32: return caps.OpenGL32;
+            case 33: return caps.OpenGL33;
+            case 40: return caps.OpenGL40;
+            case 41: return caps.OpenGL41;
+            case 42: return caps.OpenGL42;
+            case 43: return caps.OpenGL43;
+            case 44: return caps.OpenGL44;
+            case 45: return caps.OpenGL45;
+            case 46: return caps.OpenGL46;
+            default: return false;
+        }
     }
 
     @Override
     public boolean isExtensionSupported(EGLExtension extension) 
     {
         GLCapabilities caps = GL.getCapabilities();
-        return switch (extension) 
+        switch (extension) 
         {
-            case ARB_buffer_storage -> caps.GL_ARB_buffer_storage;
-            case ARB_multi_draw_indirect -> caps.GL_ARB_multi_draw_indirect;
-            case ARB_draw_elements_base_vertex -> caps.GL_ARB_draw_elements_base_vertex;
-            case ARB_shader_storage_buffer_object -> caps.GL_ARB_shader_storage_buffer_object;
-            case ARB_sync -> caps.GL_ARB_sync;
-            case ARB_timer_query -> caps.GL_ARB_timer_query;
-            case ARB_debug_output -> caps.GL_ARB_debug_output;
-            case KHR_debug -> caps.GL_KHR_debug;
-            case AMD_debug_output -> caps.GL_AMD_debug_output;
-            case ARB_uniform_buffer_object -> caps.GL_ARB_uniform_buffer_object;
-            case ARB_vertex_array_object -> caps.GL_ARB_vertex_array_object;
-            case ARB_map_buffer_range -> caps.GL_ARB_map_buffer_range;
-            case ARB_copy_buffer -> caps.GL_ARB_copy_buffer;
-            case ARB_texture_storage -> caps.GL_ARB_texture_storage;
-            case ARB_base_instance -> caps.GL_ARB_base_instance;
-	        case ARB_instanced_arrays -> caps.GL_ARB_instanced_arrays;
-	        case ARB_compatibility -> caps.GL_ARB_compatibility;
-        };
+            case ARB_buffer_storage: return caps.GL_ARB_buffer_storage;
+            case ARB_multi_draw_indirect: return caps.GL_ARB_multi_draw_indirect;
+            case ARB_draw_elements_base_vertex: return caps.GL_ARB_draw_elements_base_vertex;
+            case ARB_shader_storage_buffer_object: return caps.GL_ARB_shader_storage_buffer_object;
+            case ARB_sync: return caps.GL_ARB_sync;
+            case ARB_timer_query: return caps.GL_ARB_timer_query;
+            case ARB_debug_output: return caps.GL_ARB_debug_output;
+            case KHR_debug: return caps.GL_KHR_debug;
+            case AMD_debug_output: return caps.GL_AMD_debug_output;
+            case ARB_uniform_buffer_object: return caps.GL_ARB_uniform_buffer_object;
+            case ARB_vertex_array_object: return caps.GL_ARB_vertex_array_object;
+            case ARB_map_buffer_range: return caps.GL_ARB_map_buffer_range;
+            case ARB_copy_buffer: return caps.GL_ARB_copy_buffer;
+            case ARB_texture_storage: return caps.GL_ARB_texture_storage;
+            case ARB_base_instance: return caps.GL_ARB_base_instance;
+	        case ARB_instanced_arrays: return caps.GL_ARB_instanced_arrays;
+	        case ARB_compatibility: return caps.GL_ARB_compatibility;
+			
+	        default: throw new UnsupportedOperationException("No logic defined for extension ["+extension+"].");
+        }
     }
 
     @Override
@@ -350,11 +365,18 @@ public record LWJGL3Service(
     }
 
     @Override
-    public void glVertexAttribIPointer(int index, int size, int type, int stride, long pointer) {
-        switch (vertexAttribIMode) {
-            case CORE -> GL30C.glVertexAttribIPointer(index, size, type, stride, pointer);
-            case EXT -> EXTGPUShader4.glVertexAttribIPointerEXT(index, size, type, stride, pointer);
-            case NONE -> throw new UnsupportedOperationException("glVertexAttribIPointer not supported");
+    public void glVertexAttribIPointer(int index, int size, int type, int stride, long pointer) 
+    {
+        switch (vertexAttribIMode)
+        {
+            case CORE: 
+				GL30C.glVertexAttribIPointer(index, size, type, stride, pointer);
+				break;
+            case EXT: 
+				EXTGPUShader4.glVertexAttribIPointerEXT(index, size, type, stride, pointer);
+				break;
+            case NONE: 
+				throw new UnsupportedOperationException("glVertexAttribIPointer not supported");
         }
     }
 
@@ -656,21 +678,36 @@ public record LWJGL3Service(
     }
 
     @Override
-    public void glQueryCounter(int id, int target) {
-        switch (timerQueryMode) {
-            case CORE -> GL33C.glQueryCounter(id, target);
-            case ARB -> ARBTimerQuery.glQueryCounter(id, target);
-            case NONE -> { /* no-op */ }
-        }
+    public void glQueryCounter(int id, int target)
+    {
+	    switch (timerQueryMode)
+	    {
+		    case CORE:
+			    GL33C.glQueryCounter(id, target);
+				break;
+		    case ARB:
+			    ARBTimerQuery.glQueryCounter(id, target);
+				break;
+		    case NONE:
+			    /* no-op */
+		        break;
+	    }
     }
 
     @Override
-    public long glGetQueryObjectui64(int id, int pname) {
-        return switch (timerQueryMode) {
-            case CORE -> GL33C.glGetQueryObjectui64(id, pname);
-            case ARB -> ARBTimerQuery.glGetQueryObjectui64(id, pname);
-            case NONE -> 0L;
-        };
+    public long glGetQueryObjectui64(int id, int pname)
+    {
+	    switch (timerQueryMode)
+	    {
+		    case CORE:
+			    return GL33C.glGetQueryObjectui64(id, pname);
+		    case ARB:
+			    return ARBTimerQuery.glGetQueryObjectui64(id, pname);
+				
+			default:
+		    case NONE:
+			    return 0L;
+	    }
     }
 
     // ===================== DEBUG OPERATIONS =====================

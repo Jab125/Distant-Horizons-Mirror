@@ -42,16 +42,30 @@ import java.nio.IntBuffer;
 /**
  * LWJGL2 implementation of {@link ILWJGLService}.
  */
-// TODO why is this a record?
-public record LWJGL2Service(
-	VAOMode vaoMode,
-	TimerQueryMode timerQueryMode,
-	DebugMode debugMode,
-	VertexAttribIMode vertexAttribIMode,
-	Long2ObjectOpenHashMap<GLSync> syncObjects) implements ILWJGLService
+public class LWJGL2Service implements ILWJGLService
 {
 	private static final Logger LOGGER = LogManager.getLogger("DistantHorizons/LWJGL2Service");
 	private static final LWJGL2DebugSupport debugSupport = new LWJGL2DebugSupport();
+	
+	private final VAOMode vaoMode;
+	private final TimerQueryMode timerQueryMode;
+	private final DebugMode debugMode;
+	private final VertexAttribIMode vertexAttribIMode;
+	private final Long2ObjectOpenHashMap<GLSync> syncObjects = new Long2ObjectOpenHashMap<GLSync>();
+	
+	
+	
+	private LWJGL2Service(
+		VAOMode vaoMode, 
+		TimerQueryMode timerQueryMode, 
+		DebugMode debugMode, 
+		VertexAttribIMode vertexAttribIMode) 
+	{ 
+		this.vaoMode = vaoMode;
+		this.timerQueryMode = timerQueryMode;
+		this.debugMode = debugMode;
+		this.vertexAttribIMode = vertexAttribIMode;
+	}
 	
 	
 	
@@ -222,7 +236,7 @@ public record LWJGL2Service(
 			vertexAttribIMode = VertexAttribIMode.NONE;
 		}
 		
-		return new LWJGL2Service(vaoMode, timerQueryMode, debugMode, vertexAttribIMode, new Long2ObjectOpenHashMap<>());
+		return new LWJGL2Service(vaoMode, timerQueryMode, debugMode, vertexAttribIMode);
 	}
 	
 	
@@ -277,26 +291,28 @@ public record LWJGL2Service(
 	public boolean isExtensionSupported(EGLExtension extension)
 	{
 		ContextCapabilities caps = GLContext.getCapabilities();
-		return switch (extension)
+		switch (extension)
 		{
-			case ARB_buffer_storage -> caps.GL_ARB_buffer_storage;
-			case ARB_multi_draw_indirect -> caps.GL_ARB_multi_draw_indirect;
-			case ARB_draw_elements_base_vertex -> caps.GL_ARB_draw_elements_base_vertex;
-			case ARB_shader_storage_buffer_object -> caps.GL_ARB_shader_storage_buffer_object;
-			case ARB_sync -> caps.GL_ARB_sync;
-			case ARB_timer_query -> caps.GL_ARB_timer_query;
-			case ARB_debug_output -> caps.GL_ARB_debug_output;
-			case KHR_debug -> caps.GL_KHR_debug;
-			case AMD_debug_output -> caps.GL_AMD_debug_output;
-			case ARB_uniform_buffer_object -> caps.GL_ARB_uniform_buffer_object;
-			case ARB_vertex_array_object -> caps.GL_ARB_vertex_array_object;
-			case ARB_map_buffer_range -> caps.GL_ARB_map_buffer_range;
-			case ARB_copy_buffer -> caps.GL_ARB_copy_buffer;
-			case ARB_texture_storage -> caps.GL_ARB_texture_storage;
-			case ARB_base_instance -> caps.GL_ARB_base_instance;
-			case ARB_compatibility -> caps.GL_ARB_compatibility;
-			case ARB_instanced_arrays -> caps.GL_ARB_instanced_arrays;
-		};
+			case ARB_buffer_storage: return caps.GL_ARB_buffer_storage;
+			case ARB_multi_draw_indirect: return caps.GL_ARB_multi_draw_indirect;
+			case ARB_draw_elements_base_vertex: return caps.GL_ARB_draw_elements_base_vertex;
+			case ARB_shader_storage_buffer_object: return caps.GL_ARB_shader_storage_buffer_object;
+			case ARB_sync: return caps.GL_ARB_sync;
+			case ARB_timer_query: return caps.GL_ARB_timer_query;
+			case ARB_debug_output: return caps.GL_ARB_debug_output;
+			case KHR_debug: return caps.GL_KHR_debug;
+			case AMD_debug_output: return caps.GL_AMD_debug_output;
+			case ARB_uniform_buffer_object: return caps.GL_ARB_uniform_buffer_object;
+			case ARB_vertex_array_object: return caps.GL_ARB_vertex_array_object;
+			case ARB_map_buffer_range: return caps.GL_ARB_map_buffer_range;
+			case ARB_copy_buffer: return caps.GL_ARB_copy_buffer;
+			case ARB_texture_storage: return caps.GL_ARB_texture_storage;
+			case ARB_base_instance: return caps.GL_ARB_base_instance;
+			case ARB_compatibility: return caps.GL_ARB_compatibility;
+			case ARB_instanced_arrays: return caps.GL_ARB_instanced_arrays;
+			
+			default: throw new UnsupportedOperationException("No logic defined for extension ["+extension+"].");
+		}
 	}
 	
 	@Override
