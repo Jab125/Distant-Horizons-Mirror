@@ -554,7 +554,6 @@ public abstract class AbstractModInitializer
 		// graphics/rendering
 		#if MC_VER <= MC_1_12_2
 		Config.Client.Advanced.Graphics.Experimental.renderingEngine.setMcVersionOverrideValue(EDhApiRenderingEngine.OPEN_GL);
-		Config.Common.WorldGenerator.generatorPlan.setMcVersionOverrideValue(EDhApiGeneratorPlan.CHUNKS_ONLY);
 		Config.Common.WorldGenerator.chunkGeneratorMode.setMcVersionOverrideValue(EDhApiDistantGeneratorMode.INTERNAL_SERVER);
 		
 		// Disabled since it prevents the JVM from exiting in 1.7.10
