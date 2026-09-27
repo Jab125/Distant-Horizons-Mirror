@@ -20,6 +20,7 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.seibel.distanthorizons.common.wrappers.block.IBiomeHandler;
+import com.seibel.distanthorizons.common.wrappers.modAccessor.ICubicChunksCommonAccessor;
 import com.seibel.distanthorizons.common.wrappers.modAccessor.IGregTechCommonAccessor;
 import com.seibel.distanthorizons.common.wrappers.modAccessor.IGtnhLibCommonAccessor;
 import com.seibel.distanthorizons.common.wrappers.modAccessor.IHodgePodgeCommonAccessor;
@@ -87,6 +88,11 @@ public class ForgeMain extends AbstractModInitializer implements IForgeMain
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) 
     {
+        if (Loader.isModLoaded("cubicchunks"))
+        {
+            this.addModCompatAccessor(ICubicChunksCommonAccessor.class, CubicChunksAccessor::new);
+        }
+
         if (FMLCommonHandler.instance()
             .getEffectiveSide()
             .isClient()) 
