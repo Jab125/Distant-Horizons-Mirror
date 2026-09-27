@@ -84,21 +84,6 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	}
 	
 	
-	@SubscribeEvent
-	public void onWorldLoad(WorldEvent.Load event)
-	{
-		if (event.getWorld().isRemote)
-		{
-			if (!Arrays.asList(Config.Client.Advanced.Graphics.Texture.blocksDontUseSideTextureCsv.get().split(",")).contains("grass"))
-			{
-				String message = "\n" + MinecraftTextFormat.ORANGE + "Distant Horizons: `grass` entry in `blocksDontUseSideTextureCsv` not found." + MinecraftTextFormat.CLEAR_FORMATTING + "\n" +
-					"This will cause grass blocks with LOD textures enabled render incorrectly." + "\n" +
-					"It is recommended to add `grass` into the blocksDontUseSideTextureCsv entry. \n(Graphics->LOD Textures->Blocks Don't Use Side Textures) or delete your config file to let it regenerate";
-				ClientApi.INSTANCE.queueFastChatMessage(message);
-			}
-		}
-	}
-	
 	//==============//
 	// chunk events //
 	//==============//
