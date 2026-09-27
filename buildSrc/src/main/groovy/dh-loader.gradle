@@ -807,7 +807,11 @@ if (isNotCommonProject) {
 
     if (project.ext.needsDowngrade) {
         gradle.taskGraph.whenReady { graph ->
-            if (graph.hasTask("${project.path}:runClient")) {
+			// Only the top level projects need to be re-mapped (those that can be run).
+			// James isn't sure why, but things break otherwise.
+            if (graph.hasTask("${project.path}:runClient")
+                || graph.hasTask("${project.path}:runServer"))
+            {
                 downgradeJar.inputFile.set(shadowJar.archiveFile)
                 downgradeJar.archiveClassifier.set("dev")
                 shadeDowngradedApi.archiveClassifier.set("dev")
