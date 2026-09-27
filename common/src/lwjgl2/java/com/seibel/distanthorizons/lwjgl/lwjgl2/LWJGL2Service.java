@@ -1,23 +1,15 @@
 package com.seibel.distanthorizons.lwjgl.lwjgl2;
 
-import com.seibel.distanthorizons.lwjgl.AbstractMemoryStack;
+import com.seibel.distanthorizons.lwjgl.*;
 import org.lwjgl.BufferUtils;
-import com.seibel.distanthorizons.lwjgl.IDebugMessageHandler;
-import com.seibel.distanthorizons.lwjgl.ILWJGLService;
 import com.seibel.distanthorizons.lwjgl.lwjgl2.memory.MemoryStack;
 import com.seibel.distanthorizons.lwjgl.lwjgl2.memory.MemoryUtilities;
 import com.seibel.distanthorizons.lwjgl.lwjgl2.memory.Pointer;
-import com.seibel.distanthorizons.lwjgl.EGLExtension;
 import it.unimi.dsi.fastutil.longs.Long2ObjectOpenHashMap;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.LWJGLException;
-import org.lwjgl.opengl.APPLEVertexArrayObject;
-import org.lwjgl.opengl.ARBBufferStorage;
-import org.lwjgl.opengl.ARBTimerQuery;
-import org.lwjgl.opengl.ARBVertexArrayObject;
-import org.lwjgl.opengl.ContextCapabilities;
-import org.lwjgl.opengl.EXTGpuShader4;
+import org.lwjgl.opengl.*;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL14;
@@ -28,10 +20,6 @@ import org.lwjgl.opengl.GL31;
 import org.lwjgl.opengl.GL32;
 import org.lwjgl.opengl.GL33;
 import org.lwjgl.opengl.GL43;
-import org.lwjgl.opengl.Display;
-import org.lwjgl.opengl.GLContext;
-import org.lwjgl.opengl.GLSync;
-import org.lwjgl.opengl.KHRDebug;
 
 import java.io.PrintStream;
 import java.nio.Buffer;
@@ -312,6 +300,19 @@ public class LWJGL2Service implements ILWJGLService
 			case ARB_instanced_arrays: return caps.GL_ARB_instanced_arrays;
 			
 			default: throw new UnsupportedOperationException("No logic defined for extension ["+extension+"].");
+		}
+	}
+	
+	@Override
+	public boolean isFeatureSupported(EGLFeature feature)
+	{
+		GLCapabilities caps = GL.getCapabilities();
+		switch (feature)
+		{
+			case glBufferStorage: return caps.glBufferStorage != 0L;
+			case glBindVertexBuffer: return caps.glBindVertexBuffer != 0L;
+			
+			default: throw new UnsupportedOperationException("No logic defined for feature ["+feature+"].");
 		}
 	}
 	

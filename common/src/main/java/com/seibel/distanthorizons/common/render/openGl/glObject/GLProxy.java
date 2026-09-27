@@ -34,6 +34,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccess
 import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.lwjgl.EGLExtension;
+import com.seibel.distanthorizons.lwjgl.EGLFeature;
 import org.lwjgl.opengl.GL11;
 
 #if MC_VER > MC_1_12_2
@@ -195,14 +196,14 @@ public class GLProxy
 		this.namedObjectSupported = LWJGL.isOpenGLVersionSupported(4,5);
 		
 		// Check if we can use the Buffer Storage, which is available in GL4.4 or after
-		this.bufferStorageSupported = LWJGL.isOpenGLVersionSupported(4,4);
+		this.bufferStorageSupported = LWJGL.isFeatureSupported(EGLFeature.glBufferStorage);
 		if (!this.bufferStorageSupported)
 		{
 			LOGGER.info("This GPU doesn't support Buffer Storage (OpenGL 4.4), falling back to using other methods.");
 		}
 		
 		// Check if we can use the make-over version of Vertex Attribute, which is available in GL4.3 or after
-		this.vertexAttributeBufferBindingSupported =  LWJGL.isOpenGLVersionSupported(4,3);
+		this.vertexAttributeBufferBindingSupported = LWJGL.isFeatureSupported(EGLFeature.glBindVertexBuffer);
 		
 		// used by instanced rendering
 		this.vertexAttribDivisorSupported = LWJGL.isOpenGLVersionSupported(3,3);
