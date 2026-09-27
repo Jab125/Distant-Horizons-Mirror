@@ -22,6 +22,7 @@ import org.lwjgl.opengl.GL33;
 import org.lwjgl.opengl.GL43;
 
 import java.io.PrintStream;
+import java.lang.reflect.Field;
 import java.nio.Buffer;
 import java.nio.ByteBuffer;
 import java.nio.FloatBuffer;
@@ -306,15 +307,50 @@ public class LWJGL2Service implements ILWJGLService
 	@Override
 	public boolean isFeatureSupported(EGLFeature feature)
 	{
-		GLCapabilities caps = GL.getCapabilities();
+		ContextCapabilities caps = GLContext.getCapabilities();
 		switch (feature)
 		{
-			case glBufferStorage: return caps.glBufferStorage != 0L;
-			case glBindVertexBuffer: return caps.glBindVertexBuffer != 0L;
+			case glBufferStorage: return reflectivelyGetCapabilitySupported(caps, "glBufferStorage");
+			case glBindVertexBuffer: return reflectivelyGetCapabilitySupported(caps, "glBindVertexBuffer");
 			
 			default: throw new UnsupportedOperationException("No logic defined for feature ["+feature+"].");
 		}
 	}
+	private static boolean reflectivelyGetCapabilitySupported(ContextCapabilities caps, String fieldName)
+	{
+		// try finding the field by its name
+		Field desiredField = null;
+		Field[] fields = caps.getClass().getDeclaredFields();
+		for (int i = 0; i < fields.length; i++)
+		{
+			Field field = fields[i];
+			if (field.getName().equals(fieldName))
+			{
+				desiredField = field;
+				break;
+			}
+		}
+		
+		if (desiredField == null)
+		{
+			// LWJGL 2 should be stable enough that if this comes up it means we screwed up the capitalization or something similar
+			throw new NullPointerException("No capability field found with the name ["+fieldName+"].");
+		}
+		
+		// the field is normally private, we need it public
+		desiredField.setAccessible(true);
+		try
+		{
+			Object obj = desiredField.get(caps);
+			return ((Long) obj) != 0; // if the pointer is non-null, then this is a valid method
+		}
+		catch (IllegalAccessException e)
+		{
+			LOGGER.error("Unable to access GL capability field ["+fieldName+"] due to error: ["+e.getMessage()+"].", e);
+			return false;
+		}
+	}
+	
 	
 	@Override
 	public int getPointerSize()
