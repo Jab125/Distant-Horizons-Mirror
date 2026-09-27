@@ -96,7 +96,6 @@ public class GLProxy
 	private static GLProxy instance = null;
 	
 	
-	public boolean namedObjectSupported = false; // ~OpenGL 4.5 (UNUSED CURRENTLY)
 	public boolean bufferStorageSupported = false; // ~OpenGL 4.4
 	public boolean vertexAttributeBufferBindingSupported = false; // ~OpenGL 4.3
 	public boolean instancedArraysSupported = false;
@@ -190,10 +189,6 @@ public class GLProxy
 		//======================//
 		// get GPU capabilities //
 		//======================//
-		
-		// UNUSED currently
-		// Check if we can use the named version of all calls, which is available in GL4.5 or after
-		this.namedObjectSupported = LWJGL.isOpenGLVersionSupported(4,5);
 		
 		// Check if we can use the Buffer Storage, which is available in GL4.4 or after
 		this.bufferStorageSupported = LWJGL.isFeatureSupported(EGLFeature.glBufferStorage);
