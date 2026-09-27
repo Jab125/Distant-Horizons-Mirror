@@ -115,6 +115,10 @@ tasks.withType(JavaCompile).configureEach {
     
     // silence the "java 8 is deprecated" javac compiler warnings
     options.compilerArgs << '-Xlint:-options'
+    
+    // makes javac's "sun.misc.Unsafe is internal proprietary API" warning
+    // suppressible via @SuppressWarnings("sunapi") (see MemoryUtilities)
+    options.compilerArgs << '-XDenableSunApiLintControl'
 }
 
 java {
