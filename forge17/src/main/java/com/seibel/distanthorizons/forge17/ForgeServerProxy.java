@@ -16,14 +16,18 @@ import com.seibel.distanthorizons.common.AbstractModInitializer;
 import com.seibel.distanthorizons.common.util.ProxyUtil;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.ServerPlayerWrapper;
+import com.seibel.distanthorizons.common.wrappers.modAccessor.ICubicChunksCommonAccessor;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.misc.IServerPlayerWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
+import com.seibel.distanthorizons.forge17.modAccessor.CubicChunksEventHandler;
 
 import cpw.mods.fml.common.FMLCommonHandler;
+import cpw.mods.fml.common.Loader;
 import cpw.mods.fml.common.eventhandler.SubscribeEvent;
 import cpw.mods.fml.common.gameevent.PlayerEvent;
 import cpw.mods.fml.common.gameevent.TickEvent;
@@ -52,7 +56,12 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 		FMLCommonHandler.instance()
 			.bus()
 			.register(this);
-		
+
+		if (Loader.isModLoaded("cubicchunks"))
+		{
+			MinecraftForge.EVENT_BUS.register(new CubicChunksEventHandler());
+		}
+
 		if (this.isDedicated)
 		{
 			ForgePluginPacketSender.setPacketHandler(ServerApi.INSTANCE::pluginMessageReceived);
@@ -134,6 +143,16 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 		{
             return;
         }
+
+		// Cubic Chunks saves columns after their cubes are unloaded,
+		// they are handled by CubicChunksEventHandler instead
+		ICubicChunksCommonAccessor cubicChunksAccessor = ModAccessorInjector.INSTANCE.get(ICubicChunksCommonAccessor.class);
+		if (cubicChunksAccessor != null
+			&& cubicChunksAccessor.isCubicWorld(event.world))
+		{
+			return;
+		}
+
 	    MixinChunkMapCommon.onChunkSave((WorldServer) event.world, event.getChunk());
     }
 

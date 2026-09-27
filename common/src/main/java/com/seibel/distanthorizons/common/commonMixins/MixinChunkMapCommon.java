@@ -6,6 +6,10 @@ import com.seibel.distanthorizons.core.api.internal.ServerApi;
 import com.seibel.distanthorizons.core.api.internal.SharedApi;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
+#if MC_VER <= MC_1_7_10
+import com.seibel.distanthorizons.common.wrappers.modAccessor.ICubicChunksCommonAccessor;
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
+#endif
 #if MC_VER <= MC_1_12_2
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
@@ -18,6 +22,10 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 public class MixinChunkMapCommon
 {
+	#if MC_VER <= MC_1_7_10
+	private static final ICubicChunksCommonAccessor CUBIC_CHUNKS_ACCESSOR = ModAccessorInjector.INSTANCE.get(ICubicChunksCommonAccessor.class);
+	#endif
+
 	#if MC_VER <= MC_1_12_2
 	public static void onChunkSave(WorldServer level, Chunk chunk)
 	#else
@@ -63,6 +71,14 @@ public class MixinChunkMapCommon
 		// this logic should prevent that from happening
 		#if MC_VER <= MC_1_7_10
 		if (!ChunkWrapper.canSaveChunk(chunk))
+		{
+			return;
+		}
+
+		// Cubic Chunks unloads a column's cubes one by one,
+		// only capture the column while all of them are still loaded
+		if (CUBIC_CHUNKS_ACCESSOR != null
+			&& !CUBIC_CHUNKS_ACCESSOR.areAllCubesReady(chunk))
 		{
 			return;
 		}

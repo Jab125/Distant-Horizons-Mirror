@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.wrappers.modAccessor;
 
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IModAccessor;
 #if MC_VER <= MC_1_12_2
+import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 import org.jetbrains.annotations.Nullable;
@@ -41,5 +42,17 @@ public interface ICubicChunksCommonAccessor extends IModAccessor
 	 */
 	@Nullable
 	ExtendedBlockStorage[] getCubeStorages(Chunk chunk);
+
+	/**
+	 * Returns true if all of the column's cubes from Y 0 - 256 are loaded and lit,
+	 * so {@link #getCubeStorages} doesn't need to load or generate anything. <br>
+	 * Always true if the chunk isn't in a Cubic Chunks world. <br><br>
+	 *
+	 * Must be called on the thread that owns the world.
+	 */
+	boolean areAllCubesReady(Chunk chunk);
+
+	/** @return true if the world is a Cubic Chunks world */
+	boolean isCubicWorld(@Nullable World world);
 	#endif
 }
