@@ -146,18 +146,22 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 		}
 	}
 	
-	@SubscribeEvent
+	//Handled in MixinNetHandlerPlayClient
+/*	@SubscribeEvent
 	public void clientChunkLoadEvent(ChunkEvent.Load event)
 	{
-		if (MC.clientConnectedToDedicatedServer())
+		if (!event.getWorld().isRemote || !MC.clientConnectedToDedicatedServer())
 		{
-			if (event.getWorld() instanceof WorldServer)
-			{
-				WorldServer worldServer = (WorldServer) event.getWorld();
-				MixinChunkMapCommon.onChunkSave(worldServer, event.getChunk());
-			}
+			return;
 		}
-	}
+		
+		ILevelWrapper wrappedLevel = ProxyUtil.getLevelWrapper(event.getWorld());
+		SharedApi.INSTANCE.applyChunkUpdate(
+			new ChunkWrapper(event.getChunk(), wrappedLevel),
+			wrappedLevel,
+			true
+		);
+	}*/
 	
 	//endregion
 	
