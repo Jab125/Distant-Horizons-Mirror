@@ -642,16 +642,16 @@ public class DhInternalServerGenerator
 						}
 						#endif
 						
-						#if MC_VER <= MC_1_7_10
 						// don't unload chunks a player is watching, MC still owns those.
 						// this mirrors the same guard vanilla uses in WorldServer.saveAllChunks().
+						#if MC_VER <= MC_1_7_10
 						if (!level.getPlayerManager().func_152621_a(neighborPosX, neighborPosZ))
 						{
 							provider.dropChunk(neighborPosX, neighborPosZ);
 						}
 						#else
 						Chunk chunk = provider.getLoadedChunk(neighborPosX, neighborPosZ);
-						if (chunk != null)
+						if (chunk != null && !level.getPlayerChunkMap().contains(neighborPosX, neighborPosZ))
 						{
 							provider.queueUnload(chunk);
 						}
