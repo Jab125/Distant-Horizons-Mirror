@@ -1,6 +1,7 @@
 package com.seibel.distanthorizons.lwjgl.lwjgl3;
 
 import com.seibel.distanthorizons.lwjgl.*;
+import com.seibel.distanthorizons.lwjgl.GL33;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.lwjgl.PointerBuffer;
@@ -893,6 +894,12 @@ public class LWJGL3Service implements ILWJGLService
     public void glDisable(int cap) {
         GL11C.glDisable(cap);
     }
+	
+	@Override
+	public void glDisablei(int target, int index) { GL33C.glDisablei(target, index); }
+	
+	@Override 
+	public void glEnablei(int target, int index) { GL33C.glEnablei(target, index); }
 	
 	@Override
 	public boolean glIsEnabled(int cap)

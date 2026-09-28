@@ -35,6 +35,7 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL33C;
 
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
@@ -181,27 +182,39 @@ public class MinecraftGLWrapper
 	/** @see GL11#GL_BLEND */
 	public void enableBlend()
 	{
-		LWJGL.glEnable(GL11.GL_BLEND);
 		#if MC_VER <= MC_1_7_10
+		LWJGL.glEnable(GL11.GL_BLEND);
 		#elif MC_VER <= MC_1_12_2
 		GlStateManager.enableBlend();
+		LWJGL.glEnable(GL11.GL_BLEND);
 		#elif MC_VER <= MC_26_1_2
 		GlStateManager._enableBlend();
+		LWJGL.glEnable(GL11.GL_BLEND);
 		#else
-		GlStateManager._enableBlend(0);
+		for (int i = 0; i < 8; i++) // MC has 8 blend indicies that can be set
+		{
+			GlStateManager._enableBlend(i);
+			LWJGL.glEnablei(GL11.GL_BLEND, i);
+		}
 		#endif
 	}
 	/** @see GL11#GL_BLEND */
 	public void disableBlend()
 	{
-		LWJGL.glDisable(GL11.GL_BLEND);
 		#if MC_VER <= MC_1_7_10
+		LWJGL.glDisable(GL11.GL_BLEND);
 		#elif MC_VER <= MC_1_12_2
 		GlStateManager.disableBlend();
+		LWJGL.glDisable(GL11.GL_BLEND);
 		#elif MC_VER <= MC_26_1_2
 		GlStateManager._disableBlend();
+		LWJGL.glDisable(GL11.GL_BLEND);
 		#else
-		GlStateManager._disableBlend(0); 
+		for (int i = 0; i < 8; i++) // MC has 8 blend indicies that can be set
+		{
+			GlStateManager._disableBlend(i);
+			LWJGL.glDisablei(GL11.GL_BLEND, i);
+		} 
 		#endif
 	}
 	

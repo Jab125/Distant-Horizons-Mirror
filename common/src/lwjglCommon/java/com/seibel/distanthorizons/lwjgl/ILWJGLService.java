@@ -229,6 +229,8 @@ public interface ILWJGLService
 	
 	void glEnable(int cap);
 	void glDisable(int cap);
+	void glEnablei(int cap, int value);
+	void glDisablei(int cap, int value);
 	boolean glIsEnabled(int cap);
 	void glBlendFunc(int sfactor, int dfactor);
 	void glBlendFuncSeparate(int srcRGB, int dstRGB, int srcAlpha, int dstAlpha);

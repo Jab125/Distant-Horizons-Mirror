@@ -1105,6 +1105,12 @@ public class LWJGL2Service implements ILWJGLService
 	}
 	
 	@Override
+	public void glDisablei(int target, int index) { GL33C.glDisablei(target, index); }
+	
+	@Override
+	public void glEnablei(int target, int index) { GL33C.glEnablei(target, index); }
+	
+	@Override
 	public boolean glIsEnabled(int cap)
 	{
 		return GL11.glIsEnabled(cap);
