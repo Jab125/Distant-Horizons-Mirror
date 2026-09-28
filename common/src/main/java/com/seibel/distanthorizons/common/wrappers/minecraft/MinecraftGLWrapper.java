@@ -35,7 +35,6 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import org.lwjgl.opengl.GL11;
-import org.lwjgl.opengl.GL33C;
 
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
