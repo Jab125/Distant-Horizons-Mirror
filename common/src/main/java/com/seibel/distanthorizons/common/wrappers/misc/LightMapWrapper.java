@@ -62,7 +62,15 @@ public class LightMapWrapper implements ILightMapWrapper
 	 * which texture index IE 0,1,2... the lightmap will be bound to. <Br> 
 	 * Related to but different from {@link org.lwjgl.opengl.GL13#GL_TEXTURE0}.
 	 */
-	public static final int GL_BOUND_INDEX = 0;
+	public static final int GL_DH_BOUND_INDEX = 0;
+	/**
+	 * Needed for MC 26.1.2+ specifically,
+	 * otherwise Iris rendering won't have a lightmap for DH LODs. <Br><Br>
+	 *     
+	 * According to IMS as of 09-27-2026 this is the same
+	 * texture index that vanilla MC has been binding the lightmap too.
+	 */
+	public static final int GL_IRIS_BOUND_INDEX = 2;
 	
 	private int textureId = 0;
 	

@@ -32,7 +32,6 @@ import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import org.jetbrains.annotations.Nullable;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
-import org.lwjgl.opengl.GL14;
 import org.lwjgl.opengl.GL30;
 
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
@@ -562,7 +561,11 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 	public void bindLightmap(ILightMapWrapper lightMapWrapper)
 	{
 		LightMapWrapper lightMap = (LightMapWrapper)lightMapWrapper;
-		GLMC.glActiveTexture(GL13.GL_TEXTURE0 + LightMapWrapper.GL_BOUND_INDEX);
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0 + LightMapWrapper.GL_DH_BOUND_INDEX);
+		GLMC.glBindTexture(lightMap.getOpenGlId());
+		
+		// Iris expects the lightmap in a different index on certain minecraft versions, so handle that here
+		GLMC.glActiveTexture(GL13.GL_TEXTURE0 + LightMapWrapper.GL_IRIS_BOUND_INDEX);
 		GLMC.glBindTexture(lightMap.getOpenGlId());
 	}
 	
