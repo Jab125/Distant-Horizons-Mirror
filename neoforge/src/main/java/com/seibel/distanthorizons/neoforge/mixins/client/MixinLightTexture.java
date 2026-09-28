@@ -109,8 +109,8 @@ public class MixinLightTexture
 		this.renderWrapper.setLightmapId(glTexture.glId());
 		#elif MC_VER <= MC_26_1_2
 		// both options are available since the renderer can be changed to either Blaze3D or OpenGL
-		GlTexture glTexture = (GlTexture) this.texture;
-		this.renderWrapper.setLightmapId(glTexture.glId());
+		int textureId = NeoforgeTextureUnwrapper.getGlTextureIdFromGpuTexture(this.texture);
+		this.renderWrapper.setLightmapId(textureId);
 		
 		this.renderWrapper.setLightmapGpuTexture(this.texture);
 		#else
