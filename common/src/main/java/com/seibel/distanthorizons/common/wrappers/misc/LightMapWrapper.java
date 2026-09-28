@@ -64,11 +64,9 @@ public class LightMapWrapper implements ILightMapWrapper
 	 */
 	public static final int GL_DH_BOUND_INDEX = 0;
 	/**
-	 * Needed for MC 26.1.2+ specifically,
-	 * otherwise Iris rendering won't have a lightmap for DH LODs. <Br><Br>
-	 *     
-	 * According to IMS as of 09-27-2026 this is the same
-	 * texture index that vanilla MC has been binding the lightmap too.
+	 * Only needed for MC 26.1.2+, using for older MC versions 
+	 * will corrupt shader rendering. <br>
+	 * If missing for MC 26.1.2+ Iris rendering won't have a lightmap for DH LODs.
 	 */
 	public static final int GL_IRIS_BOUND_INDEX = 2;
 	

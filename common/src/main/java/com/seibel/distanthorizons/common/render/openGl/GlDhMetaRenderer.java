@@ -565,9 +565,15 @@ public class GlDhMetaRenderer implements IDhMetaRenderer
 		GLMC.glActiveTexture(GL13.GL_TEXTURE0 + LightMapWrapper.GL_DH_BOUND_INDEX);
 		GLMC.glBindTexture(lightMap.getOpenGlId());
 		
+		#if MC_VER <= MC_1_21_11
+		#else
+		// This is only needed for MC 26.1.2 and newer
+		// for older MC versions it causes issues due to overwriting existing Iris textures
+		
 		// Iris expects the lightmap in a different index on certain minecraft versions, so handle that here
 		GLMC.glActiveTexture(GL13.GL_TEXTURE0 + LightMapWrapper.GL_IRIS_BOUND_INDEX);
 		GLMC.glBindTexture(lightMap.getOpenGlId());
+		#endif
 	}
 	
 	public void unbindLightmap() 
