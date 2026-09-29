@@ -20,7 +20,9 @@ import java.util.Map;
 import java.util.function.Consumer;
 
 import com.seibel.distanthorizons.common.wrappers.block.IBiomeHandler;
+import com.seibel.distanthorizons.common.wrappers.modAccessor.ICubicChunksCommonAccessor;
 import com.seibel.distanthorizons.common.wrappers.modAccessor.IGregTechCommonAccessor;
+import com.seibel.distanthorizons.common.wrappers.modAccessor.IGtnhLibCommonAccessor;
 import com.seibel.distanthorizons.common.wrappers.modAccessor.IHodgePodgeCommonAccessor;
 import com.seibel.distanthorizons.common.wrappers.modAccessor.IRpleCommonAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.*;
@@ -86,6 +88,11 @@ public class ForgeMain extends AbstractModInitializer implements IForgeMain
     @Mod.EventHandler
     public void init(FMLInitializationEvent event) 
     {
+        if (Loader.isModLoaded("cubicchunks"))
+        {
+            this.addModCompatAccessor(ICubicChunksCommonAccessor.class, CubicChunksAccessor::new);
+        }
+
         if (FMLCommonHandler.instance()
             .getEffectiveSide()
             .isClient()) 
@@ -110,6 +117,12 @@ public class ForgeMain extends AbstractModInitializer implements IForgeMain
 				// we don't use try-add here since there's some additional validation beyond 
 				// just the mod being present 
 				this.addModCompatAccessor(IAngelicaAccessor.class, AngelicaAccessor::new);
+			}
+			
+			// GTNHLib
+			if (Loader.isModLoaded("gtnhlib"))
+			{
+				this.addModCompatAccessor(IGtnhLibCommonAccessor.class, GtnhLibAccessor::new);
 			}
 			
 			// RPLE

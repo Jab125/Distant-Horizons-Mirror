@@ -19,9 +19,12 @@
 package com.seibel.distanthorizons.common.wrappers.chunk;
 
 import com.seibel.distanthorizons.api.DhApi;
+import com.seibel.distanthorizons.common.util.threading.ServerThreadTaskHandler;
 import com.seibel.distanthorizons.common.wrappers.block.BiomeWrapper;
 import com.seibel.distanthorizons.common.wrappers.block.BlockStateWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.MutableBlockPosWrapper;
+import com.seibel.distanthorizons.common.wrappers.modAccessor.ICubicChunksCommonAccessor;
+import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
@@ -34,18 +37,21 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.world.IBiomeWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.ILevelWrapper;
 #if MC_VER <= MC_1_7_10
 import net.minecraft.block.Block;
+import net.minecraft.init.Blocks;
 import net.minecraft.world.biome.BiomeGenBase;
 import net.minecraft.world.chunk.Chunk;
 import com.seibel.distanthorizons.common.backports.FakeBlockState;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 #elif MC_VER <= MC_1_12_2
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.init.Blocks;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.chunk.storage.ExtendedBlockStorage;
 #else
 import net.minecraft.core.BlockPos;
+import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.level.chunk.ChunkAccess;
 import net.minecraft.world.level.chunk.ProtoChunk;
 import net.minecraft.world.level.levelgen.Heightmap;
@@ -104,6 +110,10 @@ public class ChunkWrapper implements IChunkWrapper
 	private static boolean heightmapThreadWarningLogged = false;
 	
 	#if MC_VER <= MC_1_12_2
+	private static final ICubicChunksCommonAccessor CUBIC_CHUNKS_ACCESSOR = ModAccessorInjector.INSTANCE.get(ICubicChunksCommonAccessor.class);
+	#endif
+
+	#if MC_VER <= MC_1_12_2
 	private final Chunk chunk;
 	#else
 	private final ChunkAccess chunk;
@@ -131,6 +141,17 @@ public class ChunkWrapper implements IChunkWrapper
 	#if MC_VER <= MC_1_7_10
 	private final BiomeGenBase[] biomeList;
 	#endif
+
+	#if MC_VER <= MC_1_12_2
+	/**
+	 * Only set if Cubic Chunks is present and the chunk is in a cubic world, null otherwise. <br>
+	 * The column's cube storages captured on construction, indexed from {@link #getInclusiveMinBuildHeight()}.
+	 * Block reads go through this instead of the {@link Chunk} so we don't touch
+	 * Cubic Chunks' cube cache from DH threads (which can load/generate cubes). <br>
+	 * Null entries are missing sections.
+	 */
+	private final ExtendedBlockStorage[] cubicChunksSections;
+	#endif
 	
 	
 	
@@ -150,6 +171,10 @@ public class ChunkWrapper implements IChunkWrapper
 	public ChunkWrapper(ChunkAccess chunk, ILevelWrapper wrappedLevel)
 	#endif
 	{
+		#if MC_VER == MC_1_7_10
+		assert chunk.worldObj == null || chunk.worldObj.isRemote || ServerThreadTaskHandler.INSTANCE.isCurrentThread() : "Server ChunkWrappers must be constructed on the Minecraft server thread";
+		#endif
+
 		this.chunk = chunk;
 		this.wrappedLevel = wrappedLevel;
 		
@@ -161,18 +186,28 @@ public class ChunkWrapper implements IChunkWrapper
 		#else
 		this.chunkPos = new DhChunkPos(chunk.getPos().x(), chunk.getPos().z());
 		#endif
+
+		#if MC_VER <= MC_1_12_2
+		this.cubicChunksSections = getCubicChunksSections(chunk);
+		#endif
 	}
 	
-	#if MC_VER <= MC_1_7_10
-	/** used for copying */
+	/** used for copying, shares the data captured on construction instead of capturing it again */
 	private ChunkWrapper(ChunkWrapper that, ILevelWrapper wrappedLevel)
 	{
 		this.chunk = that.chunk;
 		this.wrappedLevel = wrappedLevel;
 		this.chunkPos = new DhChunkPos(that.chunkPos.getX(), that.chunkPos.getZ());
+
+		#if MC_VER <= MC_1_7_10
 		this.biomeList = that.biomeList;
+		#endif
+
+		#if MC_VER <= MC_1_12_2
+		// the array is never modified after creation, so it can be shared
+		this.cubicChunksSections = that.cubicChunksSections;
+		#endif
 	}
-	#endif
 	
 	
 	
@@ -180,24 +215,10 @@ public class ChunkWrapper implements IChunkWrapper
 	//region
 	
 	@Override
-	public ChunkWrapper copy()
-	{
-		#if MC_VER <= MC_1_7_10
-		return new ChunkWrapper(this, this.wrappedLevel);
-		#else
-		return new ChunkWrapper(this.chunk, this.wrappedLevel);
-		#endif
-	}
+	public ChunkWrapper copy() { return new ChunkWrapper(this, this.wrappedLevel); }
 
 	@Override
-	public ChunkWrapper copyWithLevel(ILevelWrapper levelWrapper)
-	{
-		#if MC_VER <= MC_1_7_10
-		return new ChunkWrapper(this, levelWrapper);
-		#else
-		return new ChunkWrapper(this.chunk, levelWrapper);
-		#endif
-	}
+	public ChunkWrapper copyWithLevel(ILevelWrapper levelWrapper) { return new ChunkWrapper(this, levelWrapper); }
 	
 	//endregion
 	
@@ -221,6 +242,25 @@ public class ChunkWrapper implements IChunkWrapper
 			}
 		}
 		return biomeArray;
+	}
+	#endif
+
+	#if MC_VER <= MC_1_12_2
+	/**
+	 * Cubic Chunks only mirrors already loaded cubes into the chunk's storage array,
+	 * so get the storages from CC, which loads/generates any missing cubes. <br>
+	 * Only the section references are captured, not their contents. <br>
+	 * Must be called on the thread that owns the chunk.
+	 *
+	 * @return null if Cubic Chunks isn't present or the chunk isn't in a cubic world
+	 */
+	private static ExtendedBlockStorage[] getCubicChunksSections(Chunk chunk)
+	{
+		if (CUBIC_CHUNKS_ACCESSOR == null)
+		{
+			return null;
+		}
+		return CUBIC_CHUNKS_ACCESSOR.getCubeStorages(chunk);
 	}
 	#endif
 	
@@ -298,7 +338,7 @@ public class ChunkWrapper implements IChunkWrapper
 
 		// determine the lowest empty section (bottom up)
 		#if MC_VER <= MC_1_12_2
-		ExtendedBlockStorage[] sections = this.chunk.getBlockStorageArray();
+		ExtendedBlockStorage[] sections = this.getSections();
 		#else
 		LevelChunkSection[] sections = this.chunk.getSections();
 		#endif
@@ -334,7 +374,7 @@ public class ChunkWrapper implements IChunkWrapper
 
 		// determine the highest empty section (top down)
 		#if MC_VER <= MC_1_12_2
-		ExtendedBlockStorage[] sections = this.chunk.getBlockStorageArray();
+		ExtendedBlockStorage[] sections = this.getSections();
 		#else
 		LevelChunkSection[] sections = this.chunk.getSections();
 		#endif
@@ -512,8 +552,8 @@ public class ChunkWrapper implements IChunkWrapper
 		#if MC_VER <= MC_1_7_10
 		try
 		{
-			final Block block = this.chunk.getBlock(relX, relY, relZ);
-			final int meta = this.chunk.getBlockMetadata(relX, relY, relZ);
+			final Block block = this.getBlock(relX, relY, relZ);
+			final int meta = this.getBlockMetadata(relX, relY, relZ);
 			return BlockStateWrapper.fromBlockState(block, meta, this.wrappedLevel);
 		}
 		catch (Exception e)
@@ -538,7 +578,7 @@ public class ChunkWrapper implements IChunkWrapper
 		
 		try
 		{
-			return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(blockPos), this.wrappedLevel);
+			return BlockStateWrapper.fromBlockState(this.getChunkBlockState(blockPos), this.wrappedLevel);
 		}
 		catch (Exception e)
 		{
@@ -560,8 +600,8 @@ public class ChunkWrapper implements IChunkWrapper
 		#if MC_VER <= MC_1_7_10
 		try
 		{
-			final Block block = this.chunk.getBlock(relX, relY, relZ);
-			final int meta = this.chunk.getBlockMetadata(relX, relY, relZ);
+			final Block block = this.getBlock(relX, relY, relZ);
+			final int meta = this.getBlockMetadata(relX, relY, relZ);
 			return BlockStateWrapper.fromBlockState(block, meta, this.wrappedLevel, guess);
 		}
 		catch (Exception e)
@@ -585,7 +625,7 @@ public class ChunkWrapper implements IChunkWrapper
 	
 		try
 		{
-			return BlockStateWrapper.fromBlockState(this.chunk.getBlockState(pos), this.wrappedLevel, guess);
+			return BlockStateWrapper.fromBlockState(this.getChunkBlockState(pos), this.wrappedLevel, guess);
 		}
 			catch (Exception e)
 		{
@@ -599,6 +639,57 @@ public class ChunkWrapper implements IChunkWrapper
 		#endif
 	}
 	
+	#if MC_VER <= MC_1_12_2
+	private ExtendedBlockStorage[] getSections()
+	{
+		return (this.cubicChunksSections != null) ? this.cubicChunksSections : this.chunk.getBlockStorageArray();
+	}
+
+	/** @return null if the section is missing */
+	private ExtendedBlockStorage getCubicChunksSection(int relY)
+	{
+		int index = (relY - this.getInclusiveMinBuildHeight()) >> 4;
+		return (index >= 0 && index < this.cubicChunksSections.length) ? this.cubicChunksSections[index] : null;
+	}
+	#endif
+
+	#if MC_VER <= MC_1_7_10
+	private Block getBlock(int relX, int relY, int relZ)
+	{
+		if (this.cubicChunksSections == null)
+		{
+			return this.chunk.getBlock(relX, relY, relZ);
+		}
+
+		ExtendedBlockStorage section = this.getCubicChunksSection(relY);
+		return (section != null) ? section.getBlockByExtId(relX, relY & 15, relZ) : Blocks.air;
+	}
+
+	private int getBlockMetadata(int relX, int relY, int relZ)
+	{
+		if (this.cubicChunksSections == null)
+		{
+			return this.chunk.getBlockMetadata(relX, relY, relZ);
+		}
+
+		ExtendedBlockStorage section = this.getCubicChunksSection(relY);
+		return (section != null) ? section.getExtBlockMetadata(relX, relY & 15, relZ) : 0;
+	}
+	#elif MC_VER <= MC_1_12_2
+	private IBlockState getChunkBlockState(BlockPos relPos)
+	{
+		if (this.cubicChunksSections == null)
+		{
+			return this.chunk.getBlockState(relPos);
+		}
+
+		ExtendedBlockStorage section = this.getCubicChunksSection(relPos.getY());
+		return (section != null) ? section.get(relPos.getX(), relPos.getY() & 15, relPos.getZ()) : Blocks.AIR.getDefaultState();
+	}
+	#else
+	private BlockState getChunkBlockState(BlockPos relPos) { return this.chunk.getBlockState(relPos); }
+	#endif
+
 	@Override
 	public IMutableBlockPosWrapper getMutableBlockPosWrapper() { return MUTABLE_BLOCK_POS_WRAPPER_REF.get(); }
 	
@@ -747,7 +838,7 @@ public class ChunkWrapper implements IChunkWrapper
 			
 			// 1.12.2 and older doesn't store light blocks, so we have to bruteforce it
 			#if MC_VER <= MC_1_12_2
-			for (ExtendedBlockStorage section : this.chunk.getBlockStorageArray())
+			for (ExtendedBlockStorage section : this.getSections())
 			{
 				if (section == null || section.isEmpty())
 				{

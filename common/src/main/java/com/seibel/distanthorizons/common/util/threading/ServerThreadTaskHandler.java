@@ -45,6 +45,7 @@ public class ServerThreadTaskHandler
 	private final ConcurrentLinkedQueue<QueuedTask<?>> essentialTaskQueue = new ConcurrentLinkedQueue<>();
 	private IMinecraftSharedWrapper mcSharedWrapper = null;
 	private volatile boolean isShutdown;
+	private volatile Thread serverThread;
 	/**
 	 * When the current server tick started, or {@link #TICK_START_NOT_SET}. <br>
 	 * Written by {@link #onTickStart()} and consumed by {@link #runTasks()}, both of which
@@ -99,6 +100,7 @@ public class ServerThreadTaskHandler
 	/** Records the start of a server tick so {@link #runTasks()} can tell how much of it is left. */
 	public void onTickStart()
 	{
+		this.serverThread = Thread.currentThread();
 		this.tickStartNano = System.nanoTime();
 	}
 
@@ -184,11 +186,21 @@ public class ServerThreadTaskHandler
 	/** Prepares this singleton handler for a new Minecraft server session. */
 	public void reset()
 	{
+		this.serverThread = null;
 		this.isShutdown = false;
 		this.tickStartNano = TICK_START_NOT_SET;
 		if (mcSharedWrapper == null) {
 			mcSharedWrapper = SingletonInjector.INSTANCE.get(IMinecraftSharedWrapper.class);
 		}
+	}
+
+	/** Whether the caller is on the server thread, including before the first tick. */
+	public boolean isCurrentThread()
+	{
+		Thread currentServerThread = this.serverThread;
+		return (currentServerThread != null)
+			? Thread.currentThread() == currentServerThread
+			: Thread.currentThread().getName().equals("Server thread");
 	}
 
 	private static void cancelQueuedTasks(ConcurrentLinkedQueue<QueuedTask<?>> taskQueue)
