@@ -2,13 +2,6 @@ plugins {
     id 'unimined-forge112'
 }
 
-repositories {
-    maven {
-        name 'CleanroomMC Maven'
-        url 'https://maven.cleanroommc.com' // MixinBooter
-    }
-}
-
 // ==================== Mod Dependency Helper ====================
 
 def addMod(path, enabled) {
@@ -22,6 +15,9 @@ def addMod(path, enabled) {
 // ==================== Dependencies ====================
 
 dependencies {
+    shadowMe "org.spongepowered:mixin:0.8.7"
+    shadowMe "io.github.llamalad7:mixinextras-common:0.5.5"
+
     addMod('curse.maven:autoreglib-250363:2746011', rootProject.enable_quark)
     addMod('curse.maven:quark-243121:2924091', rootProject.enable_quark)
     
@@ -35,8 +31,6 @@ dependencies {
     addMod('curse.maven:gregtech-ce-unofficial-557242:5519022', rootProject.enable_gregtech)
     
     addMod('curse.maven:lumenized-1234162:6734060', rootProject.enable_lumenized)
-	
-    implementation("zone.rong:mixinbooter:11.8")
 }
 
 // ==================== Tasks ====================
