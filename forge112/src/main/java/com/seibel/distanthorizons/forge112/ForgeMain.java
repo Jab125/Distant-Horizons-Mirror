@@ -72,7 +72,7 @@ import static com.seibel.distanthorizons.common.wrappers.block.ClientBlockStateC
  * If you are looking for the real start of the mod
  * check out the ClientProxy.
  */
-@Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, acceptableRemoteVersions = "*", dependencies = "required-after:mixinbooter@[11.8,);")
+@Mod(modid = ModInfo.ID, name = ModInfo.NAME, version = ModInfo.VERSION, acceptableRemoteVersions = "*")
 public class ForgeMain extends AbstractModInitializer implements IForgeMain
 {
 	public static IIrisAccessor IRIS_ACCESSOR;

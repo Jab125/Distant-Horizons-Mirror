@@ -182,6 +182,7 @@ if (isNotCommonProject) {
                     'FMLCorePlugin': 'com.seibel.distanthorizons.forge112.DistantHorizonsLoadingPlugin',
                     'FMLCorePluginContainsFMLMod': true,
                     'FMLAT': "${gradle.ext.accessWidenerVersion}.distanthorizons_at.cfg",
+                    'TweakClass': "org.spongepowered.asm.launch.MixinTweaker",
                     'ForceLoadAsMod': true
                 )
             } else if (project.name == "forge17") {

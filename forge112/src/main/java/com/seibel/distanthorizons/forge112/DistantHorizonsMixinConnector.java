@@ -14,14 +14,8 @@ public class DistantHorizonsMixinConnector implements IMixinConnector
 	public void connect()
 	{
 		Mixins.addConfiguration("DistantHorizons.default.mixins.json");
-		if (ModDiscoverer.isModPresent("gregtech"))
-		{
-			Mixins.addConfiguration("DistantHorizons.gregtech.mixins.json");
-		}
-		if (ModDiscoverer.isModPresent("lumenized"))
-		{
-			Mixins.addConfiguration("DistantHorizons.lumenized.mixins.json");
-		}
+		Mixins.addConfiguration("DistantHorizons.gregtech.mixins.json");
+		Mixins.addConfiguration("DistantHorizons.lumenized.mixins.json");
 		if (!isIrisLoaded())
 		{
 			Mixins.addConfiguration("DistantHorizons.iris.mixins.json");

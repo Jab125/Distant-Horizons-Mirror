@@ -19,6 +19,8 @@
 
 package com.seibel.distanthorizons.forge112.mixins.client;
 
+import com.llamalad7.mixinextras.injector.wrapmethod.WrapMethod;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
 import com.seibel.distanthorizons.common.wrappers.gui.GetConfigScreen;
 import com.seibel.distanthorizons.common.wrappers.gui.TexturedButtonWidget;
 import com.seibel.distanthorizons.core.config.Config;
@@ -70,14 +72,16 @@ public class MixinOptionsScreen extends GuiScreen
 
 	}
 
-    @Inject(at = @At("HEAD"), method = "actionPerformed", cancellable = true)
-    private void lodconfig$actionPerformed(GuiButton button, CallbackInfo ci)
+    @WrapMethod(method = "actionPerformed")
+    private void lodconfig$actionPerformed(GuiButton button, Operation<Void> original)
     {
         if (button.id == button_id)
         {
             Minecraft.getMinecraft().displayGuiScreen(GetConfigScreen.getScreen(this));
-            ci.cancel();
+            return;
         }
+		
+		original.call(button);
     }
 
 }
