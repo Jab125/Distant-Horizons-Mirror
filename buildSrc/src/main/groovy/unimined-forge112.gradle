@@ -9,7 +9,6 @@ unimined.minecraft
         loader gradle.ext.forge_version
         useToolchains = false
         accessTransformer project(":common").file("src/main/resources/${gradle.ext.accessWidenerVersion}.distanthorizons_at.cfg")
-        setMixinConfigs(["DistantHorizons.default.mixins.json", "DistantHorizons.gregtech.mixins.json", "DistantHorizons.lumenized.mixins.json", "DistantHorizons.iris.mixins.json"])
     }
 
     mods 
