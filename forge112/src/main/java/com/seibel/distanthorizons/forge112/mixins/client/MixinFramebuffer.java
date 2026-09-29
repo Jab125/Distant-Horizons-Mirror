@@ -1,5 +1,7 @@
 package com.seibel.distanthorizons.forge112.mixins.client;
 
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
 import com.seibel.distanthorizons.common.commonMixins.IFramebufferDepthTexture;
 import com.seibel.distanthorizons.forge112.MixinFlags;
 import net.minecraft.client.renderer.GlStateManager;
@@ -16,7 +18,6 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
-import org.spongepowered.asm.mixin.injection.Redirect;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.nio.IntBuffer;
@@ -95,12 +96,12 @@ public abstract class MixinFramebuffer implements IFramebufferDepthTexture
 		GlStateManager.bindTexture(0);
 	}
 	
-	@Redirect(method = "createFramebuffer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/shader/Framebuffer;useDepth:Z", opcode = Opcodes.GETFIELD))
-	private boolean noopDepthBuffer(Framebuffer instance)
+	@WrapOperation(method = "createFramebuffer", at = @At(value = "FIELD", target = "Lnet/minecraft/client/shader/Framebuffer;useDepth:Z", opcode = Opcodes.GETFIELD))
+	private boolean noopDepthBuffer(Framebuffer instance, Operation<Boolean> original)
 	{
 		if (!MixinFlags.framebufferMixinEnabled)
 		{
-			return useDepth;
+			return original.call(instance); // return this.useDepth
 		}
 		
 		return false;
