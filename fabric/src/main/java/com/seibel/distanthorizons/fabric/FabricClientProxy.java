@@ -148,7 +148,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 			{
 				IClientLevelWrapper wrappedLevel = ClientLevelWrapper.getWrapper((ClientLevel) level);
 				
-				if (SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, blockPos.getX(), blockPos.getZ()))
+				if (!SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, blockPos.getX(), blockPos.getZ()))
 				{
 					// executor to prevent locking up the render/event thread
 					AbstractExecutorService executor = ThreadPoolUtil.getFileHandlerExecutor();
@@ -188,7 +188,7 @@ public class FabricClientProxy implements AbstractModInitializer.IEventProxy
 				{
 					IClientLevelWrapper wrappedLevel = ClientLevelWrapper.getWrapper((ClientLevel) level);
 					
-					if (SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, hitResult.getBlockPos().getX(), hitResult.getBlockPos().getZ()))
+					if (!SharedApi.isChunkAtBlockPosAlreadyUpdating(wrappedLevel, hitResult.getBlockPos().getX(), hitResult.getBlockPos().getZ()))
 					{
 						// executor to prevent locking up the render/event thread
 						AbstractExecutorService executor = ThreadPoolUtil.getFileHandlerExecutor();
