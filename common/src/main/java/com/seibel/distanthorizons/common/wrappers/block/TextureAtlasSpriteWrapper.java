@@ -23,6 +23,8 @@ import com.seibel.distanthorizons.common.backports.IBlockState;
 import com.seibel.distanthorizons.common.wrappers.interfaces.IMixinTextureAtlasSprite;
 import com.seibel.distanthorizons.common.wrappers.modAccessor.IGregTechCommonAccessor;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
+import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
@@ -32,6 +34,8 @@ import net.minecraft.client.renderer.IconFlipped;
 import net.minecraft.util.IIcon;
 import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
+import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
 #endif
 
 #if MC_VER < MC_1_17_1
@@ -47,6 +51,7 @@ import net.minecraft.client.renderer.texture.SpriteContents;
  */
 public class TextureAtlasSpriteWrapper
 {
+	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	private static final IGregTechCommonAccessor GREG_TECH_ACCESSOR = ModAccessorInjector.INSTANCE.get(IGregTechCommonAccessor.class);
 
 	#if MC_VER <= MC_1_7_10
@@ -55,6 +60,9 @@ public class TextureAtlasSpriteWrapper
 	 * every edge. The border is atlas padding, not part of the block texture.
 	 */
 	private static final int ANISOTROPIC_SPRITE_BORDER = 8;
+
+	/** block registry name + meta, so each unusable block state is only reported once */
+	private static final Set<String> REPORTED_UNUSABLE_ICON_KEYS = ConcurrentHashMap.newKeySet();
 	#endif
 	
 	
@@ -221,6 +229,7 @@ public class TextureAtlasSpriteWrapper
 		{
 			icon = blockstate.getBlock().getIcon(sideOrdinal, blockstate.getMeta());
 		}
+		IIcon rawIcon = icon;
 		
 		if (icon instanceof IconFlipped)
 		{
@@ -240,7 +249,33 @@ public class TextureAtlasSpriteWrapper
 			icon = unwrapIcon(icon, "mappedTexture");
 		}
 		
+		if (!hasSpriteData(icon))
+		{
+			logUnusableIcon(blockstate, sideOrdinal, rawIcon);
+		}
+
 		return (icon instanceof TextureAtlasSprite) ? (TextureAtlasSprite) icon : null;
+	}
+
+	/**
+	 * Logs block states whose icon has no usable pixel data
+	 * (rendered as {@link ColorUtil#HOT_PINK}), once per block + meta.
+	 */
+	private static void logUnusableIcon(IBlockState blockstate, int sideOrdinal, @Nullable IIcon icon)
+	{
+		Block block = blockstate.getBlock();
+		String key = Block.blockRegistry.getNameForObject(block) + ":" + blockstate.getMeta();
+		if (REPORTED_UNUSABLE_ICON_KEYS.add(key))
+		{
+			LOGGER.warn("Unusable icon for block [" + key + "] (" + block.getClass().getName() + ") side [" + sideOrdinal + "]: "
+				+ (icon != null ? "[" + icon.getIconName() + "] (" + icon.getClass().getName() + ")" : "[null]"));
+		}
+	}
+
+	private static boolean hasSpriteData(@Nullable IIcon icon)
+	{
+		return icon instanceof TextureAtlasSprite
+			&& ((IMixinTextureAtlasSprite) icon).distanthorizons$getSpriteData() != null;
 	}
 
 	/**
