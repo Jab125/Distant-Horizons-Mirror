@@ -30,7 +30,10 @@ import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 
 #if MC_VER <= MC_1_7_10
 import net.minecraft.block.Block;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.IconFlipped;
+import net.minecraft.client.renderer.texture.ITextureObject;
+import net.minecraft.client.renderer.texture.TextureMap;
 import net.minecraft.util.IIcon;
 import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Field;
@@ -208,7 +211,9 @@ public class TextureAtlasSpriteWrapper
 	 * 1.7.10 predates the baked model system, so there are no quads to rasterize;
 	 * textures are fetched directly via {@link IIcon} using the same mod-compat
 	 * handling {@link ClientBlockStateColorCache} uses
-	 * (GregTech, {@link IconFlipped}, TwilightForest, IC2).
+	 * (GregTech, {@link IconFlipped}, IC2). <br>
+	 * Other wrapped or copied icons (IE TwilightForest's GiantBlockIcon, AE2's FlippableIcon,
+	 * MalisisDoors' ClippedIcon) are resolved through the block atlas by icon name.
 	 *
 	 * @param sideOrdinal the {@link net.minecraftforge.common.util.ForgeDirection}/vanilla side
 	 *                    index passed to {@link Block#getIcon(int, int)}
@@ -235,20 +240,30 @@ public class TextureAtlasSpriteWrapper
 		{
 			icon = ((IconFlipped) icon).baseIcon;
 		}
-		
-		// twilight forest
-		if (icon != null 
-			&& icon.getClass().getName().equals("twilightforest.block.GiantBlockIcon"))
-		{
-			icon = unwrapIcon(icon, "baseIcon");
-		}
-		// Industrial Craft 2
-		if (icon != null 
+
+		// Industrial Craft 2 skips loading duplicate sub-images, mappedTexture points to the loaded copy
+		if (icon != null
 			&& icon.getClass().getName().equals("ic2.core.block.BlockTextureStitched"))
 		{
 			icon = unwrapIcon(icon, "mappedTexture");
 		}
-		
+
+		// wrapped or copied icons don't have pixel data,
+		// the atlas sprite registered under the same name does
+		if (icon != null && !hasSpriteData(icon))
+		{
+			ITextureObject blockAtlas = Minecraft.getMinecraft().getTextureManager().getTexture(TextureMap.locationBlocksTexture);
+			if (blockAtlas instanceof TextureMap)
+			{
+				// unknown names return the missing sprite, which has no sprite data
+				TextureAtlasSprite atlasSprite = ((TextureMap) blockAtlas).getAtlasSprite(icon.getIconName());
+				if (hasSpriteData(atlasSprite))
+				{
+					icon = atlasSprite;
+				}
+			}
+		}
+
 		if (!hasSpriteData(icon))
 		{
 			logUnusableIcon(blockstate, sideOrdinal, rawIcon);
@@ -280,7 +295,7 @@ public class TextureAtlasSpriteWrapper
 
 	/**
 	 * Some mods wrap their real atlas sprite inside an {@link IIcon} field
-	 * (IE TwilightForest's GiantBlockIcon, IC2's BlockTextureStitched). <br>
+	 * (IE IC2's BlockTextureStitched). <br>
 	 * This returns the icon stored in the named field, or the original {@code icon}
 	 * unchanged if the field is missing, inaccessible, or null.
 	 */
