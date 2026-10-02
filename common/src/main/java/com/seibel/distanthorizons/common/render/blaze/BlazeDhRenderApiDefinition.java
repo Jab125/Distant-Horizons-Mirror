@@ -8,7 +8,6 @@ public class BlazeDhRenderApiDefinition {}
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
-import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.*;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObjectVertexContainer;
@@ -95,7 +94,7 @@ public class BlazeDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	@Override public IDhApiSsaoRenderer getSsaoRenderer() { return BlazeDhSsaoRenderer.INSTANCE; }
 	@Override public IDhApiFogRenderer getFogRenderer() { return BlazeDhFogRenderer.INSTANCE; }
 	@Override public IDhApiFarFadeRenderer getFarFadeRenderer() { return BlazeDhFarFadeRenderer.INSTANCE; }
-	@Override public IDhAntiAliasRenderer getAntiAliasRenderer() { return BlazeDhTaaRenderer.INSTANCE; }
+	@Override public IDhApiAntiAliasRenderer getAntiAliasRenderer() { return BlazeDhTaaRenderer.INSTANCE; }
 	@Override public IDhApiDebugWireframeRenderer getDebugWireframeRenderer() { return BlazeDebugWireframeRenderer.INSTANCE; }
 	@Override public IDhApiVanillaFadeRenderer getVanillaFadeRenderer() { return BlazeVanillaFadeRenderer.INSTANCE; }
 	@Override public IDhApiTestTriangleRenderer getTestTriangleRenderer() { return BlazeDhTestTriangleRenderer.INSTANCE; }

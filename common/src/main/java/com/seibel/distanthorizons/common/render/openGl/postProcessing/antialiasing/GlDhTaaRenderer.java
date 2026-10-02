@@ -25,7 +25,7 @@ import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.render.RenderParam;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhAntiAliasRenderer;
+import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhApiAntiAliasRenderer;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL30;
@@ -40,7 +40,7 @@ import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
  * {@link GlDhTaaShader} - draws the AntiAliasing to a texture. <br>
  * {@link GlDhTaaSharpenShader} - draws the AntiAliasing texture to DH's FrameBuffer. <br>
  */
-public class GlDhTaaRenderer implements IDhAntiAliasRenderer
+public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 {
 	public static GlDhTaaRenderer INSTANCE = new GlDhTaaRenderer();
 	

@@ -2,7 +2,6 @@ package com.seibel.distanthorizons.common.render.openGl;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
-import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.*;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
@@ -82,7 +81,7 @@ public class GlDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	@Override public IDhApiSsaoRenderer getSsaoRenderer() { return GlDhSSAORenderer.INSTANCE; }
 	@Override public IDhApiFogRenderer getFogRenderer() { return GlDhFogRenderer.INSTANCE; }
 	@Override public IDhApiFarFadeRenderer getFarFadeRenderer() { return GlDhFarFadeRenderer.INSTANCE; }
-	@Override public IDhAntiAliasRenderer getAntiAliasRenderer() { return GlDhTaaRenderer.INSTANCE; }
+	@Override public IDhApiAntiAliasRenderer getAntiAliasRenderer() { return GlDhTaaRenderer.INSTANCE; }
 	@Override public IDhApiDebugWireframeRenderer getDebugWireframeRenderer() { return GlDhDebugWireframeRenderer.INSTANCE; }
 	@Override public IDhApiVanillaFadeRenderer getVanillaFadeRenderer() { return GlVanillaFadeRenderer.INSTANCE; }
 	@Override public IDhApiTestTriangleRenderer getTestTriangleRenderer() { return GlTestTriangleRenderer.INSTANCE; }

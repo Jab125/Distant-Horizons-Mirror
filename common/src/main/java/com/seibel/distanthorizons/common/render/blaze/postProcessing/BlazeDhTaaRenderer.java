@@ -45,9 +45,9 @@ import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.render.RenderParam;
 import com.seibel.distanthorizons.core.util.math.DhMat4f;
 import com.seibel.distanthorizons.core.util.math.DhVec3d;
-import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhAntiAliasRenderer;
+import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhApiAntiAliasRenderer;
 
-public class BlazeDhTaaRenderer implements IDhAntiAliasRenderer
+public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 {
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
