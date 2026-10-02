@@ -5,11 +5,12 @@ public class BlazeLodUniformBufferWrapper {}
 
 #else
 
+import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiTerrainBufferContainer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.util.math.DhVec3f;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.objects.ILodContainerUniformBufferWrapper;
+import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiTerrainContainerUniformBufferWrapper;
 
-public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper implements ILodContainerUniformBufferWrapper
+public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper implements IDhApiTerrainContainerUniformBufferWrapper
 {
 	
 	private boolean uploaded = false;
@@ -33,12 +34,14 @@ public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper impl
 	//region
 	
 	@Override
-	public void tryUpload(LodBufferContainer bufferContainer)
+	public void tryUpload(IDhApiTerrainBufferContainer apiBufferContainer)
 	{
 		if (this.uploaded)
 		{
 			return;
 		}
+		
+		LodBufferContainer bufferContainer = (LodBufferContainer)apiBufferContainer;
 		
 		DhVec3f modelOffset = new DhVec3f(
 			(float) (bufferContainer.minCornerBlockPos.getX()),

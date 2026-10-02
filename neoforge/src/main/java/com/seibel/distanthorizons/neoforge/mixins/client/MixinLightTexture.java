@@ -23,8 +23,6 @@ import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
-import com.seibel.distanthorizons.neoforge.wrappers.NeoforgeTextureUnwrapper;
 
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -79,8 +77,6 @@ public class MixinLightTexture
 	
 	@Unique
 	private MinecraftRenderWrapper renderWrapper = null;
-	@Unique
-	private AbstractDhRenderApiDefinition renderDef = null;
 	
 	
 	
@@ -96,7 +92,6 @@ public class MixinLightTexture
 		if (this.renderWrapper == null)
 		{
 			this.renderWrapper = (MinecraftRenderWrapper)SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
-			this.renderDef = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
 		}
 		
 		
@@ -115,7 +110,8 @@ public class MixinLightTexture
 		this.renderWrapper.setLightmapGpuTexture(this.texture);
 		#else
 		
-		if (this.renderDef.getRenderApi() == EDhApiRenderingApi.OPEN_GL)
+		IMinecraftRenderWrapper mcRender = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
+		if (mcRender.getMcRenderingApi() == EDhApiRenderingApi.OPEN_GL)
 		{
 			GlTexture glTexture = (GlTexture) this.texture;
 			this.renderWrapper.setLightmapId(glTexture.glId());

@@ -30,8 +30,8 @@ import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.core.util.objects.GLMessages.*;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
+import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
-import com.seibel.distanthorizons.core.wrapperInterfaces.render.AbstractDhRenderApiDefinition;
 import com.seibel.distanthorizons.coreapi.ModInfo;
 import com.seibel.distanthorizons.lwjgl.EGLExtension;
 import com.seibel.distanthorizons.lwjgl.EGLFeature;
@@ -56,7 +56,7 @@ public class GLProxy
 {
 	private static final IIrisAccessor IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
-	private static final AbstractDhRenderApiDefinition RENDER_DEF = SingletonInjector.INSTANCE.get(AbstractDhRenderApiDefinition.class);
+	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	
 	
 	public static final DhLogger LOGGER;
@@ -136,9 +136,10 @@ public class GLProxy
 	
 	private GLProxy() throws IllegalStateException
 	{
-		if (RENDER_DEF.getRenderApi() != EDhApiRenderingApi.OPEN_GL)
+		EDhApiRenderingApi mcRenderingApi = MC_RENDER.getMcRenderingApi();
+		if (mcRenderingApi != EDhApiRenderingApi.OPEN_GL)
 		{
-			throw new IllegalStateException("[" + GLProxy.class.getSimpleName() + "] was created with the wrong Rendering API ["+RENDER_DEF.getRenderApi()+"]!"); 
+			throw new IllegalStateException("[" + GLProxy.class.getSimpleName() + "] was created with the wrong Rendering API ["+mcRenderingApi+"]!"); 
 		}
 		
 		// this must be created on minecraft's render context to work correctly

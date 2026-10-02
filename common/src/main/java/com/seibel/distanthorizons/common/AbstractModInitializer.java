@@ -1,11 +1,8 @@
 package com.seibel.distanthorizons.common;
 
-import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingEngine;
 import com.seibel.distanthorizons.api.enums.config.quickOptions.EDhApiThreadPreset;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiTransparency;
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
-import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiGeneratorPlan;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiAfterDhInitEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeDhInitEvent;
 import com.seibel.distanthorizons.common.commands.CommandInitializer;
@@ -25,11 +22,10 @@ import com.seibel.distanthorizons.core.enums.MinecraftTextFormat;
 import com.seibel.distanthorizons.core.jar.ModJarInfo;
 import com.seibel.distanthorizons.core.jar.updater.SelfUpdater;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.render.renderer.AbstractDebugWireframeRenderer;
-import com.seibel.distanthorizons.core.render.renderer.StubDebugWireframeRenderer;
+import com.seibel.distanthorizons.core.render.renderer.DebugWireframeHandler;
+import com.seibel.distanthorizons.core.render.renderer.StubDebugWireframeHandler;
 import com.seibel.distanthorizons.common.wrappers.gui.NativeDialogUtil;
 import com.seibel.distanthorizons.core.util.ThreadUtil;
-import com.seibel.distanthorizons.core.util.threading.ThreadPoolUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.IVersionConstants;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftClientWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IC2meAccessor;
@@ -100,7 +96,7 @@ public abstract class AbstractModInitializer
 	
 	public void onInitializeClient()
 	{
-		DependencySetup.createClientBindings();
+		DependencySetup.INSTANCE.createClientBindings();
 		this.createInitialClientBindings();
 		
 		LOGGER.info("Initializing " + ModInfo.READABLE_NAME + " client, firing DhApiBeforeDhInitEvent...");
@@ -135,7 +131,7 @@ public abstract class AbstractModInitializer
 	
 	public void onInitializeServer()
 	{
-		DependencySetup.createServerBindings();
+		DependencySetup.INSTANCE.createServerBindings();
 		
 		LOGGER.info("Initializing " + ModInfo.READABLE_NAME + " server, firing DhApiBeforeDhInitEvent event...");
 		ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeDhInitEvent.class, null);
@@ -201,7 +197,7 @@ public abstract class AbstractModInitializer
 	
 	private void startup()
 	{
-		DependencySetup.createSharedBindings();
+		DependencySetup.INSTANCE.createSharedBindings();
 		Initializer.preConfigInit();
 		this.createInitialSharedBindings();
 	}
@@ -305,7 +301,7 @@ public abstract class AbstractModInitializer
 		{
 			try
 			{
-				DependencySetup.setRenderingApiBindings();
+				DependencySetup.INSTANCE.setRenderingApiBindingsFromConfigAsync();
 			}
 			catch (Exception e)
 			{
@@ -323,7 +319,7 @@ public abstract class AbstractModInitializer
 		
 		future.join();
 	}
-	private void postServerInit() { SingletonInjector.INSTANCE.bind(AbstractDebugWireframeRenderer.class, new StubDebugWireframeRenderer()); }
+	private void postServerInit() { SingletonInjector.INSTANCE.bind(DebugWireframeHandler.class, new StubDebugWireframeHandler()); }
 	
 	//endregion
 	
