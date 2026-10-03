@@ -35,7 +35,13 @@ public class BlazeDhVertexFormatUtil
 	@NotNull public static final VertexFormatElement SCREEN_POS;
 	@NotNull public static final VertexFormatElement RGBA_FLOAT_COLOR;
 	
-	@NotNull public static final VertexFormatElement SHORT_XYZ_POS;
+	/** 
+	 * first 3 unsigned shorts (XYZ) are position, 
+	 * last short (W) is for metadata (light, micro-offset, etc). <br>
+	 * Using a 4 element format is necessary for GPUs that only support 16 byte wide formats.
+	 * (Vs the 12 bytes that 3 shorts alone would use.)
+	 */
+	@NotNull public static final VertexFormatElement SHORT_XYZ_POS_AND_W_META;
 	@NotNull public static final VertexFormatElement BYTE_PAD;
 	/** contains light and micro-offset */
 	@NotNull public static final VertexFormatElement META;
@@ -59,7 +65,7 @@ public class BlazeDhVertexFormatUtil
 			SCREEN_POS = VertexFormatElement.register(/*id*/22, /*index*/0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.POSITION, /*count*/ 2);
 			RGBA_FLOAT_COLOR = VertexFormatElement.register(/*id*/23, /*index*/0, VertexFormatElement.Type.FLOAT, VertexFormatElement.Usage.COLOR, /*count*/ 4);
 			
-			SHORT_XYZ_POS = VertexFormatElement.register(/*id*/24, /*index*/0, VertexFormatElement.Type.USHORT, VertexFormatElement.Usage.POSITION, /*count*/ 3);
+			SHORT_XYZ_POS_AND_W_META = VertexFormatElement.register(/*id*/24, /*index*/0, VertexFormatElement.Type.USHORT, VertexFormatElement.Usage.POSITION, /*count*/ 4);
 			BYTE_PAD = VertexFormatElement.register(/*id*/25, /*index*/0, VertexFormatElement.Type.BYTE, VertexFormatElement.Usage.GENERIC, /*count*/ 1);
 			
 			META = VertexFormatElement.register(/*id*/26, /*index*/0, VertexFormatElement.Type.USHORT, VertexFormatElement.Usage.GENERIC, /*count*/ 1);
@@ -74,7 +80,7 @@ public class BlazeDhVertexFormatUtil
 			SCREEN_POS = VertexFormatElement.register(/*id*/22, /*index*/0, VertexFormatElement.Type.FLOAT, false, /*count*/ 2);
 			RGBA_FLOAT_COLOR = VertexFormatElement.register(/*id*/23, /*index*/0, VertexFormatElement.Type.FLOAT, false, /*count*/ 4);
 			
-			SHORT_XYZ_POS = VertexFormatElement.register(/*id*/24, /*index*/0, VertexFormatElement.Type.USHORT, false, /*count*/ 3);
+			SHORT_XYZ_POS_AND_W_META = VertexFormatElement.register(/*id*/24, /*index*/0, VertexFormatElement.Type.USHORT, false, /*count*/ 4);
 			BYTE_PAD = VertexFormatElement.register(/*id*/25, /*index*/0, VertexFormatElement.Type.BYTE, false, /*count*/ 1);
 			
 			META = VertexFormatElement.register(/*id*/26, /*index*/0, VertexFormatElement.Type.USHORT, false, /*count*/ 1);
@@ -90,7 +96,7 @@ public class BlazeDhVertexFormatUtil
 			SCREEN_POS = VertexFormatElement.register(/*id*/22, /*index*/0, GpuFormat.RG32_FLOAT); // 2 floats
 			RGBA_FLOAT_COLOR = VertexFormatElement.register(/*id*/23, /*index*/0, GpuFormat.RGBA32_FLOAT); // 4 floats
 			
-			SHORT_XYZ_POS = VertexFormatElement.register(/*id*/24, /*index*/0, GpuFormat.RGB16_UINT); // 3 ushorts
+			SHORT_XYZ_POS_AND_W_META = VertexFormatElement.register(/*id*/24, /*index*/0, GpuFormat.RGBA16_UINT); // 4 ushorts
 			BYTE_PAD = VertexFormatElement.register(/*id*/25, /*index*/0, GpuFormat.R8_UINT); // 1 byte
 			
 			META = VertexFormatElement.register(/*id*/26, /*index*/0, GpuFormat.R16_UINT); // 1 ushort
@@ -107,7 +113,7 @@ public class BlazeDhVertexFormatUtil
 			SCREEN_POS = new VertexFormatElement("Screen Pos", Float.BYTES * 2, GpuFormat.RG32_FLOAT);
 			RGBA_FLOAT_COLOR = new VertexFormatElement("RGBA Float Color", Float.BYTES * 4, GpuFormat.RGBA32_FLOAT);
 			
-			SHORT_XYZ_POS = new VertexFormatElement("Short XYZ Pos", Short.BYTES * 3, GpuFormat.RGB16_UINT);
+			SHORT_XYZ_POS_AND_W_META = new VertexFormatElement("Short XYZ Pos and W Meta", Short.BYTES * 4, GpuFormat.RGBA16_UINT);
 			BYTE_PAD = new VertexFormatElement("Byte Pad", 1, GpuFormat.R8_UINT);
 			
 			META = new VertexFormatElement("DH Meta", Short.BYTES, GpuFormat.R16_UINT);

@@ -54,10 +54,6 @@ import com.seibel.distanthorizons.api.interfaces.render.renderDef.AbstractDhApiR
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhApiTerrainRenderer;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 
-import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
-
 /** Renders rendering DH's LOD terrain. */
 public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 {
@@ -137,8 +133,7 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 			pipelineBuilder.withUniformBuffer("fragUniformBlock");
 			
 			VertexFormat vertexFormat = new BlazeVertexFormatBuilder()
-				.add("vPosition", BlazeDhVertexFormatUtil.SHORT_XYZ_POS)
-				.add("meta", BlazeDhVertexFormatUtil.META)
+				.add("vPositionAndMeta", BlazeDhVertexFormatUtil.SHORT_XYZ_POS_AND_W_META)
 				.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
 				.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
 				.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
