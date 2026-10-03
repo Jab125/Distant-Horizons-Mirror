@@ -47,7 +47,7 @@ public class ChunkyAccessor extends AbstractChunkyAccessor
 	public String getModName() { return "chunky"; }
 	
 	@Override
-	protected void bindOnGenerationProgressEvent()
+	protected void bindOnGenerationProgressEvent() throws IllegalStateException, NoSuchMethodError
 	{
 		#if MC_VER <= MC_1_18_2
 		// API not present
@@ -55,4 +55,10 @@ public class ChunkyAccessor extends AbstractChunkyAccessor
 		ChunkyProvider.get().getApi().onGenerationProgress((event) -> this.onGenEvent());
 		#endif
 	}
+	
+	protected Object getOrThrowChunkyApiObject() throws IllegalStateException, NoSuchMethodError
+	{ return ChunkyProvider.get(); }
+	
+	
+	
 }
