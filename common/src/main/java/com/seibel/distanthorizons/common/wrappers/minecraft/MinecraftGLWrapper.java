@@ -221,13 +221,13 @@ public class MinecraftGLWrapper
 		LWJGL.glEnable(GL11.GL_BLEND);
 		#elif MC_VER <= MC_1_12_2
 		GlStateManager.enableBlend();
-		if (!trustGlStateManager())
+		if (runDirectGlCall())
 		{
 			LWJGL.glEnable(GL11.GL_BLEND);
 		}
 		#elif MC_VER <= MC_26_1_2
 		GlStateManager._enableBlend();
-		if (!trustGlStateManager())
+		if (runDirectGlCall())
 		{
 			LWJGL.glEnable(GL11.GL_BLEND);
 		}
