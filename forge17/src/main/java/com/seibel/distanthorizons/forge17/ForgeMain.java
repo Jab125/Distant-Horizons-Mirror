@@ -143,7 +143,7 @@ public class ForgeMain extends AbstractModInitializer implements IForgeMain
 		
         ForgeChunkManager.setForcedChunkLoadingCallback(
             instance,
-            (List<ForgeChunkManager.Ticket> tickets, World world) -> chunkLoadedCallback());
+            (List<ForgeChunkManager.Ticket> tickets, World world) -> releaseStaleTickets(tickets));
     }
 	private boolean enableGregTechAccessor()
 	{
@@ -157,7 +157,19 @@ public class ForgeMain extends AbstractModInitializer implements IForgeMain
 			return false;
 		}
 	}
-	private void chunkLoadedCallback() { }
+	/**
+	 * DH requests a new ticket each time a level loads and doesn't need to re-force
+	 * any chunks from a previous session, so tickets restored from the world save are never used.
+	 * Release them, otherwise they accumulate in forcedchunks.dat until the mod's ticket limit is reached,
+	 * after which DH can't request a ticket anymore.
+	 */
+	private static void releaseStaleTickets(List<ForgeChunkManager.Ticket> tickets)
+	{
+		for (ForgeChunkManager.Ticket ticket : tickets)
+		{
+			ForgeChunkManager.releaseTicket(ticket);
+		}
+	}
 	
 	//endregion
 	
