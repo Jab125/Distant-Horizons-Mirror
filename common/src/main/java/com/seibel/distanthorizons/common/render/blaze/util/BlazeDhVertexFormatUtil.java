@@ -25,6 +25,9 @@ import com.mojang.renderpearl.api.GpuFormat;
 
 
 /**
+ * The following site includes information about supported Vulkan formats:
+ * https://vulkan.gpuinfo.org/listbufferformats.php?age=recent&apiversion=1.2
+ * 
  * @see LodQuadBuilder
  */
 public class BlazeDhVertexFormatUtil
