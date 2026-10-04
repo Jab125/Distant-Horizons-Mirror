@@ -52,6 +52,12 @@ import net.minecraft.client.renderer.state.LightmapRenderState;
 import net.minecraft.client.renderer.Lightmap;
 #endif
 
+#if MC_VER <= MC_1_21_10
+#elif MC_VER <= MC_26_1_2
+import com.seibel.distanthorizons.neoforge.wrappers.NeoforgeTextureUnwrapper;
+#else
+#endif
+
 
 #if MC_VER <= MC_1_21_11
 @Mixin(LightTexture.class)
