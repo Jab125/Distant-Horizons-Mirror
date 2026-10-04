@@ -145,7 +145,9 @@ public class MixinFogRenderer
 			instance.environmentalEnd = A_EVEN_LARGER_VALUE;
 			
 			instance.renderDistanceStart = A_REALLY_REALLY_BIG_VALUE;
-			instance.renderDistanceEnd = A_EVEN_LARGER_VALUE;
+			// renderDistanceEnd is the field this PUTFIELD writes,
+			// so it's set by passing the new value to the original call below
+			value = A_EVEN_LARGER_VALUE;
 			
 			ClientApi.RENDER_STATE.vanillaFogEnabled = false;
 		}
