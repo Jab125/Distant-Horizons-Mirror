@@ -518,16 +518,18 @@ public abstract class AbstractModInitializer
 				}
 			}
 			
+			int maxCpuThreadCount = Runtime.getRuntime().availableProcessors();
 			
-			int cpuThreadCount = Runtime.getRuntime().availableProcessors();
-			int expectedC2meThreadCount = Math.max(cpuThreadCount / 2, 1); // if no C2ME threads were found, default to 50%, C2ME's default
-			int newDhThreadCount = MathUtil.clamp(expectedC2meThreadCount, numberOfC2meThreads, cpuThreadCount);
+			// if no C2ME threads were found, default to 50%, C2ME's default
+			int estimatedC2meThreadCount = Math.max(maxCpuThreadCount / 2, 1);
+			
+			int newDhThreadCount = MathUtil.clamp(estimatedC2meThreadCount, numberOfC2meThreads, maxCpuThreadCount);
 			
 			LOGGER.info("Found ["+numberOfC2meThreads+"] C2ME threads. DH needs to use at least the same number of threads as C2ME to prevent issues with Chunky.");
 			
 			if (chunkyPresent)
 			{
-				Config.Common.MultiThreading.numberOfThreads.setApiValue(numberOfC2meThreads, "Chunky");
+				Config.Common.MultiThreading.numberOfThreads.setApiValue(newDhThreadCount, "Chunky");
 				Config.Common.MultiThreading.threadRunTimeRatio.setApiValue(1.0, "Chunky"); // C2ME threads have 100% uptime, so should we
 				Config.Client.threadPresetSetting.setApiValue(EDhApiThreadPreset.CUSTOM, "Chunky");
 				
