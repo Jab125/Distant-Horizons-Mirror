@@ -212,14 +212,20 @@ public class DependencySetup implements IDependencySetup
 				// is necessary to prevent the new renderer from accessing old objects
 				DhApi.Delayed.renderProxy.clearRenderDataCache();
 				
-				LOGGER.info("DH rendering definition bound to: [" + renderDefinition.getName() + "]-[" + renderDefinition.getRenderApi().name() + "], type: [" + renderingApiEnum.name() + "].");
+				LOGGER.info("DH rendering definition bound to: [" + renderDefinition.getName() + "]-[" + renderDefinition.getRenderApi().name() + "], name: [" + renderingApiEnum.name() + "].");
 				OverrideInjector.INSTANCE.bind(AbstractDhApiRenderDefinition.class, renderDefinition);
 				DhApiRenderProxy.INSTANCE.currentRenderingEngine = renderingApiEnum;
 				
 				if (renderingApiEnum != EDhApiRenderingEngine.API)
 				{
 					this.coreRenderingEngine = renderingApiEnum;
-					Config.Client.Advanced.Graphics.Experimental.renderingEngine.setApiValueWithoutFiringEvents(null, null);
+					
+					// if the render def was an API defined one
+					// clear the API lock so the internal DH render def could be changed
+					if (Config.Client.Advanced.Graphics.Experimental.renderingEngine.getApiValue() == EDhApiRenderingEngine.API)
+					{
+						Config.Client.Advanced.Graphics.Experimental.renderingEngine.setApiValueWithoutFiringEvents(null, null);	
+					}
 				}
 				else
 				{
