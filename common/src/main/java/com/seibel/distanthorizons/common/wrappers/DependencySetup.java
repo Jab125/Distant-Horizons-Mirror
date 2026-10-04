@@ -123,9 +123,12 @@ public class DependencySetup implements IDependencySetup
 	//================//
 	//region
 	
-	/** will be called from a DH thread, not the render thread */
+	/** 
+	 * will be called from a DH thread, not the render thread
+	 * @return a future containing: null if the binding was successful, otherwise the error message
+	 */
 	@Override
-	public void setRenderingApiBindingsFromConfigAsync() throws IllegalStateException
+	public CompletableFuture<String> setRenderingApiBindingsFromConfigAsync()
 	{
 		EDhApiRenderingEngine renderingApiEnum = Config.Client.Advanced.Graphics.Experimental.renderingEngine.get();
 		if (renderingApiEnum == EDhApiRenderingEngine.AUTO)
@@ -158,8 +161,7 @@ public class DependencySetup implements IDependencySetup
 		else
 		{
 			String message = "No ["+ AbstractDhApiRenderDefinition.class.getSimpleName()+"] concrete implementation found for the value: ["+renderingApiEnum+"].";
-			LOGGER.fatal(message);
-			throw new IllegalStateException(message);
+			return CompletableFuture.completedFuture(message);
 		}
 		
 		
@@ -167,9 +169,8 @@ public class DependencySetup implements IDependencySetup
 		if (!validApi)
 		{
 			String message = "The Distant Horizons rendering engine ["+renderDefinition.getName()+"]-["+renderingApiEnum+"] is not supported with this Minecraft config, reverting to ["+ EDhApiRenderingEngine.AUTO+"].";
-			LOGGER.fatal(message);
 			Config.Client.Advanced.Graphics.Experimental.renderingEngine.set(EDhApiRenderingEngine.AUTO);
-			throw new IllegalStateException(message);
+			return CompletableFuture.completedFuture(message);
 		}
 		
 		
@@ -178,11 +179,10 @@ public class DependencySetup implements IDependencySetup
 		{
 			if (errorMessage != null)
 			{
-				LOGGER.fatal(errorMessage);
 				Config.Client.Advanced.Graphics.Experimental.renderingEngine.set(EDhApiRenderingEngine.AUTO);
-				throw new IllegalStateException(errorMessage);
 			}
 		});
+		return setResultFuture;
 	}
 	
 	/**

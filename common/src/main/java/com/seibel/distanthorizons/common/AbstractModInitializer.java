@@ -301,12 +301,22 @@ public abstract class AbstractModInitializer
 		{
 			try
 			{
-				DependencySetup.INSTANCE.setRenderingApiBindingsFromConfigAsync();
+				DependencySetup.INSTANCE.setRenderingApiBindingsFromConfigAsync()
+					.thenApply((String errorMessage) -> 
+					{
+						if (errorMessage != null)
+						{
+							Exception e = new Exception(errorMessage);
+							onRenderApiBindingError(e);
+						}
+						
+						return null;
+					});
 			}
 			catch (Exception e)
 			{
-				NativeDialogUtil.showDialog(ModInfo.READABLE_NAME, e.getMessage(), "ok", "error");
-				MinecraftClientWrapper.INSTANCE.crashMinecraft(e.getMessage(), e);
+				// shouldn't happen, but just in case
+				onRenderApiBindingError(e);
 				future.completeExceptionally(e);
 			}
 			finally
@@ -319,6 +329,14 @@ public abstract class AbstractModInitializer
 		
 		future.join();
 	}
+	private static void onRenderApiBindingError(Exception e)
+	{
+		LOGGER.fatal(e.getMessage());
+		
+		NativeDialogUtil.showDialog(ModInfo.READABLE_NAME, e.getMessage(), "ok", "error");
+		MinecraftClientWrapper.INSTANCE.crashMinecraft(e.getMessage(), e);
+	}
+	
 	private void postServerInit() { SingletonInjector.INSTANCE.bind(DebugWireframeHandler.class, new StubDebugWireframeHandler()); }
 	
 	//endregion
