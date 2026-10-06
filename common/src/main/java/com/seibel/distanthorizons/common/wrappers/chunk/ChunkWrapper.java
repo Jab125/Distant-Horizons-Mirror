@@ -603,6 +603,55 @@ public class ChunkWrapper implements IChunkWrapper
 	public IMutableBlockPosWrapper getMutableBlockPosWrapper() { return MUTABLE_BLOCK_POS_WRAPPER_REF.get(); }
 	
 	@Override
+	public int getBlockStateAndBiomeRunMinY(int relX, int relY, int relZ)
+	{
+		#if MC_VER <= MC_1_21_11
+		return relY;
+		#else
+		int minY = this.getInclusiveMinBuildHeight();
+		if (relY < minY || relY >= this.getExclusiveMaxBuildHeight())
+		{
+			return relY;
+		}
+
+		LevelChunkSection section = this.chunk.getSections()[(relY - minY) >> 4];
+		if (section == null)
+		{
+			return relY;
+		}
+
+		boolean uniformBiome = section.getBiomes().bitsPerEntry() == 0;
+		if (section.getStates().bitsPerEntry() == 0)
+		{
+			// One block value certifies a run. Biomes are constant throughout a
+			// single-value section, or within the current four-block quart cell.
+			return Math.max(minY, uniformBiome ? relY & ~15 : relY & ~3);
+		}
+		if (!uniformBiome)
+		{
+			// Avoid a second block-and-biome scan through irregular sections.
+			return relY;
+		}
+
+		// Imported maps commonly have a single biome but multiple block values.
+		// Certify that attribute once, then inspect only native block identities.
+		// Shorter identity runs are conservative when wrappers compare equal.
+		int localY = relY & 15;
+		int sectionBottomY = relY & ~15;
+		Object blockState = section.getBlockState(relX, localY, relZ);
+		int runMinY = relY;
+		for (int nextY = localY - 1; nextY >= 0 && sectionBottomY + nextY >= minY; nextY--)
+		{
+			if (section.getBlockState(relX, nextY, relZ) != blockState) { break; }
+			runMinY--;
+		}
+		// No retained answers: later palette resizing is observed on every call.
+		return runMinY;
+		#endif
+	}
+
+
+	@Override
 	public DhChunkPos getChunkPos() { return this.chunkPos; }
 	
 	#if MC_VER <= MC_1_12_2
