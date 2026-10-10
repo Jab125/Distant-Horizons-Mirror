@@ -57,7 +57,14 @@ public class ChunkyAccessor extends AbstractChunkyAccessor
 	}
 	
 	protected Object getOrThrowChunkyApiObject() throws IllegalStateException, NoSuchMethodError
-	{ return ChunkyProvider.get(); }
+	{
+		#if MC_VER <= MC_1_18_2
+		// API not present
+		return null;
+		#else
+		return ChunkyProvider.get();
+		#endif
+	}
 	
 	
 	
