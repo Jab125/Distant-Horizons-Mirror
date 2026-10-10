@@ -223,6 +223,10 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 				
 				int i = Config.Client.Advanced.Debugging.enableWhiteWorld.get() ? 1 : 0;
 				
+				int camFloorX = (int)Math.floor(renderEventParam.exactCameraPosition.x);
+				int camFloorY = (int)Math.floor(renderEventParam.exactCameraPosition.y);
+				int camFloorZ = (int)Math.floor(renderEventParam.exactCameraPosition.z);
+				
 				this.vertSharedUniformBufferWrapper
 					.putInt(i) // uIsWhiteWorld
 					
@@ -235,10 +239,14 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 					.putFloat(BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.getWidth()) // uViewWidth
 					.putFloat(BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.getHeight()) // uViewHeight
 					
+					.putVec3i(
+						camFloorX,
+						camFloorY,
+						camFloorZ) // uCorseCameraPos
 					.putVec3f(
-						(float) renderEventParam.exactCameraPosition.x,
-						(float) renderEventParam.exactCameraPosition.y,
-						(float) renderEventParam.exactCameraPosition.z) // uCameraPos
+						(float) (renderEventParam.exactCameraPosition.x - camFloorX),
+						(float) (renderEventParam.exactCameraPosition.y - camFloorY),
+						(float) (renderEventParam.exactCameraPosition.z - camFloorZ)) // uFineCameraPos
 					.putMat4f(renderEventParam.dhMvmProjMatrix) // uCombinedMatrix
 					.finishAndUpload();
 			}

@@ -43,14 +43,12 @@ public class BlazeLodUniformBufferWrapper extends BlazeUniformBufferWrapper impl
 		
 		LodBufferContainer bufferContainer = (LodBufferContainer)apiBufferContainer;
 		
-		DhVec3f modelOffset = new DhVec3f(
-			(float) (bufferContainer.minCornerBlockPos.getX()),
-			(float) (bufferContainer.minCornerBlockPos.getY()),
-			(float) (bufferContainer.minCornerBlockPos.getZ()));
-		
 		// upload data //
 		this
-			.putVec3f(modelOffset.x, modelOffset.y, modelOffset.z) // uModelOffset
+			.putVec3i(
+				bufferContainer.minCornerBlockPos.getX(), 
+				bufferContainer.minCornerBlockPos.getY(), 
+				bufferContainer.minCornerBlockPos.getZ()) // uModelOffset
 			.finishAndUpload();
 		
 		this.uploaded = true;
