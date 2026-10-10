@@ -794,10 +794,14 @@ public class ClientBlockStateColorCache
 								}
 							}
 							
-							// save this color to speed up future queries
-							TintWithoutLevelOverrider.setStaticColor(this.blockStateWrapper, biomeWrapper, tintColor);
 							// try to get the blended color with this new information
 							tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
+							
+							if (tintColor != ClientBlockStateColorCache.INVALID_COLOR)
+							{
+								// save this color to speed up future queries
+								TintWithoutLevelOverrider.setStaticColor(this.blockStateWrapper, biomeWrapper, tintColor);
+							}
 						#endif
 						}
 					}
