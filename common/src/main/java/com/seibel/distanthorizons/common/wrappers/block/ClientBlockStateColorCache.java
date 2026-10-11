@@ -794,9 +794,6 @@ public class ClientBlockStateColorCache
 								}
 							}
 							
-							// try to get the blended color with this new information
-							tintColor = tintOverride.tryGetBlockTint(new DhBlockPosMutable(blockPos));
-							
 							if (tintColor != ClientBlockStateColorCache.INVALID_COLOR)
 							{
 								// save this color to speed up future queries
