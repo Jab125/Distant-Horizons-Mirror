@@ -52,6 +52,10 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.command.ServerCommandManager;
 #endif
 
+#if MC_VER <= MC_1_12_2
+import com.seibel.distanthorizons.api.enums.worldGeneration.EDhApiDistantGeneratorMode;
+#endif
+
 /**
  * Base for all mod loader initializers 
  * and handles most setup. 

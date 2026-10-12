@@ -53,6 +53,11 @@ import org.lwjgl.opengl.GL33;
 
 import java.util.concurrent.AbstractExecutorService;
 
+#if MC_VER < MC_1_21_9
+import net.minecraft.client.multiplayer.ClientLevel;
+#elif MC_VER <= MC_1_21_11
+#endif
+
 #if MC_VER <= MC_26_2_0
 import org.lwjgl.glfw.GLFW;
 #else
