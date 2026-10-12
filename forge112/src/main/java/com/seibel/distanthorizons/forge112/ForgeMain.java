@@ -154,6 +154,7 @@ public class ForgeMain extends AbstractModInitializer implements IForgeMain
 	protected void initializeModCompat()
 	{
 		this.tryCreateModCompatAccessor("actinium", IIrisAccessor.class, IrisAccessor::new);
+		this.tryCreateModCompatAccessor("demonica", IIrisAccessor.class, IrisAccessor::new);
 		IRIS_ACCESSOR = ModAccessorInjector.INSTANCE.get(IIrisAccessor.class);
 	}
 	
