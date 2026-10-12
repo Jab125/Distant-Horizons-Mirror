@@ -163,7 +163,7 @@ public class ClientBlockStateTextureCache
 		
 		// allow changing the texture if the API event is requested
 		// (this is done to reduce GC pressure and speed up color getting)
-		if (blockStateWrapper.allowApiColorOverride())
+		if (blockStateWrapper.allowApiTextureOverride())
 		{
 			DhApiBlockTextureOverrideEvent.EventParam eventParam = TEXTURE_OVERRIDE_EVENT_PARAM_THREAD_LOCAL.get();
 			
