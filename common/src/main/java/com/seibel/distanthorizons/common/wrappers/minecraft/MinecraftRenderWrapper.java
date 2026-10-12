@@ -571,8 +571,11 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			.getDevice()
 			.getDeviceInfo()
 			.backendName();
-		boolean isVulkan = backendName.equalsIgnoreCase("Vulkan");
-		this.renderApi = isVulkan ? EDhApiRenderingApi.VULKAN : EDhApiRenderingApi.OPEN_GL;
+		// Only MC's OpenGL backend has a GL context DH can use directly,
+		// every other renderpearl backend (Vulkan, or one added by a mod, e.g. Metal)
+		// is only reachable through Blaze3D, which is what the VULKAN paths use.
+		boolean isOpenGl = backendName.equalsIgnoreCase("OpenGL");
+		this.renderApi = isOpenGl ? EDhApiRenderingApi.OPEN_GL : EDhApiRenderingApi.VULKAN;
 		#endif
 		return this.renderApi;
 	}
