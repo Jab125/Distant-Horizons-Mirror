@@ -175,6 +175,7 @@ public class ClientBlockStateTextureCache
 				eventParam.update(
 					blockStateWrapper,
 					faceDirection.getApiVersion(),
+					blockFaceTexture.argbPixels, // sending in the current pixel colors is necessary for textures to appear correctly if no texture change events are fired
 					ClientBlockStateTextureCache::ApiTextureRegenFunc
 				);
 				ApiEventInjector.INSTANCE.fireAllEvents(DhApiBlockTextureOverrideEvent.class, eventParam);
