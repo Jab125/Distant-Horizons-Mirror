@@ -163,7 +163,9 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 	
 	private boolean hasServerConnection()
 	{
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		return MINECRAFT.func_147104_D() != null; // getCurrentServerData
+		#elif MC_VER <= MC_1_12_2
 		return MINECRAFT.getCurrentServerData() != null;
 		#else
 		return MINECRAFT.getCurrentServer() != null; 
@@ -181,7 +183,7 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 		else
 		{
 			#if MC_VER <= MC_1_7_10
-			ServerData server = MINECRAFT.getCurrentServerData();
+			ServerData server = MINECRAFT.func_147104_D(); // getCurrentServerData
 			return (server != null && server.serverName != null) ? server.serverName : "NULL";
 			#elif MC_VER <= MC_1_12_2
 			ServerData server = MINECRAFT.getCurrentServerData();
@@ -214,7 +216,9 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 	
 	private ServerData getCurrentServerData()
 	{
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		return MINECRAFT.func_147104_D(); // getCurrentServerData
+		#elif MC_VER <= MC_1_12_2
 		return MINECRAFT.getCurrentServerData();
 		#else
 		return MINECRAFT.getCurrentServer();
@@ -611,7 +615,9 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 	@Override
 	public void executeOnRenderThread(Runnable runnable)
 	{
-		#if MC_VER <= MC_1_12_2
+		#if MC_VER <= MC_1_7_10
+		MINECRAFT.func_152344_a(runnable); // addScheduledTask
+		#elif MC_VER <= MC_1_12_2
 		MINECRAFT.addScheduledTask(runnable); 
 		#else
 		MINECRAFT.execute(runnable); 
