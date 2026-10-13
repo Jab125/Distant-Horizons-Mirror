@@ -530,6 +530,13 @@ if (isNotCommonProject) {
         tasks.named("remapJar").configure {
             dependsOn(shadowJar)
             inputFile.set(shadowJar.archiveFile)
+            // without MixinExtra, @WrapOperation/@ModifyReturnValue/etc. targets are missing from the refmap
+            // and silently don't apply in obfuscated environments
+            mixinRemap {
+                reset()
+                enableBaseMixin()
+                enableMixinExtra()
+            }
         }
 
         // Make run tasks use the shadow jar so relocated deps work in dev.
