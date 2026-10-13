@@ -571,8 +571,22 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 			.getDevice()
 			.getDeviceInfo()
 			.backendName();
+		
+		boolean isOpenGl = backendName.equalsIgnoreCase("OpenGL");
 		boolean isVulkan = backendName.equalsIgnoreCase("Vulkan");
-		this.renderApi = isVulkan ? EDhApiRenderingApi.VULKAN : EDhApiRenderingApi.OPEN_GL;
+		
+		if (isOpenGl)
+		{
+			this.renderApi = EDhApiRenderingApi.OPEN_GL;
+		}
+		else if (isVulkan)
+		{
+			this.renderApi = EDhApiRenderingApi.VULKAN;
+		}
+		else
+		{
+			this.renderApi = EDhApiRenderingApi.UNKNOWN;
+		}
 		#endif
 		return this.renderApi;
 	}
