@@ -51,6 +51,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 #endif
@@ -1425,8 +1426,14 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		}
 		
 		#if MC_VER <= MC_1_12_2
-		return 8;
+		return this.isLiquid ? 8 : 0;
 		#else
+		// waterlogged blocks have water in them, but they aren't fluid blocks
+		if (!(this.blockState.getBlock() instanceof LiquidBlock))
+		{
+			return 0;
+		}
+		
 		return this.blockState.getFluidState().getAmount();
 		#endif
 	}
