@@ -259,8 +259,13 @@ public class ClientBlockStateTextureCache
 			if (blockStateWrapper.isLiquid())
 			{
 				// liquids don't have models to rasterize, bake their sprite directly
-				BlockFaceTexture liquidTexture = bakeSpriteTexture(getParticleSprite(blockStateWrapper));
-				Arrays.fill(faceTextures, liquidTexture);
+				// like vanilla, their sides use the flowing texture
+				BlockFaceTexture stillTexture = bakeSpriteTexture(getParticleSprite(blockStateWrapper));
+				BlockFaceTexture flowTexture = getFluidFlowTexture(blockStateWrapper);
+				for (int faceIndex = 0; faceIndex < FACE_DIRECTIONS.length; faceIndex++) {
+					boolean isSide = FACE_DIRECTIONS[faceIndex].axis.isHorizontal();
+					faceTextures[faceIndex] = (isSide && flowTexture != null) ? flowTexture : stillTexture;
+				}
 				return faceTextures;
 			}
 			
@@ -448,8 +453,34 @@ public class ClientBlockStateTextureCache
 	}
 	#endif
 	
+	/** Returns null if this isn't a fluid with a flowing texture */
+	@Nullable
+	public static BlockFaceTexture getFluidFlowTexture(BlockStateWrapper blockStateWrapper) {
+		#if MC_VER <= MC_1_12_2
+		return null;
+		#else
+		if (!blockStateWrapper.isLiquid()) {
+			return null;
+		}
+		
+		// vanilla and most modded fluids name their flowing texture after their still one
+		TextureAtlasSprite stillSprite = getParticleSprite(blockStateWrapper);
+		String stillName = (stillSprite != null) ? TextureAtlasSpriteWrapper.getName(stillSprite) : "";
+		if (!stillName.endsWith("_still")) {
+			return null;
+		}
+		
+		String flowName = stillName.substring(0, stillName.length() - "_still".length()) + "_flow";
+		TextureAtlasSprite flowSprite = TextureAtlasSpriteWrapper.findBlockAtlasSprite(flowName);
+		// vanilla only shows a quarter of the flowing texture on each block
+		return (flowSprite != null) ? bakeSpriteTexture(flowSprite, 0.5f) : null;
+		#endif
+	}
+	
 	/** Copies the given sprite directly, used for blocks where rasterizing model quads isn't possible. */
-	private static BlockFaceTexture bakeSpriteTexture(@Nullable TextureAtlasSprite sprite)
+	private static BlockFaceTexture bakeSpriteTexture(@Nullable TextureAtlasSprite sprite) { return bakeSpriteTexture(sprite, 1.0f); }
+	/** regionScale is how much of the sprite to use, starting from its top left */
+	private static BlockFaceTexture bakeSpriteTexture(@Nullable TextureAtlasSprite sprite, float regionScale)
 	{
 		if (sprite == null)
 		{
@@ -469,8 +500,8 @@ public class ClientBlockStateTextureCache
 		{
 			for (int v = 0; v < TEXTURE_WIDTH_AND_HEIGHT; v++)
 			{
-				int texelX = (u * spriteWidth) / TEXTURE_WIDTH_AND_HEIGHT;
-				int texelY = (v * spriteHeight) / TEXTURE_WIDTH_AND_HEIGHT;
+				int texelX = (int) ((u * spriteWidth * regionScale) / TEXTURE_WIDTH_AND_HEIGHT);
+				int texelY = (int) ((v * spriteHeight * regionScale) / TEXTURE_WIDTH_AND_HEIGHT);
 				pixels[TextureUtil.getPixelIndex(u,v)] = TextureAtlasSpriteWrapper.getPixelARGB(sprite, 0, texelX, texelY);
 			}
 		}

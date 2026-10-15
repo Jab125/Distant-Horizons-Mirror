@@ -47,6 +47,19 @@ import java.util.concurrent.ConcurrentHashMap;
 import net.minecraft.client.renderer.texture.SpriteContents;
 #endif
 
+#if MC_VER > MC_1_12_2
+import com.seibel.distanthorizons.coreapi.ModInfo;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.renderer.texture.AbstractTexture;
+import net.minecraft.client.renderer.texture.TextureAtlas;
+import org.jetbrains.annotations.Nullable;
+#endif
+#if MC_VER > MC_1_12_2 && MC_VER <= MC_1_21_10
+import net.minecraft.resources.ResourceLocation;
+#elif MC_VER > MC_1_21_10
+import net.minecraft.resources.Identifier;
+#endif
+
 /**
  * For wrapping/utilizing around TextureAtlasSprite
  *
@@ -204,6 +217,58 @@ public class TextureAtlasSpriteWrapper
 	}
 	
 	
+	
+	#if MC_VER > MC_1_12_2
+	/** IE "minecraft:block/water_still" */
+	public static String getName(TextureAtlasSprite sprite) {
+		#if MC_VER < MC_1_19_4
+		return sprite.getName().toString();
+		#else
+		return sprite.contents().name().toString();
+		#endif
+	}
+	
+	/** Returns null if the sprite isn't in the block atlas */
+	@Nullable
+	public static TextureAtlasSprite findBlockAtlasSprite(String spriteName) {
+		int separatorIndex = spriteName.indexOf(':');
+		String namespace = (separatorIndex == -1) ? "minecraft" : spriteName.substring(0, separatorIndex);
+		String path = spriteName.substring(separatorIndex + 1);
+		
+		try {
+			AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS);
+			if (!(texture instanceof TextureAtlas)) {
+				return null;
+			}
+			
+			TextureAtlas atlas = (TextureAtlas) texture;
+			TextureAtlasSprite sprite = atlas.getSprite(createResourceLocation(namespace, path));
+			// unknown names give back the missing texture instead of null
+			TextureAtlasSprite missingSprite = atlas.getSprite(createResourceLocation(ModInfo.RESOURCE_NAMESPACE, "missing_sprite"));
+			if (sprite == null || sprite == missingSprite) {
+				return null;
+			}
+			return sprite;
+		} catch (Exception e) {
+			LOGGER.warn("Unable to get the sprite ["+spriteName+"] from the block atlas. Error: ["+e+"].", e);
+			return null;
+		}
+	}
+	
+	#if MC_VER <= MC_1_21_10
+	private static ResourceLocation createResourceLocation(String namespace, String path) {
+	#else
+	private static Identifier createResourceLocation(String namespace, String path) {
+	#endif
+		#if MC_VER <= MC_1_20_6
+		return new ResourceLocation(namespace, path);
+		#elif MC_VER <= MC_1_21_10
+		return ResourceLocation.fromNamespaceAndPath(namespace, path);
+		#else
+		return Identifier.fromNamespaceAndPath(namespace, path);
+		#endif
+	}
+	#endif
 	
 	#if MC_VER <= MC_1_7_10
 	/**
