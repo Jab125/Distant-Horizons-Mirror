@@ -1416,6 +1416,19 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		#endif
 	}
 	
+	@Override
+	public int getFluidAmount() {
+		if (this.blockState == null) {
+			return 0;
+		}
+		
+		#if MC_VER <= MC_1_12_2
+		return 8;
+		#else
+		return this.blockState.getFluidState().getAmount();
+		#endif
+	}
+	
 	
 	@Override
 	public String getSerialString() { return this.serialString; }
