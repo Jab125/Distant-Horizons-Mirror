@@ -1417,8 +1417,10 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	}
 	
 	@Override
-	public int getFluidAmount() {
-		if (this.blockState == null) {
+	public int getFluidAmount()
+	{
+		if (this.blockState == null)
+		{
 			return 0;
 		}
 		

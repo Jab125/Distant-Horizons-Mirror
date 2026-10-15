@@ -50,7 +50,8 @@ public class BlockStateTextureProvider implements IBlockStateFaceTextureProvider
 	
 	@Nullable
 	@Override
-	public BlockFaceTexture getFluidFlowTexture(IBlockStateWrapper blockState) {
+	public BlockFaceTexture getFluidFlowTexture(IBlockStateWrapper blockState)
+	{
 		return (blockState instanceof BlockStateWrapper) ? ClientBlockStateTextureCache.getFluidFlowTexture((BlockStateWrapper) blockState) : null;
 	}
 	

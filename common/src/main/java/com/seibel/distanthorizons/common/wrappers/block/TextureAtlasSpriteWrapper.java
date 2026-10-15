@@ -220,7 +220,8 @@ public class TextureAtlasSpriteWrapper
 	
 	#if MC_VER > MC_1_12_2
 	/** IE "minecraft:block/water_still" */
-	public static String getName(TextureAtlasSprite sprite) {
+	public static String getName(TextureAtlasSprite sprite)
+	{
 		#if MC_VER < MC_1_19_4
 		return sprite.getName().toString();
 		#else
@@ -230,14 +231,17 @@ public class TextureAtlasSpriteWrapper
 	
 	/** Returns null if the sprite isn't in the block atlas */
 	@Nullable
-	public static TextureAtlasSprite findBlockAtlasSprite(String spriteName) {
+	public static TextureAtlasSprite findBlockAtlasSprite(String spriteName)
+	{
 		int separatorIndex = spriteName.indexOf(':');
 		String namespace = (separatorIndex == -1) ? "minecraft" : spriteName.substring(0, separatorIndex);
 		String path = spriteName.substring(separatorIndex + 1);
 		
-		try {
+		try
+		{
 			AbstractTexture texture = Minecraft.getInstance().getTextureManager().getTexture(TextureAtlas.LOCATION_BLOCKS);
-			if (!(texture instanceof TextureAtlas)) {
+			if (!(texture instanceof TextureAtlas))
+			{
 				return null;
 			}
 			
@@ -245,21 +249,25 @@ public class TextureAtlasSpriteWrapper
 			TextureAtlasSprite sprite = atlas.getSprite(createResourceLocation(namespace, path));
 			// unknown names give back the missing texture instead of null
 			TextureAtlasSprite missingSprite = atlas.getSprite(createResourceLocation(ModInfo.RESOURCE_NAMESPACE, "missing_sprite"));
-			if (sprite == null || sprite == missingSprite) {
+			if (sprite == null || sprite == missingSprite)
+			{
 				return null;
 			}
 			return sprite;
-		} catch (Exception e) {
+		}
+		catch (Exception e)
+		{
 			LOGGER.warn("Unable to get the sprite ["+spriteName+"] from the block atlas. Error: ["+e+"].", e);
 			return null;
 		}
 	}
 	
 	#if MC_VER <= MC_1_21_10
-	private static ResourceLocation createResourceLocation(String namespace, String path) {
+	private static ResourceLocation createResourceLocation(String namespace, String path)
 	#else
-	private static Identifier createResourceLocation(String namespace, String path) {
+	private static Identifier createResourceLocation(String namespace, String path)
 	#endif
+	{
 		#if MC_VER <= MC_1_20_6
 		return new ResourceLocation(namespace, path);
 		#elif MC_VER <= MC_1_21_10

@@ -262,7 +262,8 @@ public class ClientBlockStateTextureCache
 				// like vanilla, their sides use the flowing texture
 				BlockFaceTexture stillTexture = bakeSpriteTexture(getParticleSprite(blockStateWrapper));
 				BlockFaceTexture flowTexture = getFluidFlowTexture(blockStateWrapper);
-				for (int faceIndex = 0; faceIndex < FACE_DIRECTIONS.length; faceIndex++) {
+				for (int faceIndex = 0; faceIndex < FACE_DIRECTIONS.length; faceIndex++)
+				{
 					boolean isSide = FACE_DIRECTIONS[faceIndex].axis.isHorizontal();
 					faceTextures[faceIndex] = (isSide && flowTexture != null) ? flowTexture : stillTexture;
 				}
@@ -455,18 +456,21 @@ public class ClientBlockStateTextureCache
 	
 	/** Returns null if this isn't a fluid with a flowing texture */
 	@Nullable
-	public static BlockFaceTexture getFluidFlowTexture(BlockStateWrapper blockStateWrapper) {
+	public static BlockFaceTexture getFluidFlowTexture(BlockStateWrapper blockStateWrapper)
+	{
 		#if MC_VER <= MC_1_12_2
 		return null;
 		#else
-		if (!blockStateWrapper.isLiquid()) {
+		if (!blockStateWrapper.isLiquid())
+		{
 			return null;
 		}
 		
 		// vanilla and most modded fluids name their flowing texture after their still one
 		TextureAtlasSprite stillSprite = getParticleSprite(blockStateWrapper);
 		String stillName = (stillSprite != null) ? TextureAtlasSpriteWrapper.getName(stillSprite) : "";
-		if (!stillName.endsWith("_still")) {
+		if (!stillName.endsWith("_still"))
+		{
 			return null;
 		}
 		
