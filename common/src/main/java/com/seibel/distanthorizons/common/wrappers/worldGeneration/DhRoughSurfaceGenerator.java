@@ -147,6 +147,10 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		ArrayList<DhApiTerrainDataPoint> apiDataPoints = new ArrayList<>();
 		int width = pooledFullDataSource.getWidthInDataColumns();
 		
+		#if MC_VER > MC_26_2_0
+		this.genParams.cachedDensity.begin();
+		#endif
+
 		try(PhantomArrayListCheckout checkout = ARRAY_LIST_POOL.checkoutLongArrays(3))
 		{
 			// we could probably get away with an int or short array,
@@ -267,6 +271,12 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 				}
 			}
 		}
+		#if MC_VER > MC_26_2_0
+		finally
+		{
+			this.genParams.cachedDensity.end();
+		}
+		#endif
 		
 		//endregion
 		
@@ -989,7 +999,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		return genParams.density
 			.compute(new DensityFunction.SinglePointContext(blockX, blockY, blockZ)) > 0.0;
 		#else
-		return genParams.density.sampleValue(blockX, blockY, blockZ) > 0.0;
+		return genParams.cachedDensity.sampleValue(blockX, blockY, blockZ) > 0.0;
 		#endif
 	}
 	
@@ -1035,6 +1045,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		public DensityFunction density;
 		#else
 		public DensitySampler.Bound density;
+		private final RoughSurfaceDensitySampler cachedDensity;
 		#endif
 		
 		public boolean isSuperFlatWorld;
@@ -1091,6 +1102,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			DensityFunction finalDensityFunc = this.randomState.router.finalDensity();
 			this.density = densitySamplers.get(finalDensityFunc);
+			this.cachedDensity = new RoughSurfaceDensitySampler(this.density.sampler());
 			
 			#endif
 			//endregion

@@ -4,6 +4,7 @@
     "package": "com.seibel.distanthorizons.neoforge.mixins",
     "mixins": [
         "server.MixinChunkGenerator",
+        "server.MixinSamplerContext",
         "server.MixinChunkMap",
         "server.MixinServerPlayer",
         "server.MixinTFChunkGenerator",
