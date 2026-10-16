@@ -147,9 +147,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		ArrayList<DhApiTerrainDataPoint> apiDataPoints = new ArrayList<>();
 		int width = pooledFullDataSource.getWidthInDataColumns();
 		
-		#if MC_VER > MC_26_2_0
 		this.genParams.cachedDensity.begin();
-		#endif
 
 		try(PhantomArrayListCheckout checkout = ARRAY_LIST_POOL.checkoutLongArrays(3))
 		{
@@ -271,12 +269,10 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 				}
 			}
 		}
-		#if MC_VER > MC_26_2_0
 		finally
 		{
 			this.genParams.cachedDensity.end();
 		}
-		#endif
 		
 		//endregion
 		
@@ -995,12 +991,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 	
 	private static boolean isNoiseSolidAtBlockPos(GenParams genParams, int blockX, int blockY, int blockZ)
 	{
-		#if MC_VER <= MC_26_2_0
-		return genParams.density
-			.compute(new DensityFunction.SinglePointContext(blockX, blockY, blockZ)) > 0.0;
-		#else
 		return genParams.cachedDensity.sampleValue(blockX, blockY, blockZ) > 0.0;
-		#endif
 	}
 	
 	//endregion
@@ -1043,6 +1034,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		#if MC_VER <= MC_26_2_0
 		public DensityFunction density;
+		private final LegacyRoughSurfaceDensitySampler cachedDensity;
 		#else
 		public DensitySampler.Bound density;
 		private final RoughSurfaceDensitySampler cachedDensity;
@@ -1087,6 +1079,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			#if MC_VER <= MC_26_2_0
 			
 			this.density = this.randomState.router().finalDensity();
+			this.cachedDensity = new LegacyRoughSurfaceDensitySampler(this.density);
 			
 			#else
 			
