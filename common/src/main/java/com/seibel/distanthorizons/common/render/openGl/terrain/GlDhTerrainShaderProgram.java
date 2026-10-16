@@ -376,11 +376,11 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		if (bufferContainers != null)
 		{
+			boolean reverseTransparentOrder = !opaquePass && Config.Client.Advanced.Graphics.Quality.transparencySorting.get();
 			for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
 			{
-				// the containers are sorted near to far, transparent LODs need to be drawn far to near
-				// so closer transparent LODs don't depth-cull the ones behind them
-				int containerIndex = opaquePass ? lodIndex : (bufferContainers.size() - 1 - lodIndex);
+				// When sorting is enabled, transparent LODs are drawn far to near.
+				int containerIndex = reverseTransparentOrder ? (bufferContainers.size() - 1 - lodIndex) : lodIndex;
 				IDhApiTerrainBufferContainer apiBufferContainer = bufferContainers.get(containerIndex);
 				LodBufferContainer bufferContainer = (LodBufferContainer)apiBufferContainer;
 				if (!bufferContainer.buffersUploaded)
