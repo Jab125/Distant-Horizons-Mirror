@@ -51,6 +51,7 @@ import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
+import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.state.BlockState;
 #endif
@@ -1413,6 +1414,45 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		return blockState.getLightValue();
 		#else
 		return blockState.getLightEmission();
+		#endif
+	}
+	
+	@Override
+	public int getFluidAmount()
+	{
+		if (this.blockState == null)
+		{
+			return 0;
+		}
+		
+		#if MC_VER <= MC_1_12_2
+		if (!this.isLiquid)
+		{
+			return 0;
+		}
+
+		// vanilla fluids store their level in the meta (the LEVEL property in 1.12.2),
+		// 0 is a source, 1-7 are flowing and 8+ are falling (which renders full)
+		if (this.blockState.getBlock() instanceof BlockLiquid)
+		{
+			#if MC_VER <= MC_1_7_10
+			int level = this.blockState.getMeta();
+			#else
+			int level = this.blockState.getValue(BlockLiquid.LEVEL);
+			#endif
+			return (level >= 8) ? 8 : (8 - level);
+		}
+
+		// modded fluids render full
+		return 8;
+		#else
+		// waterlogged blocks have water in them, but they aren't fluid blocks
+		if (!(this.blockState.getBlock() instanceof LiquidBlock))
+		{
+			return 0;
+		}
+		
+		return this.blockState.getFluidState().getAmount();
 		#endif
 	}
 	
