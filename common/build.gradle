@@ -6,6 +6,9 @@ dependencies {
 
 configurations.testAnnotationProcessor.extendsFrom configurations.annotationProcessor
 configurations.testRuntimeClasspath.extendsFrom configurations.minecraftLibraries
+configurations.testRuntimeClasspath.resolutionStrategy.capabilitiesResolution.withCapability('org.lz4:lz4-java') {
+    selectHighestVersion()
+}
 
 sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
 sourceSets.test.runtimeClasspath += sourceSets.main.compileClasspath
