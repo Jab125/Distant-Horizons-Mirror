@@ -1,1 +1,16 @@
 apply plugin: 'dh-loader'
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
+configurations.testAnnotationProcessor.extendsFrom configurations.annotationProcessor
+
+sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.runtimeClasspath += sourceSets.main.compileClasspath
+
+test {
+    useJUnit()
+    workingDir = layout.buildDirectory.dir('test-runtime').get().asFile
+    doFirst { workingDir.mkdirs() }
+}
