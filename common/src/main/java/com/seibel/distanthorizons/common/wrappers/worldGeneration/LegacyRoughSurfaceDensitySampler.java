@@ -157,6 +157,10 @@ public final class LegacyRoughSurfaceDensitySampler
 		}
 
 		@Override
+		public void fillArray(double[] output, DensityFunction.ContextProvider provider)
+		{ this.input.fillArray(output, provider); }
+
+		@Override
 		public double minValue()
 		{ return this.input.minValue(); }
 

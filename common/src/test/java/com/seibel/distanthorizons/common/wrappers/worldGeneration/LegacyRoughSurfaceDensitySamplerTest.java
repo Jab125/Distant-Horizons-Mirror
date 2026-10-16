@@ -248,6 +248,28 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	}
 
 	@Test
+	public void bulkSamplingKeepsTheWrappedImplementation()
+	{
+		CountingFunction input = new CountingFunction(point -> 0.0)
+		{
+			@Override
+			public void fillArray(double[] output, DensityFunction.ContextProvider provider)
+			{ java.util.Arrays.fill(output, 3.25); }
+		};
+		DensityFunction original = new BulkFunction(DensityFunctions.cacheOnce(input));
+		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(original);
+		sampler.begin();
+		try
+		{
+			assertBits(original.compute(new DensityFunction.SinglePointContext(0, 0, 0)), sampler.sampleValue(0, 0, 0));
+		}
+		finally
+		{
+			sampler.end();
+		}
+	}
+
+	@Test
 	public void cachedChildrenPropagateTheirYDependency()
 	{
 		DensityFunction inner = DensityFunctions.cacheOnce(new CountingFunction(point -> point.blockY() * 0.125));
@@ -445,7 +467,39 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	private static void assertBits(double expected, double actual)
 	{ assertEquals(Double.doubleToRawLongBits(expected), Double.doubleToRawLongBits(actual)); }
 
-	private static final class CountingFunction implements DensityFunction.SimpleFunction
+	private static final class BulkFunction extends CountingFunction
+	{
+		private final DensityFunction input;
+
+		private BulkFunction(DensityFunction input)
+		{
+			super(point -> 0.0);
+			this.input = input;
+		}
+
+		@Override
+		public double compute(DensityFunction.FunctionContext context)
+		{
+			double[] output = new double[1];
+			this.input.fillArray(output, new DensityFunction.ContextProvider()
+			{
+				@Override
+				public DensityFunction.FunctionContext forIndex(int index)
+				{ return context; }
+
+				@Override
+				public void fillAllDirectly(double[] values, DensityFunction function)
+				{ values[0] = function.compute(context); }
+			});
+			return output[0];
+		}
+
+		@Override
+		public DensityFunction mapAll(DensityFunction.Visitor visitor)
+		{ return visitor.apply(new BulkFunction(this.input.mapAll(visitor))); }
+	}
+
+	private static class CountingFunction implements DensityFunction.SimpleFunction
 	{
 		private final ToDoubleFunction<DensityFunction.FunctionContext> function;
 		private final AtomicInteger calls = new AtomicInteger();
