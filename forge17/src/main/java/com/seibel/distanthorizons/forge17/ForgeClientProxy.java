@@ -16,7 +16,6 @@
 package com.seibel.distanthorizons.forge17;
 
 import net.minecraft.client.Minecraft;
-import org.lwjgl.input.Keyboard;
 import net.minecraft.client.shader.Framebuffer;
 import net.minecraft.world.World;
 import net.minecraft.world.chunk.Chunk;
@@ -25,7 +24,6 @@ import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.event.entity.player.PlayerInteractEvent;
 
 import com.seibel.distanthorizons.common.AbstractModInitializer;
-import com.seibel.distanthorizons.common.util.DebugKeybindHandler;
 import com.seibel.distanthorizons.common.util.ProxyUtil;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
@@ -142,6 +140,8 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void registerKeyBindings(InputEvent.KeyInputEvent event)
 	{
+		// TODO: Verify and implement for 1.12.2 and older
+		/*
 		if (Minecraft.getMinecraft().thePlayer == null)
 		{
 			return;
@@ -153,6 +153,7 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 		}
 		
 		DebugKeybindHandler.onKeyPressed(Keyboard.getEventKey());
+		*/
 	}
 	
 	//endregion

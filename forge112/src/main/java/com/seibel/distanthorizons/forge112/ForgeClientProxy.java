@@ -21,7 +21,6 @@ package com.seibel.distanthorizons.forge112;
 
 import com.seibel.distanthorizons.common.AbstractModInitializer;
 import com.seibel.distanthorizons.common.commonMixins.MixinChunkMapCommon;
-import com.seibel.distanthorizons.common.util.DebugKeybindHandler;
 import com.seibel.distanthorizons.common.util.ProxyUtil;
 import com.seibel.distanthorizons.common.wrappers.chunk.ChunkWrapper;
 import com.seibel.distanthorizons.core.api.internal.ClientApi;
@@ -54,7 +53,6 @@ import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.InputEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
 import org.jetbrains.annotations.NotNull;
-import org.lwjgl.input.Keyboard;
 import org.lwjgl.opengl.GL30;
 
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
@@ -177,6 +175,8 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void registerKeyBindings(InputEvent.KeyInputEvent event)
 	{
+		// TODO: Verify and implement for 1.12.2 and older
+		/*
 		if (Minecraft.getMinecraft().player == null)
 		{
 			return;
@@ -188,6 +188,7 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 		}
 		
 		DebugKeybindHandler.onKeyPressed(Keyboard.getEventKey());
+		*/
 	}
 	
 	//endregion
