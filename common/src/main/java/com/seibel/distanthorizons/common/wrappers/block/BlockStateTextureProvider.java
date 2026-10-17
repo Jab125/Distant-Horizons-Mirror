@@ -48,13 +48,6 @@ public class BlockStateTextureProvider implements IBlockStateFaceTextureProvider
 		return ClientBlockStateTextureCache.getFaceTexture((BlockStateWrapper) blockState, direction);
 	}
 	
-	@Nullable
-	@Override
-	public BlockFaceTexture getFluidFlowTexture(IBlockStateWrapper blockState)
-	{
-		return (blockState instanceof BlockStateWrapper) ? ClientBlockStateTextureCache.getFluidFlowTexture((BlockStateWrapper) blockState) : null;
-	}
-	
 	@Override
 	public void clear() 
 	{
