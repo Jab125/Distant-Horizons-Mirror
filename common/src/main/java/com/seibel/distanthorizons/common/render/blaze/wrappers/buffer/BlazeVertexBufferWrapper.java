@@ -21,6 +21,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 #endif
 
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
+import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.IndexBufferBuilder;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
@@ -148,6 +149,13 @@ public class BlazeVertexBufferWrapper implements IDhApiVertexBufferWrapper
 			int byteSize = (vertexBuffer.limit() - vertexBuffer.position());
 			this.vertexGpuBuffer = GPU_DEVICE.createBuffer(this::getName, usage, byteSize);
 			
+			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertexGpuBuffer, /*offset*/0, byteSize);
+			COMMAND_ENCODER.writeToBuffer(bufferSlice, vertexBuffer);
+		}
+		else if (Config.Client.Advanced.Graphics.Quality.transparencySorting.get())
+		{
+			// re-uploads with the same size (IE re-sorted transparent quads) also need to be written
+			int byteSize = (vertexBuffer.limit() - vertexBuffer.position());
 			GpuBufferSlice bufferSlice = new GpuBufferSlice(this.vertexGpuBuffer, /*offset*/0, byteSize);
 			COMMAND_ENCODER.writeToBuffer(bufferSlice, vertexBuffer);
 		}

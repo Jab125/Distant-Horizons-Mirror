@@ -310,9 +310,12 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 					
 					
 					
+					boolean reverseTransparentOrder = !opaquePass && Config.Client.Advanced.Graphics.Quality.transparencySorting.get();
 					for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
 					{
-						IDhApiTerrainBufferContainer apiBufferContainer = bufferContainers.get(lodIndex);
+						// When sorting is enabled, transparent LODs are drawn far to near.
+						int containerIndex = reverseTransparentOrder ? (bufferContainers.size() - 1 - lodIndex) : lodIndex;
+						IDhApiTerrainBufferContainer apiBufferContainer = bufferContainers.get(containerIndex);
 						LodBufferContainer bufferContainer = (LodBufferContainer) apiBufferContainer;
 						BlazeLodUniformBufferWrapper uniformWrapper = (BlazeLodUniformBufferWrapper) bufferContainer.getUniformContainer();
 						
