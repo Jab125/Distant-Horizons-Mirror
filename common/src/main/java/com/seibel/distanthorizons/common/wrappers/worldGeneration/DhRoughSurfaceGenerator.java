@@ -55,10 +55,8 @@ import java.util.function.Consumer;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.core.QuartPos;
 #else
-import net.minecraft.world.level.levelgen.densityfunction.*;
 import com.mojang.datafixers.util.Pair;
 import net.minecraft.core.BlockPos;
-import net.minecraft.util.context.ContextMap;
 #endif
 
 public class DhRoughSurfaceGenerator implements IRoughGenerator
@@ -1034,8 +1032,6 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		#if MC_VER <= MC_26_2_0
 		public DensityFunction density;
-		#else
-		public DensitySampler.Bound density;
 		#endif
 		private final RoughSurfaceDensitySampler cachedDensity;
 		
@@ -1082,19 +1078,8 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			#else
 			
-			ContextMap samplerUserFields = ContextMap.builder()
-				.set(Beardifier.CONTEXT_KEY, Beardifier.EMPTY)
-				.build();
-			
-			DensitySamplerSet densitySamplers = this.randomState.samplersWithContext(
-				SamplerContext.builder()
-					.setUserFields(samplerUserFields)
-					.build()
-			);
-			
-			DensityFunction finalDensityFunc = this.randomState.router.finalDensity();
-			this.density = densitySamplers.get(finalDensityFunc);
-			this.cachedDensity = new RoughSurfaceDensitySampler(this.randomState, finalDensityFunc);
+			this.cachedDensity = new RoughSurfaceDensitySampler(
+				this.randomState, this.randomState.router.finalDensity());
 			
 			#endif
 			//endregion
