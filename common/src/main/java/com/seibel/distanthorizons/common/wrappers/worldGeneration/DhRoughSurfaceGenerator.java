@@ -1034,11 +1034,10 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 		
 		#if MC_VER <= MC_26_2_0
 		public DensityFunction density;
-		private final LegacyRoughSurfaceDensitySampler cachedDensity;
 		#else
 		public DensitySampler.Bound density;
-		private final RoughSurfaceDensitySampler cachedDensity;
 		#endif
+		private final RoughSurfaceDensitySampler cachedDensity;
 		
 		public boolean isSuperFlatWorld;
 		public int superFlatHeight = Integer.MIN_VALUE;
@@ -1079,7 +1078,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			#if MC_VER <= MC_26_2_0
 			
 			this.density = this.randomState.router().finalDensity();
-			this.cachedDensity = new LegacyRoughSurfaceDensitySampler(this.density);
+			this.cachedDensity = new RoughSurfaceDensitySampler(this.density);
 			
 			#else
 			

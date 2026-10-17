@@ -88,7 +88,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 
 	private static long[] timeGraph(DensityFunction original, boolean cached)
 	{
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(original);
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(original);
 		long start = System.nanoTime();
 		if (cached)
 		{
@@ -144,7 +144,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 
 	private static void assertGraphValues(DensityFunction original)
 	{
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(original);
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(original);
 		sampler.begin();
 		try
 		{
@@ -170,7 +170,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	@Test
 	public void samplingRequiresAnActiveRequest()
 	{
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(DensityFunctions.zero());
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(DensityFunctions.zero());
 		assertThrows(IllegalStateException.class, () -> sampler.sampleValue(0, 0, 0));
 		sampler.begin();
 		try
@@ -190,7 +190,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	public void columnValuesAreReusedWithoutAssumingMarkersAreIndependentOfY()
 	{
 		CountingFunction input = new CountingFunction(point -> point.blockX() * 0.25 + point.blockZ());
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(DensityFunctions.flatCache(input));
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(DensityFunctions.flatCache(input));
 		sampler.begin();
 		try
 		{
@@ -223,7 +223,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 		CountingFunction input = new CountingFunction(point ->
 			Math.sin(point.blockX() * 0.13) + point.blockY() * 0.015625 - point.blockZ() * 0.31);
 		DensityFunction original = marker.apply(input);
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(original);
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(original);
 		int[] coordinates = {Integer.MIN_VALUE, -30000000, -4097, -65, -1, 0, 1, 64, 4096, 30000000, Integer.MAX_VALUE};
 		sampler.begin();
 		try
@@ -257,7 +257,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 			{ java.util.Arrays.fill(output, 3.25); }
 		};
 		DensityFunction original = new BulkFunction(DensityFunctions.cacheOnce(input));
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(original);
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(original);
 		sampler.begin();
 		try
 		{
@@ -274,7 +274,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	{
 		DensityFunction inner = DensityFunctions.cacheOnce(new CountingFunction(point -> point.blockY() * 0.125));
 		DensityFunction graph = DensityFunctions.add(inner, DensityFunctions.flatCache(inner));
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(graph);
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(graph);
 		sampler.begin();
 		try
 		{
@@ -293,7 +293,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	public void yDependencyCanChangeBetweenColumns()
 	{
 		CountingFunction input = new CountingFunction(point -> point.blockX() < 0 ? -0.0 : point.blockY() * 0.5);
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(DensityFunctions.cache2d(input));
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(DensityFunctions.cache2d(input));
 		sampler.begin();
 		try
 		{
@@ -312,7 +312,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	public void eachRequestStartsWithEmptyCaches()
 	{
 		CountingFunction input = new CountingFunction(point -> 3.25);
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
 		for (int request = 1; request <= 3; request++)
 		{
 			sampler.begin();
@@ -340,7 +340,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 			}
 			return point.blockY() * 0.5;
 		});
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
 		sampler.begin();
 		try
 		{
@@ -360,8 +360,8 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	{
 		CountingFunction input = new CountingFunction(point -> point.blockY() * 0.5);
 		DensityFunction graph = DensityFunctions.cacheOnce(input);
-		LegacyRoughSurfaceDensitySampler first = new LegacyRoughSurfaceDensitySampler(graph);
-		LegacyRoughSurfaceDensitySampler second = new LegacyRoughSurfaceDensitySampler(graph);
+		RoughSurfaceDensitySampler first = new RoughSurfaceDensitySampler(graph);
+		RoughSurfaceDensitySampler second = new RoughSurfaceDensitySampler(graph);
 		first.begin();
 		second.begin();
 		try
@@ -384,7 +384,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	public void failedRequestsReleaseWorkerCaches() throws Exception
 	{
 		CountingFunction input = new CountingFunction(point -> 3.25);
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
 		ExecutorService worker = Executors.newSingleThreadExecutor();
 		try
 		{
@@ -427,7 +427,7 @@ public class LegacyRoughSurfaceDensitySamplerTest
 	public void workersHaveIndependentCaches() throws Exception
 	{
 		CountingFunction input = new CountingFunction(point -> point.blockY() * 0.5);
-		LegacyRoughSurfaceDensitySampler sampler = new LegacyRoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
+		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(DensityFunctions.cacheOnce(input));
 		ExecutorService workers = Executors.newFixedThreadPool(4);
 		CyclicBarrier barrier = new CyclicBarrier(4);
 		try
