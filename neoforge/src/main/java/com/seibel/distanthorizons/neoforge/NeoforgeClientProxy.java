@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.neoforge;
 import com.mojang.blaze3d.platform.InputConstants;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
 import com.seibel.distanthorizons.common.AbstractModInitializer;
+import com.seibel.distanthorizons.common.util.DebugKeybindHandler;
 import com.seibel.distanthorizons.common.util.ProxyUtil;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
@@ -177,7 +178,7 @@ public class NeoforgeClientProxy implements AbstractModInitializer.IEventProxy
 		}
 		#endif
 		
-		ClientApi.INSTANCE.keyPressedEvent(event.getKey());
+		DebugKeybindHandler.onKeyPressed(event.getKey());
 	}
 	
 	//endregion

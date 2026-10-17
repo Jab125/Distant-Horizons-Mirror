@@ -175,16 +175,20 @@ public class ForgeClientProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void registerKeyBindings(InputEvent.KeyInputEvent event)
 	{
-	/*	if (Minecraft.getMinecraft().player == null)
+		// TODO: Verify and implement for 1.12.2 and older
+		/*
+		if (Minecraft.getMinecraft().player == null)
 		{
 			return;
 		}
-		if (event.getAction() != GLFW.GLFW_PRESS)
+		// only key presses, not releases
+		if (!Keyboard.getEventKeyState())
 		{
 			return;
 		}
 		
-		ClientApi.INSTANCE.keyPressedEvent(event.getKey());*/
+		DebugKeybindHandler.onKeyPressed(Keyboard.getEventKey());
+		*/
 	}
 	
 	//endregion
