@@ -20,11 +20,23 @@ package com.seibel.distanthorizons.common.wrappers.worldGeneration;
 
 #if MC_VER > MC_26_2_0
 
+import com.mojang.serialization.MapCodec;
+import net.minecraft.SharedConstants;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.data.registries.VanillaRegistries;
+import net.minecraft.server.Bootstrap;
+import net.minecraft.util.Interval;
 import net.minecraft.world.level.levelgen.Beardifier;
+import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
+import net.minecraft.world.level.levelgen.RandomState;
 import net.minecraft.world.level.levelgen.densityfunction.DensityBuffer;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunction;
+import net.minecraft.world.level.levelgen.densityfunction.DensityFunctions;
 import net.minecraft.world.level.levelgen.densityfunction.DensitySampler;
 import net.minecraft.world.level.levelgen.densityfunction.DensityVolume;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
+import net.minecraft.world.level.levelgen.densityfunction.DfRewriteRule;
+import org.junit.BeforeClass;
 import org.junit.Test;
 
 import java.util.concurrent.Executors;
@@ -36,13 +48,41 @@ import static org.junit.Assert.*;
 
 public class RoughSurfaceDensitySamplerTest
 {
+	private static RandomState randomState;
+
+	@BeforeClass
+	public static void initializeRegistries()
+	{
+		SharedConstants.tryDetectVersion();
+		Bootstrap.bootStrap();
+		var registries = VanillaRegistries.createWorldLookup();
+		var settings = registries.lookupOrThrow(Registries.NOISE_SETTINGS)
+			.getOrThrow(NoiseGeneratorSettings.OVERWORLD).value();
+		randomState = RandomState.create(registries.lookupOrThrow(Registries.NOISE), 21426927, settings);
+	}
+
+	private static RoughSurfaceDensitySampler createSampler(ContextSampler input)
+	{ return new RoughSurfaceDensitySampler(randomState, DensityFunctions.cache(input)); }
+
 	@Test
 	public void scalarQueriesDoNotUseVolumeValues()
 	{
-		SamplerContext context = RoughSurfaceDensitySampler.createContext();
+		ContextSampler input = new ContextSampler();
+		RoughSurfaceDensitySampler sampler = createSampler(input);
 		DensityVolume volume = new DensityVolume(4, 8, 4, -4, -8, -4);
-		assertEquals(-1, RoughSurfaceDensitySampler.scalarIndex(context, volume, -2, -3, -1));
-		assertSame(Beardifier.EMPTY, context.getField(Beardifier.CONTEXT_KEY));
+		DensityBuffer output = DensityBuffer.createUnpooled(volume.size());
+		sampler.begin();
+		try
+		{
+			sampler.sampleVolume(output, volume);
+			assertEquals(9.5f, output.get(0), 0.0f);
+			assertEquals(3.25f, sampler.sampleValue(-2, -3, -1), 0.0f);
+			assertSame(Beardifier.EMPTY, input.context.getField(Beardifier.CONTEXT_KEY));
+		}
+		finally
+		{
+			sampler.end();
+		}
 	}
 
 	@Test
@@ -50,29 +90,36 @@ public class RoughSurfaceDensitySamplerTest
 	{
 		SamplerContext context = SamplerContext.builder().enableCaches().build();
 		DensityVolume volume = new DensityVolume(4, 8, 4, -4, -8, -4);
-		assertEquals(volume.indexOfBlock(-2, -3, -1),
-			RoughSurfaceDensitySampler.scalarIndex(context, volume, -2, -3, -1));
-		assertEquals(-1, RoughSurfaceDensitySampler.scalarIndex(context, volume, 0, 0, 0));
+		DensitySampler.Bound sampler = randomState.getSampler(DensityFunctions.cache(new ContextSampler())).bind(context);
+		sampler.sampleVolume(DensityBuffer.createUnpooled(volume.size()), volume);
+		assertEquals(9.5f, sampler.sampleValue(-2, -3, -1), 0.0f);
+		assertEquals(3.25f, sampler.sampleValue(0, 0, 0), 0.0f);
 	}
 
 	@Test
-	public void steppedVolumesKeepTheirBoundaryRules()
+	public void steppedVolumesDoNotSupplyScalarValues()
 	{
-		SamplerContext ordinary = SamplerContext.builder().enableCaches().build();
-		SamplerContext rough = RoughSurfaceDensitySampler.createContext();
+		RoughSurfaceDensitySampler sampler = createSampler(new ContextSampler());
 		DensityVolume volume = new DensityVolume(2, 2, 2, -4, -8, -4, 4, 8, 4);
-		for (int x : new int[] {-5, -4, -3, 0, 1, 4})
+		sampler.begin();
+		try
 		{
-			assertEquals(volume.indexOfBlock(x, 0, 0),
-				RoughSurfaceDensitySampler.scalarIndex(ordinary, volume, x, 0, 0));
-			assertEquals(-1, RoughSurfaceDensitySampler.scalarIndex(rough, volume, x, 0, 0));
+			sampler.sampleVolume(DensityBuffer.createUnpooled(volume.size()), volume);
+			for (int x : new int[] {-5, -4, -3, 0, 1, 4})
+			{
+				assertEquals(3.25f, sampler.sampleValue(x, 0, 0), 0.0f);
+			}
+		}
+		finally
+		{
+			sampler.end();
 		}
 	}
 
 	@Test
 	public void samplingRequiresAnActiveRequest()
 	{
-		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(new ContextSampler());
+		RoughSurfaceDensitySampler sampler = createSampler(new ContextSampler());
 		assertThrows(IllegalStateException.class, () -> sampler.sampleValue(0, 0, 0));
 		sampler.begin();
 		try
@@ -92,7 +139,7 @@ public class RoughSurfaceDensitySamplerTest
 	public void eachRequestReleasesItsContext()
 	{
 		ContextSampler input = new ContextSampler();
-		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(input);
+		RoughSurfaceDensitySampler sampler = createSampler(input);
 		SamplerContext previous = null;
 		for (int request = 0; request < 10; request++)
 		{
@@ -116,7 +163,7 @@ public class RoughSurfaceDensitySamplerTest
 	@Test
 	public void failedRequestsCanReleaseTheirContext()
 	{
-		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(new ContextSampler());
+		RoughSurfaceDensitySampler sampler = createSampler(new ContextSampler());
 		assertThrows(IllegalArgumentException.class, () ->
 		{
 			sampler.begin();
@@ -138,8 +185,8 @@ public class RoughSurfaceDensitySamplerTest
 	public void workersHaveIndependentContexts() throws Exception
 	{
 		CyclicBarrier barrier = new CyclicBarrier(4);
-		DensitySampler input = new ContextSampler();
-		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(input);
+		ContextSampler input = new ContextSampler();
+		RoughSurfaceDensitySampler sampler = createSampler(input);
 		ExecutorService workers = Executors.newFixedThreadPool(4);
 		try
 		{
@@ -164,7 +211,7 @@ public class RoughSurfaceDensitySamplerTest
 			{
 				assertEquals(3.25f, result.get(), 0.0f);
 			}
-			assertEquals(4, ((ContextSampler) input).contexts.size());
+			assertEquals(4, input.contexts.size());
 		}
 		finally
 		{
@@ -177,8 +224,8 @@ public class RoughSurfaceDensitySamplerTest
 	{
 		ContextSampler firstInput = new ContextSampler();
 		ContextSampler secondInput = new ContextSampler();
-		RoughSurfaceDensitySampler first = new RoughSurfaceDensitySampler(firstInput);
-		RoughSurfaceDensitySampler second = new RoughSurfaceDensitySampler(secondInput);
+		RoughSurfaceDensitySampler first = createSampler(firstInput);
+		RoughSurfaceDensitySampler second = createSampler(secondInput);
 		first.begin();
 		second.begin();
 		try
@@ -199,7 +246,7 @@ public class RoughSurfaceDensitySamplerTest
 	@Test
 	public void reusedWorkerDoesNotRetainFailedRequests() throws Exception
 	{
-		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(new ContextSampler());
+		RoughSurfaceDensitySampler sampler = createSampler(new ContextSampler());
 		ExecutorService worker = Executors.newSingleThreadExecutor();
 		try
 		{
@@ -242,7 +289,7 @@ public class RoughSurfaceDensitySamplerTest
 	@Test
 	public void cancelledWorkerReleasesItsContext() throws Exception
 	{
-		RoughSurfaceDensitySampler sampler = new RoughSurfaceDensitySampler(new ContextSampler());
+		RoughSurfaceDensitySampler sampler = createSampler(new ContextSampler());
 		java.util.concurrent.CountDownLatch started = new java.util.concurrent.CountDownLatch(1);
 		java.util.concurrent.CountDownLatch wait = new java.util.concurrent.CountDownLatch(1);
 		ExecutorService worker = Executors.newSingleThreadExecutor();
@@ -281,7 +328,7 @@ public class RoughSurfaceDensitySamplerTest
 		}
 	}
 
-	private static class ContextSampler implements DensitySampler
+	private static class ContextSampler implements DensitySampler, DensityFunction
 	{
 		private SamplerContext context;
 		private final java.util.Set<SamplerContext> contexts = java.util.concurrent.ConcurrentHashMap.newKeySet();
@@ -296,7 +343,27 @@ public class RoughSurfaceDensitySamplerTest
 
 		@Override
 		public void sampleVolume(SamplerContext context, DensityBuffer output, DensityVolume volume)
-		{ DensitySampler.sampleVolumeNaive(context, output, volume, this); }
+		{ output.fill(9.5f); }
+
+		@Override
+		public DensitySampler compileSampler(CompileContext context)
+		{ return this; }
+
+		@Override
+		public DensityFunction rewriteChildren(DfRewriteRule rule)
+		{ return this; }
+
+		@Override
+		public Interval range()
+		{ return Interval.of(3.25f, 9.5f); }
+
+		@Override
+		public int domainAxes()
+		{ return ALL_AXES; }
+
+		@Override
+		public MapCodec<? extends DensityFunction> codec()
+		{ throw new UnsupportedOperationException(); }
 	}
 }
 #endif

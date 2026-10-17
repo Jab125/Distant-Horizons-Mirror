@@ -1094,7 +1094,7 @@ public class DhRoughSurfaceGenerator implements IRoughGenerator
 			
 			DensityFunction finalDensityFunc = this.randomState.router.finalDensity();
 			this.density = densitySamplers.get(finalDensityFunc);
-			this.cachedDensity = new RoughSurfaceDensitySampler(this.density.sampler());
+			this.cachedDensity = new RoughSurfaceDensitySampler(this.randomState, finalDensityFunc);
 			
 			#endif
 			//endregion

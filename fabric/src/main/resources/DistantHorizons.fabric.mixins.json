@@ -4,7 +4,6 @@
   "package": "com.seibel.distanthorizons.fabric.mixins",
   "mixins": [
     "server.MixinChunkGenerator",
-    "server.MixinSamplerContext",
     "server.MixinChunkMap",
     "server.MixinEntity",
     "server.MixinServerPlayer",
