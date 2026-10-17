@@ -1446,6 +1446,12 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		// modded fluids render full
 		return 8;
 		#else
+		// bubble columns are water source blocks that aren't LiquidBlocks
+		if (this.blockState.is(Blocks.BUBBLE_COLUMN))
+		{
+			return this.blockState.getFluidState().getAmount();
+		}
+
 		// waterlogged blocks have water in them, but they aren't fluid blocks
 		if (!(this.blockState.getBlock() instanceof LiquidBlock))
 		{
