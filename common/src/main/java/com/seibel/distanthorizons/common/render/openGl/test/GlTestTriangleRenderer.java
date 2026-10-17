@@ -22,6 +22,7 @@ package com.seibel.distanthorizons.common.render.openGl.test;
 import com.seibel.distanthorizons.api.enums.config.EDhApiGpuUploadMethod;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.apply.GlDhApplyShader;
+import com.seibel.distanthorizons.common.render.openGl.postProcessing.copy.GlDhCopyShader;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -134,12 +135,15 @@ public class GlTestTriangleRenderer implements IDhApiTestTriangleRenderer
 		this.basicShader.bind();
 		this.va.bind();
 		
+		GLMC.disableBlend();
+		GLMC.disableDepthTest();
+		
 		this.vbo.bind();
 		this.va.bindBufferToAllBindingPoints(this.vbo.getId());
 		
 		LWJGL.glDrawArrays(GL11.GL_TRIANGLES, 0, 3);
 		
-		GlDhApplyShader.INSTANCE.render((RenderParam)renderParams);
+		GlDhCopyShader.INSTANCE.render((RenderParam)renderParams);
 	}
 	
 	//endregion
