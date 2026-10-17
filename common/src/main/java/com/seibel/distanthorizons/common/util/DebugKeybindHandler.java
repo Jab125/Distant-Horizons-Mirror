@@ -34,7 +34,10 @@ import org.lwjgl.glfw.GLFW;
 #endif
 #endif
 
-/** Handles DH's debug keybinds (F6, F7 and F8). Key codes change between Minecraft versions so this lives in common. */
+/** 
+ * Handles DH's debug keybinds (F6, F7 and F8). 
+ * Since key codes change between Minecraft versions this lives in common.
+ */
 public class DebugKeybindHandler
 {
 	private static final IMinecraftClientWrapper MC_CLIENT = SingletonInjector.INSTANCE.get(IMinecraftClientWrapper.class);
@@ -60,6 +63,11 @@ public class DebugKeybindHandler
 	
 	
 	
+	//==================//
+	// key press events //
+	//==================//
+	//region
+	
 	/** @param keyCode Minecraft's key code for the key that was pressed */
 	public static void onKeyPressed(int keyCode)
 	{
@@ -84,6 +92,15 @@ public class DebugKeybindHandler
 			MC_CLIENT.sendChatMessage("F8: Set debug mode to " + Config.Client.Advanced.Debugging.debugRenderingColors.get());
 		}
 	}
+	
+	//endregion
+	
+	
+	
+	//=============//
+	// tick events //
+	//=============//
+	//region
 	
 	/** For loaders without a key press event (Fabric), checks the debug keys once per client tick */
 	public static void checkDebugKeysEachTick()
@@ -131,5 +148,9 @@ public class DebugKeybindHandler
 		return InputConstants.isKeyDown(keyCode);
 		#endif
 	}
+	
+	//endregion
+	
+	
 	
 }
