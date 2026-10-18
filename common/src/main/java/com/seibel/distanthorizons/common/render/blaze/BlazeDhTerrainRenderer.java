@@ -312,7 +312,11 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 					
 					for (int lodIndex = 0; lodIndex < bufferContainers.size(); lodIndex++)
 					{
-						IDhApiTerrainBufferContainer apiBufferContainer = bufferContainers.get(lodIndex);
+						// the containers are sorted near to far, transparent LODs need to be drawn far to near
+						// so closer transparent LODs don't depth-cull the ones behind them
+						int containerIndex = opaquePass ? lodIndex : (bufferContainers.size() - 1 - lodIndex);
+						IDhApiTerrainBufferContainer apiBufferContainer = bufferContainers.get(containerIndex);
+						
 						LodBufferContainer bufferContainer = (LodBufferContainer) apiBufferContainer;
 						BlazeLodUniformBufferWrapper uniformWrapper = (BlazeLodUniformBufferWrapper) bufferContainer.getUniformContainer();
 						
