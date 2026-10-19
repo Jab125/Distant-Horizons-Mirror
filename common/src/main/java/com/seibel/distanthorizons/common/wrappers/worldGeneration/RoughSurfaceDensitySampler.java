@@ -44,7 +44,6 @@ import net.minecraft.world.level.levelgen.densityfunction.DensitySampler;
 import net.minecraft.world.level.levelgen.densityfunction.DensityVolume;
 import net.minecraft.world.level.levelgen.densityfunction.DfRewriteRule;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
-import net.minecraft.world.level.levelgen.densityfunction.ScopedDensityBuffer;
 import net.minecraft.world.level.levelgen.densityfunction.op.CacheFunction;
 
 import java.util.HashMap;
@@ -97,24 +96,7 @@ public final class RoughSurfaceDensitySampler
 	}
 
 	public void end()
-	{
-		#if MC_VER <= MC_26_2_0
-		this.current.remove();
-		#else
-		Request request = this.current.get();
-		try
-		{
-			if (request != null)
-			{
-				request.close();
-			}
-		}
-		finally
-		{
-			this.current.remove();
-		}
-		#endif
-	}
+	{ this.current.remove(); }
 
 	#if MC_VER <= MC_26_2_0
 	public double sampleValue(int x, int y, int z)
@@ -275,17 +257,6 @@ public final class RoughSurfaceDensitySampler
 			}
 			return cell;
 		}
-
-		private void close()
-		{
-			for (CacheCell cell : this.cells)
-			{
-				if (cell != null && cell.buffer != null)
-				{
-					cell.buffer.close();
-				}
-			}
-		}
 	}
 
 	private static final class CacheCell
@@ -293,7 +264,7 @@ public final class RoughSurfaceDensitySampler
 		private long valueKey;
 		private float value = Float.NaN;
 		private DensityVolume volume;
-		private ScopedDensityBuffer buffer;
+		private DensityBuffer buffer;
 	}
 
 	private record CachedSampler(int index, DensitySampler input) implements DensitySampler
@@ -323,29 +294,12 @@ public final class RoughSurfaceDensitySampler
 			CacheCell cell = this.cell(context);
 			if (cell.buffer == null || !volume.equals(cell.volume))
 			{
-				this.fill(context, cell, volume);
+				DensityBuffer buffer = DensityBuffer.createUnpooled(volume.size());
+				this.input.sampleVolume(context, buffer, volume);
+				cell.volume = volume;
+				cell.buffer = buffer;
 			}
 			output.copyFrom(cell.buffer);
-		}
-
-		private void fill(SamplerContext context, CacheCell cell, DensityVolume volume)
-		{
-			ScopedDensityBuffer buffer = context.acquireBuffer(volume);
-			try
-			{
-				this.input.sampleVolume(context, buffer, volume);
-			}
-			catch (RuntimeException | Error failure)
-			{
-				buffer.close();
-				throw failure;
-			}
-			if (cell.buffer != null)
-			{
-				cell.buffer.close();
-			}
-			cell.volume = volume;
-			cell.buffer = buffer;
 		}
 	}
 
