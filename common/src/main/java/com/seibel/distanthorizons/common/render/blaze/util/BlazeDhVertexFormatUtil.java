@@ -46,8 +46,8 @@ public class BlazeDhVertexFormatUtil
 	 */
 	@NotNull public static final VertexFormatElement SHORT_XYZ_POS_AND_W_META;
 	@NotNull public static final VertexFormatElement BYTE_PAD;
-	/** contains light and micro-offset */
-	@NotNull public static final VertexFormatElement META;
+	/** offset inside the block in 256ths and flags, see EDhApiTerrainVertexFormat */
+	@NotNull public static final VertexFormatElement EXTENDED_DATA;
 	@NotNull public static final VertexFormatElement RGBA_UBYTE_COLOR;
 	@NotNull public static final VertexFormatElement IRIS_MATERIAL;
 	@NotNull public static final VertexFormatElement IRIS_NORMAL;
@@ -71,7 +71,7 @@ public class BlazeDhVertexFormatUtil
 			SHORT_XYZ_POS_AND_W_META = VertexFormatElement.register(/*id*/24, /*index*/0, VertexFormatElement.Type.USHORT, VertexFormatElement.Usage.POSITION, /*count*/ 4);
 			BYTE_PAD = VertexFormatElement.register(/*id*/25, /*index*/0, VertexFormatElement.Type.BYTE, VertexFormatElement.Usage.GENERIC, /*count*/ 1);
 			
-			META = VertexFormatElement.register(/*id*/26, /*index*/0, VertexFormatElement.Type.USHORT, VertexFormatElement.Usage.GENERIC, /*count*/ 1);
+			EXTENDED_DATA = VertexFormatElement.register(/*id*/26, /*index*/0, VertexFormatElement.Type.UBYTE, VertexFormatElement.Usage.GENERIC, /*count*/ 4);
 			RGBA_UBYTE_COLOR = VertexFormatElement.register(/*id*/27, /*index*/0, VertexFormatElement.Type.UBYTE, VertexFormatElement.Usage.COLOR, /*count*/ 4);
 			IRIS_MATERIAL = VertexFormatElement.register(/*id*/28, /*index*/0, VertexFormatElement.Type.BYTE, VertexFormatElement.Usage.GENERIC, /*count*/ 1);
 			IRIS_NORMAL = VertexFormatElement.register(/*id*/29, /*index*/0, VertexFormatElement.Type.BYTE, VertexFormatElement.Usage.GENERIC, /*count*/ 1);
@@ -86,7 +86,7 @@ public class BlazeDhVertexFormatUtil
 			SHORT_XYZ_POS_AND_W_META = VertexFormatElement.register(/*id*/24, /*index*/0, VertexFormatElement.Type.USHORT, false, /*count*/ 4);
 			BYTE_PAD = VertexFormatElement.register(/*id*/25, /*index*/0, VertexFormatElement.Type.BYTE, false, /*count*/ 1);
 			
-			META = VertexFormatElement.register(/*id*/26, /*index*/0, VertexFormatElement.Type.USHORT, false, /*count*/ 1);
+			EXTENDED_DATA = VertexFormatElement.register(/*id*/26, /*index*/0, VertexFormatElement.Type.UBYTE, false, /*count*/ 4);
 			RGBA_UBYTE_COLOR = VertexFormatElement.register(/*id*/27, /*index*/0, VertexFormatElement.Type.UBYTE, true, /*count*/ 4);
 			IRIS_MATERIAL = VertexFormatElement.register(/*id*/28, /*index*/0, VertexFormatElement.Type.BYTE, false, /*count*/ 1);
 			IRIS_NORMAL = VertexFormatElement.register(/*id*/29, /*index*/0, VertexFormatElement.Type.BYTE, false, /*count*/ 1);
@@ -102,7 +102,7 @@ public class BlazeDhVertexFormatUtil
 			SHORT_XYZ_POS_AND_W_META = VertexFormatElement.register(/*id*/24, /*index*/0, GpuFormat.RGBA16_UINT); // 4 ushorts
 			BYTE_PAD = VertexFormatElement.register(/*id*/25, /*index*/0, GpuFormat.R8_UINT); // 1 byte
 			
-			META = VertexFormatElement.register(/*id*/26, /*index*/0, GpuFormat.R16_UINT); // 1 ushort
+			EXTENDED_DATA = VertexFormatElement.register(/*id*/26, /*index*/0, GpuFormat.RGBA8_UINT); // 4 ubytes
 			RGBA_UBYTE_COLOR = VertexFormatElement.register(/*id*/27, /*index*/0, GpuFormat.RGBA8_UNORM); // 4 ubytes
 			IRIS_MATERIAL = VertexFormatElement.register(/*id*/28, /*index*/0, GpuFormat.R8_UINT); // 1 byte
 			IRIS_NORMAL = VertexFormatElement.register(/*id*/29, /*index*/0, GpuFormat.R8_UINT); // 1 byte
@@ -119,7 +119,7 @@ public class BlazeDhVertexFormatUtil
 			SHORT_XYZ_POS_AND_W_META = new VertexFormatElement("Short XYZ Pos and W Meta", Short.BYTES * 4, GpuFormat.RGBA16_UINT);
 			BYTE_PAD = new VertexFormatElement("Byte Pad", 1, GpuFormat.R8_UINT);
 			
-			META = new VertexFormatElement("DH Meta", Short.BYTES, GpuFormat.R16_UINT);
+			EXTENDED_DATA = new VertexFormatElement("DH Extended Data", 4, GpuFormat.RGBA8_UINT);
 			RGBA_UBYTE_COLOR = new VertexFormatElement("Rgba Ubyte Color", 4, GpuFormat.RGBA8_UNORM);
 			IRIS_MATERIAL = new VertexFormatElement("Iris Material", 1, GpuFormat.R8_UINT);
 			IRIS_NORMAL = new VertexFormatElement("Iris Normal", 1, GpuFormat.R8_UINT);

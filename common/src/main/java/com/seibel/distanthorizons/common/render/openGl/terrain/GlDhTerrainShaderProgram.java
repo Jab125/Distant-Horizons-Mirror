@@ -1,6 +1,8 @@
 package com.seibel.distanthorizons.common.render.openGl.terrain;
 
+import com.seibel.distanthorizons.api.enums.rendering.EDhApiTerrainVertexFormat;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
+import com.seibel.distanthorizons.api.interfaces.render.renderDef.AbstractDhApiRenderDefinition;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhApiTerrainRenderer;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiTerrainBufferContainer;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
@@ -16,7 +18,6 @@ import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlVertexAttributePostGL43;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlVertexAttributePreGL43;
 import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.GlVertexPointer;
-import com.seibel.distanthorizons.common.render.openGl.util.vertexFormat.GlLodVertexFormat;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
@@ -34,6 +35,7 @@ import com.seibel.distanthorizons.core.util.math.DhVec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
+import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
@@ -63,7 +65,9 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	
 	private boolean init = false;
 	
-	public GlAbstractVertexAttribute vao;
+	/** one for each vertex format, see EDhApiTerrainVertexFormat */
+	private GlAbstractVertexAttribute baseVao;
+	private GlAbstractVertexAttribute extendedVao;
 	
 	/** used for TAA jitter, the 8 represents how many jitter points are available */
 	private int frameIndexMod8 = 0;
@@ -100,6 +104,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	// Debug Uniform
 	public int uIsWhiteWorld = -1;
 	
+	public int uHasExtendedData = -1;
+	
 	//endregion
 	
 	
@@ -114,7 +120,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		super(
 			"assets/distanthorizons/shaders/terrain/gl/vert.vert",
 			"assets/distanthorizons/shaders/terrain/gl/frag.frag",
-			new String[]{"vPosition", "color", "irisData"}
+			new String[]{"vPosition", "color", "irisData", "extendedData"}
 		);
 	}
 	
@@ -152,40 +158,53 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		// Debug Uniform
 		this.uIsWhiteWorld = this.getUniformLocation("uIsWhiteWorld");
 		
+		this.uHasExtendedData = this.getUniformLocation("uHasExtendedData");
 		
-		if (GLProxy.getInstance().vertexAttributeBufferBindingSupported)
-		{
-			this.vao = new GlVertexAttributePostGL43(); // also binds AbstractVertexAttribute
-		}
-		else
-		{
-			this.vao = new GlVertexAttributePreGL43(); // also binds AbstractVertexAttribute
-		}
-		this.vao.bind();
+		
+		this.baseVao = createVao(EDhApiTerrainVertexFormat.BASE);
+		this.extendedVao = createVao(EDhApiTerrainVertexFormat.EXTENDED);
+		
+		this.init = true;
+	}
+	private static GlAbstractVertexAttribute createVao(EDhApiTerrainVertexFormat vertexFormat)
+	{
+		GlAbstractVertexAttribute vao = GLProxy.getInstance().vertexAttributeBufferBindingSupported
+			? new GlVertexAttributePostGL43() // also binds AbstractVertexAttribute
+			: new GlVertexAttributePreGL43(); // also binds AbstractVertexAttribute
+		vao.bind();
 		
 		// short: x, y, z, meta
 		//      meta: byte skylight, byte blocklight, byte microOffset
-		this.vao.setVertexAttribute(0, 0, GlVertexPointer.addUnsignedShortsPointer(4, false, true));
+		vao.setVertexAttribute(0, 0, GlVertexPointer.addUnsignedShortsPointer(4, false, true));
 		// byte: r, g, b, a
-		this.vao.setVertexAttribute(0, 1, GlVertexPointer.addUnsignedBytesPointer(4, true, false));
+		vao.setVertexAttribute(0, 1, GlVertexPointer.addUnsignedBytesPointer(4, true, false));
 		// byte: iris material ID, normal index, 2 spacers
-		this.vao.setVertexAttribute(0, 2, GlVertexPointer.addUnsignedBytesPointer(4, true, true));
+		vao.setVertexAttribute(0, 2, GlVertexPointer.addUnsignedBytesPointer(4, true, true));
+		if (vertexFormat == EDhApiTerrainVertexFormat.EXTENDED)
+		{
+			// byte: offset x, y, z (256ths of a block), flags
+			vao.setVertexAttribute(0, 3, GlVertexPointer.addUnsignedBytesPointer(4, false, true));
+		}
 		
 		try
 		{
-			int vertexByteCount = GlLodVertexFormat.DH_VERTEX_FORMAT.getByteSize();
-			this.vao.completeAndCheck(vertexByteCount);
+			vao.completeAndCheck(vertexFormat.bytesPerVertex);
 		}
 		catch (RuntimeException e)
 		{
-			System.out.println(GlLodVertexFormat.DH_VERTEX_FORMAT);
+			System.out.println(vertexFormat);
 			throw e;
 		}
 		
 		// unbinding here is necessary to fix an issue when running on Legacy GL
-		this.vao.unbind();
-		
-		this.init = true;
+		vao.unbind();
+		return vao;
+	}
+	/** the format changes when a shader pack is turned on or off */
+	private GlAbstractVertexAttribute getVao()
+	{
+		EDhApiTerrainVertexFormat vertexFormat = OverrideInjector.INSTANCE.get(AbstractDhApiRenderDefinition.class).getTerrainVertexFormat();
+		return (vertexFormat == EDhApiTerrainVertexFormat.EXTENDED) ? this.extendedVao : this.baseVao;
 	}
 	
 	//endregion
@@ -202,24 +221,25 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	{
 		this.tryInit();
 		super.bind();
-		this.vao.bind();
+		this.getVao().bind();
 	}
 	@Override
 	public void unbind()
 	{
 		super.unbind();
-		this.vao.unbind();
+		this.getVao().unbind();
 	}
 	
 	@Override
 	public void free()
 	{
-		this.vao.free();
+		this.baseVao.free();
+		this.extendedVao.free();
 		super.free();
 	}
 	
 	@Override
-	public void bindVertexBuffer(int vbo) { this.vao.bindBufferToAllBindingPoints(vbo); }
+	public void bindVertexBuffer(int vbo) { this.getVao().bindBufferToAllBindingPoints(vbo); }
 	
 	@Override
 	public void fillUniformData(DhApiRenderParam renderParameters)
@@ -288,6 +308,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		// Debug
 		this.setUniform(this.uIsWhiteWorld, Config.Client.Advanced.Debugging.enableWhiteWorld.get());
+		this.setUniform(this.uHasExtendedData, (this.getVao() == this.extendedVao));
 		
 		// Clip Uniform
 		float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();

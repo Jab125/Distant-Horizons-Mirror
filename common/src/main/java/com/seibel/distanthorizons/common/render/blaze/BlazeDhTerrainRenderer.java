@@ -138,6 +138,7 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 				.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
 				.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
 				.add("textureTile", BlazeDhVertexFormatUtil.TEXTURE_TILE)
+				.add("extendedData", BlazeDhVertexFormatUtil.EXTENDED_DATA)
 				.build();
 			pipelineBuilder.withVertexFormat(vertexFormat);
 			
