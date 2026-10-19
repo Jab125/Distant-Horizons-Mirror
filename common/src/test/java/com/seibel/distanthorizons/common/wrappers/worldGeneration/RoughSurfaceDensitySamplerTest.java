@@ -26,6 +26,7 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.data.registries.VanillaRegistries;
 import net.minecraft.server.Bootstrap;
 import net.minecraft.util.Interval;
+import net.minecraft.util.context.ContextMap;
 import net.minecraft.world.level.levelgen.Beardifier;
 import net.minecraft.world.level.levelgen.NoiseGeneratorSettings;
 import net.minecraft.world.level.levelgen.RandomState;
@@ -36,6 +37,7 @@ import net.minecraft.world.level.levelgen.densityfunction.DensitySampler;
 import net.minecraft.world.level.levelgen.densityfunction.DensityVolume;
 import net.minecraft.world.level.levelgen.densityfunction.SamplerContext;
 import net.minecraft.world.level.levelgen.densityfunction.DfRewriteRule;
+import net.minecraft.world.level.levelgen.densityfunction.op.InterpolatedFunction;
 import org.junit.BeforeClass;
 import org.junit.Test;
 
@@ -481,6 +483,43 @@ public class RoughSurfaceDensitySamplerTest
 		finally
 		{
 			sampler.end();
+		}
+	}
+
+	@Test
+	public void offGridScalarInterpolationReusesCornerEvaluation()
+	{
+		ContextSampler referenceInput = new ContextSampler();
+		ContextSampler cachedInput = new ContextSampler();
+		DensityFunction referenceSource = new InterpolatedFunction(DensityFunctions.cache(referenceInput), 4, 8);
+		DensityFunction cachedSource = new InterpolatedFunction(DensityFunctions.cache(cachedInput), 4, 8);
+		var fields = ContextMap.builder().set(Beardifier.CONTEXT_KEY, Beardifier.EMPTY).build();
+		var reference = randomState.getSampler(referenceSource).bind(
+			SamplerContext.builder().setUserFields(fields).build());
+		RoughSurfaceDensitySampler cached = new RoughSurfaceDensitySampler(randomState, cachedSource);
+		cached.begin();
+		try
+		{
+			for (int x = -3; x < 0; x++)
+			{
+				for (int y = -7; y < -4; y++)
+				{
+					for (int z = -3; z < 0; z++)
+					{
+						assertEquals(reference.sampleValue(x, y, z), cached.sampleValue(x, y, z), 0.0f);
+					}
+				}
+			}
+			assertEquals(27, referenceInput.volumeCalls.get());
+			assertEquals(1, cachedInput.volumeCalls.get());
+			assertEquals(3.25f, reference.sampleValue(-4, -8, -4), 0.0f);
+			assertEquals(3.25f, cached.sampleValue(-4, -8, -4), 0.0f);
+			assertEquals(1, referenceInput.scalarCalls.get());
+			assertEquals(1, cachedInput.scalarCalls.get());
+		}
+		finally
+		{
+			cached.end();
 		}
 	}
 
