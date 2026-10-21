@@ -20,11 +20,8 @@ repositories {
 // ==================== Mod Dependency Helper ====================
 
 def addMod(path, enabled) {
-    // GTNH dev jars use different MCP names from this project's stable mappings.
-    // Select the SRG release artifact explicitly for Unimined to remap at runtime;
-    // GTNH's default Gradle metadata otherwise selects the dev artifact.
     if (enabled == "2")
-        dependencies { modImplementation("${path}@jar") { transitive = false } }
+        dependencies { modImplementation("${path}:dev") { transitive = false } }
     else if (enabled == "1")
         dependencies { modCompileOnly("${path}:dev") { transitive = false } }
 }
