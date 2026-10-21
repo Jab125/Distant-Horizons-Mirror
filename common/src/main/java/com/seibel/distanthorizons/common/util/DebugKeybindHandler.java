@@ -130,7 +130,7 @@ public class DebugKeybindHandler
 		// TODO: Verify and implement for 1.12.2 and older
 		//return Minecraft.getMinecraft().currentScreen != null;
 		return true;
-		#elif MC_VER <= MC_26_2_0
+		#elif MC_VER <= MC_26_1_2
 		return Minecraft.getInstance().screen != null;
 		#else
 		return Minecraft.getInstance().gui.screen() != null;
