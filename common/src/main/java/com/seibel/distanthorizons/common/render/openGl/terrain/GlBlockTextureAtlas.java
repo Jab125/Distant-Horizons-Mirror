@@ -24,6 +24,7 @@ import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureR
 import com.seibel.distanthorizons.core.render.AbstractBlockTextureAtlas;
 import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import org.lwjgl.opengl.GL11;
+import org.lwjgl.opengl.GL12;
 import org.lwjgl.opengl.GL13;
 
 import java.nio.ByteBuffer;
@@ -94,6 +95,8 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 		// texels bleeding between unrelated tiles on adjacent layers
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER, GL11.GL_NEAREST_MIPMAP_LINEAR);
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
+		// Stop before mip levels combine neighboring block tiles.
+		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, Integer.numberOfTrailingZeros(TextureUtil.TEXTURE_WIDTH_AND_HEIGHT));
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
 	}
