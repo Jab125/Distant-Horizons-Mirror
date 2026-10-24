@@ -68,9 +68,9 @@ public class GlDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	@Override
 	public EDhApiTerrainVertexFormat getTerrainVertexFormat()
 	{
-		// shader packs (Iris) read the base format
+		// shader packs (Iris) read the format without offsets
 		boolean shaderPackInUse = (IRIS_ACCESSOR != null && IRIS_ACCESSOR.isShaderPackInUse());
-		return shaderPackInUse ? EDhApiTerrainVertexFormat.BASE : EDhApiTerrainVertexFormat.EXTENDED;
+		return shaderPackInUse ? EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE : EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET;
 	}
 	
 	@Override

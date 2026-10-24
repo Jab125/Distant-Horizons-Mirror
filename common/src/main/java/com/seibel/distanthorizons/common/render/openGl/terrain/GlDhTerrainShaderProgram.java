@@ -66,8 +66,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	private boolean init = false;
 	
 	/** one for each vertex format, see EDhApiTerrainVertexFormat */
-	private GlAbstractVertexAttribute baseVao;
-	private GlAbstractVertexAttribute extendedVao;
+	private GlAbstractVertexAttribute noOffsetVao;
+	private GlAbstractVertexAttribute offsetVao;
 	
 	/** used for TAA jitter, the 8 represents how many jitter points are available */
 	private int frameIndexMod8 = 0;
@@ -104,7 +104,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	// Debug Uniform
 	public int uIsWhiteWorld = -1;
 	
-	public int uHasExtendedData = -1;
+	public int uHasOffsetData = -1;
 	
 	//endregion
 	
@@ -120,7 +120,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		super(
 			"assets/distanthorizons/shaders/terrain/gl/vert.vert",
 			"assets/distanthorizons/shaders/terrain/gl/frag.frag",
-			new String[]{"vPosition", "color", "irisData", "extendedData"}
+			new String[]{"vPosition", "color", "irisData", "offsetData"}
 		);
 	}
 	
@@ -158,11 +158,11 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		// Debug Uniform
 		this.uIsWhiteWorld = this.getUniformLocation("uIsWhiteWorld");
 		
-		this.uHasExtendedData = this.getUniformLocation("uHasExtendedData");
+		this.uHasOffsetData = this.getUniformLocation("uHasOffsetData");
 		
 		
-		this.baseVao = createVao(EDhApiTerrainVertexFormat.BASE);
-		this.extendedVao = createVao(EDhApiTerrainVertexFormat.EXTENDED);
+		this.noOffsetVao = createVao(EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE);
+		this.offsetVao = createVao(EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET);
 		
 		this.init = true;
 	}
@@ -180,7 +180,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		vao.setVertexAttribute(0, 1, GlVertexPointer.addUnsignedBytesPointer(4, true, false));
 		// byte: iris material ID, normal index, 2 spacers
 		vao.setVertexAttribute(0, 2, GlVertexPointer.addUnsignedBytesPointer(4, true, true));
-		if (vertexFormat == EDhApiTerrainVertexFormat.EXTENDED)
+		if (vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET)
 		{
 			// byte: offset x, y, z (256ths of a block), flags
 			vao.setVertexAttribute(0, 3, GlVertexPointer.addUnsignedBytesPointer(4, false, true));
@@ -204,7 +204,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	private GlAbstractVertexAttribute getVao()
 	{
 		EDhApiTerrainVertexFormat vertexFormat = OverrideInjector.INSTANCE.get(AbstractDhApiRenderDefinition.class).getTerrainVertexFormat();
-		return (vertexFormat == EDhApiTerrainVertexFormat.EXTENDED) ? this.extendedVao : this.baseVao;
+		return (vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET) ? this.offsetVao : this.noOffsetVao;
 	}
 	
 	//endregion
@@ -233,8 +233,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	@Override
 	public void free()
 	{
-		this.baseVao.free();
-		this.extendedVao.free();
+		this.noOffsetVao.free();
+		this.offsetVao.free();
 		super.free();
 	}
 	
@@ -308,7 +308,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		// Debug
 		this.setUniform(this.uIsWhiteWorld, Config.Client.Advanced.Debugging.enableWhiteWorld.get());
-		this.setUniform(this.uHasExtendedData, (this.getVao() == this.extendedVao));
+		this.setUniform(this.uHasOffsetData, (this.getVao() == this.offsetVao));
 		
 		// Clip Uniform
 		float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
