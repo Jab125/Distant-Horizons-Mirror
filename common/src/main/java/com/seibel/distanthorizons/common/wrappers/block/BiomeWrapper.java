@@ -93,6 +93,9 @@ public class BiomeWrapper implements IBiomeWrapper
 	
 	public static final ConcurrentHashMap<String, BiomeWrapper> WRAPPER_BY_RESOURCE_LOCATION = new ConcurrentHashMap<>();
 	
+	/** keep track of broken biomes so we don't log every time */
+	private static final HashSet<String> BROKEN_RESOURCE_LOCATION_STRINGS = new HashSet<>();
+	
 	public static final String EMPTY_BIOME_STRING = "EMPTY";
 	public static final BiomeWrapper EMPTY_WRAPPER = new BiomeWrapper(null, null);
 	
@@ -101,9 +104,6 @@ public class BiomeWrapper implements IBiomeWrapper
 		#else "minecraft:plains" #endif;
 	
 	
-	
-	/** keep track of broken biomes so we don't log every time */
-	private static final HashSet<String> brokenResourceLocationStrings = new HashSet<>();
 	
 	/** 
 	 * Only display this warning once, otherwise the log may be spammed <br> 
@@ -223,6 +223,12 @@ public class BiomeWrapper implements IBiomeWrapper
 	
 	@Override
 	public Object getWrappedMcObject() { return this.biome; }
+	
+	public static void clearCache() 
+	{
+		WRAPPER_BY_BIOME.clear();
+		WRAPPER_BY_RESOURCE_LOCATION.clear();
+	}
 	
 	//endregion
 	
@@ -363,9 +369,9 @@ public class BiomeWrapper implements IBiomeWrapper
 				
 				if (!deserializeResult.success)
 				{
-					if (!brokenResourceLocationStrings.contains(resourceLocationString))
+					if (!BROKEN_RESOURCE_LOCATION_STRINGS.contains(resourceLocationString))
 					{
-						brokenResourceLocationStrings.add(resourceLocationString);
+						BROKEN_RESOURCE_LOCATION_STRINGS.add(resourceLocationString);
 						LOGGER.warn("Unable to deserialize biome from string: [" + resourceLocationString + "]");
 					}
 					return EMPTY_WRAPPER;
