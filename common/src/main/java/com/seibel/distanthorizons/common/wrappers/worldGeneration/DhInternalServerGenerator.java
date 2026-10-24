@@ -223,6 +223,23 @@ public class DhInternalServerGenerator
 	// generation //
 	//============//
 	
+	#if MC_VER <= MC_1_12_2
+	/**
+	 * False once Forge has unloaded this world. <br>
+	 * Server thread tasks queued before that can still run afterward and must not touch it anymore,
+	 * Forge has already dropped its tickets and forced chunks.
+	 */
+	private boolean isLevelLoaded()
+	{
+		WorldServer level = this.params.mcServerLevel;
+		#if MC_VER <= MC_1_7_10
+		return DimensionManager.getWorld(level.provider.dimensionId) == level;
+		#else
+		return DimensionManager.getWorld(level.provider.getDimension()) == level;
+		#endif
+	}
+	#endif
+	
 	/** 
 	 * Releases the Forge ticket, 
 	 * otherwise every world gen restart (e.g. toggling the generator plan) leaves one behind 
@@ -231,16 +248,10 @@ public class DhInternalServerGenerator
 	public void close()
 	{
 		#if MC_VER <= MC_1_12_2
-		WorldServer level = this.params.mcServerLevel;
 		ServerThreadTaskHandler.INSTANCE.queueEssentialTask(() ->
 		{
 			// Forge drops the tickets of unloaded worlds itself and would throw here
-			#if MC_VER <= MC_1_7_10
-			boolean levelLoaded = DimensionManager.getWorld(level.provider.dimensionId) == level;
-			#else
-			boolean levelLoaded = DimensionManager.getWorld(level.provider.getDimension()) == level;
-			#endif
-			if (levelLoaded)
+			if (this.isLevelLoaded())
 			{
 				ForgeChunkManager.releaseTicket(this.dhServerGenTicket);
 			}
@@ -388,6 +399,11 @@ public class DhInternalServerGenerator
 			{
 				try
 				{
+					if (!this.isLevelLoaded())
+					{
+						return null;
+					}
+					
 					ChunkProviderServer provider = (ChunkProviderServer) this.params.mcServerLevel.getChunkProvider();
 					// Each pump frees a limited number of chunks so several are generally needed,
 					// but we want to avoid an endless loop.
@@ -503,6 +519,11 @@ public class DhInternalServerGenerator
 			
 			return ServerThreadTaskHandler.INSTANCE.queueTask(() ->
 			{
+				if (!this.isLevelLoaded())
+				{
+					return null;
+				}
+				
 				ChunkProviderServer provider = (ChunkProviderServer) level.getChunkProvider();
 				
 				// load neighbors first so the target chunk can fully populate.
@@ -630,6 +651,11 @@ public class DhInternalServerGenerator
 		{
 			try
 			{
+				if (!this.isLevelLoaded())
+				{
+					return null;
+				}
+				
 				ChunkProviderServer provider = (ChunkProviderServer) level.getChunkProvider();
 	
 				// release the target chunk and the neighbors acquired in requestChunkFromServerAsync.
