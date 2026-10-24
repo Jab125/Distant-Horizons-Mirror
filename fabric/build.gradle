@@ -34,7 +34,9 @@ dependencies {
 
     // Sodium
     addMod("maven.modrinth:sodium:${rootProject.sodium_version}", rootProject.enable_sodium)
-    if (rootProject.enable_sodium == "2") implementation "org.joml:joml:1.10.2"
+    if (rootProject.enable_sodium == "2" && rootProject.mcIndex <= rootProject.mcVers.indexOf("1.19.2")) {
+        implementation "org.joml:joml:1.10.2"
+    }
     
 	// Lithium
     addMod("maven.modrinth:lithium:${rootProject.lithium_version}", rootProject.enable_lithium)
