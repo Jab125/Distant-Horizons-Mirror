@@ -523,6 +523,11 @@ if (isNotCommonProject) {
         // NightConfig
         relocate "com.electronwill.nightconfig", "${librariesLocation}.electronwill.nightconfig"
 
+        // 1.7.10 always runs on Java 8 so the Java 9+ variants of the bundled libraries are never used,
+        // FML's ASM can't read them and logs a "corrupt zip" error for each on every start
+        if (rootProject.minecraft_version == "1.7.10")
+            exclude "META-INF/versions/**"
+
         mergeServiceFiles()
     }
     
