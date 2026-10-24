@@ -22,7 +22,9 @@ package com.seibel.distanthorizons.common.render.openGl.terrain;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
 import com.seibel.distanthorizons.core.render.AbstractBlockTextureAtlas;
+import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import com.seibel.distanthorizons.coreapi.util.TextureUtil;
+import com.seibel.distanthorizons.lwjgl.GL12;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL13;
 
@@ -96,6 +98,10 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER, GL11.GL_NEAREST);
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_S, GL11.GL_REPEAT);
 		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_WRAP_T, GL11.GL_REPEAT);
+		
+		// mip limiting is necessary to prevent mipping outside a given block
+		int mipLevels = (int)Math.sqrt(TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);
+		LWJGL.glTexParameteri(GL11.GL_TEXTURE_2D, GL12.GL_TEXTURE_MAX_LEVEL, mipLevels);
 	}
 	
 	public int getTextureId() { return this.textureId; }
