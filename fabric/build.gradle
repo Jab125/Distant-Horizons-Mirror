@@ -23,6 +23,9 @@ dependencies {
         exclude module: "fabric-gametest-api-v1"
     }
 
+    // example local jar reference for troubleshooting other mods:
+    //dependencies { compileOnly(files('../run/client/mods/polytone-26.3-6.8.6-fabric.jar')) }
+
     // Mod Menu
     addMod("maven.modrinth:modmenu:${rootProject.modmenu_version}", rootProject.enable_mod_menu)
 
