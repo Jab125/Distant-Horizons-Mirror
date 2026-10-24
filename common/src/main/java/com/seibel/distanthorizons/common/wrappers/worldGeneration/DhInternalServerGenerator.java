@@ -225,13 +225,12 @@ public class DhInternalServerGenerator
 	{
 		this.runValidation();
 		
+		ArrayList<CompletableFuture<ChunkWrapper>> getChunkFutureList = new ArrayList<>();
 		try
 		{
 			//=====================//
 			// create gen requests //
 			//=====================//
-			
-			ArrayList<CompletableFuture<ChunkWrapper>> getChunkFutureList = new ArrayList<>();
 			
 			{
 				Iterator<ChunkPos> chunkPosIterator = ChunkPosGenStream.getIterator(genEvent.minChunkPos.getX(), genEvent.minChunkPos.getZ(), genEvent.widthInChunks, 0);
@@ -321,6 +320,20 @@ public class DhInternalServerGenerator
 		}
 		finally
 		{
+			#if MC_VER <= MC_1_12_2
+			// if a request failed we got here early while other requests may still be queued,
+			// releases run before requests on the server thread, so those would acquire their chunks
+			// after the release below and never give them back
+			for (int i = 0; i < getChunkFutureList.size(); i++)
+			{
+				try
+				{
+					getChunkFutureList.get(i).join();
+				}
+				catch (Exception ignore) { }
+			}
+			#endif
+			
 			ArrayList<CompletableFuture<Void>> releaseFutures = new ArrayList<>();
 
 			// release all chunks from the server to prevent out of memory issues.
