@@ -129,6 +129,13 @@ public class DhInternalServerGenerator
 	 * This map tracks how many in-flight generation events currently need each chunk pos loaded.
 	 */
 	private final ConcurrentHashMap<DhChunkPos, Integer> generationChunkRefCountMap = new ConcurrentHashMap<>();
+	
+	/**
+	 * Set once {@link #close()} was called. <br>
+	 * Requests of generation events that are still running can be queued behind the ticket release,
+	 * they must not force chunks with the released ticket.
+	 */
+	private volatile boolean closed = false;
 	#endif
 	
 	
@@ -248,6 +255,7 @@ public class DhInternalServerGenerator
 	public void close()
 	{
 		#if MC_VER <= MC_1_12_2
+		this.closed = true;
 		ServerThreadTaskHandler.INSTANCE.queueEssentialTask(() ->
 		{
 			// Forge drops the tickets of unloaded worlds itself and would throw here
@@ -519,8 +527,11 @@ public class DhInternalServerGenerator
 			
 			return ServerThreadTaskHandler.INSTANCE.queueTask(() ->
 			{
-				if (!this.isLevelLoaded())
+				// releases are still processed after closing, so chunks acquired before that are freed normally
+				if (this.closed || !this.isLevelLoaded())
 				{
+					// nothing was acquired, so the release won't revert the ignore added above
+					this.scheduleRemovePosToIgnore(McObjectConverter.convert(chunkPos));
 					return null;
 				}
 				
