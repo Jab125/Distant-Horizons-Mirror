@@ -34,12 +34,14 @@ import net.minecraft.world.ChunkCoordIntPair;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.ForgeChunkManager;
 #elif MC_VER <= MC_1_12_2
 import net.minecraft.util.math.ChunkPos;
 import net.minecraft.world.WorldServer;
 import net.minecraft.world.chunk.Chunk;
 import net.minecraft.world.gen.ChunkProviderServer;
+import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.common.ForgeChunkManager;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.chunk.storage.AnvilChunkLoader;
@@ -220,6 +222,32 @@ public class DhInternalServerGenerator
 	//============//
 	// generation //
 	//============//
+	
+	/** 
+	 * Releases the Forge ticket, 
+	 * otherwise every world gen restart (e.g. toggling the generator plan) leaves one behind 
+	 * until Forge's per mod ticket limit is reached.
+	 */
+	public void close()
+	{
+		#if MC_VER <= MC_1_12_2
+		WorldServer level = this.params.mcServerLevel;
+		ServerThreadTaskHandler.INSTANCE.queueEssentialTask(() ->
+		{
+			// Forge drops the tickets of unloaded worlds itself and would throw here
+			#if MC_VER <= MC_1_7_10
+			boolean levelLoaded = DimensionManager.getWorld(level.provider.dimensionId) == level;
+			#else
+			boolean levelLoaded = DimensionManager.getWorld(level.provider.getDimension()) == level;
+			#endif
+			if (levelLoaded)
+			{
+				ForgeChunkManager.releaseTicket(this.dhServerGenTicket);
+			}
+			return null;
+		});
+		#endif
+	}
 	
 	public void generateChunksViaInternalServer(ChunkGenEvent genEvent)
 	{
