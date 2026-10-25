@@ -2,7 +2,6 @@ package com.seibel.distanthorizons.common.render.openGl.terrain;
 
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiTerrainVertexFormat;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
-import com.seibel.distanthorizons.api.interfaces.render.renderDef.AbstractDhApiRenderDefinition;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhApiTerrainRenderer;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiTerrainBufferContainer;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
@@ -35,7 +34,6 @@ import com.seibel.distanthorizons.core.util.math.DhVec3f;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
-import com.seibel.distanthorizons.coreapi.DependencyInjection.OverrideInjector;
 import org.lwjgl.opengl.GL11;
 import org.lwjgl.opengl.GL14;
 
@@ -68,6 +66,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	/** one for each vertex format, see EDhApiTerrainVertexFormat */
 	private GlAbstractVertexAttribute noOffsetVao;
 	private GlAbstractVertexAttribute offsetVao;
+	/** set from the render parameters each frame */
+	private EDhApiTerrainVertexFormat vertexFormat = EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE;
 	
 	/** used for TAA jitter, the 8 represents how many jitter points are available */
 	private int frameIndexMod8 = 0;
@@ -200,11 +200,9 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		vao.unbind();
 		return vao;
 	}
-	/** the format changes when a shader pack is turned on or off */
 	private GlAbstractVertexAttribute getVao()
 	{
-		EDhApiTerrainVertexFormat vertexFormat = OverrideInjector.INSTANCE.get(AbstractDhApiRenderDefinition.class).getTerrainVertexFormat();
-		return (vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET) ? this.offsetVao : this.noOffsetVao;
+		return (this.vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET) ? this.offsetVao : this.noOffsetVao;
 	}
 	
 	//endregion
@@ -244,6 +242,9 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	@Override
 	public void fillUniformData(DhApiRenderParam renderParameters)
 	{
+		// the format changes when a shader pack is turned on or off
+		this.vertexFormat = renderParameters.renderDefinition.getTerrainVertexFormat();
+		
 		DhMat4f combinedMatrix = new DhMat4f(renderParameters.dhProjectionMatrix);
 		combinedMatrix.multiply(renderParameters.dhModelViewMatrix);
 		
@@ -308,7 +309,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		// Debug
 		this.setUniform(this.uIsWhiteWorld, Config.Client.Advanced.Debugging.enableWhiteWorld.get());
-		this.setUniform(this.uHasOffsetData, (this.getVao() == this.offsetVao));
+		this.setUniform(this.uHasOffsetData, (this.vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET));
 		
 		// Clip Uniform
 		float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
