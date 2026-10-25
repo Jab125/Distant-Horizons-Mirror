@@ -135,9 +135,8 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 			VertexFormat vertexFormat = new BlazeVertexFormatBuilder()
 				.add("vPositionAndMeta", BlazeDhVertexFormatUtil.SHORT_XYZ_POS_AND_W_META)
 				.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
-				.add("irisMaterial", BlazeDhVertexFormatUtil.IRIS_MATERIAL)
-				.add("irisNormal", BlazeDhVertexFormatUtil.IRIS_NORMAL)
-				.add("textureTile", BlazeDhVertexFormatUtil.TEXTURE_TILE)
+				.add("materialNormalTile", BlazeDhVertexFormatUtil.MATERIAL_NORMAL_TILE)
+				.add("offsetData", BlazeDhVertexFormatUtil.OFFSET_DATA)
 				.build();
 			pipelineBuilder.withVertexFormat(vertexFormat);
 			

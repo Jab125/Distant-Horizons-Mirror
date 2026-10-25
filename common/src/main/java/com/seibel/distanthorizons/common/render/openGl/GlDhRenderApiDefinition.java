@@ -3,6 +3,7 @@ package com.seibel.distanthorizons.common.render.openGl;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
+import com.seibel.distanthorizons.api.enums.rendering.EDhApiTerrainVertexFormat;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.*;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
 import com.seibel.distanthorizons.common.render.openGl.generic.GlGenericObjectRenderer;
@@ -63,6 +64,14 @@ public class GlDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	
 	public EDhApiRenderingApi getRenderApi() { return EDhApiRenderingApi.OPEN_GL; }
 	public boolean isNativeRenderer() { return true; }
+	
+	@Override
+	public EDhApiTerrainVertexFormat getTerrainVertexFormat()
+	{
+		// shader packs (Iris) read the format without offsets
+		boolean shaderPackInUse = (IRIS_ACCESSOR != null && IRIS_ACCESSOR.isShaderPackInUse());
+		return shaderPackInUse ? EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE : EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_OFFSET;
+	}
 	
 	@Override
 	public int getPriority() { return IOverrideInjector.CORE_PRIORITY; }

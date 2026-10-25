@@ -8,6 +8,7 @@ public class BlazeDhRenderApiDefinition {}
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
 import com.seibel.distanthorizons.api.enums.config.EDhApiRenderingApi;
+import com.seibel.distanthorizons.api.enums.rendering.EDhApiTerrainVertexFormat;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.*;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
 import com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObjectVertexContainer;
@@ -55,6 +56,9 @@ public class BlazeDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	private final EDhApiRenderingApi renderApi;
 	public EDhApiRenderingApi getRenderApi() { return this.renderApi; }
 	public boolean isNativeRenderer() { return false; }
+	
+	@Override
+	public EDhApiTerrainVertexFormat getTerrainVertexFormat() { return EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_OFFSET; }
 	
 	@Override
 	public int getPriority() { return IOverrideInjector.CORE_PRIORITY; }
