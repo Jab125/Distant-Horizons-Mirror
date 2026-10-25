@@ -1446,19 +1446,25 @@ public class BlockStateWrapper implements IBlockStateWrapper
 		// modded fluids render full
 		return LodUtil.MAX_FLUID_AMOUNT;
 		#else
-		// bubble columns are water source blocks that aren't LiquidBlocks
-		if (this.blockState.is(Blocks.BUBBLE_COLUMN))
+		return this.blockState.getFluidState().getAmount();
+		#endif
+	}
+	
+	@Override
+	public boolean isWaterlogged()
+	{
+		if (this.blockState == null)
 		{
-			return this.blockState.getFluidState().getAmount();
-		}
-
-		// waterlogged blocks have water in them, but they aren't fluid blocks
-		if (!(this.blockState.getBlock() instanceof LiquidBlock))
-		{
-			return LodUtil.NO_FLUID_AMOUNT;
+			return false;
 		}
 		
-		return this.blockState.getFluidState().getAmount();
+		#if MC_VER <= MC_1_12_2
+		return false;
+		#else
+		// bubble columns are water source blocks, not waterlogged blocks
+		return !this.blockState.getFluidState().isEmpty()
+			&& !(this.blockState.getBlock() instanceof LiquidBlock)
+			&& !this.blockState.is(Blocks.BUBBLE_COLUMN);
 		#endif
 	}
 	
