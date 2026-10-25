@@ -162,7 +162,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		
 		this.noOffsetVao = createVao(EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE);
-		this.offsetVao = createVao(EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET);
+		this.offsetVao = createVao(EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET_UV_NORMAL);
 		
 		this.init = true;
 	}
@@ -180,7 +180,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		vao.setVertexAttribute(0, 1, GlVertexPointer.addUnsignedBytesPointer(4, true, false));
 		// byte: iris material ID, normal index, 2 spacers
 		vao.setVertexAttribute(0, 2, GlVertexPointer.addUnsignedBytesPointer(4, true, true));
-		if (vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET)
+		if (vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET_UV_NORMAL)
 		{
 			// byte: offset x, y, z (256ths of a block), flags
 			vao.setVertexAttribute(0, 3, GlVertexPointer.addUnsignedBytesPointer(4, false, true));
@@ -202,7 +202,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	}
 	private GlAbstractVertexAttribute getVao()
 	{
-		return (this.vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET) ? this.offsetVao : this.noOffsetVao;
+		return (this.vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET_UV_NORMAL) ? this.offsetVao : this.noOffsetVao;
 	}
 	
 	//endregion
@@ -309,7 +309,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		// Debug
 		this.setUniform(this.uIsWhiteWorld, Config.Client.Advanced.Debugging.enableWhiteWorld.get());
-		this.setUniform(this.uHasOffsetData, (this.vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET));
+		this.setUniform(this.uHasOffsetData, (this.vertexFormat == EDhApiTerrainVertexFormat.POS_COLOR_LIGHT_MICRO_TEXTURE_OFFSET_UV_NORMAL));
 		
 		// Clip Uniform
 		float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
