@@ -30,6 +30,14 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRen
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.ISodiumAccessor;
 import net.minecraft.client.Minecraft;
 
+#if MC_VER > MC_26_2_0
+import com.seibel.distanthorizons.core.render.VanillaSectionCoverage;
+import com.seibel.distanthorizons.fabric.mixins.client.MixinSodiumWorldRenderer;
+import net.caffeinemc.mods.sodium.client.render.SodiumWorldRenderer;
+import net.caffeinemc.mods.sodium.client.render.chunk.LocalSectionIndex;
+import net.caffeinemc.mods.sodium.client.render.chunk.region.RenderRegion;
+#endif
+
 
 #if MC_VER < MC_1_20_1
 import me.jellysquid.mods.sodium.client.render.SodiumWorldRenderer;
@@ -67,6 +75,51 @@ public class SodiumAccessor implements ISodiumAccessor
 	
 	@Override
 	public String getModName() { return "Sodium-Fabric"; }
+
+	#if MC_VER > MC_26_2_0
+	@Override
+	public VanillaSectionCoverage getNativeTerrainCoverage()
+	{
+		SodiumWorldRenderer renderer = SodiumWorldRenderer.instanceNullable();
+		if (renderer == null) return null;
+		var manager = ((MixinSodiumWorldRenderer)(Object)renderer).distantHorizons$getSectionManager();
+		if (manager == null) return null;
+		var lists = manager.getRenderLists();
+		int minX = Integer.MAX_VALUE, minZ = Integer.MAX_VALUE;
+		int maxX = Integer.MIN_VALUE, maxZ = Integer.MIN_VALUE;
+		var iterator = lists.iterator(false);
+		while (iterator.hasNext())
+		{
+			var list = iterator.next();
+			if (list.getSectionsWithGeometryCount() == 0) continue;
+			var region = list.getRegion();
+			minX = Math.min(minX, region.getOriginX());
+			minZ = Math.min(minZ, region.getOriginZ());
+			maxX = Math.max(maxX, region.getOriginX() + RenderRegion.REGION_WIDTH * 16);
+			maxZ = Math.max(maxZ, region.getOriginZ() + RenderRegion.REGION_LENGTH * 16);
+		}
+		if (minX == Integer.MAX_VALUE) return null;
+		var level = Minecraft.getInstance().level;
+		VanillaSectionCoverage coverage = new VanillaSectionCoverage(minX, level.getMinY(), minZ,
+			(maxX - minX) / 16, (level.getHeight() + 15) / 16, (maxZ - minZ) / 16);
+		iterator = lists.iterator(false);
+		while (iterator.hasNext())
+		{
+			var list = iterator.next();
+			var region = list.getRegion();
+			var sections = list.sectionsWithGeometryIterator(false);
+			if (sections == null) continue;
+			while (sections.hasNext())
+			{
+				int index = sections.nextByteAsInt();
+				coverage.include(region.getOriginX() + LocalSectionIndex.unpackX(index) * 16,
+					region.getOriginY() + LocalSectionIndex.unpackY(index) * 16,
+					region.getOriginZ() + LocalSectionIndex.unpackZ(index) * 16);
+			}
+		}
+		return coverage;
+	}
+	#endif
 	
 	
 	

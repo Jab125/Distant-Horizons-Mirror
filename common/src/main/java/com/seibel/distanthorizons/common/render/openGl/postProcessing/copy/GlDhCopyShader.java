@@ -19,6 +19,8 @@
 
 package com.seibel.distanthorizons.common.render.openGl.postProcessing.copy;
 
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.common.render.openGl.postProcessing.antialiasing.GlDhTaaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLState;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
@@ -47,6 +49,7 @@ public class GlDhCopyShader extends GlAbstractShaderRenderer
 	
 	// uniforms
 	public int uCopyTexture;
+	private int sourceColorTextureId;
 	
 	
 	
@@ -83,6 +86,11 @@ public class GlDhCopyShader extends GlAbstractShaderRenderer
 	@Override
 	protected void onRender(RenderParam renderParams)
 	{
+		this.sourceColorTextureId = GlDhMetaRenderer.INSTANCE.getActiveColorTextureId();
+		if (MC_RENDER.hasNativeTransparencyCoverage() && Config.Client.Advanced.Graphics.enableAntiAliasing.get())
+		{
+			this.sourceColorTextureId = GlDhTaaRenderer.INSTANCE.getResolvedColorTexture();
+		}
 		if (MC_RENDER.mcRendersToFrameBuffer())
 		{
 			this.renderToFrameBuffer();
@@ -117,7 +125,7 @@ public class GlDhCopyShader extends GlAbstractShaderRenderer
 			//GLMC.glBlendFunc(GL33.GL_ONE, GL33.GL_ONE_MINUS_SRC_ALPHA);
 			
 			GLMC.glActiveTexture(GL13.GL_TEXTURE0);
-			GLMC.glBindTexture(GlDhMetaRenderer.INSTANCE.getActiveColorTextureId());
+			GLMC.glBindTexture(this.sourceColorTextureId);
 			LWJGL.glUniform1i(this.uCopyTexture, 0);
 			
 			// Copy to MC's framebuffer
@@ -161,7 +169,7 @@ public class GlDhCopyShader extends GlAbstractShaderRenderer
 			GLMC.disableBlend();
 			
 			GLMC.glActiveTexture(GL13.GL_TEXTURE0);
-			GLMC.glBindTexture(GlDhMetaRenderer.INSTANCE.getActiveColorTextureId());
+			GLMC.glBindTexture(this.sourceColorTextureId);
 			LWJGL.glUniform1i(this.uCopyTexture, 0);
 			
 			

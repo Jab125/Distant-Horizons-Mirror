@@ -35,6 +35,7 @@ import com.mojang.renderpearl.api.pipeline.RenderPipeline;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer;
+import com.seibel.distanthorizons.common.render.blaze.BlazeDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazePostProcessUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.RenderPassWrapper;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.RenderPipelineBuilderWrapper;
@@ -52,6 +53,7 @@ public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 	public static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
 	public static final BlazeDhTaaRenderer INSTANCE = new BlazeDhTaaRenderer();
+	public static final BlazeDhTaaRenderer OPAQUE_INSTANCE = new BlazeDhTaaRenderer();
 	
 	
 	private RenderPipeline pipeline;
@@ -61,12 +63,11 @@ public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 	private GpuBuffer vboGpuBuffer;
 	
 	
-	private final BlazeTextureWrapper colorTextureA = BlazeTextureWrapper.createColor("dh_taa_color_a");
-	private final BlazeTextureWrapper colorTextureB = BlazeTextureWrapper.createColor("dh_taa_color_b");
-	/** flips each frame */
-	private boolean textureAIsHistory = true;
+	private BlazeTextureWrapper colorTextureA = BlazeTextureWrapper.createColor("dh_taa_color_a");
+	// Each pass keeps its own history and shares the next output buffer.
+	private static BlazeTextureWrapper scratchColorTexture = BlazeTextureWrapper.createColor("dh_taa_scratch");
+	private boolean historyValid = false;
 	
-	private final BlazeTextureWrapper taaDepthTextureWrapper = BlazeTextureWrapper.createDepth("dh_taa_depth_texture");
 	
 	// Previous-frame state, captured at the END of render() for use NEXT frame.
 	private final DhMat4f previousDhProjMvmMatrix = new DhMat4f();
@@ -130,38 +131,35 @@ public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 	@Override
 	public void render(DhApiRenderParam apiRenderParams)
 	{
-		RenderParam renderParams = (RenderParam)apiRenderParams;
+		BlazeTextureWrapper outputTexture = this.resolve((RenderParam)apiRenderParams);
+		if (!outputTexture.isEmpty())
+		{
+			BlazeDhSharpenRenderer.INSTANCE.render(outputTexture, (RenderParam)apiRenderParams);
+		}
+	}
+
+	public BlazeTextureWrapper getResolvedColorTexture() { return this.colorTextureA; }
+
+	public BlazeTextureWrapper resolve(RenderParam renderParams)
+	{
 		this.tryInit();
 		
 		// shouldn't happen, but just in case
 		if (BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.isEmpty()
 			|| BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.isEmpty())
 		{
-			return;
+			return BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper;
 		}
-		
-		
 		
 		// textures
-		this.colorTextureA.tryCreateOrResizeToScreenSize();
-		this.colorTextureB.tryCreateOrResizeToScreenSize();
+		boolean resized = this.colorTextureA.tryCreateOrResizeToScreenSize();
+		resized |= scratchColorTexture.tryCreateOrResizeToScreenSize();
+		if (resized) this.historyValid = false;
 		
-		this.taaDepthTextureWrapper.tryCreateOrResizeToScreenSize();
 		
 		
-		BlazeTextureWrapper historyTexture;
-		BlazeTextureWrapper outputTexture;
-		if (this.textureAIsHistory)
-		{
-			historyTexture = this.colorTextureA;
-			outputTexture = this.colorTextureB;
-		}
-		else
-		{
-			historyTexture = this.colorTextureB;
-			outputTexture = this.colorTextureA;
-		}
-		
+		BlazeTextureWrapper historyTexture = this.colorTextureA;
+		BlazeTextureWrapper outputTexture = scratchColorTexture;
 		
 		// frag uniforms 
 		{
@@ -190,6 +188,8 @@ public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 				.putFloat(BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.getHeight()) // viewHeight
 				
 				.putInt(((renderParams.renderDefinition.getDepthRange() == EDhApiDepthRange.ZERO_TO_POS_ONE) ? 1 : 0)) // uDepthIsZeroToPositiveOne
+				.putFloat(BlazeDhTerrainRenderer.INSTANCE.getTaaFrameIndex()) // uFrameMod8
+				.putInt(this.historyValid ? 1 : 0) // uHistoryValid
 				
 				.finishAndUpload()
 			;
@@ -199,7 +199,7 @@ public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 		try (RenderPassWrapper renderPassWrapper = new RenderPassWrapper(
 			this::getRenderPassName,
 			outputTexture,
-			this.taaDepthTextureWrapper
+			null
 		))
 		{
 			renderPassWrapper.bindTexture("uCurrentColorSampler", BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper);
@@ -218,7 +218,9 @@ public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 		{
 			// Save this frame's data for next frame's reprojection
 			
-			this.textureAIsHistory = !this.textureAIsHistory;
+			scratchColorTexture = this.colorTextureA;
+			this.colorTextureA = outputTexture;
+			this.historyValid = true;
 			
 			this.previousDhProjMvmMatrix.set(renderParams.dhProjectionMatrix);
 			this.previousDhProjMvmMatrix.multiply(renderParams.dhModelViewMatrix);
@@ -228,8 +230,7 @@ public class BlazeDhTaaRenderer implements IDhApiAntiAliasRenderer
 		
 		
 		
-		// This also applies the texture to DH's color texture
-		BlazeDhSharpenRenderer.INSTANCE.render(outputTexture, renderParams);
+		return outputTexture;
 	}
 	private String getRenderPassName() { return "distantHorizons:TaaRenderer"; }
 	

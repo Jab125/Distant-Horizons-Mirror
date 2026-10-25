@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.render.openGl.terrain;
 
+import com.seibel.distanthorizons.common.render.VanillaTerrainCoverage;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiTerrainVertexFormat;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiTerrainBufferContainer;
@@ -19,6 +20,7 @@ import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.api.enums.rendering.EDhApiRenderPass;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
@@ -68,6 +70,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	
 	/** used for TAA jitter, the 8 represents how many jitter points are available */
 	private int frameIndexMod8 = 0;
+	public int getTaaFrameIndex() { return this.frameIndexMod8; }
 	
 	
 	
@@ -87,6 +90,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	
 	public int uLightMap = -1;
 	public int uBlockAtlas = -1;
+	private int uUseVanillaCoverage, uVanillaCoverageTexture, uVanillaCoverageOrigin, uVanillaCoverageSpanZ;
 	
 	// fragment shader uniforms
 	public int uClipDistance = -1;
@@ -142,6 +146,10 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		this.uLightMap = this.getUniformLocation("uLightMap");
 		this.uBlockAtlas = this.getUniformLocation("uBlockAtlas");
+		this.uUseVanillaCoverage = this.getUniformLocation("uUseVanillaCoverage");
+		this.uVanillaCoverageTexture = this.getUniformLocation("uVanillaCoverageTexture");
+		this.uVanillaCoverageOrigin = this.getUniformLocation("uVanillaCoverageOrigin");
+		this.uVanillaCoverageSpanZ = this.getUniformLocation("uVanillaCoverageSpanZ");
 		
 		// Fog/Clip Uniforms
 		this.uClipDistance = this.getUniformLocation("uClipDistance");
@@ -199,7 +207,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	}
 	private GlAbstractVertexAttribute getVao()
 	{
-		return (this.vertexFormat == EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_OFFSET) ? this.offsetVao : this.noOffsetVao;
+		return (this.vertexFormat != EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE) ? this.offsetVao : this.noOffsetVao;
 	}
 	
 	//endregion
@@ -277,6 +285,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		
 		if (Config.Client.Advanced.Graphics.enableAntiAliasing.get()
+			&& !com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive()
 			&&
 			(
 				IRIS_ACCESSOR == null
@@ -284,8 +293,11 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 			)
 		)
 		{
-			this.frameIndexMod8++;
-			this.frameIndexMod8 %= 8;
+			if (renderParameters.renderPass != EDhApiRenderPass.TRANSPARENT)
+			{
+				this.frameIndexMod8++;
+				this.frameIndexMod8 %= 8;
+			}
 		}
 		else
 		{
@@ -306,7 +318,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		
 		// Debug
 		this.setUniform(this.uIsWhiteWorld, Config.Client.Advanced.Debugging.enableWhiteWorld.get());
-		this.setUniform(this.uHasOffsetData, (this.vertexFormat == EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_OFFSET));
+		this.setUniform(this.uHasOffsetData, (this.vertexFormat != EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE));
 		
 		// Clip Uniform
 		float dhNearClipDistance = RenderUtil.getNearClipPlaneInBlocks();
@@ -337,6 +349,28 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	//===========//
 	//region
 	
+	private void configureVanillaCoverage(RenderParam renderParams, boolean opaquePass)
+	{
+		#if MC_VER > MC_26_2_0
+		if (GlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame != this) return;
+		this.bind();
+		boolean enabled = !opaquePass && VanillaTerrainCoverage.isActive()
+			&& !com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive();
+		this.setUniform(this.uUseVanillaCoverage, enabled);
+		this.setUniform(this.uVanillaCoverageTexture, 3);
+		if (!enabled) return;
+		var camera = renderParams.exactCameraPosition;
+		this.setUniform(this.uVanillaCoverageOrigin, new DhVec3f(
+			(float)(VanillaTerrainCoverage.getOriginX() - camera.x),
+			(float)(VanillaTerrainCoverage.getOriginY() - camera.y),
+			(float)(VanillaTerrainCoverage.getOriginZ() - camera.z)));
+		this.setUniform(this.uVanillaCoverageSpanZ, VanillaTerrainCoverage.getSpanZ());
+		GLMC.glActiveTexture(org.lwjgl.opengl.GL13.GL_TEXTURE3);
+		LWJGL.glBindSampler(3, 0);
+		GLMC.glBindTexture(((com.mojang.renderpearl.backend.opengl.GlTexture)VanillaTerrainCoverage.getTexture().getTexture()).glId());
+		#endif
+	}
+
 	public void render(
 		RenderParam renderEventParam, boolean opaquePass,
 		IDhApiReadOnlyList<? extends IDhApiTerrainBufferContainer> bufferContainers)
@@ -345,6 +379,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		// debug wireframe setup //
 		//=======================//
 		
+		this.configureVanillaCoverage(renderEventParam, opaquePass);
+
 		boolean renderWireframe = Config.Client.Advanced.Debugging.renderWireframe.get();
 		if (renderWireframe)
 		{

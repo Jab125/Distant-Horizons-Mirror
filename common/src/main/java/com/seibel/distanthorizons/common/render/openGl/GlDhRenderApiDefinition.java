@@ -70,7 +70,7 @@ public class GlDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	{
 		// shader packs (Iris) read the format without offsets
 		boolean shaderPackInUse = (IRIS_ACCESSOR != null && IRIS_ACCESSOR.isShaderPackInUse());
-		return shaderPackInUse ? EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE : EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_OFFSET;
+		return shaderPackInUse ? EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE : EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_FLUID;
 	}
 	
 	@Override

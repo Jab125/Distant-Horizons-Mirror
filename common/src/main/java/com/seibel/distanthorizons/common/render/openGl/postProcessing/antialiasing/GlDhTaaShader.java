@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.openGl.postProcessing.antialias
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
 import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
+import com.seibel.distanthorizons.common.render.openGl.GlDhTerrainRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.GlScreenQuad;
 import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRenderer;
@@ -69,6 +70,10 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 	public int uViewHeight;
 	
 	public int uDepthIsZeroToPositiveOne;
+	private int uFrameMod8;
+	private int uHistoryValid;
+	private boolean historyValid = false;
+	public void invalidateHistory() { this.historyValid = false; }
 	
 	public int uCurrentColorSampler;
 	public int uCurrentDepthSampler;
@@ -110,6 +115,8 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 		this.uViewHeight = this.shader.getUniformLocation("uViewHeight");
 		
 		this.uDepthIsZeroToPositiveOne = this.shader.getUniformLocation("uDepthIsZeroToPositiveOne");
+		this.uFrameMod8 = this.shader.getUniformLocation("uFrameMod8");
+		this.uHistoryValid = this.shader.getUniformLocation("uHistoryValid");
 		
 		this.uCurrentColorSampler = this.shader.getUniformLocation("uCurrentColorSampler");
 		this.uCurrentDepthSampler = this.shader.getUniformLocation("uCurrentDepthSampler");
@@ -141,6 +148,8 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 		double cameraOffsetZ = renderParams.exactCameraPosition.z - this.previousCameraPos.z;
 		
 		
+		this.shader.setUniform(this.uFrameMod8, (float)GlDhTerrainRenderer.INSTANCE.getTerrainShaderProgram().getTaaFrameIndex());
+		this.shader.setUniform(this.uHistoryValid, this.historyValid);
 		// apply uniforms
 		{
 			this.shader.setUniform(this.uDhProjectionInverse, dhProjectionInverse);
@@ -164,6 +173,7 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 	
 	public void savePostRenderUniformObjects(RenderParam renderParams)
 	{
+		this.historyValid = true;
 		// Save this frame's data for next frame's reprojection
 		
 		this.previousDhProjMvmMatrix.set(renderParams.dhProjectionMatrix);

@@ -38,6 +38,8 @@ import com.mojang.renderpearl.api.device.GpuDevice;
 import com.mojang.blaze3d.systems.RenderSystem;
 #endif
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
+import com.seibel.distanthorizons.api.enums.rendering.EDhApiRenderPass;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
@@ -207,17 +209,26 @@ public class BlazeVanillaFadeRenderer implements IDhApiVanillaFadeRenderer
 				.putMat4f(inverseMcMvmProjMatrix) // uMcInvMvmProj
 				.putInt((MC_RENDER.getMcDepthDirection() == EDhApiDepthDirection.REVERSE_Z) ? 1 : 0) // uIsMcReverseZDepth
 				.putInt((renderParams.renderDefinition.getDepthRange() == EDhApiDepthRange.ZERO_TO_POS_ONE) ? 1 : 0) // uDepthIsZeroToPositiveOne
+				.putInt(Config.Client.Advanced.Graphics.Quality.vanillaFadeMode.get() != EDhApiMcRenderingFadeMode.NONE ? 1 : 0)
+				.putInt(renderParams.renderDefinition.getDepthDirection() == EDhApiDepthDirection.REVERSE_Z ? 1 : 0)
+				.putInt(Config.Client.Advanced.Graphics.enableAntiAliasing.get() ? 1 : 0)
 				.finishAndUpload()
 			;
 		}
 		
 		
-		this.renderFadeToTexture();
+		BlazeTextureWrapper dhColorTexture = BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper;
+		if (renderParams.renderPass == EDhApiRenderPass.OPAQUE && Config.Client.Advanced.Graphics.enableAntiAliasing.get())
+		{
+			dhColorTexture = MC_RENDER.hasNativeTransparencyCoverage()
+					? BlazeDhTaaRenderer.INSTANCE.getResolvedColorTexture() : BlazeDhTaaRenderer.OPAQUE_INSTANCE.resolve(renderParams);
+		}
+		this.renderFadeToTexture(dhColorTexture);
 		BlazeDhCopyRenderer.INSTANCE.render(this.fadeColorTextureWrapper, this.mcColorTextureWrapper);
 		
 	}
 	
-	private void renderFadeToTexture()
+	private void renderFadeToTexture(BlazeTextureWrapper dhColorTexture)
 	{
 		try (RenderPassWrapper renderPassWrapper = new RenderPassWrapper(
 			this::getRenderPassName,
@@ -228,7 +239,7 @@ public class BlazeVanillaFadeRenderer implements IDhApiVanillaFadeRenderer
 			renderPassWrapper.bindTexture("uCombinedMcDhColorTexture", this.mcColorTextureWrapper);
 			
 			renderPassWrapper.bindTexture("uDhDepthTexture", BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper);
-			renderPassWrapper.bindTexture("uDhColorTexture", BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper);
+			renderPassWrapper.bindTexture("uDhColorTexture", dhColorTexture);
 			
 			renderPassWrapper.setUniform("fragUniformBlock", this.fragUniformBufferWrapper);
 			

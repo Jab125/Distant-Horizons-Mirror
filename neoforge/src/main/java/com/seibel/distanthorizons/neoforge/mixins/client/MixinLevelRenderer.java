@@ -19,6 +19,8 @@
 
 package com.seibel.distanthorizons.neoforge.mixins.client;
 
+import com.seibel.distanthorizons.common.render.VanillaTerrainCoverage;
+
 #if MC_VER < MC_1_19_4
 import com.seibel.distanthorizons.core.util.math.DhMat4f;
 import com.seibel.distanthorizons.core.util.math.DhVec3f;
@@ -70,6 +72,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 #elif MC_VER <= MC_26_3_0
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.mojang.renderpearl.api.commands.RenderPass;
+import net.minecraft.client.renderer.LevelTargetBundle;
+import org.spongepowered.asm.mixin.Final;
+import java.util.Optional;
+import java.util.OptionalDouble;
+import com.llamalad7.mixinextras.sugar.Local;
+import com.llamalad7.mixinextras.sugar.ref.LocalRef;
 import net.minecraft.client.renderer.chunk.ChunkSectionsToRender;
 import net.minecraft.client.renderer.feature.FeatureRenderDispatcher;
 #endif
@@ -100,6 +111,15 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 @Mixin(LevelRenderer.class)
 public class MixinLevelRenderer
 {
+	#if MC_VER > MC_26_2_0
+	@com.llamalad7.mixinextras.injector.ModifyExpressionValue(method = "extractSectionDrawGroups",
+		at = @At(value = "FIELD", target = "Lnet/minecraft/client/renderer/state/OptionsRenderState;chunkSectionFadeInTime:D"))
+	private double useCompleteNativeSections(double fadeTime)
+	{
+		return com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.requiresSharedOit() ? 0.0 : fadeTime;
+	}
+	#endif
+
 	@Unique
 	private static final DhLogger LOGGER = new DhLoggerBuilder().build();
 	
@@ -254,6 +274,9 @@ public class MixinLevelRenderer
 	// handled in game renderer
 	#else
 	
+	@Shadow @Final private LevelTargetBundle targets;
+	@Shadow private void executeOit(ChunkSectionsToRender chunks, FeatureRenderDispatcher.PreparedFrame features) { throw new AssertionError(); }
+
 	@Inject(at = @At("HEAD"), method = "prepareTranslucents")
 	private void prepareTranslucents(
 		CallbackInfo callback)
@@ -261,6 +284,7 @@ public class MixinLevelRenderer
 	{
 		ClientApi.RENDER_STATE.mcModelViewMatrix = McObjectConverter.convert(RenderSystem.getModelViewStack());
 		
+		VanillaTerrainCoverage.update();
 		ClientApi.RENDER_STATE.canRenderOrThrow();
 		ClientApi.INSTANCE.renderLods();
 	}
@@ -271,16 +295,61 @@ public class MixinLevelRenderer
 		CallbackInfo callback)
 	{
 		ClientApi.INSTANCE.renderDeferredLodsForShaders();
-		ClientApi.INSTANCE.renderFadeOpaque();
+		ClientApi.INSTANCE.renderFadeTransparent();
 	}
 	
-	// improved transparency is necessary since the normal transparent pass is in the same renderPass
-	// preventing us from adding our own render pass inbetween
 	@Inject(at = @At("HEAD"), method = "executeOit")
-	private void executeOit(
-		final ChunkSectionsToRender chunkSectionsToRender, final FeatureRenderDispatcher.PreparedFrame featureFrame,
-		CallbackInfo callback)
-	{ ClientApi.INSTANCE.renderFadeTransparent(); }
+	private void beforeOit(ChunkSectionsToRender chunks, FeatureRenderDispatcher.PreparedFrame features, CallbackInfo callback)
+	{
+		var main = this.targets.main.get();
+		if (com.seibel.distanthorizons.common.render.NativeReferenceRenderer.isNeeded())
+		{
+			com.seibel.distanthorizons.common.render.NativeReferenceRenderer.begin(main, features);
+			com.seibel.distanthorizons.common.render.NativeReferenceRenderer.clearTransparency(this.targets);
+			this.executeOit(chunks, features);
+			com.seibel.distanthorizons.common.render.NativeReferenceRenderer.end(main);
+			com.seibel.distanthorizons.common.render.NativeReferenceRenderer.clearTransparency(this.targets);
+		}
+		ClientApi.INSTANCE.renderFadeOpaque();
+		com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.drawOpaque(main);
+	}
+
+	@Inject(at = @At("RETURN"), method = "executeOit")
+	private void afterOit(ChunkSectionsToRender chunks, FeatureRenderDispatcher.PreparedFrame features, CallbackInfo callback)
+	{
+		com.seibel.distanthorizons.common.render.NativeReferenceRenderer.apply(this.targets.main.get(),
+			com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.getFrameParams());
+	}
+
+	@WrapOperation(method = "executeOit", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;renderOit(Lcom/mojang/renderpearl/api/textures/GpuSampler;Lnet/minecraft/client/renderer/oit/OitStage;Lnet/minecraft/client/renderer/oit/OitRenderPassProvider$Parameters;Lcom/mojang/renderpearl/api/textures/GpuTextureView;Lcom/mojang/renderpearl/api/textures/GpuTextureView;)V"))
+	private void renderSharedTransparency(ChunkSectionsToRender chunks, com.mojang.renderpearl.api.textures.GpuSampler sampler,
+		net.minecraft.client.renderer.oit.OitStage stage, net.minecraft.client.renderer.oit.OitRenderPassProvider.Parameters targets,
+		com.mojang.renderpearl.api.textures.GpuTextureView atlas, com.mojang.renderpearl.api.textures.GpuTextureView lightmap,
+		Operation<Void> original)
+	{
+		if (!com.seibel.distanthorizons.common.render.NativeReferenceRenderer.isRendering())
+			original.call(chunks, sampler, stage, targets, atlas, lightmap);
+		com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.draw(stage, targets, atlas, lightmap);
+	}
+
+	@WrapOperation(method = "lambda$addMainPass$0", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/renderer/LevelRenderer;executeClassicTransparency(Lnet/minecraft/client/renderer/chunk/ChunkSectionsToRender;Lnet/minecraft/client/renderer/feature/FeatureRenderDispatcher$PreparedFrame;Lcom/mojang/renderpearl/api/commands/RenderPass;)V"))
+	private void fadeBeforeClassicTransparency(LevelRenderer renderer, ChunkSectionsToRender chunks, FeatureRenderDispatcher.PreparedFrame features, RenderPass pass, Operation<Void> original, @Local LocalRef<RenderPass> passReference)
+	{
+		if (ClientApi.shouldRenderOpaqueFade())
+		{
+			pass.close();
+			passReference.set(null);
+			ClientApi.INSTANCE.renderFadeOpaque();
+			var target = this.targets.main.get();
+			pass = RenderSystem.getDevice().createCommandEncoder().createRenderPass(
+				() -> "DH vanilla transparency", target.getColorTextureView(), Optional.empty(),
+				target.getDepthTextureView(), OptionalDouble.empty());
+			// The enclosing render scope closes the replacement pass.
+			passReference.set(pass);
+			RenderSystem.bindDefaultUniforms(pass);
+		}
+		original.call(renderer, chunks, features, pass);
+	}
 	
 	#endif
 	

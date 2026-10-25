@@ -181,6 +181,18 @@ public class BlazeDhFogRenderer implements IDhApiFogRenderer
 		this.fogColorTextureWrapper.tryCreateOrResizeToScreenSize();
 		this.fogDepthTextureWrapper.tryCreateOrResizeToScreenSize();
 		
+		this.prepareUniforms(renderParams, fogRenderParams, true);
+
+		this.renderFogToTexture();
+		this.applyRenderer.render(renderParams, this.fogColorTextureWrapper.getTexture(), BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.getTexture(), BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.getTexture());
+
+	}
+
+
+
+	public GpuBuffer prepareUniforms(RenderParam renderParams, DhApiFogRenderParam fogRenderParams, boolean enabled)
+	{
+
 		{
 			// create data //
 			
@@ -242,18 +254,15 @@ public class BlazeDhFogRenderer implements IDhApiFogRenderer
 				
 				.putInt((renderParams.renderDefinition.getDepthDirection() == EDhApiDepthDirection.REVERSE_Z) ? 1 : 0) // uIsReverseZDepth
 				.putInt((renderParams.renderDefinition.getDepthRange() == EDhApiDepthRange.ZERO_TO_POS_ONE) ? 1 : 0) // uDepthIsZeroToPositiveOne
+				.putInt(enabled ? 1 : 0)
 				
 				.finishAndUpload()
 			;
 		}
 		
 		
-		this.renderFogToTexture();
-		this.applyRenderer.render(renderParams, this.fogColorTextureWrapper.getTexture(), BlazeDhMetaRenderer.INSTANCE.dhDepthTextureWrapper.getTexture(), BlazeDhMetaRenderer.INSTANCE.dhColorTextureWrapper.getTexture());
-		
+		return this.fragUniformBufferWrapper.getGpuBuffer();
 	}
-	
-	
 	
 	private void renderFogToTexture()
 	{

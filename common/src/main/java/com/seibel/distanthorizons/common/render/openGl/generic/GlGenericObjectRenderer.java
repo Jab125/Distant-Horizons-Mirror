@@ -340,7 +340,11 @@ public class GlGenericObjectRenderer implements IDhApiGenericRenderer
 				}
 				
 				// update instanced data if needed
-				if (this.instancedRenderingAvailable)
+				if (this.instancedRenderingAvailable
+					#if MC_VER > MC_26_2_0
+					|| com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive()
+					#endif
+				)
 				{
 					boxGroup.tryUpdateInstancedDataAsync(apiRenderEventParam);
 					
@@ -359,6 +363,19 @@ public class GlGenericObjectRenderer implements IDhApiGenericRenderer
 				try (IProfilerWrapper.IProfileBlock namespace_profile = profiler.push(boxGroup.getResourceLocationNamespace());
 					IProfilerWrapper.IProfileBlock location_profile = profiler.push(boxGroup.getResourceLocationPath()))
 				{
+					#if MC_VER > MC_26_2_0
+					if (com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive())
+					{
+						com.seibel.distanthorizons.common.render.NativeGenericRenderer.capture(renderEventParam, boxGroup,
+							((GlGenericObjectVertexContainer)boxGroup.vertexBufferContainer).getNativeBuffer());
+						if (boxGroup.ssaoEnabled)
+						{
+							if (this.instancedRenderingAvailable) this.renderBoxGroupInstanced(shaderProgram, renderEventParam, boxGroup, renderEventParam.exactCameraPosition, profiler);
+							else this.renderBoxGroupDirect(shaderProgram, renderEventParam, boxGroup, renderEventParam.exactCameraPosition, profiler);
+						}
+					}
+					else
+					#endif
 					if (this.instancedRenderingAvailable)
 					{
 						this.renderBoxGroupInstanced(shaderProgram, renderEventParam, boxGroup, renderEventParam.exactCameraPosition, profiler);
