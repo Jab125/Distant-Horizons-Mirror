@@ -30,7 +30,6 @@ import com.seibel.distanthorizons.common.wrappers.world.ClientLevelWrapper;
 import com.seibel.distanthorizons.common.wrappers.world.ServerLevelWrapper;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.file.structure.ClientOnlySaveStructure;
-import com.seibel.distanthorizons.core.render.RenderThreadTaskHandler;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IImmersivePortalsAccessor;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IClientLevelWrapper;
 import com.seibel.distanthorizons.core.wrapperInterfaces.world.IServerLevelWrapper;
@@ -413,7 +412,8 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 		player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/false);
 		#else
 		
-		RenderThreadTaskHandler.INSTANCE.queueRunningOnRenderThread("MinecraftClientWrapper sendChatMessage", () -> 
+		// Font glyph uploads must run outside an active render pass.
+		MINECRAFT.schedule(() ->
 		{
 			#if MC_VER <= MC_1_21_11
 			player.displayClientMessage(net.minecraft.network.chat.Component.translatable(string), /*isOverlay*/false);
