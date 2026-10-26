@@ -100,6 +100,16 @@ public class GlDhMetaRenderer implements IDhApiMetaRenderer
 	//============//
 	//region
 	
+
+	@Override
+	public void prepareNativeTransparency(com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam params,
+		com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiFogRenderParam fog)
+	{
+		#if MC_VER > MC_26_2_0
+		com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.prepare((com.seibel.distanthorizons.core.render.RenderParam)params, fog);
+		#endif
+	}
+
 	@Override
 	public void runRenderPassSetup(DhApiRenderParam apiRenderParams)
 	{
@@ -133,7 +143,8 @@ public class GlDhMetaRenderer implements IDhApiMetaRenderer
 		
 		this.bindLightmap(renderParams.lightmap);
 		
-		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get())
+		if (Config.Client.Advanced.Graphics.Texture.enableTexturedLods.get()
+			|| com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive())
 		{
 			GlBlockTextureAtlas.INSTANCE.uploadPendingTiles();
 			GlBlockTextureAtlas.INSTANCE.bind();
@@ -473,7 +484,11 @@ public class GlDhMetaRenderer implements IDhApiMetaRenderer
 	}
 	
 	@Override
-	public void copyToMcTexture(DhApiRenderParam renderParams) { GlDhCopyShader.INSTANCE.render((RenderParam)renderParams); }
+	public void copyToMcTexture(DhApiRenderParam renderParams)
+	{
+		if (com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive()) return;
+		GlDhCopyShader.INSTANCE.render((RenderParam)renderParams);
+	}
 	
 	//endregion
 	

@@ -20,6 +20,9 @@
 package com.seibel.distanthorizons.common.render.openGl.postProcessing.fade;
 
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.distanthorizons.api.enums.rendering.EDhApiRenderPass;
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.common.render.openGl.postProcessing.antialiasing.GlDhTaaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLState;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
@@ -158,6 +161,13 @@ public class GlVanillaFadeRenderer implements IDhApiVanillaFadeRenderer
 			}
 			
 			
+			int dhColorTexture = GlDhMetaRenderer.INSTANCE.getActiveColorTextureId();
+			if (renderParams.renderPass == EDhApiRenderPass.OPAQUE && Config.Client.Advanced.Graphics.enableAntiAliasing.get())
+			{
+				dhColorTexture = MC_RENDER.hasNativeTransparencyCoverage()
+					? GlDhTaaRenderer.INSTANCE.getResolvedColorTexture() : GlDhTaaRenderer.OPAQUE_INSTANCE.resolve(renderParams, false);
+			}
+			GlDhVanillaFadeShader.INSTANCE.setDhColorTexture(dhColorTexture);
 			GlDhVanillaFadeShader.INSTANCE.frameBuffer = this.fadeFramebuffer;
 			GlDhVanillaFadeShader.INSTANCE.setProjectionMatrix(renderParams);
 			GlDhVanillaFadeShader.INSTANCE.setLevelMaxHeight(renderParams.clientLevelWrapper.getMaxHeight());

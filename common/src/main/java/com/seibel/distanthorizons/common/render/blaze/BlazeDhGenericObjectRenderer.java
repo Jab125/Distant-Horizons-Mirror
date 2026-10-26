@@ -327,6 +327,13 @@ public class BlazeDhGenericObjectRenderer implements IDhApiGenericRenderer
 				try (IProfilerWrapper.IProfileBlock namespace_profile = profiler.push(boxGroup.getResourceLocationNamespace());
 					IProfilerWrapper.IProfileBlock location_profile = profiler.push(boxGroup.getResourceLocationPath()))
 				{
+					#if MC_VER > MC_26_2_0
+					com.seibel.distanthorizons.common.render.NativeGenericRenderer.capture(renderEventParam, boxGroup,
+						(BlazeGenericObjectVertexContainer)boxGroup.vertexBufferContainer);
+					#endif
+					#if MC_VER > MC_26_2_0
+					if (!com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive() || boxGroup.ssaoEnabled)
+					#endif
 					this.renderBoxGroupInstanced(renderEventParam, boxGroup);
 				}
 				

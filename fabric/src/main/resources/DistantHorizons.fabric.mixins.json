@@ -20,6 +20,8 @@
     "client.MixinImmersivePortalsRenderStates",
     "client.MixinIrisFrameBuffer",
     "client.MixinLevelRenderer",
+    "client.MixinSodiumWorldRenderer",
+    "client.MixinSodiumUniforms",
     "client.MixinChunkSectionsToRender",
     "client.MixinLightTexture",
     "client.MixinMinecraft",

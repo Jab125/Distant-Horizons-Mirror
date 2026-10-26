@@ -42,7 +42,8 @@ import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
  */
 public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 {
-	public static GlDhTaaRenderer INSTANCE = new GlDhTaaRenderer();
+	public static GlDhTaaRenderer INSTANCE = new GlDhTaaRenderer(GlDhTaaShader.INSTANCE);
+	public static final GlDhTaaRenderer OPAQUE_INSTANCE = new GlDhTaaRenderer(new GlDhTaaShader());
 	
 	private static final IMinecraftRenderWrapper MC_RENDER = SingletonInjector.INSTANCE.get(IMinecraftRenderWrapper.class);
 	private static final MinecraftGLWrapper GLMC = MinecraftGLWrapper.INSTANCE;
@@ -53,13 +54,14 @@ public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 	private int width = -1;
 	private int height = -1;
 	private int framebufferA = -1;
-	private int framebufferB = -1;
+	// Each pass keeps its own history and shares the next output buffer.
+	private static int scratchFramebuffer = -1;
+	private static int scratchColorTexture = -1;
+	private static int scratchWidth = -1;
+	private static int scratchHeight = -1;
 	
 	private int colorTextureA = -1;
-	private int colorTextureB = -1;
 	
-	/** flips each frame */
-	private boolean textureAIsHistory = true;
 	
 	
 	
@@ -68,7 +70,9 @@ public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 	//=============//
 	//region
 	
-	private GlDhTaaRenderer() { }
+	private final GlDhTaaShader shader;
+
+	private GlDhTaaRenderer(GlDhTaaShader shader) { this.shader = shader; }
 	
 	public void init()
 	{
@@ -78,36 +82,51 @@ public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 		}
 		this.init = true;
 		
-		GlDhTaaShader.INSTANCE.init();
+		this.shader.init();
 		GlDhTaaSharpenShader.INSTANCE.init();
 	}
 	
 	private void createFramebuffer(int width, int height)
 	{
+		this.shader.invalidateHistory();
 		if (this.framebufferA != -1)
 		{
 			LWJGL.glDeleteFramebuffers(this.framebufferA);
-			LWJGL.glDeleteFramebuffers(this.framebufferB);
 			this.framebufferA = -1;
-			this.framebufferB = -1;
 		}
 		
 		if (this.colorTextureA != -1)
 		{
 			GLMC.glDeleteTextures(this.colorTextureA);
-			GLMC.glDeleteTextures(this.colorTextureB);
 			this.colorTextureA = -1;
-			this.colorTextureB = -1;
 		}
 		
 		this.framebufferA = LWJGL.glGenFramebuffers();
 		GLMC.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.framebufferA);
 		this.colorTextureA = genTexture(width, height);
-		
-		this.framebufferB = LWJGL.glGenFramebuffers();
-		GLMC.glBindFramebuffer(GL30.GL_FRAMEBUFFER, this.framebufferB);
-		this.colorTextureB = genTexture(width, height);
 	}
+
+	private static void prepareScratch(int width, int height)
+	{
+		if (scratchWidth == width && scratchHeight == height) return;
+		freeScratch();
+		scratchFramebuffer = LWJGL.glGenFramebuffers();
+		GLMC.glBindFramebuffer(GL30.GL_FRAMEBUFFER, scratchFramebuffer);
+		scratchColorTexture = genTexture(width, height);
+		scratchWidth = width;
+		scratchHeight = height;
+	}
+
+	private static void freeScratch()
+	{
+		if (scratchFramebuffer != -1) LWJGL.glDeleteFramebuffers(scratchFramebuffer);
+		if (scratchColorTexture != -1) GLMC.glDeleteTextures(scratchColorTexture);
+		scratchFramebuffer = -1;
+		scratchColorTexture = -1;
+		scratchWidth = -1;
+		scratchHeight = -1;
+	}
+
 	private static int genTexture(int width, int height)
 	{
 		int id = GLMC.glGenTextures();
@@ -138,7 +157,13 @@ public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 	@Override
 	public void render(DhApiRenderParam apiRenderParams)
 	{
-		RenderParam renderParams = (RenderParam)apiRenderParams;
+		this.resolve((RenderParam)apiRenderParams, true);
+	}
+
+	public int getResolvedColorTexture() { return this.colorTextureA; }
+
+	public int resolve(RenderParam renderParams, boolean sharpen)
+	{
 		
 		// GLState needed in MC 1.16.5 probably due to MC not manually setting each GL state they need before the next rendering step
 		try (GLState state = new GLState())
@@ -155,36 +180,29 @@ public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 				this.createFramebuffer(width, height);
 			}
 			
-			int historyTextureId;
-			int outputTextureId;
-			int framebufferId;
-			if (this.textureAIsHistory)
-			{
-				historyTextureId = this.colorTextureA;
-				
-				outputTextureId = this.colorTextureB;
-				framebufferId = this.framebufferB;
-			}
-			else
-			{
-				historyTextureId = this.colorTextureB;
-				
-				outputTextureId = this.colorTextureA;
-				framebufferId = this.framebufferA;
-			}
+			prepareScratch(width, height);
+			int historyTextureId = this.colorTextureA;
+			int outputTextureId = scratchColorTexture;
+			int framebufferId = scratchFramebuffer;
 			
-			
-			GlDhTaaShader.INSTANCE.renderPrep(
+			this.shader.renderPrep(
 				framebufferId,
 				historyTextureId, outputTextureId
 			);
-			GlDhTaaShader.INSTANCE.render(renderParams);
+			this.shader.render(renderParams);
 			
-			GlDhTaaSharpenShader.INSTANCE.render(renderParams);
+			if (sharpen)
+			{
+				GlDhTaaSharpenShader.INSTANCE.render(renderParams);
+			}
 			
 			// post-render
-			GlDhTaaShader.INSTANCE.savePostRenderUniformObjects(renderParams);
-			this.textureAIsHistory = !this.textureAIsHistory;
+			this.shader.savePostRenderUniformObjects(renderParams);
+			scratchColorTexture = this.colorTextureA;
+			scratchFramebuffer = this.framebufferA;
+			this.colorTextureA = outputTextureId;
+			this.framebufferA = framebufferId;
+			return outputTextureId;
 			
 		}
 	}
@@ -200,8 +218,32 @@ public class GlDhTaaRenderer implements IDhApiAntiAliasRenderer
 	
 	public void free()
 	{
-		GlDhTaaShader.INSTANCE.free();
-		GlDhTaaSharpenShader.INSTANCE.free();
+		this.freeHistory();
+		if (this == INSTANCE)
+		{
+			OPAQUE_INSTANCE.freeHistory();
+			freeScratch();
+			GlDhTaaSharpenShader.INSTANCE.free();
+		}
+	}
+
+	private void freeHistory()
+	{
+		this.shader.invalidateHistory();
+		this.shader.free();
+		if (this.framebufferA != -1)
+		{
+			LWJGL.glDeleteFramebuffers(this.framebufferA);
+			this.framebufferA = -1;
+		}
+		if (this.colorTextureA != -1)
+		{
+			GLMC.glDeleteTextures(this.colorTextureA);
+			this.colorTextureA = -1;
+		}
+		this.width = -1;
+		this.height = -1;
+		this.init = false;
 	}
 	
 	//endregion

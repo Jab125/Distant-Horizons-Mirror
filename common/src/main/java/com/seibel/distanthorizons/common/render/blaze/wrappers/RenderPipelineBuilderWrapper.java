@@ -273,7 +273,10 @@ public class RenderPipelineBuilderWrapper
 				default:
 					throw new UnsupportedOperationException("No depth test defined for type ["+this.depthTest+"].");
 			}
-			this.blazePipelineBuilder.withDepthStencilState(new DepthStencilState(compareOp, this.writeDepth));
+			this.blazePipelineBuilder.withDepthStencilState(
+				this.depthTest == EDhDepthTest.NONE && !this.writeDepth
+					? Optional.empty()
+					: Optional.of(new DepthStencilState(compareOp, this.writeDepth)));
 			
 			#if MC_VER <= MC_26_1_2
 			this.blazePipelineBuilder.withColorTargetState(

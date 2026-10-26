@@ -109,6 +109,11 @@ public class BlazeTextureWrapper implements IDhBlazeTexture, IDhApiBlazeTextureW
 			1, 1,
 			false);
 	}
+	#if MC_VER > MC_26_2_0
+	public static BlazeTextureWrapper createFloatColor(String name)
+	{ return new BlazeTextureWrapper(name, GpuFormat.R32_FLOAT, FilterMode.NEAREST, 1, 1, false); }
+	#endif
+
 	public static BlazeTextureWrapper createTextureAtlas(String name)
 	{
 		int mipLevelCount = (int)Math.sqrt(TextureUtil.TEXTURE_WIDTH_AND_HEIGHT);

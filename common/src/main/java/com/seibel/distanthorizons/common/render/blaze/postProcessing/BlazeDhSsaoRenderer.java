@@ -256,6 +256,7 @@ public class BlazeDhSsaoRenderer implements IDhApiSsaoRenderer
 			renderPassWrapper.draw(4);
 		}
 	}
+	public BlazeTextureWrapper getRawTexture() { return this.ssaoColorTextureWrapper; }
 	private String getRenderPassName() { return "distantHorizons:SsaoRenderer"; }
 	
 	

@@ -55,6 +55,7 @@ public class GlDhSSAORenderer implements IDhApiSsaoRenderer
 	private int ssaoFramebuffer = -1;
 	
 	private int ssaoTexture = -1;
+	public int getRawTextureId() { return this.ssaoTexture; }
 	
 	
 	

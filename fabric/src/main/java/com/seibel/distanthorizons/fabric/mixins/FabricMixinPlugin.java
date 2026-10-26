@@ -22,7 +22,17 @@ public class FabricMixinPlugin extends AbstractDhMixinPlugin implements IMixinCo
 	
 	@Override
 	public boolean shouldApplyMixin(String targetClassName, String mixinClassName)
-	{ return this.shouldApplyDhMixin(targetClassName, mixinClassName); }
+	{
+		if (mixinClassName.endsWith("MixinSodiumWorldRenderer") || mixinClassName.endsWith("MixinSodiumUniforms"))
+		{
+			#if MC_VER > MC_26_2_0
+			return FabricLoader.getInstance().isModLoaded("sodium");
+			#else
+			return false;
+			#endif
+		}
+		return this.shouldApplyDhMixin(targetClassName, mixinClassName);
+	}
 	
 	
 	@Override

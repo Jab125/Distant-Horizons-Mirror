@@ -54,6 +54,8 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	private final PixelUploadGlState uploadGlState = new PixelUploadGlState();
 	
 	private int textureId = 0;
+	private long revision;
+	private int width, height;
 	
 	
 	
@@ -82,6 +84,9 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 		}
 		
 		this.textureId = LWJGL.glGenTextures();
+		this.revision++;
+		this.width = width;
+		this.height = height;
 		LWJGL.glBindTexture(GL11.GL_TEXTURE_2D, this.textureId);
 		LWJGL.glTexImage2D(
 			GL11.GL_TEXTURE_2D, 0,
@@ -105,6 +110,9 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	}
 	
 	public int getTextureId() { return this.textureId; }
+	public long getRevision() { return this.revision; }
+	public int getWidth() { return this.width; }
+	public int getHeight() { return this.height; }
 	
 	//endregion
 	

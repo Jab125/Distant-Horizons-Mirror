@@ -5,6 +5,8 @@ public class BlazeDhMetaRenderer {}
 
 #else
 
+import com.seibel.distanthorizons.core.config.Config;
+import com.seibel.distanthorizons.common.render.blaze.postProcessing.BlazeDhTaaRenderer;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiAfterColorDepthTextureCreatedEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiTextureCreatedParam;
@@ -50,6 +52,16 @@ public class BlazeDhMetaRenderer implements IDhApiMetaRenderer
 	//=================//
 	//region
 	
+
+	@Override
+	public void prepareNativeTransparency(com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam params,
+		com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiFogRenderParam fog)
+	{
+		#if MC_VER > MC_26_2_0
+		com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.prepare((com.seibel.distanthorizons.core.render.RenderParam)params, fog);
+		#endif
+	}
+
 	@Override
 	public void runRenderPassSetup(DhApiRenderParam renderParams)
 	{
@@ -82,8 +94,14 @@ public class BlazeDhMetaRenderer implements IDhApiMetaRenderer
 	@Override
 	public void copyToMcTexture(DhApiRenderParam renderParams)
 	{
+		if (com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive()) return;
 		this.mcColorTextureWrapper.tryWrap(MinecraftRenderWrapper.INSTANCE.getRenderTarget().getColorTexture());
-		BlazeDhCopyRenderer.INSTANCE.render(this.dhColorTextureWrapper, this.mcColorTextureWrapper);
+		var source = this.dhColorTextureWrapper;
+		if (MC_RENDER.hasNativeTransparencyCoverage() && Config.Client.Advanced.Graphics.enableAntiAliasing.get())
+		{
+			source = BlazeDhTaaRenderer.INSTANCE.getResolvedColorTexture();
+		}
+		BlazeDhCopyRenderer.INSTANCE.render(source, this.mcColorTextureWrapper);
 	}
 	
 	//endregion

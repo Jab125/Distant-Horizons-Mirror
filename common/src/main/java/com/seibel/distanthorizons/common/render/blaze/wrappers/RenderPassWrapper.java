@@ -13,6 +13,7 @@ import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.OptionalInt;
 import java.util.function.Supplier;
+import org.jetbrains.annotations.Nullable;
 
 #if MC_VER <= MC_26_2_0
 import com.mojang.blaze3d.buffers.GpuBuffer;
@@ -59,21 +60,21 @@ public class RenderPassWrapper implements AutoCloseable
 	public RenderPassWrapper(
 		final Supplier<String> nameGetterFunc, 
 		final IDhBlazeTexture colorTexture, 
-		final IDhBlazeTexture depthTexture)
+		@Nullable final IDhBlazeTexture depthTexture)
 	{
 		#if MC_VER <= MC_26_1_2
 		this.renderPass = COMMAND_ENCODER.createRenderPass(
 			nameGetterFunc,
 			colorTexture.getTextureView(),
 			/*optionalClearColorAsInt*/ OptionalInt.empty(),
-			depthTexture.getTextureView(),
+			depthTexture == null ? null : depthTexture.getTextureView(),
 			/*optionalDepthValueAsDouble*/ OptionalDouble.empty());
 		#else
 		this.renderPass = COMMAND_ENCODER.createRenderPass(
 			nameGetterFunc,
 			colorTexture.getTextureView(),
 			/*clearColor*/ Optional.empty(),
-			depthTexture.getTextureView(),
+			depthTexture == null ? null : depthTexture.getTextureView(),
 			/*clearDepth*/ OptionalDouble.empty());
 		#endif
 	}

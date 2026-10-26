@@ -40,6 +40,10 @@ public class GlGenericObjectVertexContainer implements IDhApiGenericObjectVertex
 	public int[] materialData = new int[0];
 	
 	public int uploadedBoxCount = 0;
+	#if MC_VER > MC_26_2_0
+	private com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObjectVertexContainer nativeBuffer;
+	private boolean nativeUploadPending;
+	#endif
 	
 	private EState state = EState.NEW;
 	@Override 
@@ -56,6 +60,11 @@ public class GlGenericObjectVertexContainer implements IDhApiGenericObjectVertex
 	
 	public void updateCpuSideVertexData(List<DhApiRenderableBox> uploadBoxList)
 	{
+		#if MC_VER > MC_26_2_0
+		if (this.nativeBuffer == null) this.nativeBuffer = new com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObjectVertexContainer();
+		this.nativeBuffer.updateCpuSideVertexData(uploadBoxList);
+		this.nativeUploadPending = true;
+		#endif
 		int boxCount = uploadBoxList.size();
 		
 		
@@ -109,6 +118,19 @@ public class GlGenericObjectVertexContainer implements IDhApiGenericObjectVertex
 		}
 	}
 	
+	#if MC_VER > MC_26_2_0
+	public com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObjectVertexContainer getNativeBuffer()
+	{
+		if (!com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive()) return null;
+		if (this.nativeBuffer != null && this.nativeUploadPending)
+		{
+			this.nativeBuffer.uploadDataToGpu();
+			this.nativeUploadPending = false;
+		}
+		return this.nativeBuffer;
+	}
+	#endif
+
 	@Override
 	public void uploadDataToGpu()
 	{
@@ -155,6 +177,9 @@ public class GlGenericObjectVertexContainer implements IDhApiGenericObjectVertex
 	@Override
 	public void close()
 	{
+		#if MC_VER > MC_26_2_0
+		if (this.nativeBuffer != null) this.nativeBuffer.close();
+		#endif
 		tryDeleteBuffer(this.chunkPos);
 		tryDeleteBuffer(this.subChunkPos);
 		tryDeleteBuffer(this.scale);

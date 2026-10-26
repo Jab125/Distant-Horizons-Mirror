@@ -26,6 +26,7 @@ import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.GlScreenQuad;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
+import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRenderer;
@@ -67,6 +68,9 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 	public int uMaxLevelHeight = -1;
 	
 	public int uOnlyRenderLods = -1;
+	public int uEnableVanillaFade = -1;
+	public int uIsDhReverseZDepth = -1;
+	public int uAntiAliasingEnabled = -1;
 	public int uIsMcReverseZDepth = -1;
 	public int uDepthIsZeroToPositiveOne = -1;
 	
@@ -105,6 +109,9 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 		this.uMaxLevelHeight = this.shader.tryGetUniformLocation("uMaxLevelHeight");
 		
 		this.uOnlyRenderLods = this.shader.tryGetUniformLocation("uOnlyRenderLods");
+		this.uEnableVanillaFade = this.shader.tryGetUniformLocation("uEnableVanillaFade");
+		this.uIsDhReverseZDepth = this.shader.tryGetUniformLocation("uIsDhReverseZDepth");
+		this.uAntiAliasingEnabled = this.shader.tryGetUniformLocation("uAntiAliasingEnabled");
 		this.uIsMcReverseZDepth = this.shader.tryGetUniformLocation("uIsMcReverseZDepth");
 		this.uDepthIsZeroToPositiveOne = this.shader.tryGetUniformLocation("uDepthIsZeroToPositiveOne");
 		
@@ -142,6 +149,9 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 		this.shader.setUniform(this.uMaxLevelHeight, this.levelMaxHeight);
 		
 		this.shader.setUniform(this.uOnlyRenderLods, Config.Client.Advanced.Debugging.lodOnlyMode.get());
+		this.shader.setUniform(this.uEnableVanillaFade, Config.Client.Advanced.Graphics.Quality.vanillaFadeMode.get() != EDhApiMcRenderingFadeMode.NONE);
+		this.shader.setUniform(this.uIsDhReverseZDepth, renderParams.renderDefinition.getDepthDirection() == EDhApiDepthDirection.REVERSE_Z);
+		this.shader.setUniform(this.uAntiAliasingEnabled, Config.Client.Advanced.Graphics.enableAntiAliasing.get());
 		this.shader.setUniform(this.uIsMcReverseZDepth, (MC_RENDER.getMcDepthDirection() == EDhApiDepthDirection.REVERSE_Z) ? 1 : 0);
 		this.shader.setUniform(this.uDepthIsZeroToPositiveOne, (renderParams.renderDefinition.getDepthRange() == EDhApiDepthRange.ZERO_TO_POS_ONE) ? 1 : 0);
 	}
@@ -151,6 +161,9 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 		this.inverseMcMvmProjMatrix = renderParams.mcInverseMvmProjectionMatrix;
 		this.inverseDhMvmProjMatrix = renderParams.dhInverseMvmProjectionMatrix;
 	}
+	private int dhColorTexture = -1;
+	public void setDhColorTexture(int texture) { this.dhColorTexture = texture; }
+
 	public void setLevelMaxHeight(int levelMaxHeight) { this.levelMaxHeight = levelMaxHeight; }
 	
 	//endregion
@@ -166,7 +179,7 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 	protected void onRender(RenderParam renderParams)
 	{
 		int depthTextureId = GlDhMetaRenderer.INSTANCE.getActiveDepthTextureId();
-		int colorTextureId = GlDhMetaRenderer.INSTANCE.getActiveColorTextureId();
+		int colorTextureId = this.dhColorTexture;
 		
 		if (depthTextureId == -1
 			|| colorTextureId == -1)

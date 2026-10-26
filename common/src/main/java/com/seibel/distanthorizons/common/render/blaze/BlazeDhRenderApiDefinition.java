@@ -58,7 +58,7 @@ public class BlazeDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	public boolean isNativeRenderer() { return false; }
 	
 	@Override
-	public EDhApiTerrainVertexFormat getTerrainVertexFormat() { return EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_OFFSET; }
+	public EDhApiTerrainVertexFormat getTerrainVertexFormat() { return EDhApiTerrainVertexFormat.POS_META_COLOR_MATERIAL_NORMAL_TEXTURE_FLUID; }
 	
 	@Override
 	public int getPriority() { return IOverrideInjector.CORE_PRIORITY; }

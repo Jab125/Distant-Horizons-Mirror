@@ -23,6 +23,9 @@ public class MixinClientPacketListener
 	#endif
 	void onCleanupStart(CallbackInfo ci)
 	{
+		#if MC_VER > MC_26_2_0
+		com.seibel.distanthorizons.common.render.VanillaTerrainCoverage.free();
+		#endif
 		ClientApi.INSTANCE.onClientOnlyDisconnected();
 	}
 	

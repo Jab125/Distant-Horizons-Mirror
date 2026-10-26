@@ -19,6 +19,7 @@
 
 package com.seibel.distanthorizons.common.wrappers.minecraft;
 
+import com.seibel.distanthorizons.common.render.VanillaTerrainCoverage;
 import java.awt.Color;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -195,6 +196,20 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	// methods //
 	//=========//
 	
+	@Override
+	public boolean hasNativeTransparencyCoverage()
+	{ return VanillaTerrainCoverage.isActive(); }
+
+	@Override
+	public boolean requiresSectionAlignedTerrain()
+	{
+		#if MC_VER > MC_26_2_0
+		return true;
+		#else
+		return false;
+		#endif
+	}
+
 	@Override
 	public DhVec3f getLookAtVector()
 	{
@@ -635,7 +650,11 @@ public class MinecraftRenderWrapper implements IMinecraftRenderWrapper
 	}
 	
 	@Override
-	public void clearTargetFrameBuffer() { this.finalLevelFrameBufferId = -1; }
+	public void clearTargetFrameBuffer()
+	{
+		this.finalLevelFrameBufferId = -1;
+		MinecraftClientWrapper.INSTANCE.executeOnRenderThread(VanillaTerrainCoverage::free);
+	}
 	
 	@Override
 	public int getGlDepthTextureId()

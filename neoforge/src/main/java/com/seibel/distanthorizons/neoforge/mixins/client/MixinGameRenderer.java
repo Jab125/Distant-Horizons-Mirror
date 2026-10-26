@@ -58,6 +58,14 @@ import net.minecraft.client.renderer.state.level.PlayerRenderState;
 @Mixin(GameRenderer.class)
 public class MixinGameRenderer
 {
+	#if MC_VER > MC_26_2_0
+	@Inject(method = "useImprovedTransparency", at = @At("RETURN"), cancellable = true)
+	private void useSharedTransparency(org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable<Boolean> callback)
+	{
+		if (com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.requiresSharedOit()) callback.setReturnValue(true);
+	}
+	#endif
+
 	#if MC_VER <= MC_26_2_0
 	// get the modified projection matrix right before it's uploaded to the GPU
 	@Inject(
@@ -112,7 +120,10 @@ public class MixinGameRenderer
 	
 	@Inject(method = "renderLevel", at = @At("RETURN"))
 	private void onRenderLevelEnd(CallbackInfo ci)
-	{ MixinProjectionMatrixBufferCommon.getNewMvmMatrix = false; }
+	{
+		MixinProjectionMatrixBufferCommon.getNewMvmMatrix = false;
+		com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.finishFrame();
+	}
 	
 	#endif
 	

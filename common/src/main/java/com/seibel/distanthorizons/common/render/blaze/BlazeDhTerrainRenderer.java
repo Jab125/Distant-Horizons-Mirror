@@ -1,5 +1,7 @@
 package com.seibel.distanthorizons.common.render.blaze;
 
+import com.seibel.distanthorizons.common.render.VanillaTerrainCoverage;
+
 #if MC_VER <= MC_1_21_10
 public class BlazeDhTerrainRenderer {}
 
@@ -78,6 +80,7 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 	
 	/** used for TAA jitter, the 8 represents how many jitter points are available */
 	private int frameIndexMod8 = 0;
+	public int getTaaFrameIndex() { return this.frameIndexMod8; }
 	
 	
 	
@@ -124,6 +127,7 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 			
 			pipelineBuilder.withSampler("uLightMap");
 			pipelineBuilder.withSampler("uBlockAtlas");
+			pipelineBuilder.withSampler("uVanillaCoverageTexture");
 			
 			pipelineBuilder.withVertexShader("terrain/blaze/vert");
 			pipelineBuilder.withFragmentShader("terrain/blaze/frag");
@@ -174,17 +178,25 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 		boolean opaquePass,
 		IDhApiReadOnlyList<? extends IDhApiTerrainBufferContainer> bufferContainers)
 	{
-		RenderParam renderEventParam = (RenderParam)apiRenderEventParam;
+		RenderParam renderEventParam = (RenderParam) apiRenderEventParam;
+		#if MC_VER > MC_26_2_0
+		if (opaquePass) com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.capture(renderEventParam, bufferContainers);
+		if (!opaquePass && com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive()) return;
+		#endif
 		IProfilerWrapper profiler = renderEventParam.profiler;
 		
 		this.tryInit(renderEventParam);
 		
 		
 		
-		if (Config.Client.Advanced.Graphics.enableAntiAliasing.get())
+		if (Config.Client.Advanced.Graphics.enableAntiAliasing.get()
+			&& !com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive())
 		{
-			this.frameIndexMod8++;
-			this.frameIndexMod8 %= 8;
+			if (opaquePass)
+			{
+				this.frameIndexMod8++;
+				this.frameIndexMod8 %= 8;
+			}
 		}
 		else
 		{
@@ -262,7 +274,20 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 				}
 				
 				
-				// upload data //
+				boolean useCoverage = false;
+				float coverageX = 0, coverageY = 0, coverageZ = 0;
+				int coverageSpan = 0;
+				#if MC_VER > MC_26_2_0
+				useCoverage = !opaquePass && VanillaTerrainCoverage.isActive()
+					&& !com.seibel.distanthorizons.common.render.NativeTransparencyRenderer.isActive();
+				if (useCoverage)
+				{
+					coverageX = (float)(VanillaTerrainCoverage.getOriginX() - renderEventParam.exactCameraPosition.x);
+					coverageY = (float)(VanillaTerrainCoverage.getOriginY() - renderEventParam.exactCameraPosition.y);
+					coverageZ = (float)(VanillaTerrainCoverage.getOriginZ() - renderEventParam.exactCameraPosition.z);
+					coverageSpan = VanillaTerrainCoverage.getSpanZ();
+				}
+				#endif
 				this.fragUniformBufferWrapper
 					.putFloat(dhNearClipDistance) // uClipDistance
 					.putFloat(Config.Client.Advanced.Graphics.NoiseTexture.noiseIntensity.get()) // uNoiseIntensity
@@ -270,6 +295,9 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 					.putInt(Config.Client.Advanced.Graphics.NoiseTexture.noiseDropoff.get()) // uNoiseDropoff
 					.putInt(Config.Client.Advanced.Graphics.Quality.ditherDhFade.get() ? 1 : 0) // uDitherDhRendering
 					.putInt(Config.Client.Advanced.Graphics.NoiseTexture.enableNoiseTexture.get() ? 1 : 0) // uNoiseEnabled
+					.putInt(useCoverage ? 1 : 0)
+					.putVec3f(coverageX, coverageY, coverageZ)
+					.putInt(coverageSpan)
 					.finishAndUpload()
 				;
 			}
@@ -298,6 +326,12 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 					
 					BlazeTextureWrapper blockTextureAtlas = BlazeBlockTextureAtlas.INSTANCE.getTextureWrapper();
 					renderPassWrapper.bindTexture("uBlockAtlas", blockTextureAtlas);
+					#if MC_VER > MC_26_2_0
+					renderPassWrapper.bindTexture("uVanillaCoverageTexture", VanillaTerrainCoverage.isActive()
+						? VanillaTerrainCoverage.getTexture() : blockTextureAtlas);
+					#else
+					renderPassWrapper.bindTexture("uVanillaCoverageTexture", blockTextureAtlas);
+					#endif
 					DhApiRenderProxy.activeBlazeDhBlockRatioAtlasTextureWrapper = blockTextureAtlas;
 					
 					// set pipeline
