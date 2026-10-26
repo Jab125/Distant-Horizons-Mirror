@@ -39,6 +39,8 @@ import net.minecraft.item.ItemDye;
 import cpw.mods.fml.common.registry.GameData;
 import com.seibel.distanthorizons.common.backports.IBlockState;
 import net.minecraftforge.fluids.IFluidBlock;
+import net.minecraftforge.fluids.BlockFluidBase;
+import net.minecraftforge.fluids.BlockFluidFinite;
 import com.seibel.distanthorizons.common.backports.FakeBlockState;
 #elif MC_VER <= MC_1_12_2
 import net.minecraft.block.*;
@@ -46,6 +48,8 @@ import net.minecraft.init.Blocks;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.block.properties.IProperty;
 import net.minecraftforge.fluids.IFluidBlock;
+import net.minecraftforge.fluids.BlockFluidBase;
+import net.minecraftforge.fluids.BlockFluidFinite;
 #else
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.level.block.BeaconBeamBlock;
@@ -1443,7 +1447,28 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			return (level >= LodUtil.MAX_FLUID_AMOUNT) ? LodUtil.MAX_FLUID_AMOUNT : (LodUtil.MAX_FLUID_AMOUNT - level);
 		}
 
-		// modded fluids render full
+		// Forge fluids (ex: Tinkers' Construct) store their level in the meta as well,
+		// but it's scaled by quantaPerBlock instead of vanilla's fixed 8
+		if (this.blockState.getBlock() instanceof BlockFluidBase)
+		{
+			// quantaPerBlock is made public via the access transformer
+			int quantaPerBlock = Math.max(1, ((BlockFluidBase) this.blockState.getBlock()).quantaPerBlock);
+			#if MC_VER <= MC_1_7_10
+			int level = this.blockState.getMeta();
+			#else
+			int level = this.blockState.getValue(BlockFluidBase.LEVEL);
+			#endif
+			
+			// classic fluids count down from a source (level 0 = full),
+			// finite fluids count up (level = quanta - 1)
+			int quantaRemaining = (this.blockState.getBlock() instanceof BlockFluidFinite)
+					? (level + 1)
+					: (quantaPerBlock - level);
+			int amount = Math.round((quantaRemaining * LodUtil.MAX_FLUID_AMOUNT) / (float) quantaPerBlock);
+			return Math.max(LodUtil.MIN_FLUID_AMOUNT, Math.min(LodUtil.MAX_FLUID_AMOUNT, amount));
+		}
+		
+		// other modded fluids render full
 		return LodUtil.MAX_FLUID_AMOUNT;
 		#else
 		return this.blockState.getFluidState().getAmount();
