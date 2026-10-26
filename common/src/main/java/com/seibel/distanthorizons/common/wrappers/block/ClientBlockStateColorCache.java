@@ -45,6 +45,8 @@ import com.seibel.distanthorizons.common.backports.IBlockState;
 import com.seibel.distanthorizons.common.backports.FakeBlockState;
 import com.seibel.distanthorizons.common.backports.FakeWorld;
 #elif MC_VER <= MC_1_12_2
+import net.minecraftforge.fluids.Fluid;
+import net.minecraftforge.fluids.IFluidBlock;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.init.Blocks;
 import net.minecraft.util.EnumBlockRenderType;
@@ -745,6 +747,16 @@ public class ClientBlockStateColorCache
 						|| block == Blocks.FLOWING_WATER)
 					{
 						tintColor = biomeWrapper.biome.getWaterColor();
+					}
+				}
+				else if (block instanceof IFluidBlock)
+				{
+					// Forge fluid blocks bake Fluid#getColor() into the model.
+					// Mods that share one texture across many fluids (ex: Tinkers' Construct) would otherwise get the same wrong color.
+					Fluid fluid = ((IFluidBlock) block).getFluid();
+					if (fluid != null)
+					{
+						tintColor = fluid.getColor();
 					}
 				}
 				else
