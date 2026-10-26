@@ -113,15 +113,6 @@ public class NeoforgeServerProxy implements AbstractModInitializer.IEventProxy
 	@SubscribeEvent
 	public void playerLoggedOutEvent(PlayerEvent.PlayerLoggedOutEvent event)
 	{ this.serverApi.serverPlayerDisconnectEvent(getServerPlayerWrapper(event)); }
-	@SubscribeEvent
-	public void playerChangedDimensionEvent(PlayerEvent.PlayerChangedDimensionEvent event)
-	{
-		this.serverApi.serverPlayerLevelChangeEvent(
-			getServerPlayerWrapper(event),
-			getServerLevelWrapper(event.getFrom(), event),
-			getServerLevelWrapper(event.getTo(), event)
-		);
-	}
 	
 	
 	

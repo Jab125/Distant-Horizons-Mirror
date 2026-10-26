@@ -160,16 +160,6 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 		this.serverApi.serverPlayerDisconnectEvent(serverPlayerWrapper);
 	}
 	
-	@SubscribeEvent
-	public void playerChangedDimensionEvent(PlayerEvent.PlayerChangedDimensionEvent event)
-	{
-		this.serverApi.serverPlayerLevelChangeEvent(
-			getServerPlayerWrapper(event),
-			getServerLevelWrapper(event.fromDim, event),
-			getServerLevelWrapper(event.toDim, event)
-		);
-	}
-	
 	//endregion
 	
 	
