@@ -126,6 +126,7 @@ public final class NativeGenericRenderer
 			if (pipelines == null) pipelines = OitPipelineSet.builder("distanthorizons_native_objects", pipelineBuilder(false)).build();
 			pipeline = pipelines.getPipeline(stage);
 		}
+		RenderSystem.bindDefaultUniforms(pass);
 		pass.setPipeline(RenderSystem.getCompiledPipeline(pipeline));
 		NativeTransparencyRenderer.bindFog(pass);
 		for (Packet packet : PACKETS)
