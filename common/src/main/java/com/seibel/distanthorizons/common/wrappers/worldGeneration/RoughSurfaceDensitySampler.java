@@ -28,7 +28,7 @@ public class RoughSurfaceDensitySampler { }
 import net.minecraft.util.KeyDispatchDataCodec;
 import net.minecraft.world.level.levelgen.DensityFunction;
 import net.minecraft.world.level.levelgen.DensityFunctions;
-import org.jspecify.annotations.NonNull;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -150,7 +150,7 @@ public final class RoughSurfaceDensitySampler
 		private final Map<DensityFunction, DensityFunction> mapped = new HashMap<>();
 		
 		@Override
-		public @NonNull DensityFunction apply(@NonNull DensityFunction densityFunction)
+		public @NotNull DensityFunction apply(@NotNull DensityFunction densityFunction)
 		{
 			return this.mapped.computeIfAbsent(densityFunction, (input) ->
 			{
@@ -224,14 +224,14 @@ public final class RoughSurfaceDensitySampler
 		}
 		
 		@Override
-		public void fillArray(double @NonNull [] output, DensityFunction.@NonNull ContextProvider provider)
+		public void fillArray(double @NotNull [] output, DensityFunction.@NotNull ContextProvider provider)
 		{ this.densityFunction.fillArray(output, provider); }
 		
 		@Override public double minValue() { return this.densityFunction.minValue(); }
 		@Override public double maxValue() { return this.densityFunction.maxValue(); }
 		
 		@Override
-		public @NonNull KeyDispatchDataCodec<? extends DensityFunction> codec()
+		public @NotNull KeyDispatchDataCodec<? extends DensityFunction> codec()
 		{ return this.densityFunction.codec(); }
 	}
 	
