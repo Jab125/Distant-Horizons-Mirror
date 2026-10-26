@@ -191,14 +191,6 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 	private static IServerLevelWrapper getServerLevelWrapper(WorldServer level) 
     { return ServerLevelWrapper.getWrapper(level); }
 	
-    private static IServerLevelWrapper getServerLevelWrapper(int dim, PlayerEvent event) 
-    {
-        WorldServer world = (WorldServer) event.player.worldObj;
-        WorldServer worldDim = world.func_73046_m()
-            .worldServerForDimension(dim);
-        return getServerLevelWrapper(worldDim);
-    }
-	
     private static IServerPlayerWrapper getServerPlayerWrapper(PlayerEvent event) 
     { return ServerPlayerWrapper.getWrapper((EntityPlayerMP) event.player); }
 	
