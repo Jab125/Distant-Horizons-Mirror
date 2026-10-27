@@ -30,6 +30,7 @@ import com.seibel.distanthorizons.core.util.math.DhMat4f;
 import com.seibel.distanthorizons.core.util.math.DhVec3d;
 import org.lwjgl.opengl.GL13;
 import org.lwjgl.opengl.GL30;
+import org.lwjgl.opengl.GL33;
 
 import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
 
@@ -210,7 +211,17 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 		GLMC.glBindTexture(this.historyColorTextureId);
 		LWJGL.glUniform1i(this.uHistoryColorSampler, 2);
 		
-		GlScreenQuad.INSTANCE.render();
+		// Sampler objects override texture filters. Unbind for linear history sampling, then restore the previous binding.
+		int previousSampler = LWJGL.glGetInteger(GL33.GL_SAMPLER_BINDING);
+		LWJGL.glBindSampler(2, 0);
+		try
+		{
+			GlScreenQuad.INSTANCE.render();
+		}
+		finally
+		{
+			LWJGL.glBindSampler(2, previousSampler);
+		}
 	}
 	
 	//endregion
