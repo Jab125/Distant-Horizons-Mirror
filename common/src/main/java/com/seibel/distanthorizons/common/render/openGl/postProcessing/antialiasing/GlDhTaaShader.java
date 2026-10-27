@@ -211,6 +211,7 @@ public class GlDhTaaShader extends GlAbstractShaderRenderer
 		GLMC.glBindTexture(this.historyColorTextureId);
 		LWJGL.glUniform1i(this.uHistoryColorSampler, 2);
 		
+		// Sampler objects override texture filters. Unbind for linear history sampling, then restore the previous binding.
 		int previousSampler = LWJGL.glGetInteger(GL33.GL_SAMPLER_BINDING);
 		LWJGL.glBindSampler(2, 0);
 		try
