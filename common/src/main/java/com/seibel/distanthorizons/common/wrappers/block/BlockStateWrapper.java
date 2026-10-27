@@ -190,6 +190,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean useBottomTextureForSides;
 	private final boolean alwaysRasterizeTexture;
 	private final boolean isSolid;
+	private final boolean isFullBlock;
 	private final boolean isLiquid;
 	private final boolean allowApiColorOverride;
 	private final boolean allowApiTextureOverride;
@@ -666,6 +667,30 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	        #else
 			this.isSolid = !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
             #endif
+			}
+		}
+		
+		
+		// is full block //
+		{
+			if (this.isAir()
+				|| this.blockState == null)
+			{
+				this.isFullBlock = false;
+			}
+			else
+			{
+				#if MC_VER <= MC_1_7_10
+				// render type 0 is a standard cube, slabs and farmland are type 0 but smaller
+				Block block = this.blockState.getBlock();
+				this.isFullBlock = block.getRenderType() == 0
+					&& block.getBlockBoundsMinX() == 0 && block.getBlockBoundsMinY() == 0 && block.getBlockBoundsMinZ() == 0
+					&& block.getBlockBoundsMaxX() == 1 && block.getBlockBoundsMaxY() == 1 && block.getBlockBoundsMaxZ() == 1;
+				#elif MC_VER <= MC_1_12_2
+				this.isFullBlock = this.blockState.isFullCube();
+				#else
+				this.isFullBlock = Block.isShapeFullBlock(this.blockState.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
+				#endif
 			}
 		}
 		
@@ -1530,6 +1555,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	}
 	
 	@Override public boolean isSolid() { return this.isSolid; }
+	@Override public boolean isFullBlock() { return this.isFullBlock; }
 	@Override public boolean isLiquid() { return this.isLiquid; }
 	@Override public boolean isBeaconBlock() { return this.isBeaconBlock; }
 	@Override public boolean isBeaconBaseBlock() { return this.isBeaconBaseBlock; }
