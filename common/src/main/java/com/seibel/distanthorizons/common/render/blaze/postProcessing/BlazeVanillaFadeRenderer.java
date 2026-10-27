@@ -40,6 +40,7 @@ import com.mojang.blaze3d.systems.RenderSystem;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
+import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.common.render.blaze.BlazeDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.blaze.apply.BlazeDhCopyRenderer;
@@ -54,6 +55,7 @@ import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
+import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
 import com.seibel.distanthorizons.core.render.RenderParam;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.util.math.DhMat4f;
@@ -180,8 +182,8 @@ public class BlazeVanillaFadeRenderer implements IDhApiVanillaFadeRenderer
 			// measured in blocks
 			// these multipliers in James' tests should provide a fairly smooth transition
 			// without having underdraw issues
-			float fadeStartDistance = dhNearClipDistance * 1.5f;
-			float fadeEndDistance = dhNearClipDistance * 1.9f;
+			float fadeStartDistance = dhNearClipDistance * 1.5f * 0.9f;
+			float fadeEndDistance = dhNearClipDistance * 1.9f * 0.9f;
 			
 			
 			DhMat4f inverseMcModelViewProjectionMatrix = new DhMat4f(renderParams.mcProjectionMatrix);
@@ -207,6 +209,7 @@ public class BlazeVanillaFadeRenderer implements IDhApiVanillaFadeRenderer
 				.putMat4f(inverseMcMvmProjMatrix) // uMcInvMvmProj
 				.putInt((MC_RENDER.getMcDepthDirection() == EDhApiDepthDirection.REVERSE_Z) ? 1 : 0) // uIsMcReverseZDepth
 				.putInt((renderParams.renderDefinition.getDepthRange() == EDhApiDepthRange.ZERO_TO_POS_ONE) ? 1 : 0) // uDepthIsZeroToPositiveOne
+				.putInt((Config.Client.Advanced.Graphics.Quality.vanillaFadeMode.get() == EDhApiMcRenderingFadeMode.DOUBLE_PASS) ? 1 : 0) // uIsWaterDeferred
 				.finishAndUpload()
 			;
 		}

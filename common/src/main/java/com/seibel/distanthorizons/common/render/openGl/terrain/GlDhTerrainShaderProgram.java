@@ -1,5 +1,6 @@
 package com.seibel.distanthorizons.common.render.openGl.terrain;
 
+import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
 import com.seibel.distanthorizons.api.interfaces.override.rendering.IDhApiShaderProgram;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhApiTerrainRenderer;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiTerrainBufferContainer;
@@ -88,7 +89,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 	public int uBlockAtlas = -1;
 	
 	// fragment shader uniforms
-	public int uClipDistance = -1;
+	public int uClipNearDistance = -1;
+	public int uClipFarDistance = -1;
 	public int uDitherDhRendering = -1;
 	
 	// Noise Uniforms
@@ -141,7 +143,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		this.uBlockAtlas = this.getUniformLocation("uBlockAtlas");
 		
 		// Fog/Clip Uniforms
-		this.uClipDistance = this.getUniformLocation("uClipDistance");
+		this.uClipNearDistance = this.getUniformLocation("uClipNearDistance");
+		this.uClipFarDistance = this.getUniformLocation("uClipFarDistance");
 		
 		// Noise Uniforms
 		this.uNoiseEnabled = this.getUniformLocation("uNoiseEnabled");
@@ -295,8 +298,20 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		{
 			// this added value prevents the near clip plane and discard circle from touching, which looks bad
 			dhNearClipDistance += 16f;
+			dhNearClipDistance *= 0.9f;
 		}
-		this.setUniform(this.uClipDistance, dhNearClipDistance);
+		float dhFarClipDistance;
+		if (Config.Client.Advanced.Graphics.Quality.vanillaFadeMode.get() == EDhApiMcRenderingFadeMode.DOUBLE_PASS)
+		{
+			dhFarClipDistance = dhNearClipDistance * 1.5f;
+		}
+		else
+		{
+			dhFarClipDistance = dhNearClipDistance * 1.9f;
+			dhNearClipDistance *= 1.5f;
+		}
+		this.setUniform(this.uClipNearDistance, dhNearClipDistance);
+		this.setUniform(this.uClipFarDistance, dhFarClipDistance);
 	}
 	
 	@Override

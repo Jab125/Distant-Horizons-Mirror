@@ -21,6 +21,7 @@ package com.seibel.distanthorizons.common.render.openGl.postProcessing.fade;
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthRange;
+import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
 import com.seibel.distanthorizons.api.objects.math.DhApiMat4f;
 import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.shader.GlShaderProgram;
@@ -29,6 +30,7 @@ import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
 import com.seibel.distanthorizons.common.render.openGl.util.GlAbstractShaderRenderer;
+import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
 import com.seibel.distanthorizons.core.render.RenderParam;
 import com.seibel.distanthorizons.core.util.RenderUtil;
 import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IMinecraftRenderWrapper;
@@ -69,6 +71,7 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 	public int uOnlyRenderLods = -1;
 	public int uIsMcReverseZDepth = -1;
 	public int uDepthIsZeroToPositiveOne = -1;
+	public int uIsWaterDeferred = -1;
 	
 	
 	
@@ -107,6 +110,7 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 		this.uOnlyRenderLods = this.shader.tryGetUniformLocation("uOnlyRenderLods");
 		this.uIsMcReverseZDepth = this.shader.tryGetUniformLocation("uIsMcReverseZDepth");
 		this.uDepthIsZeroToPositiveOne = this.shader.tryGetUniformLocation("uDepthIsZeroToPositiveOne");
+		this.uIsWaterDeferred = this.shader.tryGetUniformLocation("uIsWaterDeferred");
 		
 	}
 	
@@ -133,8 +137,8 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 		// measured in blocks
 		// these multipliers in James' tests should provide a fairly smooth transition
 		// without having underdraw issues
-		float fadeStartDistance = dhNearClipDistance * 1.5f;
-		float fadeEndDistance = dhNearClipDistance * 1.9f;
+		float fadeStartDistance = dhNearClipDistance * 1.5f * 0.9f;
+		float fadeEndDistance = dhNearClipDistance * 1.9f * 0.9f;
 		
 		this.shader.setUniform(this.uStartFadeBlockDistance, fadeStartDistance);
 		this.shader.setUniform(this.uEndFadeBlockDistance, fadeEndDistance);
@@ -143,7 +147,7 @@ public class GlDhVanillaFadeShader extends GlAbstractShaderRenderer
 		
 		this.shader.setUniform(this.uOnlyRenderLods, Config.Client.Advanced.Debugging.lodOnlyMode.get());
 		this.shader.setUniform(this.uIsMcReverseZDepth, (MC_RENDER.getMcDepthDirection() == EDhApiDepthDirection.REVERSE_Z) ? 1 : 0);
-		this.shader.setUniform(this.uDepthIsZeroToPositiveOne, (renderParams.renderDefinition.getDepthRange() == EDhApiDepthRange.ZERO_TO_POS_ONE) ? 1 : 0);
+		this.shader.setUniform(this.uIsWaterDeferred, (Config.Client.Advanced.Graphics.Quality.vanillaFadeMode.get() == EDhApiMcRenderingFadeMode.DOUBLE_PASS) ? 1 : 0);
 	}
 	
 	public void setProjectionMatrix(RenderParam renderParams)

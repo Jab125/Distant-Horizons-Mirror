@@ -22,6 +22,7 @@ import com.mojang.renderpearl.api.vertex.VertexFormat;
 #endif
 
 import com.seibel.distanthorizons.api.enums.config.EDhApiDepthDirection;
+import com.seibel.distanthorizons.api.enums.config.EDhApiMcRenderingFadeMode;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiTerrainBufferContainer;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApiVertexBufferWrapper;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeBufferRenderEvent;
@@ -260,12 +261,24 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 				{
 					// this added value prevents the near clip plane and discard circle from touching, which looks bad
 					dhNearClipDistance += 16f;
+					dhNearClipDistance *= 0.9f;
+				}
+				float dhFarClipDistance;
+				if (Config.Client.Advanced.Graphics.Quality.vanillaFadeMode.get() == EDhApiMcRenderingFadeMode.DOUBLE_PASS)
+				{
+					dhFarClipDistance = dhNearClipDistance * 1.5f;
+				}
+				else
+				{
+					dhFarClipDistance = dhNearClipDistance * 1.9f;
+					dhNearClipDistance *= 1.5f;
 				}
 				
 				
 				// upload data //
 				this.fragUniformBufferWrapper
-					.putFloat(dhNearClipDistance) // uClipDistance
+					.putFloat(dhNearClipDistance) // uClipNearDistance
+					.putFloat(dhFarClipDistance) // uClipFarDistance
 					.putFloat(Config.Client.Advanced.Graphics.NoiseTexture.noiseIntensity.get()) // uNoiseIntensity
 					.putInt(Config.Client.Advanced.Graphics.NoiseTexture.noiseSteps.get()) // uNoiseSteps
 					.putInt(Config.Client.Advanced.Graphics.NoiseTexture.noiseDropoff.get()) // uNoiseDropoff
