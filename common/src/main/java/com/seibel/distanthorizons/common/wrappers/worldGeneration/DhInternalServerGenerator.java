@@ -352,7 +352,7 @@ public class DhInternalServerGenerator
 					// but we want to avoid an endless loop.
 					int remainingDrainAttemptCount = MAX_UNLOAD_DRAIN_ATTEMPT_COUNT;
 					#if MC_VER <= MC_1_7_10
-					while (!provider.droppedChunksSet.isEmpty() && remainingDrainAttemptCount-- > 0)
+					while (!provider.chunksToUnload.isEmpty() && remainingDrainAttemptCount-- > 0)
 					{
 						provider.unloadQueuedChunks();
 					}
@@ -627,7 +627,7 @@ public class DhInternalServerGenerator
 						#if MC_VER <= MC_1_7_10
 						if (!level.getPlayerManager().func_152621_a(neighborPosX, neighborPosZ))
 						{
-							provider.dropChunk(neighborPosX, neighborPosZ);
+							provider.unloadChunksIfNotNearSpawn(neighborPosX, neighborPosZ);
 						}
 						#else
 						Chunk chunk = provider.getLoadedChunk(neighborPosX, neighborPosZ);
