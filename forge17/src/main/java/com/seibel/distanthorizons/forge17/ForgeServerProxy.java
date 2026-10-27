@@ -160,15 +160,6 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 	}
 
     @SubscribeEvent
-    public void playerChangedDimensionEvent(PlayerEvent.PlayerChangedDimensionEvent event) 
-    {
-        ServerApi.INSTANCE.serverPlayerLevelChangeEvent(
-            getServerPlayerWrapper(event),
-            getServerLevelWrapper(event.fromDim, event),
-            getServerLevelWrapper(event.toDim, event));
-    }
-
-    @SubscribeEvent
 	public void clickBlockEvent(PlayerInteractEvent event)
     {
 		ILevelWrapper wrappedLevel = ProxyUtil.getLevelWrapper(event.world);
@@ -199,14 +190,6 @@ public class ForgeServerProxy implements AbstractModInitializer.IEventProxy
 	
 	private static IServerLevelWrapper getServerLevelWrapper(WorldServer level) 
     { return ServerLevelWrapper.getWrapper(level); }
-	
-    private static IServerLevelWrapper getServerLevelWrapper(int dim, PlayerEvent event) 
-    {
-        WorldServer world = (WorldServer) event.player.worldObj;
-        WorldServer worldDim = world.func_73046_m()
-            .worldServerForDimension(dim);
-        return getServerLevelWrapper(worldDim);
-    }
 	
     private static IServerPlayerWrapper getServerPlayerWrapper(PlayerEvent event) 
     { return ServerPlayerWrapper.getWrapper((EntityPlayerMP) event.player); }
