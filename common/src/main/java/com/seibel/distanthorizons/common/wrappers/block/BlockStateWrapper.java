@@ -189,6 +189,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean renderTexture;
 	private final boolean useBottomTextureForSides;
 	private final boolean alwaysRasterizeTexture;
+	private final boolean averageConnectedColors;
 	private final boolean isSolid;
 	private final boolean isLiquid;
 	private final boolean allowApiColorOverride;
@@ -626,6 +627,13 @@ public class BlockStateWrapper implements IBlockStateWrapper
 				String alwaysRasterNamesCsv = Config.Client.Advanced.Graphics.Texture.blocksAlwaysRasterizeTextureCsv.get();
 				this.alwaysRasterizeTexture = blockSerialInCsv(lowerCaseSerial, alwaysRasterNamesCsv);
 			}
+		}
+		
+		
+		// connected color averaging //
+		{
+			String averagedBlockNamesCsv = Config.Client.Advanced.Graphics.Quality.blocksAverageConnectedColorsCsv.get();
+			this.averageConnectedColors = blockSerialInCsv(lowerCaseSerial, averagedBlockNamesCsv);
 		}
 		
 		
@@ -1541,6 +1549,19 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	@Override public boolean renderTexture() { return this.renderTexture; }
 	@Override public boolean useBottomTextureForSides() { return this.useBottomTextureForSides; }
 	@Override public boolean alwaysRasterizeTexture() { return this.alwaysRasterizeTexture; }
+	@Override public boolean averageConnectedColors() { return this.averageConnectedColors; }
+	
+	@Override
+	public boolean isSameBlock(IBlockStateWrapper other)
+	{
+		BlockStateWrapper otherWrapper = (BlockStateWrapper) other;
+		if (this.blockState == null || otherWrapper.blockState == null)
+		{
+			return this.blockState == otherWrapper.blockState;
+		}
+		
+		return this.blockState.getBlock() == otherWrapper.blockState.getBlock();
+	}
 	
 	@Override public Color getMapColor() { return this.mapColor; }
 	@Override public Color getBeaconTintColor() { return this.beaconTintColor; }
