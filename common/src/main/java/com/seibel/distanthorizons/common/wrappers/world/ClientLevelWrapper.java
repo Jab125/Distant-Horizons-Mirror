@@ -390,6 +390,12 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 	public int getBlockColor(
 		DhBlockPos blockWorldPos, IBiomeWrapper biome, FullDataSourceV2 fullDataSource, IBlockStateWrapper blockWrapper, 
 		boolean allowApiOverride)
+	{ return this.getBlockColorCache(blockWrapper).getColor((BiomeWrapper) biome, fullDataSource, blockWorldPos, allowApiOverride); }
+	
+	@Override
+	public boolean needPostTinting(IBlockStateWrapper blockWrapper) { return this.getBlockColorCache(blockWrapper).needPostTinting(); }
+	
+	private ClientBlockStateColorCache getBlockColorCache(IBlockStateWrapper blockWrapper)
 	{
 		ClientBlockStateColorCache blockColorCache = this.blockColorCacheByBlockState.get(((BlockStateWrapper) blockWrapper).blockState);
 		if (blockColorCache == null)
@@ -398,8 +404,7 @@ public class ClientLevelWrapper implements IClientLevelWrapper
 					((BlockStateWrapper) blockWrapper).blockState,
 					this.createCachedBlockColorCacheFunc);
 		}
-		
-		return blockColorCache.getColor((BiomeWrapper) biome, fullDataSource, blockWorldPos, allowApiOverride);
+		return blockColorCache;
 	}
 	
 	@Override

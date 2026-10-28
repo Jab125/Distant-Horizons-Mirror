@@ -259,6 +259,8 @@ public class ClientBlockStateColorCache
 		this.resolveColors();
 	}
 	
+	public boolean needPostTinting() { return this.needPostTinting; }
+	
 	//endregion
 	
 	
