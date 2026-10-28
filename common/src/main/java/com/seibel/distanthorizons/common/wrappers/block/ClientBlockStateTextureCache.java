@@ -259,7 +259,7 @@ public class ClientBlockStateTextureCache
 			if (blockStateWrapper.isLiquid())
 			{
 				// liquids don't have models to rasterize, bake their sprite directly
-				BlockFaceTexture liquidTexture = bakeSpriteTexture(getParticleSprite(blockStateWrapper), false);
+				BlockFaceTexture liquidTexture = bakeSpriteTexture(getParticleSprite(blockStateWrapper));
 				Arrays.fill(faceTextures, liquidTexture);
 				return faceTextures;
 			}
@@ -294,7 +294,7 @@ public class ClientBlockStateTextureCache
 	{
 		#if MC_VER <= MC_1_7_10
 		TextureAtlasSprite sprite = getFaceSprite(blockStateWrapper, dhDirection);
-		return bakeSpriteTexture(sprite, false);
+		return bakeSpriteTexture(sprite);
 		
 		#else
 		
@@ -349,7 +349,7 @@ public class ClientBlockStateTextureCache
 					TextureAtlasSprite quadSprite = getQuadSprite(faceQuad);
 					boolean isQuadTinted = isQuadTinted(faceQuad);
 					
-					return bakeSpriteTexture(quadSprite, isQuadTinted);
+					return bakeSpriteTexture(quadSprite);
 				}
 			}
 			
@@ -373,7 +373,7 @@ public class ClientBlockStateTextureCache
 			// blocks without quads (IE blocks rendered via block entities like chests)
 			// fall back to their particle texture
 			TextureAtlasSprite particleSprite = getParticleSprite(blockStateWrapper);
-			return bakeSpriteTexture(particleSprite, false);
+			return bakeSpriteTexture(particleSprite);
 		}
 		
 		return createTextureByRasterizingQuads(blockStateWrapper, dhDirection, rasterQuadList);
@@ -439,17 +439,17 @@ public class ClientBlockStateTextureCache
 			// nothing is visible from this direction,
 			// fall back to the particle texture since LODs expect
 			// every face to be renderable
-			return bakeSpriteTexture(getParticleSprite(blockStateWrapper), false);
+			return bakeSpriteTexture(getParticleSprite(blockStateWrapper));
 		}
 		
 		//endregion
 		
-		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels, textureTinted);
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
 	}
 	#endif
 	
 	/** Copies the given sprite directly, used for blocks where rasterizing model quads isn't possible. */
-	private static BlockFaceTexture bakeSpriteTexture(@Nullable TextureAtlasSprite sprite, boolean biomeTinted)
+	private static BlockFaceTexture bakeSpriteTexture(@Nullable TextureAtlasSprite sprite)
 	{
 		if (sprite == null)
 		{
@@ -474,7 +474,7 @@ public class ClientBlockStateTextureCache
 				pixels[TextureUtil.getPixelIndex(u,v)] = TextureAtlasSpriteWrapper.getPixelARGB(sprite, 0, texelX, texelY);
 			}
 		}
-		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels, biomeTinted);
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
 	}
 	
 	//endregion
