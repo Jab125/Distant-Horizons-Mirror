@@ -46,9 +46,9 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
 #elif MC_VER <= MC_1_21_9
-import net.minecraft.world.level.chunk.PalettedContainerFactory;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 #else
-import net.minecraft.world.level.chunk.PalettedContainerFactory;
+import net.minecraft.world.level.chunk.LevelChunkSection;
 #endif
 
 public class ChunkFileReader implements AutoCloseable
@@ -74,6 +74,9 @@ public class ChunkFileReader implements AutoCloseable
 	 * was an issue with the sync pulling method.
 	 */
 	private boolean pullExistingChunkUsingMcAsyncMethod = false;
+	#if MC_VER >= MC_1_21_9
+	private final LevelChunkSection emptySection;
+	#endif
 	
 	private final AtomicReference<RegionFileStorageExternalCache> regionFileStorageCacheRef = new AtomicReference<>();
 	public RegionFileStorageExternalCache getOrCreateRegionFileCache(RegionFileStorage storage)
@@ -99,6 +102,9 @@ public class ChunkFileReader implements AutoCloseable
 	public ChunkFileReader(GlobalWorldGenParams params)
 	{
 		this.params = params;
+		#if MC_VER >= MC_1_21_9
+		this.emptySection = new LevelChunkSection(params.mcServerLevel.palettedContainerFactory());
+		#endif
 		
 		if (MOD_CHECKER.isModLoaded("c2me"))
 		{
@@ -302,7 +308,13 @@ public class ChunkFileReader implements AutoCloseable
 	
 	public ChunkWrapper CreateProtoChunkWrapper(ServerLevel level, ChunkPos chunkPos)
 	{
+		#if MC_VER >= MC_1_21_9
+		ProtoChunk chunk = level == this.params.mcServerLevel
+			? new DeferredProtoChunk(chunkPos, level, level.palettedContainerFactory(), this.emptySection)
+			: CreateProtoChunk(level, chunkPos);
+		#else
 		ProtoChunk chunk = CreateProtoChunk(level, chunkPos);
+		#endif
 		return new ChunkWrapper(chunk, this.params.dhServerLevel.getLevelWrapper());
 	}
 	public static ProtoChunk CreateProtoChunk(ServerLevel level, ChunkPos chunkPos)
@@ -320,7 +332,7 @@ public class ChunkFileReader implements AutoCloseable
 		#elif MC_VER < MC_1_21_9
 		return new ProtoChunk(chunkPos, UpgradeData.EMPTY, level, level.registryAccess().lookupOrThrow(Registries.BIOME), null);
 		#else
-		return new ProtoChunk(chunkPos, UpgradeData.EMPTY, level, PalettedContainerFactory.create(level.registryAccess()), null);
+		return new ProtoChunk(chunkPos, UpgradeData.EMPTY, level, level.palettedContainerFactory(), null);
 		#endif
 	}
 	
