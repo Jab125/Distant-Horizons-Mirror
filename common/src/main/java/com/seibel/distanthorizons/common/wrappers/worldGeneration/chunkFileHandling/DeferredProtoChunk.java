@@ -17,10 +17,12 @@ import net.minecraft.world.level.material.FluidState;
 import net.minecraft.world.level.material.Fluids;
 import net.minecraft.world.ticks.ProtoChunkTicks;
 
+// Fresh DH border chunks usually need structure metadata without any mutable sections.
 final class DeferredProtoChunk extends ProtoChunk
 {
-	// Reads can share empty storage. Mutable access always creates an owned section.
+	// Acquire/release publishes fully initialized sections to other workers.
 	private static final VarHandle SECTION = MethodHandles.arrayElementVarHandle(LevelChunkSection[].class);
+	// This shared placeholder must never escape through mutable section access.
 	private final LevelChunkSection emptySection;
 	private final PalettedContainerFactory containerFactory;
 
@@ -46,6 +48,7 @@ final class DeferredProtoChunk extends ProtoChunk
 		if (section != this.emptySection) return section;
 		synchronized (this)
 		{
+			// Another worker may have created this section while we waited.
 			section = this.sections[index];
 			if (section == this.emptySection)
 			{
@@ -59,7 +62,7 @@ final class DeferredProtoChunk extends ProtoChunk
 	@Override
 	public LevelChunkSection[] getSections()
 	{
-		// Callers can mutate the returned array and its sections.
+		// Materialize every section before exposing mutable storage to callers.
 		for (int i = 0; i < this.sections.length; i++) this.getSection(i);
 		return this.sections;
 	}
@@ -67,6 +70,7 @@ final class DeferredProtoChunk extends ProtoChunk
 	@Override
 	public BlockState getBlockState(BlockPos pos)
 	{
+		// Empty block and fluid reads must not trigger section allocation.
 		if (this.isOutsideBuildHeight(pos.getY())) return Blocks.VOID_AIR.defaultBlockState();
 		LevelChunkSection section = (LevelChunkSection) SECTION.getAcquire(this.sections, this.getSectionIndex(pos.getY()));
 		return section.hasOnlyAir() ? Blocks.AIR.defaultBlockState()
@@ -85,6 +89,7 @@ final class DeferredProtoChunk extends ProtoChunk
 	@Override
 	public int getHighestFilledSectionIndex()
 	{
+		// The vanilla scan calls getSections(), which would materialize empty borders.
 		for (int i = this.sections.length - 1; i >= 0; i--)
 			if (!((LevelChunkSection) SECTION.getAcquire(this.sections, i)).hasOnlyAir()) return i;
 		return -1;

@@ -45,8 +45,6 @@ import net.minecraft.world.level.chunk.status.ChunkStatus;
 #elif MC_VER <= MC_1_21_8
 import net.minecraft.core.registries.Registries;
 import net.minecraft.world.level.chunk.status.ChunkStatus;
-#elif MC_VER <= MC_1_21_9
-import net.minecraft.world.level.chunk.LevelChunkSection;
 #else
 import net.minecraft.world.level.chunk.LevelChunkSection;
 #endif
@@ -75,6 +73,7 @@ public class ChunkFileReader implements AutoCloseable
 	 */
 	private boolean pullExistingChunkUsingMcAsyncMethod = false;
 	#if MC_VER >= MC_1_21_9
+	// The private placeholder uses this reader's level-specific biome registry.
 	private final LevelChunkSection emptySection;
 	#endif
 	
@@ -309,6 +308,7 @@ public class ChunkFileReader implements AutoCloseable
 	public ChunkWrapper CreateProtoChunkWrapper(ServerLevel level, ChunkPos chunkPos)
 	{
 		#if MC_VER >= MC_1_21_9
+		// Other levels need their own default biome and palette factory.
 		ProtoChunk chunk = level == this.params.mcServerLevel
 			? new DeferredProtoChunk(chunkPos, level, level.palettedContainerFactory(), this.emptySection)
 			: CreateProtoChunk(level, chunkPos);
@@ -332,6 +332,7 @@ public class ChunkFileReader implements AutoCloseable
 		#elif MC_VER < MC_1_21_9
 		return new ProtoChunk(chunkPos, UpgradeData.EMPTY, level, level.registryAccess().lookupOrThrow(Registries.BIOME), null);
 		#else
+		// The level factory shares metadata, while its containers remain independently owned.
 		return new ProtoChunk(chunkPos, UpgradeData.EMPTY, level, level.palettedContainerFactory(), null);
 		#endif
 	}

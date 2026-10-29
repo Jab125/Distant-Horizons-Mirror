@@ -341,9 +341,11 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 	@Override
 	public @NotNull ChunkAccess getChunk(int chunkX, int chunkZ, @NotNull ChunkStatus chunkStatus)
 	{
+		// Only inspect the fixed region grid here. Fallback map access remains locked.
 		if (this.dhHasChunk(chunkX, chunkZ))
 		{
 			ChunkAccess cachedChunk = this.dhGetChunk(chunkX, chunkZ);
+			// Live chunks must reach the fallback for read-only wrapping.
 			if (cachedChunk != null
 				&& !(cachedChunk instanceof LevelChunk)
 				&& ChunkWrapper.getStatus(cachedChunk).isOrAfter(chunkStatus))

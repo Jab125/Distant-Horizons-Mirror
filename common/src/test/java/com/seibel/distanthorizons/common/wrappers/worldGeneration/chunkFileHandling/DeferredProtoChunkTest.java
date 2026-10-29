@@ -43,6 +43,7 @@ public class DeferredProtoChunkTest
 		IdMapper<Holder<Biome>> biomes = new IdMapper<>();
 		biomes.add(plains);
 		biomes.add(desert);
+		// These tests use the containers, not serialization codecs.
 		#if MC_VER > MC_26_3_0
 		factory = new PalettedContainerFactory(Strategy.createForBlockStates(Block.BLOCK_STATE_REGISTRY),
 			Blocks.AIR.defaultBlockState(), null, plains, Strategy.createForNoiseBiomes(biomes), null,
@@ -76,6 +77,7 @@ public class DeferredProtoChunkTest
 
 	private static LevelChunkSection[] rawSections(ProtoChunk chunk) throws Exception
 	{
+		// Inspect storage without triggering the public materializing accessor.
 		Field field = ChunkAccess.class.getDeclaredField("sections");
 		field.setAccessible(true);
 		return (LevelChunkSection[]) field.get(chunk);
@@ -88,6 +90,7 @@ public class DeferredProtoChunkTest
 		DeferredProtoChunk chunk = create(empty);
 		ProtoChunk vanilla = new ProtoChunk(POS, UpgradeData.EMPTY, HEIGHT, factory, null);
 		assertThrows(IllegalStateException.class, () -> biome(chunk, -8, 0, -12));
+		// FEATURES selects section biomes on both versions of the biome API.
 		chunk.setPersistedStatus(net.minecraft.world.level.chunk.status.ChunkStatus.FEATURES);
 		vanilla.setPersistedStatus(net.minecraft.world.level.chunk.status.ChunkStatus.FEATURES);
 		for (int y = -65; y <= 320; y++)
