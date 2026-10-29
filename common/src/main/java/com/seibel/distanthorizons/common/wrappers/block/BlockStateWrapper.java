@@ -22,8 +22,10 @@ package com.seibel.distanthorizons.common.wrappers.block;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiBlockMaterial;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockStateWrapperCreatedEvent;
 import com.seibel.distanthorizons.common.wrappers.WrapperFactory;
+import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
+import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
@@ -52,6 +54,7 @@ import net.minecraftforge.fluids.BlockFluidBase;
 import net.minecraftforge.fluids.BlockFluidFinite;
 #else
 import net.minecraft.tags.BlockTags;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
@@ -190,6 +193,9 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean useBottomTextureForSides;
 	private final boolean alwaysRasterizeTexture;
 	private final boolean isSolid;
+	private final boolean isFullBlock;
+	/** indexed by {@link EDhDirection#faceIndex} */
+	private final boolean[] isFaceFullByFaceIndex = new boolean[6];
 	private final boolean isLiquid;
 	private final boolean allowApiColorOverride;
 	private final boolean allowApiTextureOverride;
@@ -666,6 +672,46 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	        #else
 			this.isSolid = !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
             #endif
+			}
+		}
+		
+		
+		// full block and full faces //
+		{
+			if (this.isAir()
+				|| this.blockState == null)
+			{
+				this.isFullBlock = false;
+			}
+			else
+			{
+				#if MC_VER <= MC_1_7_10
+				// render type 0 is a standard cube, slabs and farmland are type 0 but smaller
+				Block block = this.blockState.getBlock();
+				this.isFullBlock = block.getRenderType() == 0
+					&& block.getBlockBoundsMinX() == 0 && block.getBlockBoundsMinY() == 0 && block.getBlockBoundsMinZ() == 0
+					&& block.getBlockBoundsMaxX() == 1 && block.getBlockBoundsMaxY() == 1 && block.getBlockBoundsMaxZ() == 1;
+				#elif MC_VER <= MC_1_12_2
+				this.isFullBlock = this.blockState.isFullCube();
+				#else
+				this.isFullBlock = Block.isShapeFullBlock(this.blockState.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
+				#endif
+				
+				for (EDhDirection direction : EDhDirection.ALL)
+				{
+					#if MC_VER <= MC_1_7_10
+					// these versions can't check a single face without a level
+					this.isFaceFullByFaceIndex[direction.faceIndex] = this.blockState.getBlock().isOpaqueCube();
+					#elif MC_VER <= MC_1_12_2
+					this.isFaceFullByFaceIndex[direction.faceIndex] = this.blockState.isOpaqueCube();
+					#elif MC_VER < MC_1_21_3
+					Direction mcDirection = McObjectConverter.convert(direction);
+					this.isFaceFullByFaceIndex[direction.faceIndex] = Block.isFaceFull(this.blockState.getFaceOcclusionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, mcDirection), mcDirection);
+					#else
+					Direction mcDirection = McObjectConverter.convert(direction);
+					this.isFaceFullByFaceIndex[direction.faceIndex] = Block.isFaceFull(this.blockState.getFaceOcclusionShape(mcDirection), mcDirection);
+					#endif
+				}
 			}
 		}
 		
@@ -1530,6 +1576,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	}
 	
 	@Override public boolean isSolid() { return this.isSolid; }
+	@Override public boolean isFullBlock() { return this.isFullBlock; }
+	@Override public boolean isFaceFull(EDhDirection direction) { return this.isFaceFullByFaceIndex[direction.faceIndex]; }
 	@Override public boolean isLiquid() { return this.isLiquid; }
 	@Override public boolean isBeaconBlock() { return this.isBeaconBlock; }
 	@Override public boolean isBeaconBaseBlock() { return this.isBeaconBaseBlock; }
