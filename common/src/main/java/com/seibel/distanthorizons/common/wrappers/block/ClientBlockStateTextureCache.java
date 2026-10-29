@@ -189,31 +189,13 @@ public class ClientBlockStateTextureCache
 	private static final float[] QUAD_TILE_U_BY_VERTEX = { 0, 0, 1, 1 };
 	private static final float[] QUAD_TILE_V_BY_VERTEX = { 0, 1, 1, 0 };
 	
-	/** Quads whose u/v falls between the texels of a shrunken texture */
+	/** Quads on textures bigger than a tile */
 	private static boolean needsOwnTile(QuadGeometry geometry)
 	{
 		// smaller textures keep every texel in the shared tile
-		if (geometry.sprite == null
-			|| (TextureAtlasSpriteWrapper.getWidth(geometry.sprite) <= TEXTURE_WIDTH_AND_HEIGHT
-				&& TextureAtlasSpriteWrapper.getHeight(geometry.sprite) <= TEXTURE_WIDTH_AND_HEIGHT))
-		{
-			return false;
-		}
-		
-		for (int i = 0; i < 4; i++)
-		{
-			if (!isOnTileTexel(geometry.spriteUByVertex[i])
-				|| !isOnTileTexel(geometry.spriteVByVertex[i]))
-			{
-				return true;
-			}
-		}
-		return false;
-	}
-	private static boolean isOnTileTexel(float spriteUv)
-	{
-		float tileTexel = spriteUv * TEXTURE_WIDTH_AND_HEIGHT;
-		return Math.abs(tileTexel - Math.round(tileTexel)) < 0.01f;
+		return geometry.sprite != null
+			&& (TextureAtlasSpriteWrapper.getWidth(geometry.sprite) > TEXTURE_WIDTH_AND_HEIGHT
+				|| TextureAtlasSpriteWrapper.getHeight(geometry.sprite) > TEXTURE_WIDTH_AND_HEIGHT);
 	}
 	
 	/** Fills a whole tile with only the texels the quad shows */

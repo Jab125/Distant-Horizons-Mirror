@@ -60,6 +60,7 @@ import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 #endif
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -667,8 +668,16 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			}
 			else
 			{
-	        #if MC_VER < MC_1_20_1
+	        #if MC_VER <= MC_1_7_10
 			this.isSolid = this.blockState.getMaterial().isSolid();
+	        #elif MC_VER <= MC_1_12_2
+			// snow's material isn't solid, from 2 layers it has a collision box
+			this.isSolid = this.blockState.getMaterial().isSolid()
+				|| (this.blockState.getBlock() instanceof BlockSnow && this.blockState.getValue(BlockSnow.LAYERS) > 1);
+	        #elif MC_VER < MC_1_20_1
+			// snow's material isn't solid, from 2 layers it has a collision box
+			this.isSolid = this.blockState.getMaterial().isSolid()
+				|| (this.blockState.getBlock() instanceof SnowLayerBlock && this.blockState.getValue(SnowLayerBlock.LAYERS) > 1);
 	        #else
 			this.isSolid = !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
             #endif
