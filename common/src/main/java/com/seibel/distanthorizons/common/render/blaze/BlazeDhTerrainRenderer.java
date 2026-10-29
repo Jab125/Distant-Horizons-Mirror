@@ -137,6 +137,7 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 				.add("vColor", BlazeDhVertexFormatUtil.RGBA_UBYTE_COLOR)
 				.add("materialNormalTile", BlazeDhVertexFormatUtil.MATERIAL_NORMAL_TILE)
 				.add("offsetData", BlazeDhVertexFormatUtil.OFFSET_DATA)
+				.add("uvNormal", BlazeDhVertexFormatUtil.UV_NORMAL)
 				.build();
 			pipelineBuilder.withVertexFormat(vertexFormat);
 			
