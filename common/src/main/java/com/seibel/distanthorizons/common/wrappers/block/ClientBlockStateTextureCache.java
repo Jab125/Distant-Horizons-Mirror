@@ -162,13 +162,89 @@ public class ClientBlockStateTextureCache
 		{
 			QuadGeometry geometry = decodeQuad(bakedQuad, null);
 			
-			// quads often share a sprite
-			BlockFaceTexture texture = textureBySprite.computeIfAbsent(geometry.sprite, ClientBlockStateTextureCache::bakeSpriteTexture);
+			float[] uByVertex = geometry.spriteUByVertex;
+			float[] vByVertex = geometry.spriteVByVertex;
+			BlockFaceTexture texture;
+			if (needsOwnTile(geometry))
+			{
+				texture = bakeQuadTexture(geometry);
+				// the quad shows its whole tile
+				uByVertex = QUAD_TILE_U_BY_VERTEX;
+				vByVertex = QUAD_TILE_V_BY_VERTEX;
+			}
+			else
+			{
+				// quads often share a sprite
+				texture = textureBySprite.computeIfAbsent(geometry.sprite, ClientBlockStateTextureCache::bakeSpriteTexture);
+			}
+			
 			modelQuads.add(new BlockModelQuad(
 				geometry.xByVertex, geometry.yByVertex, geometry.zByVertex,
-				geometry.spriteUByVertex, geometry.spriteVByVertex,
+				uByVertex, vByVertex,
 				texture, cullDirection));
 		}
+	}
+	
+	/** the tile corner each vertex gets in {@link #bakeQuadTexture} */
+	private static final float[] QUAD_TILE_U_BY_VERTEX = { 0, 0, 1, 1 };
+	private static final float[] QUAD_TILE_V_BY_VERTEX = { 0, 1, 1, 0 };
+	
+	/** Quads whose u/v falls between the texels of a shrunken texture */
+	private static boolean needsOwnTile(QuadGeometry geometry)
+	{
+		// smaller textures keep every texel in the shared tile
+		if (geometry.sprite == null
+			|| (TextureAtlasSpriteWrapper.getWidth(geometry.sprite) <= TEXTURE_WIDTH_AND_HEIGHT
+				&& TextureAtlasSpriteWrapper.getHeight(geometry.sprite) <= TEXTURE_WIDTH_AND_HEIGHT))
+		{
+			return false;
+		}
+		
+		for (int i = 0; i < 4; i++)
+		{
+			if (!isOnTileTexel(geometry.spriteUByVertex[i])
+				|| !isOnTileTexel(geometry.spriteVByVertex[i]))
+			{
+				return true;
+			}
+		}
+		return false;
+	}
+	private static boolean isOnTileTexel(float spriteUv)
+	{
+		float tileTexel = spriteUv * TEXTURE_WIDTH_AND_HEIGHT;
+		return Math.abs(tileTexel - Math.round(tileTexel)) < 0.01f;
+	}
+	
+	/** Fills a whole tile with only the texels the quad shows */
+	private static BlockFaceTexture bakeQuadTexture(QuadGeometry geometry)
+	{
+		int spriteWidth = TextureAtlasSpriteWrapper.getWidth(geometry.sprite);
+		int spriteHeight = TextureAtlasSpriteWrapper.getHeight(geometry.sprite);
+		
+		int[] pixels = new int[TEXTURE_WIDTH_AND_HEIGHT * TEXTURE_WIDTH_AND_HEIGHT];
+		for (int u = 0; u < TEXTURE_WIDTH_AND_HEIGHT; u++)
+		{
+			for (int v = 0; v < TEXTURE_WIDTH_AND_HEIGHT; v++)
+			{
+				// this pixel's spot on the quad, blended from the corners
+				float s = (u + 0.5f) / TEXTURE_WIDTH_AND_HEIGHT;
+				float t = (v + 0.5f) / TEXTURE_WIDTH_AND_HEIGHT;
+				float[] cornerWeights = { (1 - s) * (1 - t), (1 - s) * t, s * t, s * (1 - t) };
+				float spriteU = 0;
+				float spriteV = 0;
+				for (int i = 0; i < 4; i++)
+				{
+					spriteU += cornerWeights[i] * geometry.spriteUByVertex[i];
+					spriteV += cornerWeights[i] * geometry.spriteVByVertex[i];
+				}
+				
+				int texelX = MathUtil.clamp(0, (int) (spriteU * spriteWidth), spriteWidth - 1);
+				int texelY = MathUtil.clamp(0, (int) (spriteV * spriteHeight), spriteHeight - 1);
+				pixels[TextureUtil.getPixelIndex(u, v)] = TextureAtlasSpriteWrapper.getPixelARGB(geometry.sprite, 0, texelX, texelY);
+			}
+		}
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
 	}
 	#endif
 	
