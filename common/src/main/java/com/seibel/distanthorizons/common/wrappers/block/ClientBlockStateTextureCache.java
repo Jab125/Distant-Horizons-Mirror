@@ -148,7 +148,9 @@ public class ClientBlockStateTextureCache
 	}
 	
 	#if MC_VER > MC_1_7_10
-	private static void addModelQuads(BlockStateWrapper blockStateWrapper, @Nullable EDhDirection cullDirection, ArrayList<BlockModelQuad> modelQuads) throws Exception
+	private static void addModelQuads(
+		BlockStateWrapper blockStateWrapper, @Nullable EDhDirection cullDirection,
+		ArrayList<BlockModelQuad> modelQuads, HashMap<TextureAtlasSprite, BlockFaceTexture> textureBySprite) throws Exception
 	{
 		List<BakedQuad> bakedQuads = QuadWrapper.getQuadsForDirection(blockStateWrapper.blockState, cullDirection);
 		if (bakedQuads == null)
@@ -159,18 +161,13 @@ public class ClientBlockStateTextureCache
 		for (BakedQuad bakedQuad : bakedQuads)
 		{
 			QuadGeometry geometry = decodeQuad(bakedQuad, null);
-			float[] cornerPositions = new float[12];
-			float[] cornerUvs = new float[8];
-			for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++)
-			{
-				cornerPositions[vertexIndex * 3] = geometry.xByVertex[vertexIndex];
-				cornerPositions[vertexIndex * 3 + 1] = geometry.yByVertex[vertexIndex];
-				cornerPositions[vertexIndex * 3 + 2] = geometry.zByVertex[vertexIndex];
-				cornerUvs[vertexIndex * 2] = geometry.spriteUByVertex[vertexIndex];
-				cornerUvs[vertexIndex * 2 + 1] = geometry.spriteVByVertex[vertexIndex];
-			}
 			
-			modelQuads.add(new BlockModelQuad(cornerPositions, cornerUvs, bakeSpriteTexture(geometry.sprite), cullDirection));
+			// quads often share a sprite
+			BlockFaceTexture texture = textureBySprite.computeIfAbsent(geometry.sprite, ClientBlockStateTextureCache::bakeSpriteTexture);
+			modelQuads.add(new BlockModelQuad(
+				geometry.xByVertex, geometry.yByVertex, geometry.zByVertex,
+				geometry.spriteUByVertex, geometry.spriteVByVertex,
+				texture, cullDirection));
 		}
 	}
 	#endif
@@ -188,16 +185,17 @@ public class ClientBlockStateTextureCache
 		}
 		
 		ArrayList<BlockModelQuad> modelQuads = new ArrayList<>();
+		HashMap<TextureAtlasSprite, BlockFaceTexture> textureBySprite = new HashMap<>();
 		try
 		{
 			// getQuads() and RANDOM aren't thread safe so all baking is done in a lock
 			BAKE_LOCK.lock();
 			
 			// null gets the quads that no side can hide
-			addModelQuads(blockStateWrapper, null, modelQuads);
+			addModelQuads(blockStateWrapper, null, modelQuads, textureBySprite);
 			for (EDhDirection direction : FACE_DIRECTIONS)
 			{
-				addModelQuads(blockStateWrapper, direction, modelQuads);
+				addModelQuads(blockStateWrapper, direction, modelQuads, textureBySprite);
 			}
 		}
 		catch (Exception bakeError)
@@ -757,14 +755,16 @@ public class ClientBlockStateTextureCache
 			geometry.spriteUByVertex[vertexIndex] = (maxU != minU) ? ((u - minU) / (maxU - minU)) : 0.0f;
 			geometry.spriteVByVertex[vertexIndex] = (maxV != minV) ? ((v - minV) / (maxV - minV)) : 0.0f;
 			
-			geometry.xByVertex[vertexIndex] = x;
-			geometry.yByVertex[vertexIndex] = y;
-			geometry.zByVertex[vertexIndex] = z;
-			
 			// models use the block space positions instead of a face
 			if (dhDirection != null)
 			{
 				projectOntoQuadFace(dhDirection, x, y, z, geometry, vertexIndex);
+			}
+			else
+			{
+				geometry.xByVertex[vertexIndex] = x;
+				geometry.yByVertex[vertexIndex] = y;
+				geometry.zByVertex[vertexIndex] = z;
 			}
 		}
 		

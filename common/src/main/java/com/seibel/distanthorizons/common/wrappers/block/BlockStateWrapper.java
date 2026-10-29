@@ -686,7 +686,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			else
 			{
 				#if MC_VER <= MC_1_7_10
-				// render type 0 is a standard cube, slabs and farmland are type 0 but smaller
+				// render type 0 blocks can be smaller than a full cube
 				Block block = this.blockState.getBlock();
 				this.isFullBlock = block.getRenderType() == 0
 					&& block.getBlockBoundsMinX() == 0 && block.getBlockBoundsMinY() == 0 && block.getBlockBoundsMinZ() == 0
