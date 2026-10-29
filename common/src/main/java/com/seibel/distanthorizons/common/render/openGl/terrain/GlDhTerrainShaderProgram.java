@@ -117,7 +117,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		super(
 			"assets/distanthorizons/shaders/terrain/gl/vert.vert",
 			"assets/distanthorizons/shaders/terrain/gl/frag.frag",
-			new String[]{"vPosition", "color", "irisData", "offsetData"}
+			new String[]{"vPosition", "color", "irisData", "offsetData", "uvNormal"}
 		);
 	}
 	
