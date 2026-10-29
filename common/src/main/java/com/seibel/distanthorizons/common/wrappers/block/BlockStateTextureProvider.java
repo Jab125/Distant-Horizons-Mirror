@@ -20,6 +20,7 @@
 package com.seibel.distanthorizons.common.wrappers.block;
 
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockFaceTexture;
+import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockModelQuad;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateFaceTextureProvider;
 import com.seibel.distanthorizons.core.wrapperInterfaces.block.IBlockStateWrapper;
@@ -46,6 +47,17 @@ public class BlockStateTextureProvider implements IBlockStateFaceTextureProvider
 			throw new UnsupportedOperationException("blockState must be a ["+BlockStateWrapper.class.getSimpleName()+"]");
 		}
 		return ClientBlockStateTextureCache.getFaceTexture((BlockStateWrapper) blockState, direction);
+	}
+	
+	@Override
+	public BlockModelQuad[] getModel(IBlockStateWrapper blockState)
+	{
+		if (!(blockState instanceof BlockStateWrapper))
+		{
+			// shouldn't happen, but just in case
+			throw new UnsupportedOperationException("blockState must be a ["+BlockStateWrapper.class.getSimpleName()+"]");
+		}
+		return ClientBlockStateTextureCache.getModel((BlockStateWrapper) blockState);
 	}
 	
 	@Override

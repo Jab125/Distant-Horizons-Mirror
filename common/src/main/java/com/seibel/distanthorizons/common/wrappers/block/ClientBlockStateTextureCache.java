@@ -26,6 +26,7 @@ import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockColorOverrideEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockTextureOverrideEvent;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockFaceTexture;
+import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockModelQuad;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -118,6 +119,7 @@ public class ClientBlockStateTextureCache
 	private static final ReentrantLock BAKE_LOCK = new ReentrantLock();
 	
 	private static final ConcurrentHashMap<BlockStateWrapper, BlockFaceTexture[]> TEXTURES_BY_BLOCK_WRAPPER = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<BlockStateWrapper, BlockModelQuad[]> MODELS_BY_BLOCK_WRAPPER = new ConcurrentHashMap<>();
 	
 	/** 
 	 * can be enabled to make sure the textures are being parsed
@@ -145,8 +147,82 @@ public class ClientBlockStateTextureCache
 		return faceTextures[direction.faceIndex];
 	}
 	
+	#if MC_VER > MC_1_7_10
+	private static void addModelQuads(BlockStateWrapper blockStateWrapper, @Nullable EDhDirection cullDirection, ArrayList<BlockModelQuad> modelQuads) throws Exception
+	{
+		List<BakedQuad> bakedQuads = QuadWrapper.getQuadsForDirection(blockStateWrapper.blockState, cullDirection);
+		if (bakedQuads == null)
+		{
+			return;
+		}
+		
+		for (BakedQuad bakedQuad : bakedQuads)
+		{
+			QuadGeometry geometry = decodeQuad(bakedQuad, null);
+			float[] cornerPositions = new float[12];
+			float[] cornerUvs = new float[8];
+			for (int vertexIndex = 0; vertexIndex < 4; vertexIndex++)
+			{
+				cornerPositions[vertexIndex * 3] = geometry.xByVertex[vertexIndex];
+				cornerPositions[vertexIndex * 3 + 1] = geometry.yByVertex[vertexIndex];
+				cornerPositions[vertexIndex * 3 + 2] = geometry.zByVertex[vertexIndex];
+				cornerUvs[vertexIndex * 2] = geometry.spriteUByVertex[vertexIndex];
+				cornerUvs[vertexIndex * 2 + 1] = geometry.spriteVByVertex[vertexIndex];
+			}
+			
+			modelQuads.add(new BlockModelQuad(cornerPositions, cornerUvs, bakeSpriteTexture(geometry.sprite), cullDirection));
+		}
+	}
+	#endif
+	
+	private static BlockModelQuad[] bakeModel(BlockStateWrapper blockStateWrapper)
+	{
+		#if MC_VER <= MC_1_7_10
+		// 1.7.10 doesn't have baked quads
+		return new BlockModelQuad[0];
+		#else
+		if (BlockStateWrapper.isAir(blockStateWrapper.blockState)
+			|| blockStateWrapper.isLiquid())
+		{
+			return new BlockModelQuad[0];
+		}
+		
+		ArrayList<BlockModelQuad> modelQuads = new ArrayList<>();
+		try
+		{
+			// getQuads() and RANDOM aren't thread safe so all baking is done in a lock
+			BAKE_LOCK.lock();
+			
+			// null gets the quads that no side can hide
+			addModelQuads(blockStateWrapper, null, modelQuads);
+			for (EDhDirection direction : FACE_DIRECTIONS)
+			{
+				addModelQuads(blockStateWrapper, direction, modelQuads);
+			}
+		}
+		catch (Exception bakeError)
+		{
+			LOGGER.warn("Failed to read the model for block ["+blockStateWrapper.getSerialString()+"], error: ["+bakeError.getMessage()+"], block will render as a box.", bakeError);
+			modelQuads.clear();
+		}
+		finally
+		{
+			BAKE_LOCK.unlock();
+		}
+		
+		return modelQuads.toArray(new BlockModelQuad[0]);
+		#endif
+	}
+	
+	public static BlockModelQuad[] getModel(BlockStateWrapper blockStateWrapper)
+	{ return MODELS_BY_BLOCK_WRAPPER.computeIfAbsent(blockStateWrapper, ClientBlockStateTextureCache::bakeModel); }
+	
 	/** Should be called whenever MC's textures change, IE when resource packs are swapped. */
-	public static void clearCache() { TEXTURES_BY_BLOCK_WRAPPER.clear(); }
+	public static void clearCache()
+	{
+		TEXTURES_BY_BLOCK_WRAPPER.clear();
+		MODELS_BY_BLOCK_WRAPPER.clear();
+	}
 	
 	//endregion
 	
@@ -619,7 +695,7 @@ public class ClientBlockStateTextureCache
 	//region
 	
 	#if MC_VER > MC_1_7_10
-	private static QuadGeometry decodeQuad(BakedQuad quad, EDhDirection dhDirection)
+	private static QuadGeometry decodeQuad(BakedQuad quad, @Nullable EDhDirection dhDirection)
 	{
 		QuadGeometry geometry = new QuadGeometry();
 		
@@ -681,8 +757,15 @@ public class ClientBlockStateTextureCache
 			geometry.spriteUByVertex[vertexIndex] = (maxU != minU) ? ((u - minU) / (maxU - minU)) : 0.0f;
 			geometry.spriteVByVertex[vertexIndex] = (maxV != minV) ? ((v - minV) / (maxV - minV)) : 0.0f;
 			
+			geometry.xByVertex[vertexIndex] = x;
+			geometry.yByVertex[vertexIndex] = y;
+			geometry.zByVertex[vertexIndex] = z;
 			
-			projectOntoQuadFace(dhDirection, x, y, z, geometry, vertexIndex);
+			// models use the block space positions instead of a face
+			if (dhDirection != null)
+			{
+				projectOntoQuadFace(dhDirection, x, y, z, geometry, vertexIndex);
+			}
 		}
 		
 		return geometry;
@@ -769,6 +852,11 @@ public class ClientBlockStateTextureCache
 		public final float[] spriteUByVertex = new float[4];
 		/** sprite local texture coordinates in the range [0,1] */
 		public final float[] spriteVByVertex = new float[4];
+		
+		/** block space positions in the range [0,1] */
+		public final float[] xByVertex = new float[4];
+		public final float[] yByVertex = new float[4];
+		public final float[] zByVertex = new float[4];
 		
 		
 		public TextureAtlasSprite sprite;
