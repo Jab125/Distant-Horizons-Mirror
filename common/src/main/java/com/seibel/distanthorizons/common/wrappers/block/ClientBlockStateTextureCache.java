@@ -24,7 +24,9 @@ import com.seibel.distanthorizons.api.enums.rendering.EDhApiDirection;
 import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockColorOverrideEvent;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockModelOverrideEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockTextureOverrideEvent;
+import com.seibel.distanthorizons.api.objects.render.DhApiModelQuad;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockFaceTexture;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockModelQuad;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
@@ -160,29 +162,52 @@ public class ClientBlockStateTextureCache
 		
 		for (BakedQuad bakedQuad : bakedQuads)
 		{
-			QuadGeometry geometry = decodeQuad(bakedQuad, null);
-			
-			float[] uByVertex = geometry.spriteUByVertex;
-			float[] vByVertex = geometry.spriteVByVertex;
-			BlockFaceTexture texture;
-			if (needsOwnTile(geometry))
-			{
-				texture = bakeQuadTexture(geometry);
-				// the quad shows its whole tile
-				uByVertex = QUAD_TILE_U_BY_VERTEX;
-				vByVertex = QUAD_TILE_V_BY_VERTEX;
-			}
-			else
-			{
-				// quads often share a sprite
-				texture = textureBySprite.computeIfAbsent(geometry.sprite, ClientBlockStateTextureCache::bakeSpriteTexture);
-			}
-			
-			modelQuads.add(new BlockModelQuad(
-				geometry.xByVertex, geometry.yByVertex, geometry.zByVertex,
-				uByVertex, vByVertex,
-				texture, cullDirection));
+			addModelQuad(decodeQuad(bakedQuad, null), cullDirection, modelQuads, textureBySprite);
 		}
+	}
+	
+	private static void addModelQuad(
+		QuadGeometry geometry, @Nullable EDhDirection cullDirection,
+		ArrayList<BlockModelQuad> modelQuads, HashMap<TextureAtlasSprite, BlockFaceTexture> textureBySprite)
+	{
+		float[] uByVertex = geometry.spriteUByVertex;
+		float[] vByVertex = geometry.spriteVByVertex;
+		BlockFaceTexture texture;
+		if (needsOwnTile(geometry))
+		{
+			texture = bakeQuadTexture(geometry);
+			// the quad shows its whole tile
+			uByVertex = QUAD_TILE_U_BY_VERTEX;
+			vByVertex = QUAD_TILE_V_BY_VERTEX;
+		}
+		else
+		{
+			// quads often share a sprite
+			texture = textureBySprite.computeIfAbsent(geometry.sprite, ClientBlockStateTextureCache::bakeSpriteTexture);
+		}
+		
+		modelQuads.add(new BlockModelQuad(
+			geometry.xByVertex, geometry.yByVertex, geometry.zByVertex,
+			uByVertex, vByVertex,
+			texture, cullDirection));
+	}
+	
+	/** API quads use the same geometry as Minecraft's quads */
+	private static QuadGeometry createApiQuadGeometry(DhApiModelQuad apiQuad)
+	{
+		if (!(apiQuad.sprite instanceof TextureAtlasSprite))
+		{
+			throw new ClassCastException("Invalid sprite given, it must be Minecraft's ["+TextureAtlasSprite.class.getName()+"].");
+		}
+		
+		QuadGeometry geometry = new QuadGeometry();
+		geometry.sprite = (TextureAtlasSprite) apiQuad.sprite;
+		System.arraycopy(apiQuad.xByCorner, 0, geometry.xByVertex, 0, 4);
+		System.arraycopy(apiQuad.yByCorner, 0, geometry.yByVertex, 0, 4);
+		System.arraycopy(apiQuad.zByCorner, 0, geometry.zByVertex, 0, 4);
+		System.arraycopy(apiQuad.uByCorner, 0, geometry.spriteUByVertex, 0, 4);
+		System.arraycopy(apiQuad.vByCorner, 0, geometry.spriteVByVertex, 0, 4);
+		return geometry;
 	}
 	
 	/** the tile corner each vertex gets in {@link #bakeQuadTexture} */
@@ -242,6 +267,14 @@ public class ClientBlockStateTextureCache
 			return new BlockModelQuad[0];
 		}
 		
+		// API users can replace or add to the model
+		DhApiBlockModelOverrideEvent.EventParam eventParam = null;
+		if (blockStateWrapper.allowApiModelOverride())
+		{
+			eventParam = new DhApiBlockModelOverrideEvent.EventParam(blockStateWrapper);
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiBlockModelOverrideEvent.class, eventParam);
+		}
+		
 		ArrayList<BlockModelQuad> modelQuads = new ArrayList<>();
 		HashMap<TextureAtlasSprite, BlockFaceTexture> textureBySprite = new HashMap<>();
 		try
@@ -249,11 +282,41 @@ public class ClientBlockStateTextureCache
 			// getQuads() and RANDOM aren't thread safe so all baking is done in a lock
 			BAKE_LOCK.lock();
 			
-			// null gets the quads that no side can hide
-			addModelQuads(blockStateWrapper, null, modelQuads, textureBySprite);
-			for (EDhDirection direction : FACE_DIRECTIONS)
+			// the blocks whose Minecraft models are read
+			ArrayList<BlockStateWrapper> modelBlocks = new ArrayList<>();
+			if (eventParam == null || eventParam.getKeepBlockModel())
 			{
-				addModelQuads(blockStateWrapper, direction, modelQuads, textureBySprite);
+				modelBlocks.add(blockStateWrapper);
+			}
+			if (eventParam != null)
+			{
+				for (IDhApiBlockStateWrapper copiedBlock : eventParam.getCopiedBlocks())
+				{
+					if (!(copiedBlock instanceof BlockStateWrapper))
+					{
+						throw new ClassCastException("Invalid ["+IDhApiBlockStateWrapper.class.getSimpleName()+"] value given. Block State wrapper object must be one given by the DH API (it can't be a custom implementation), specifically of type ["+BlockStateWrapper.class.getName()+"].");
+					}
+					modelBlocks.add((BlockStateWrapper) copiedBlock);
+				}
+			}
+			
+			for (BlockStateWrapper modelBlock : modelBlocks)
+			{
+				// null gets the quads that no side can hide
+				addModelQuads(modelBlock, null, modelQuads, textureBySprite);
+				for (EDhDirection direction : FACE_DIRECTIONS)
+				{
+					addModelQuads(modelBlock, direction, modelQuads, textureBySprite);
+				}
+			}
+			
+			if (eventParam != null)
+			{
+				for (DhApiModelQuad apiQuad : eventParam.getAddedQuads())
+				{
+					EDhDirection cullDirection = (apiQuad.cullDirection != null) ? EDhDirection.fromApiVersion(apiQuad.cullDirection) : null;
+					addModelQuad(createApiQuadGeometry(apiQuad), cullDirection, modelQuads, textureBySprite);
+				}
 			}
 		}
 		catch (Exception bakeError)
