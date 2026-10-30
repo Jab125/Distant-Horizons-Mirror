@@ -61,6 +61,17 @@ public class BlockStateTextureProvider implements IBlockStateFaceTextureProvider
 	}
 	
 	@Override
+	public boolean isFaceTinted(IBlockStateWrapper blockState, EDhDirection direction)
+	{
+		if (!(blockState instanceof BlockStateWrapper))
+		{
+			// shouldn't happen, but just in case
+			throw new UnsupportedOperationException("blockState must be a ["+BlockStateWrapper.class.getSimpleName()+"]");
+		}
+		return ClientBlockStateTextureCache.isFaceTinted((BlockStateWrapper) blockState, direction);
+	}
+	
+	@Override
 	public void clear() 
 	{
 		ClientBlockStateTextureCache.clearCache();

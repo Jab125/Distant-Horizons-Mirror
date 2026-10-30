@@ -410,6 +410,17 @@ public class ClientBlockStateColorCache
 					try
 					{
 						BakedQuad firstQuad = quads.get(0);
+						BakedQuad untintedQuad = null;
+						// take the color from a tinted part if there is one
+						if (!ClientBlockStateTextureCache.isQuadTinted(firstQuad))
+						{
+							BakedQuad tintedQuad = this.findTintedQuad();
+							if (tintedQuad != null)
+							{
+								untintedQuad = firstQuad;
+								firstQuad = tintedQuad;
+							}
+						}
 						
 						#if MC_VER <= MC_1_12_2
 						this.needPostTinting = firstQuad.hasTintIndex();						
@@ -444,6 +455,13 @@ public class ClientBlockStateColorCache
 							firstQuad.materialInfo().sprite(),
 							EColorMode.getColorMode(this.blockState.getBlock()));
 						#endif
+						
+						// keep the usual part's alpha
+						if (untintedQuad != null)
+						{
+							int untintedColor = calculateColorFromTexture(ClientBlockStateTextureCache.getQuadSprite(untintedQuad), EColorMode.getColorMode(this.blockState.getBlock()));
+							this.baseColor = ColorUtil.setAlpha(this.baseColor, ColorUtil.getAlpha(untintedColor));
+						}
 					}
 					catch (Exception e)
 					{
@@ -505,6 +523,35 @@ public class ClientBlockStateColorCache
 	#if MC_VER > MC_1_7_10
 	@Nullable
 	private List<BakedQuad> getUnculledQuads() throws Exception { return this.getQuadsForDirection(null); }
+	/** @return null if none of the block's quads are tinted */
+	@Nullable
+	private BakedQuad findTintedQuad()
+	{
+		for (EDhDirection direction : COLOR_RESOLUTION_DIRECTION_ORDER)
+		{
+			try
+			{
+				List<BakedQuad> quads = this.getQuadsForDirection(direction);
+				if (quads == null)
+				{
+					continue;
+				}
+				
+				for (BakedQuad quad : quads)
+				{
+					if (ClientBlockStateTextureCache.isQuadTinted(quad))
+					{
+						return quad;
+					}
+				}
+			}
+			catch (Exception ignore)
+			{
+				// invalid blocks can fail to give quads
+			}
+		}
+		return null;
+	}
 	@Nullable
 	private List<BakedQuad> getQuadsForDirection(@Nullable EDhDirection direction) throws Exception
 	{
