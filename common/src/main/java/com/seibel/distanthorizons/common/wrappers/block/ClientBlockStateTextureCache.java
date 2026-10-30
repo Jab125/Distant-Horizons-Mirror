@@ -306,6 +306,8 @@ public class ClientBlockStateTextureCache
 		try
 		{
 			List<BakedQuad> bakedQuads;
+			// the side the quads belong to
+			EDhDirection quadDirection = dhDirection;
 			
 			if (blockStateWrapper.useBottomTextureForSides()
 				&& dhDirection != EDhDirection.UP
@@ -315,6 +317,7 @@ public class ClientBlockStateTextureCache
 				// which looks bad when repeated.
 				// In those cases we just use the bottom texture.
 				bakedQuads = QuadWrapper.getQuadsForDirection(blockStateWrapper.blockState, EDhDirection.DOWN);
+				quadDirection = EDhDirection.DOWN;
 			}
 			else
 			{
@@ -342,14 +345,16 @@ public class ClientBlockStateTextureCache
 					&& !bakedQuads.isEmpty())
 				{
 					// Faces with culled quads cover the whole face (IE full cubes),
-					// copying the quad's sprite directly is both more reliable
-					// and more accurate than rasterizing.
-					
+					// drawing the picked quad through its uvs turns the texture with the block
 					BakedQuad faceQuad = pickFaceQuad(bakedQuads);
-					TextureAtlasSprite quadSprite = getQuadSprite(faceQuad);
-					boolean isQuadTinted = isQuadTinted(faceQuad);
+					int[] pixels = new int[TEXTURE_WIDTH_AND_HEIGHT * TEXTURE_WIDTH_AND_HEIGHT];
+					if (rasterizeQuad(decodeQuad(faceQuad, quadDirection), pixels))
+					{
+						return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
+					}
 					
-					return bakeSpriteTexture(quadSprite);
+					// the quad doesn't face this side
+					return bakeSpriteTexture(getQuadSprite(faceQuad));
 				}
 			}
 			
@@ -667,7 +672,6 @@ public class ClientBlockStateTextureCache
 			#endif
 			
 			
-			#if MC_VER <= MC_1_21_11
 			// vertex UVs are texture atlas coordinates and
 			// need to be converted into sprite local coordinates
 			float minU = TextureAtlasSpriteWrapper.getMinU(geometry.sprite);
@@ -676,12 +680,6 @@ public class ClientBlockStateTextureCache
 			float maxV = TextureAtlasSpriteWrapper.getMaxV(geometry.sprite);
 			geometry.spriteUByVertex[vertexIndex] = (maxU != minU) ? ((u - minU) / (maxU - minU)) : 0.0f;
 			geometry.spriteVByVertex[vertexIndex] = (maxV != minV) ? ((v - minV) / (maxV - minV)) : 0.0f;
-			#else
-			// vertex UVs are already sprite local coordinates,
-			// the renderer looks the sprite up via the quad's material instead of the vertex data
-			geometry.spriteUByVertex[vertexIndex] = u;
-			geometry.spriteVByVertex[vertexIndex] = v;
-			#endif
 			
 			
 			projectOntoQuadFace(dhDirection, x, y, z, geometry, vertexIndex);
