@@ -333,16 +333,7 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 	@Override
 	public @NotNull ChunkAccess getChunk(int chunkX, int chunkZ)
 	{
-		try
-		{
-			// lock is to prevent issues with underlying MC code that doesn't support multithreading
-			this.getChunkLock.lock();
-			return this.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY);
-		}
-		finally
-		{
-			this.getChunkLock.unlock();
-		}
+		return this.getChunk(chunkX, chunkZ, ChunkStatus.EMPTY);
 	}
 	
 	// Override to ensure no other mod mixins cause skipping the overrided
@@ -350,6 +341,19 @@ public class DhLitWorldGenRegion extends WorldGenRegion
 	@Override
 	public @NotNull ChunkAccess getChunk(int chunkX, int chunkZ, @NotNull ChunkStatus chunkStatus)
 	{
+		// Only inspect the fixed region grid here. Fallback map access remains locked.
+		if (this.dhHasChunk(chunkX, chunkZ))
+		{
+			ChunkAccess cachedChunk = this.dhGetChunk(chunkX, chunkZ);
+			// Live chunks must reach the fallback for read-only wrapping.
+			if (cachedChunk != null
+				&& !(cachedChunk instanceof LevelChunk)
+				&& ChunkWrapper.getStatus(cachedChunk).isOrAfter(chunkStatus))
+			{
+				return cachedChunk;
+			}
+		}
+
 		try
 		{
 			// lock is to prevent issues with underlying MC code that doesn't support multithreading
