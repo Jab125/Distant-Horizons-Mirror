@@ -906,6 +906,8 @@ public class ClientBlockStateColorCache
 		return returnColor;
 	}
 	
+	public boolean getNeedPostTinting() { return this.needPostTinting; }
+	
 	//endregion
 	
 	
