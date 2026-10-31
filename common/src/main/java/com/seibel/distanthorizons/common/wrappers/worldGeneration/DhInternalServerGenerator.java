@@ -154,6 +154,15 @@ public class DhInternalServerGenerator
 		this.dhServerGenTicket = ForgeChunkManager.requestTicket(FORGE_MAIN, params.mcServerLevel, ForgeChunkManager.Type.NORMAL);
 		increaseChunkLimit(this.dhServerGenTicket, 1000);
 		#endif
+
+		#if MC_VER <= MC_1_7_10
+		// DH only forces chunks to generate them, they shouldn't be simulated in the meantime
+		if (HODGE_PODGE_ACCESSOR != null
+			&& this.dhServerGenTicket != null)
+		{
+			HODGE_PODGE_ACCESSOR.excludeTicketFromSimulation(this.dhServerGenTicket);
+		}
+		#endif
 	}
 
 	#if MC_VER <= MC_1_12_2
@@ -417,7 +426,7 @@ public class DhInternalServerGenerator
 					// but we want to avoid an endless loop.
 					int remainingDrainAttemptCount = MAX_UNLOAD_DRAIN_ATTEMPT_COUNT;
 					#if MC_VER <= MC_1_7_10
-					while (!provider.droppedChunksSet.isEmpty()
+					while (!provider.chunksToUnload.isEmpty()
 						&& !provider.loadedChunks.isEmpty()
 						&& remainingDrainAttemptCount-- > 0)
 					{
@@ -561,13 +570,6 @@ public class DhInternalServerGenerator
 						}
 
 						#if MC_VER <= MC_1_7_10
-						if (HODGE_PODGE_ACCESSOR != null)
-						{
-							HODGE_PODGE_ACCESSOR.preventChunkSimulation(level, neighborPosX, neighborPosZ);
-						}
-						#endif
-						
-						#if MC_VER <= MC_1_7_10
 						ForgeChunkManager.forceChunk(this.dhServerGenTicket, new ChunkCoordIntPair(neighborPosX, neighborPosZ));
 						#else
 						ForgeChunkManager.forceChunk(this.dhServerGenTicket, new ChunkPos(neighborPosX, neighborPosZ));
@@ -693,13 +695,6 @@ public class DhInternalServerGenerator
 						ForgeChunkManager.unforceChunk(this.dhServerGenTicket, new ChunkCoordIntPair(neighborPosX, neighborPosZ));
 						#else
 						ForgeChunkManager.unforceChunk(this.dhServerGenTicket, new ChunkPos(neighborPosX, neighborPosZ));
-						#endif
-						
-						#if MC_VER <= MC_1_7_10
-						if (HODGE_PODGE_ACCESSOR != null)
-						{
-							HODGE_PODGE_ACCESSOR.allowChunkSimulation(level, neighborPosX, neighborPosZ);
-						}
 						#endif
 						
 						// don't unload chunks a player is watching, MC still owns those.
