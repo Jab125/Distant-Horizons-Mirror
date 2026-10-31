@@ -423,6 +423,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 					GlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame.setModelOffsetPos(MODEL_POS);
 					
 					ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, BEFORE_BUFFER_RENDER_EVENT_PARAM);
+					BEFORE_BUFFER_RENDER_EVENT_PARAM.clearLevelRef();
 				}
 				
 				IDhApiVertexBufferWrapper[] vertexBuffers = (opaquePass ? bufferContainer.getVboOpaqueWrappers() : bufferContainer.getVboTransparentWrappers());
