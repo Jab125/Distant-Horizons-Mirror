@@ -707,7 +707,7 @@ public class DhInternalServerGenerator
 						#if MC_VER <= MC_1_7_10
 						if (!level.getPlayerManager().func_152621_a(neighborPosX, neighborPosZ))
 						{
-							provider.dropChunk(neighborPosX, neighborPosZ);
+							provider.unloadChunksIfNotNearSpawn(neighborPosX, neighborPosZ);
 						}
 						#else
 						Chunk chunk = provider.getLoadedChunk(neighborPosX, neighborPosZ);

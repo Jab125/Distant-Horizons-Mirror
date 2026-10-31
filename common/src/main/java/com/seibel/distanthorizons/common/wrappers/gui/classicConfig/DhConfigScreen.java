@@ -1152,7 +1152,11 @@ class DhConfigScreen extends DhScreen
 					
 					if (btn.mousePressed(this.mc, mouseX, mouseY))
 					{
+						#if MC_VER <= MC_1_7_10
+						btn.func_146113_a(this.mc.getSoundHandler()); // playPressSound
+						#elif MC_VER <= MC_1_12_2
 						btn.playPressSound(this.mc.getSoundHandler());
+						#endif
 						
 						OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(btn);
 						if (handler != null)
@@ -1175,7 +1179,11 @@ class DhConfigScreen extends DhScreen
 					
 					if (reset.mousePressed(this.mc, mouseX, mouseY))
 					{
+						#if MC_VER <= MC_1_7_10
+						reset.func_146113_a(this.mc.getSoundHandler()); // playPressSound
+						#elif MC_VER <= MC_1_12_2
 						reset.playPressSound(this.mc.getSoundHandler());
+						#endif
 						
 						OnPressed handler = GuiHelper.HANDLER_BY_BUTTON.get(reset);
 						if (handler != null)
