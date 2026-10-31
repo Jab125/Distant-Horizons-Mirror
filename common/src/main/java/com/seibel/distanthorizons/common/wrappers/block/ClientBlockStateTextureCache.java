@@ -149,6 +149,65 @@ public class ClientBlockStateTextureCache
 		return faceTextures[direction.faceIndex];
 	}
 	
+	public static BlockModelQuad[] getModel(BlockStateWrapper blockStateWrapper)
+	{ return MODELS_BY_BLOCK_WRAPPER.computeIfAbsent(blockStateWrapper, ClientBlockStateTextureCache::bakeModel); }
+	
+	/** Faces without quads on their side use the unculled ones */
+	public static boolean isFaceTinted(BlockStateWrapper blockStateWrapper, EDhDirection direction)
+	{
+		#if MC_VER <= MC_1_7_10
+		// no quads, faces follow the block
+		return true;
+		#else
+		// liquids have no quads, they follow the block
+		if (blockStateWrapper.isLiquid())
+		{
+			return true;
+		}
+		
+		try
+		{
+			List<BakedQuad> quads = QuadWrapper.getQuadsForDirection(blockStateWrapper.blockState, direction);
+			if (quads == null || quads.isEmpty())
+			{
+				quads = QuadWrapper.getUnculledQuads(blockStateWrapper.blockState);
+			}
+			
+			if (quads != null)
+			{
+				for (BakedQuad quad : quads)
+				{
+					if (isQuadTinted(quad))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		catch (Exception ignore)
+		{
+			// invalid blocks can fail to give quads
+		}
+		return false;
+		#endif
+	}
+	
+	/** Should be called whenever MC's textures change, IE when resource packs are swapped. */
+	public static void clearCache()
+	{
+		TEXTURES_BY_BLOCK_WRAPPER.clear();
+		MODELS_BY_BLOCK_WRAPPER.clear();
+	}
+	
+	//endregion
+	
+	
+	
+	//==============//
+	// model baking //
+	//==============//
+	//region
+	
 	#if MC_VER > MC_1_7_10
 	private static void addModelQuads(
 		BlockStateWrapper blockStateWrapper, @Nullable EDhDirection cullDirection,
@@ -331,56 +390,6 @@ public class ClientBlockStateTextureCache
 		
 		return modelQuads.toArray(new BlockModelQuad[0]);
 		#endif
-	}
-	
-	public static BlockModelQuad[] getModel(BlockStateWrapper blockStateWrapper)
-	{ return MODELS_BY_BLOCK_WRAPPER.computeIfAbsent(blockStateWrapper, ClientBlockStateTextureCache::bakeModel); }
-	
-	/** Faces without quads on their side use the unculled ones */
-	public static boolean isFaceTinted(BlockStateWrapper blockStateWrapper, EDhDirection direction)
-	{
-		#if MC_VER <= MC_1_7_10
-		// no quads, faces follow the block
-		return true;
-		#else
-		// liquids have no quads, they follow the block
-		if (blockStateWrapper.isLiquid())
-		{
-			return true;
-		}
-		
-		try
-		{
-			List<BakedQuad> quads = QuadWrapper.getQuadsForDirection(blockStateWrapper.blockState, direction);
-			if (quads == null || quads.isEmpty())
-			{
-				quads = QuadWrapper.getUnculledQuads(blockStateWrapper.blockState);
-			}
-			
-			if (quads != null)
-			{
-				for (BakedQuad quad : quads)
-				{
-					if (isQuadTinted(quad))
-					{
-						return true;
-					}
-				}
-			}
-		}
-		catch (Exception ignore)
-		{
-			// invalid blocks can fail to give quads
-		}
-		return false;
-		#endif
-	}
-	
-	/** Should be called whenever MC's textures change, IE when resource packs are swapped. */
-	public static void clearCache()
-	{
-		TEXTURES_BY_BLOCK_WRAPPER.clear();
-		MODELS_BY_BLOCK_WRAPPER.clear();
 	}
 	
 	//endregion
