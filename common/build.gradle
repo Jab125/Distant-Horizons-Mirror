@@ -1,1 +1,19 @@
 apply plugin: 'dh-loader'
+
+dependencies {
+    testImplementation 'junit:junit:4.13.2'
+}
+
+tasks.named('test') {
+    useJUnit()
+    workingDir = layout.buildDirectory.dir('test-runtime').get().asFile
+    doFirst { workingDir.mkdirs() }
+}
+
+configurations.testAnnotationProcessor.extendsFrom configurations.annotationProcessor
+configurations.testRuntimeClasspath.extendsFrom configurations.minecraftLibraries
+configurations.testRuntimeClasspath.resolutionStrategy.capabilitiesResolution.withCapability('org.lz4:lz4-java') {
+    selectHighestVersion()
+}
+sourceSets.test.compileClasspath += sourceSets.main.compileClasspath
+sourceSets.test.runtimeClasspath += sourceSets.main.compileClasspath
