@@ -390,6 +390,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 			// https://github.com/IrisShaders/Iris/issues/2582
 			// https://github.com/IrisShaders/Iris/blob/1.21.9/common/src/main/java/net/irisshaders/iris/compat/dh/LodRendererEvents.java#L346
 			GLMC.enableFaceCulling();
+			LWJGL.glEnable(GL11.GL_CULL_FACE);
 		}
 		
 		
