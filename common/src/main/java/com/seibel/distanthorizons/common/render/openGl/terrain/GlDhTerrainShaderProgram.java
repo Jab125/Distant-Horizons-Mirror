@@ -7,6 +7,7 @@ import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApi
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.*;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
 import com.seibel.distanthorizons.api.objects.math.DhApiVec3f;
+import com.seibel.distanthorizons.api.objects.math.DhApiVec3i;
 import com.seibel.distanthorizons.api.objects.util.IDhApiReadOnlyList;
 import com.seibel.distanthorizons.common.render.openGl.GlDhMetaRenderer;
 import com.seibel.distanthorizons.common.render.openGl.glObject.GLProxy;
@@ -19,7 +20,6 @@ import com.seibel.distanthorizons.common.render.openGl.glObject.vertexAttribute.
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodQuadBuilder;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.dependencyInjection.SingletonInjector;
@@ -402,21 +402,14 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 				int containerIndex = opaquePass ? lodIndex : (bufferContainers.size() - 1 - lodIndex);
 				IDhApiTerrainBufferContainer apiBufferContainer = bufferContainers.get(containerIndex);
 				
-				LodBufferContainer bufferContainer = (LodBufferContainer)apiBufferContainer;
-				if (!bufferContainer.buffersUploaded)
-				{
-					// make sure we don't accidentally try
-					// rendering a buffer that is (or is going to be) freed 
-					continue;
-				}
-				
 				// set uniforms and fire events
 				{
+					DhApiVec3i minCornerBlockPos = apiBufferContainer.getMinCornerBlockPos();
 					DhVec3d camPos = renderEventParam.exactCameraPosition;
 					MODEL_POS.set(
-						(float) (bufferContainer.minCornerBlockPos.getX() - camPos.x),
-						(float) (bufferContainer.minCornerBlockPos.getY() - camPos.y),
-						(float) (bufferContainer.minCornerBlockPos.getZ() - camPos.z));
+						(float) (minCornerBlockPos.x - camPos.x),
+						(float) (minCornerBlockPos.y - camPos.y),
+						(float) (minCornerBlockPos.z - camPos.z));
 					BEFORE_BUFFER_RENDER_EVENT_PARAM.update(renderEventParam, MODEL_POS);
 					
 					GlDhMetaRenderer.INSTANCE.shaderProgramForThisFrame.bind();
@@ -426,7 +419,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 					BEFORE_BUFFER_RENDER_EVENT_PARAM.clearLevelReferences();
 				}
 				
-				IDhApiVertexBufferWrapper[] vertexBuffers = (opaquePass ? bufferContainer.getVboOpaqueWrappers() : bufferContainer.getVboTransparentWrappers());
+				IDhApiVertexBufferWrapper[] vertexBuffers = (opaquePass ? apiBufferContainer.getVboOpaqueWrappers() : apiBufferContainer.getVboTransparentWrappers());
 				for (int vboIndex = 0; vboIndex < vertexBuffers.length; vboIndex++)
 				{
 					GLVertexBuffer vbo = (GLVertexBuffer) vertexBuffers[vboIndex];

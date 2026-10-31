@@ -27,6 +27,7 @@ import com.seibel.distanthorizons.api.interfaces.render.renderDef.objects.IDhApi
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeBufferRenderEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBeforeRenderPassEvent;
 import com.seibel.distanthorizons.api.methods.events.sharedParameterObjects.DhApiRenderParam;
+import com.seibel.distanthorizons.api.objects.math.DhApiVec3i;
 import com.seibel.distanthorizons.api.objects.util.IDhApiReadOnlyList;
 import com.seibel.distanthorizons.common.render.blaze.util.BlazeDhVertexFormatUtil;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.BlazeVertexFormatBuilder;
@@ -40,10 +41,8 @@ import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVerte
 import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeUniformBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.misc.LightMapWrapper;
 import com.seibel.distanthorizons.core.config.Config;
-import com.seibel.distanthorizons.core.dataObjects.render.bufferBuilding.LodBufferContainer;
 import com.seibel.distanthorizons.core.logging.DhLogger;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
-import com.seibel.distanthorizons.core.pos.DhSectionPos;
 import com.seibel.distanthorizons.core.render.DhApiRenderProxy;
 import com.seibel.distanthorizons.core.render.RenderParam;
 import com.seibel.distanthorizons.core.util.RenderUtil;
@@ -316,15 +315,14 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 						int containerIndex = opaquePass ? lodIndex : (bufferContainers.size() - 1 - lodIndex);
 						IDhApiTerrainBufferContainer apiBufferContainer = bufferContainers.get(containerIndex);
 						
-						LodBufferContainer bufferContainer = (LodBufferContainer) apiBufferContainer;
-						BlazeLodUniformBufferWrapper uniformWrapper = (BlazeLodUniformBufferWrapper) bufferContainer.getUniformContainer();
+						BlazeLodUniformBufferWrapper uniformWrapper = (BlazeLodUniformBufferWrapper) apiBufferContainer.getUniformContainer();
 						
 						boolean columnBuilderDebugEnabled = Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugEnable.get();
 						if (columnBuilderDebugEnabled)
 						{
-							if (DhSectionPos.getDetailLevel(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugDetailLevel.get()
-								&& DhSectionPos.getX(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugXPos.get()
-								&& DhSectionPos.getZ(bufferContainer.pos) == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugZPos.get())
+							if (apiBufferContainer.getDetailLevel() == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugDetailLevel.get()
+								&& apiBufferContainer.getLodPosX() == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugXPos.get()
+								&& apiBufferContainer.getLodPosZ() == Config.Client.Advanced.Debugging.ColumnBuilderDebugging.columnBuilderDebugZPos.get())
 							{
 								int breakpoint = 0;
 							}
@@ -340,8 +338,8 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 						
 						// render each buffer
 						IDhApiVertexBufferWrapper[] bufferWrapperList = opaquePass 
-							? bufferContainer.getVboOpaqueWrappers() 
-							: bufferContainer.getVboTransparentWrappers();
+							? apiBufferContainer.getVboOpaqueWrappers() 
+							: apiBufferContainer.getVboTransparentWrappers();
 						for (int i = 0; i < bufferWrapperList.length; i++)
 						{
 							BlazeVertexBufferWrapper bufferWrapper = (BlazeVertexBufferWrapper) bufferWrapperList[i];
@@ -354,11 +352,12 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 							
 							// fire render event
 							{
+								DhApiVec3i minCornerBlockPos = apiBufferContainer.getMinCornerBlockPos();
 								DhVec3d camPos = renderEventParam.exactCameraPosition;
 								MODEL_POS.set(
-									(float) (bufferContainer.minCornerBlockPos.getX() - camPos.x),
-									(float) (bufferContainer.minCornerBlockPos.getY() - camPos.y),
-									(float) (bufferContainer.minCornerBlockPos.getZ() - camPos.z));
+									(float) (minCornerBlockPos.x - camPos.x),
+									(float) (minCornerBlockPos.y - camPos.y),
+									(float) (minCornerBlockPos.z - camPos.z));
 								BEFORE_BUFFER_RENDER_EVENT_PARAM.update(renderEventParam, MODEL_POS);
 								ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeBufferRenderEvent.class, BEFORE_BUFFER_RENDER_EVENT_PARAM);
 								BEFORE_BUFFER_RENDER_EVENT_PARAM.clearLevelReferences();
