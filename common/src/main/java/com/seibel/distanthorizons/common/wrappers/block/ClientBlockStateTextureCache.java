@@ -24,8 +24,11 @@ import com.seibel.distanthorizons.api.enums.rendering.EDhApiDirection;
 import com.seibel.distanthorizons.api.interfaces.block.IDhApiBlockStateWrapper;
 import com.seibel.distanthorizons.api.interfaces.world.IDhApiLevelWrapper;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockColorOverrideEvent;
+import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockModelOverrideEvent;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockTextureOverrideEvent;
+import com.seibel.distanthorizons.api.objects.render.DhApiModelQuad;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockFaceTexture;
+import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockModelQuad;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
 import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -107,6 +110,10 @@ public class ClientBlockStateTextureCache
 			EDhDirection.EAST
 		};
 	
+	/** the tile corner each vertex gets in {@link #bakeQuadTexture} */
+	private static final float[] QUAD_TILE_U_BY_VERTEX = { 0, 0, 1, 1 };
+	private static final float[] QUAD_TILE_V_BY_VERTEX = { 0, 1, 1, 0 };
+	
 	/**
 	 * Methods using MC's "RandomSource" object aren't thread safe <br>
 	 * so we need to put locks around that logic. <br>
@@ -118,6 +125,7 @@ public class ClientBlockStateTextureCache
 	private static final ReentrantLock BAKE_LOCK = new ReentrantLock();
 	
 	private static final ConcurrentHashMap<BlockStateWrapper, BlockFaceTexture[]> TEXTURES_BY_BLOCK_WRAPPER = new ConcurrentHashMap<>();
+	private static final ConcurrentHashMap<BlockStateWrapper, BlockModelQuad[]> MODELS_BY_BLOCK_WRAPPER = new ConcurrentHashMap<>();
 	
 	/** 
 	 * can be enabled to make sure the textures are being parsed
@@ -145,8 +153,244 @@ public class ClientBlockStateTextureCache
 		return faceTextures[direction.faceIndex];
 	}
 	
+	public static BlockModelQuad[] getModel(BlockStateWrapper blockStateWrapper)
+	{ return MODELS_BY_BLOCK_WRAPPER.computeIfAbsent(blockStateWrapper, ClientBlockStateTextureCache::bakeModel); }
+	
+	/** Faces without quads on their side use the unculled ones */
+	public static boolean isFaceTinted(BlockStateWrapper blockStateWrapper, EDhDirection direction)
+	{
+		#if MC_VER <= MC_1_7_10
+		// no quads, faces follow the block
+		return true;
+		#else
+		// liquids have no quads, they follow the block
+		if (blockStateWrapper.isLiquid())
+		{
+			return true;
+		}
+		
+		try
+		{
+			List<BakedQuad> quads = QuadWrapper.getQuadsForDirection(blockStateWrapper.blockState, direction);
+			if (quads == null || quads.isEmpty())
+			{
+				quads = QuadWrapper.getUnculledQuads(blockStateWrapper.blockState);
+			}
+			
+			if (quads != null)
+			{
+				for (BakedQuad quad : quads)
+				{
+					if (isQuadTinted(quad))
+					{
+						return true;
+					}
+				}
+			}
+		}
+		catch (Exception ignore)
+		{
+			// invalid blocks can fail to give quads
+		}
+		return false;
+		#endif
+	}
+	
 	/** Should be called whenever MC's textures change, IE when resource packs are swapped. */
-	public static void clearCache() { TEXTURES_BY_BLOCK_WRAPPER.clear(); }
+	public static void clearCache()
+	{
+		TEXTURES_BY_BLOCK_WRAPPER.clear();
+		MODELS_BY_BLOCK_WRAPPER.clear();
+	}
+	
+	//endregion
+	
+	
+	
+	//==============//
+	// model baking //
+	//==============//
+	//region
+	
+	#if MC_VER > MC_1_7_10
+	private static void addModelQuads(
+		BlockStateWrapper blockStateWrapper, @Nullable EDhDirection cullDirection,
+		ArrayList<BlockModelQuad> modelQuads, HashMap<TextureAtlasSprite, BlockFaceTexture> textureBySprite) throws Exception
+	{
+		List<BakedQuad> bakedQuads = QuadWrapper.getQuadsForDirection(blockStateWrapper.blockState, cullDirection);
+		if (bakedQuads == null)
+		{
+			return;
+		}
+		
+		for (BakedQuad bakedQuad : bakedQuads)
+		{
+			addModelQuad(decodeQuad(bakedQuad, null), cullDirection, modelQuads, textureBySprite);
+		}
+	}
+	
+	private static void addModelQuad(
+		QuadGeometry geometry, @Nullable EDhDirection cullDirection,
+		ArrayList<BlockModelQuad> modelQuads, HashMap<TextureAtlasSprite, BlockFaceTexture> textureBySprite)
+	{
+		float[] uByVertex = geometry.spriteUByVertex;
+		float[] vByVertex = geometry.spriteVByVertex;
+		BlockFaceTexture texture;
+		if (needsOwnTile(geometry))
+		{
+			texture = bakeQuadTexture(geometry);
+			// the quad shows its whole tile
+			uByVertex = QUAD_TILE_U_BY_VERTEX;
+			vByVertex = QUAD_TILE_V_BY_VERTEX;
+		}
+		else
+		{
+			// quads often share a sprite
+			texture = textureBySprite.computeIfAbsent(geometry.sprite, ClientBlockStateTextureCache::bakeSpriteTexture);
+		}
+		
+		modelQuads.add(new BlockModelQuad(
+			geometry.xByVertex, geometry.yByVertex, geometry.zByVertex,
+			uByVertex, vByVertex,
+			texture, cullDirection, geometry.tinted));
+	}
+	
+	/** API quads use the same geometry as Minecraft's quads */
+	private static QuadGeometry createApiQuadGeometry(DhApiModelQuad apiQuad)
+	{
+		if (!(apiQuad.sprite instanceof TextureAtlasSprite))
+		{
+			throw new ClassCastException("Invalid sprite given, it must be Minecraft's ["+TextureAtlasSprite.class.getName()+"].");
+		}
+		
+		QuadGeometry geometry = new QuadGeometry();
+		geometry.sprite = (TextureAtlasSprite) apiQuad.sprite;
+		System.arraycopy(apiQuad.xByCorner, 0, geometry.xByVertex, 0, 4);
+		System.arraycopy(apiQuad.yByCorner, 0, geometry.yByVertex, 0, 4);
+		System.arraycopy(apiQuad.zByCorner, 0, geometry.zByVertex, 0, 4);
+		System.arraycopy(apiQuad.uByCorner, 0, geometry.spriteUByVertex, 0, 4);
+		System.arraycopy(apiQuad.vByCorner, 0, geometry.spriteVByVertex, 0, 4);
+		return geometry;
+	}
+	
+	/** Quads on textures bigger than a tile */
+	private static boolean needsOwnTile(QuadGeometry geometry)
+	{
+		// smaller textures keep every texel in the shared tile
+		return geometry.sprite != null
+			&& (TextureAtlasSpriteWrapper.getWidth(geometry.sprite) > TEXTURE_WIDTH_AND_HEIGHT
+				|| TextureAtlasSpriteWrapper.getHeight(geometry.sprite) > TEXTURE_WIDTH_AND_HEIGHT);
+	}
+	
+	/** Fills a whole tile with only the texels the quad shows */
+	private static BlockFaceTexture bakeQuadTexture(QuadGeometry geometry)
+	{
+		int spriteWidth = TextureAtlasSpriteWrapper.getWidth(geometry.sprite);
+		int spriteHeight = TextureAtlasSpriteWrapper.getHeight(geometry.sprite);
+		
+		int[] pixels = new int[TEXTURE_WIDTH_AND_HEIGHT * TEXTURE_WIDTH_AND_HEIGHT];
+		for (int u = 0; u < TEXTURE_WIDTH_AND_HEIGHT; u++)
+		{
+			for (int v = 0; v < TEXTURE_WIDTH_AND_HEIGHT; v++)
+			{
+				// this pixel's spot on the quad, blended from the corners
+				float s = (u + 0.5f) / TEXTURE_WIDTH_AND_HEIGHT;
+				float t = (v + 0.5f) / TEXTURE_WIDTH_AND_HEIGHT;
+				float[] cornerWeights = { (1 - s) * (1 - t), (1 - s) * t, s * t, s * (1 - t) };
+				float spriteU = 0;
+				float spriteV = 0;
+				for (int i = 0; i < 4; i++)
+				{
+					spriteU += cornerWeights[i] * geometry.spriteUByVertex[i];
+					spriteV += cornerWeights[i] * geometry.spriteVByVertex[i];
+				}
+				
+				int texelX = MathUtil.clamp(0, (int) (spriteU * spriteWidth), spriteWidth - 1);
+				int texelY = MathUtil.clamp(0, (int) (spriteV * spriteHeight), spriteHeight - 1);
+				pixels[TextureUtil.getPixelIndex(u, v)] = TextureAtlasSpriteWrapper.getPixelARGB(geometry.sprite, 0, texelX, texelY);
+			}
+		}
+		return BlockFaceTexture.createTexture(TEXTURE_WIDTH_AND_HEIGHT, TEXTURE_WIDTH_AND_HEIGHT, pixels);
+	}
+	#endif
+	
+	private static BlockModelQuad[] bakeModel(BlockStateWrapper blockStateWrapper)
+	{
+		#if MC_VER <= MC_1_7_10
+		// 1.7.10 doesn't have baked quads
+		return new BlockModelQuad[0];
+		#else
+		if (BlockStateWrapper.isAir(blockStateWrapper.blockState)
+			|| blockStateWrapper.isLiquid())
+		{
+			return new BlockModelQuad[0];
+		}
+		
+		// API users can replace or add to the model
+		DhApiBlockModelOverrideEvent.EventParam eventParam = null;
+		if (blockStateWrapper.allowApiModelOverride())
+		{
+			eventParam = new DhApiBlockModelOverrideEvent.EventParam(blockStateWrapper);
+			ApiEventInjector.INSTANCE.fireAllEvents(DhApiBlockModelOverrideEvent.class, eventParam);
+		}
+		
+		ArrayList<BlockModelQuad> modelQuads = new ArrayList<>();
+		HashMap<TextureAtlasSprite, BlockFaceTexture> textureBySprite = new HashMap<>();
+		try
+		{
+			// getQuads() and RANDOM aren't thread safe so all baking is done in a lock
+			BAKE_LOCK.lock();
+			
+			// the blocks whose Minecraft models are read
+			ArrayList<BlockStateWrapper> modelBlocks = new ArrayList<>();
+			if (eventParam == null || eventParam.getKeepBlockModel())
+			{
+				modelBlocks.add(blockStateWrapper);
+			}
+			if (eventParam != null)
+			{
+				for (IDhApiBlockStateWrapper copiedBlock : eventParam.getCopiedBlocks())
+				{
+					if (!(copiedBlock instanceof BlockStateWrapper))
+					{
+						throw new ClassCastException("Invalid ["+IDhApiBlockStateWrapper.class.getSimpleName()+"] value given. Block State wrapper object must be one given by the DH API (it can't be a custom implementation), specifically of type ["+BlockStateWrapper.class.getName()+"].");
+					}
+					modelBlocks.add((BlockStateWrapper) copiedBlock);
+				}
+			}
+			
+			for (BlockStateWrapper modelBlock : modelBlocks)
+			{
+				// null gets the quads that no side can hide
+				addModelQuads(modelBlock, null, modelQuads, textureBySprite);
+				for (EDhDirection direction : FACE_DIRECTIONS)
+				{
+					addModelQuads(modelBlock, direction, modelQuads, textureBySprite);
+				}
+			}
+			
+			if (eventParam != null)
+			{
+				for (DhApiModelQuad apiQuad : eventParam.getAddedQuads())
+				{
+					EDhDirection cullDirection = (apiQuad.cullDirection != null) ? EDhDirection.fromApiVersion(apiQuad.cullDirection) : null;
+					addModelQuad(createApiQuadGeometry(apiQuad), cullDirection, modelQuads, textureBySprite);
+				}
+			}
+		}
+		catch (Exception bakeError)
+		{
+			LOGGER.warn("Failed to read the model for block ["+blockStateWrapper.getSerialString()+"], error: ["+bakeError.getMessage()+"], block will render as a box.", bakeError);
+			modelQuads.clear();
+		}
+		finally
+		{
+			BAKE_LOCK.unlock();
+		}
+		
+		return modelQuads.toArray(new BlockModelQuad[0]);
+		#endif
+	}
 	
 	//endregion
 	
@@ -619,7 +863,7 @@ public class ClientBlockStateTextureCache
 	//region
 	
 	#if MC_VER > MC_1_7_10
-	private static QuadGeometry decodeQuad(BakedQuad quad, EDhDirection dhDirection)
+	private static QuadGeometry decodeQuad(BakedQuad quad, @Nullable EDhDirection dhDirection)
 	{
 		QuadGeometry geometry = new QuadGeometry();
 		
@@ -681,8 +925,17 @@ public class ClientBlockStateTextureCache
 			geometry.spriteUByVertex[vertexIndex] = (maxU != minU) ? ((u - minU) / (maxU - minU)) : 0.0f;
 			geometry.spriteVByVertex[vertexIndex] = (maxV != minV) ? ((v - minV) / (maxV - minV)) : 0.0f;
 			
-			
-			projectOntoQuadFace(dhDirection, x, y, z, geometry, vertexIndex);
+			// models use the block space positions instead of a face
+			if (dhDirection != null)
+			{
+				projectOntoQuadFace(dhDirection, x, y, z, geometry, vertexIndex);
+			}
+			else
+			{
+				geometry.xByVertex[vertexIndex] = x;
+				geometry.yByVertex[vertexIndex] = y;
+				geometry.zByVertex[vertexIndex] = z;
+			}
 		}
 		
 		return geometry;
@@ -769,6 +1022,11 @@ public class ClientBlockStateTextureCache
 		public final float[] spriteUByVertex = new float[4];
 		/** sprite local texture coordinates in the range [0,1] */
 		public final float[] spriteVByVertex = new float[4];
+		
+		/** block space positions in the range [0,1] */
+		public final float[] xByVertex = new float[4];
+		public final float[] yByVertex = new float[4];
+		public final float[] zByVertex = new float[4];
 		
 		
 		public TextureAtlasSprite sprite;
@@ -860,7 +1118,7 @@ public class ClientBlockStateTextureCache
 		return quadList.get(0);
 	}
 	
-	private static TextureAtlasSprite getQuadSprite(BakedQuad quad)
+	static TextureAtlasSprite getQuadSprite(BakedQuad quad)
 	{
 		#if MC_VER <= MC_1_12_2
 		return quad.getSprite();
@@ -875,7 +1133,7 @@ public class ClientBlockStateTextureCache
 		#endif
 	}
 	
-	private static boolean isQuadTinted(BakedQuad quad)
+	static boolean isQuadTinted(BakedQuad quad)
 	{
 		#if MC_VER <= MC_1_12_2
 		return quad.hasTintIndex();

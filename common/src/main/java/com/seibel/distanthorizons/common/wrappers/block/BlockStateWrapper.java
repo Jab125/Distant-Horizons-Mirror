@@ -22,8 +22,10 @@ package com.seibel.distanthorizons.common.wrappers.block;
 import com.seibel.distanthorizons.api.enums.rendering.EDhApiBlockMaterial;
 import com.seibel.distanthorizons.api.methods.events.abstractEvents.DhApiBlockStateWrapperCreatedEvent;
 import com.seibel.distanthorizons.common.wrappers.WrapperFactory;
+import com.seibel.distanthorizons.common.wrappers.McObjectConverter;
 import com.seibel.distanthorizons.core.config.Config;
 import com.seibel.distanthorizons.core.config.types.ConfigEntry;
+import com.seibel.distanthorizons.core.enums.EDhDirection;
 import com.seibel.distanthorizons.core.logging.DhLoggerBuilder;
 import com.seibel.distanthorizons.coreapi.DependencyInjection.ApiEventInjector;
 import com.seibel.distanthorizons.coreapi.util.ColorUtil;
@@ -52,11 +54,13 @@ import net.minecraftforge.fluids.BlockFluidBase;
 import net.minecraftforge.fluids.BlockFluidFinite;
 #else
 import net.minecraft.tags.BlockTags;
+import net.minecraft.core.Direction;
 import net.minecraft.world.level.block.BeaconBeamBlock;
 import net.minecraft.world.level.block.Block;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.LiquidBlock;
 import net.minecraft.world.level.block.SoundType;
+import net.minecraft.world.level.block.SnowLayerBlock;
 import net.minecraft.world.level.block.state.BlockState;
 #endif
 import com.seibel.distanthorizons.core.logging.DhLogger;
@@ -190,9 +194,13 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	private final boolean useBottomTextureForSides;
 	private final boolean alwaysRasterizeTexture;
 	private final boolean isSolid;
+	private final boolean isFullBlock;
+	/** indexed by {@link EDhDirection#faceIndex} */
+	private final boolean[] isFaceFullByFaceIndex = new boolean[6];
 	private final boolean isLiquid;
 	private final boolean allowApiColorOverride;
 	private final boolean allowApiTextureOverride;
+	private final boolean allowApiModelOverride;
 	/** null if this block can't tint beacons */
 	private final Color beaconTintColor; 
 	private final Color mapColor;
@@ -471,6 +479,17 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			{
 				this.allowApiTextureOverride = false;
 			}
+			
+			// allow overriding if present
+			if (overrideEventParam != null
+				&& overrideEventParam.getAllowApiModelOverride() != null)
+			{
+				this.allowApiModelOverride = overrideEventParam.getAllowApiModelOverride();
+			}
+			else
+			{
+				this.allowApiModelOverride = false;
+			}
 		}
 		
 		
@@ -661,11 +680,59 @@ public class BlockStateWrapper implements IBlockStateWrapper
 			}
 			else
 			{
-	        #if MC_VER < MC_1_20_1
+	        #if MC_VER <= MC_1_7_10
 			this.isSolid = this.blockState.getMaterial().isSolid();
+	        #elif MC_VER <= MC_1_12_2
+			// snow's material isn't solid, from 2 layers it has a collision box
+			this.isSolid = this.blockState.getMaterial().isSolid()
+				|| (this.blockState.getBlock() instanceof BlockSnow && this.blockState.getValue(BlockSnow.LAYERS) > 1);
+	        #elif MC_VER < MC_1_20_1
+			// snow's material isn't solid, from 2 layers it has a collision box
+			this.isSolid = this.blockState.getMaterial().isSolid()
+				|| (this.blockState.getBlock() instanceof SnowLayerBlock && this.blockState.getValue(SnowLayerBlock.LAYERS) > 1);
 	        #else
 			this.isSolid = !this.blockState.getCollisionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO).isEmpty();
             #endif
+			}
+		}
+		
+		
+		// full block and full faces //
+		{
+			if (this.isAir()
+				|| this.blockState == null)
+			{
+				this.isFullBlock = false;
+			}
+			else
+			{
+				#if MC_VER <= MC_1_7_10
+				// render type 0 blocks can be smaller than a full cube
+				Block block = this.blockState.getBlock();
+				this.isFullBlock = block.getRenderType() == 0
+					&& block.getBlockBoundsMinX() == 0 && block.getBlockBoundsMinY() == 0 && block.getBlockBoundsMinZ() == 0
+					&& block.getBlockBoundsMaxX() == 1 && block.getBlockBoundsMaxY() == 1 && block.getBlockBoundsMaxZ() == 1;
+				#elif MC_VER <= MC_1_12_2
+				this.isFullBlock = this.blockState.isFullCube();
+				#else
+				this.isFullBlock = Block.isShapeFullBlock(this.blockState.getShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO));
+				#endif
+				
+				for (EDhDirection direction : EDhDirection.ALL)
+				{
+					#if MC_VER <= MC_1_7_10
+					// these versions can't check a single face without a level
+					this.isFaceFullByFaceIndex[direction.faceIndex] = this.blockState.getBlock().isOpaqueCube();
+					#elif MC_VER <= MC_1_12_2
+					this.isFaceFullByFaceIndex[direction.faceIndex] = this.blockState.isOpaqueCube();
+					#elif MC_VER < MC_1_21_3
+					Direction mcDirection = McObjectConverter.convert(direction);
+					this.isFaceFullByFaceIndex[direction.faceIndex] = Block.isFaceFull(this.blockState.getFaceOcclusionShape(EmptyBlockGetter.INSTANCE, BlockPos.ZERO, mcDirection), mcDirection);
+					#else
+					Direction mcDirection = McObjectConverter.convert(direction);
+					this.isFaceFullByFaceIndex[direction.faceIndex] = Block.isFaceFull(this.blockState.getFaceOcclusionShape(mcDirection), mcDirection);
+					#endif
+				}
 			}
 		}
 		
@@ -1530,6 +1597,8 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	}
 	
 	@Override public boolean isSolid() { return this.isSolid; }
+	@Override public boolean isFullBlock() { return this.isFullBlock; }
+	@Override public boolean isFaceFull(EDhDirection direction) { return this.isFaceFullByFaceIndex[direction.faceIndex]; }
 	@Override public boolean isLiquid() { return this.isLiquid; }
 	@Override public boolean isBeaconBlock() { return this.isBeaconBlock; }
 	@Override public boolean isBeaconBaseBlock() { return this.isBeaconBaseBlock; }
@@ -1538,6 +1607,7 @@ public class BlockStateWrapper implements IBlockStateWrapper
 	@Override public boolean allowsBeaconBeamPassage() { return this.allowsBeaconBeamPassage; }
 	@Override public boolean allowApiColorOverride() { return this.allowApiColorOverride; }
 	@Override public boolean allowApiTextureOverride() { return this.allowApiTextureOverride; }
+	@Override public boolean allowApiModelOverride() { return this.allowApiModelOverride; }
 	@Override public boolean renderTexture() { return this.renderTexture; }
 	@Override public boolean useBottomTextureForSides() { return this.useBottomTextureForSides; }
 	@Override public boolean alwaysRasterizeTexture() { return this.alwaysRasterizeTexture; }

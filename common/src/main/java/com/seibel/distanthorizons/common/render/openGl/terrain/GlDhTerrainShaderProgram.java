@@ -117,7 +117,7 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		super(
 			"assets/distanthorizons/shaders/terrain/gl/vert.vert",
 			"assets/distanthorizons/shaders/terrain/gl/frag.frag",
-			new String[]{"vPosition", "color", "irisData", "offsetData"}
+			new String[]{"vPosition", "color", "irisData", "offsetData", "uvNormal"}
 		);
 	}
 	
@@ -181,6 +181,8 @@ public class GlDhTerrainShaderProgram extends GlShaderProgram implements IDhApiS
 		{
 			// byte: offset x, y, z (256ths of a block), flags
 			vao.setVertexAttribute(0, 3, GlVertexPointer.addUnsignedBytesPointer(4, false, true));
+			// byte: u, v, normal (2 bytes)
+			vao.setVertexAttribute(0, 4, GlVertexPointer.addUnsignedBytesPointer(4, false, true));
 		}
 		
 		try

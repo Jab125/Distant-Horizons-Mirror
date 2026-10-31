@@ -12,6 +12,8 @@ import net.minecraft.util.EnumFacing;
 import net.minecraft.block.BlockRotatedPillar;
 import net.minecraft.block.*;
 import net.minecraft.client.multiplayer.WorldClient;
+import net.minecraft.client.renderer.BlockModelShapes;
+import net.minecraft.client.renderer.block.model.IBakedModel;
 import net.minecraft.client.renderer.color.BlockColors;
 import net.minecraft.util.math.BlockPos;
 #else
@@ -104,7 +106,17 @@ public class QuadWrapper
 			
 			#if MC_VER <= MC_1_12_2
 			try {
-				quads = MC.getBlockRendererDispatcher().getModelForState(blockState).getQuads(blockState, direction, RANDOM.nextLong());
+				BlockModelShapes modelShapes = MC.getBlockRendererDispatcher().getBlockModelShapes();
+				IBakedModel model = modelShapes.getModelForState(blockState);
+				// tile entity blocks only have the missing model
+				if (model == modelShapes.getModelManager().getMissingModel())
+				{
+					quads = Collections.emptyList();
+				}
+				else
+				{
+					quads = model.getQuads(blockState, direction, RANDOM.nextLong());
+				}
 			}
 			catch (Exception e)
 			{
