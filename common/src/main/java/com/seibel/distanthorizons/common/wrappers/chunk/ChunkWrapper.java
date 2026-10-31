@@ -527,13 +527,15 @@ public class ChunkWrapper implements IChunkWrapper
 		}
 		#else
 		BlockPos.MutableBlockPos blockPos = MUTABLE_BLOCK_POS_REF.get();
-		
+
+		// world position is needed for debug worlds to get their blocks correctly
+		// regular MC worlds us a bitwise & to limit the position to a relative position
 		#if MC_VER <= MC_1_12_2
-		blockPos.setPos(relX, relY, relZ);
+		blockPos.setPos(this.chunkPos.getMinBlockX() + relX, relY, this.chunkPos.getMinBlockZ() + relZ);
 		#else
-		blockPos.setX(relX);
+		blockPos.setX(this.chunkPos.getMinBlockX() + relX);
 		blockPos.setY(relY);
-		blockPos.setZ(relZ);
+		blockPos.setZ(this.chunkPos.getMinBlockZ() + relZ);
 		#endif
 		
 		try
@@ -575,12 +577,15 @@ public class ChunkWrapper implements IChunkWrapper
 		}
 		#else
 		BlockPos.MutableBlockPos pos = (BlockPos.MutableBlockPos)mcBlockPos.getWrappedMcObject();
+		
+		// world position is needed for debug worlds to get their blocks correctly
+		// regular MC worlds us a bitwise & to limit the position to a relative position
 		#if MC_VER <= MC_1_12_2
-		pos.setPos(relX, relY, relZ);
+		pos.setPos(this.chunkPos.getMinBlockX() + relX, relY, this.chunkPos.getMinBlockZ() + relZ);
 		#else
-		pos.setX(relX);
+		pos.setX(this.chunkPos.getMinBlockX() + relX);
 		pos.setY(relY);
-		pos.setZ(relZ);
+		pos.setZ(this.chunkPos.getMinBlockZ() + relZ);
 		#endif
 	
 		try
