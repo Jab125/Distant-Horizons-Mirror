@@ -110,6 +110,10 @@ public class ClientBlockStateTextureCache
 			EDhDirection.EAST
 		};
 	
+	/** the tile corner each vertex gets in {@link #bakeQuadTexture} */
+	private static final float[] QUAD_TILE_U_BY_VERTEX = { 0, 0, 1, 1 };
+	private static final float[] QUAD_TILE_V_BY_VERTEX = { 0, 1, 1, 0 };
+	
 	/**
 	 * Methods using MC's "RandomSource" object aren't thread safe <br>
 	 * so we need to put locks around that logic. <br>
@@ -268,10 +272,6 @@ public class ClientBlockStateTextureCache
 		System.arraycopy(apiQuad.vByCorner, 0, geometry.spriteVByVertex, 0, 4);
 		return geometry;
 	}
-	
-	/** the tile corner each vertex gets in {@link #bakeQuadTexture} */
-	private static final float[] QUAD_TILE_U_BY_VERTEX = { 0, 0, 1, 1 };
-	private static final float[] QUAD_TILE_V_BY_VERTEX = { 0, 1, 1, 0 };
 	
 	/** Quads on textures bigger than a tile */
 	private static boolean needsOwnTile(QuadGeometry geometry)
