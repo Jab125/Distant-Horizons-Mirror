@@ -417,7 +417,7 @@ public class DhInternalServerGenerator
 					// but we want to avoid an endless loop.
 					int remainingDrainAttemptCount = MAX_UNLOAD_DRAIN_ATTEMPT_COUNT;
 					#if MC_VER <= MC_1_7_10
-					while (!provider.droppedChunksSet.isEmpty()
+					while (!provider.chunksToUnload.isEmpty()
 						&& !provider.loadedChunks.isEmpty()
 						&& remainingDrainAttemptCount-- > 0)
 					{
