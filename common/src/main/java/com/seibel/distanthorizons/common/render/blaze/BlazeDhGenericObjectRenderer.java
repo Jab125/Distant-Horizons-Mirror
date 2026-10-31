@@ -249,7 +249,7 @@ public class BlazeDhGenericObjectRenderer implements IDhApiGenericRenderer
 				// allow API users to cancel this object's rendering
 				EVENT_PARAM.update(renderEventParam, boxGroup);
 				boolean cancelRendering = ApiEventInjector.INSTANCE.fireAllEvents(DhApiBeforeGenericObjectRenderEvent.class, EVENT_PARAM);
-				EVENT_PARAM.clearLevelRef();
+				EVENT_PARAM.clearLevelReferences();
 				
 				if (cancelRendering)
 				{
