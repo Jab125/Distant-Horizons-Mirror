@@ -15,6 +15,7 @@ import com.seibel.distanthorizons.common.render.openGl.postProcessing.fade.GlDhF
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.fade.GlVanillaFadeRenderer;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.fog.GlDhFogRenderer;
 import com.seibel.distanthorizons.common.render.openGl.postProcessing.ssao.GlDhSSAORenderer;
+import com.seibel.distanthorizons.common.render.openGl.terrain.GlBlockTextureAtlas;
 import com.seibel.distanthorizons.common.render.openGl.test.GlTestTriangleRenderer;
 import com.seibel.distanthorizons.core.dependencyInjection.ModAccessorInjector;
 import com.seibel.distanthorizons.core.wrapperInterfaces.modAccessor.IIrisAccessor;
@@ -95,6 +96,7 @@ public class GlDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	@Override public IDhApiVanillaFadeRenderer getVanillaFadeRenderer() { return GlVanillaFadeRenderer.INSTANCE; }
 	@Override public IDhApiTestTriangleRenderer getTestTriangleRenderer() { return GlTestTriangleRenderer.INSTANCE; }
 	@Override public IDhApiGenericRenderer getGenericRenderer() { return GlGenericObjectRenderer.INSTANCE; }
+	@Override public IDhApiBlockTextureAtlas getTextureAtlasWrapper() { return GlBlockTextureAtlas.INSTANCE; }
 	
 	//endregion
 	

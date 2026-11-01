@@ -19,10 +19,9 @@
 
 package com.seibel.distanthorizons.common.render.openGl.terrain;
 
+import com.seibel.distanthorizons.api.interfaces.render.renderDef.IDhApiBlockTextureAtlas;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftGLWrapper;
 import com.seibel.distanthorizons.core.dataObjects.render.textures.BlockTextureRegistry;
-import com.seibel.distanthorizons.core.render.AbstractBlockTextureAtlas;
-import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 import com.seibel.distanthorizons.coreapi.util.TextureUtil;
 import com.seibel.distanthorizons.lwjgl.GL12;
 import org.lwjgl.opengl.GL11;
@@ -41,7 +40,7 @@ import static com.seibel.distanthorizons.lwjgl.LWJGLServiceProvider.LWJGL;
  *
  * @see BlockTextureRegistry
  */
-public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
+public class GlBlockTextureAtlas implements IDhApiBlockTextureAtlas
 {
 	public static final GlBlockTextureAtlas INSTANCE = new GlBlockTextureAtlas();
 	
@@ -74,7 +73,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	//region
 	
 	@Override
-	protected void tryCreateOrResize(int width, int height)
+	public void tryCreateOrResize(int width, int height)
 	{
 		if (this.textureId != 0)
 		{
@@ -140,7 +139,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	//region
 	
 	@Override
-	protected void beforeWriteToTexture()
+	public void beforeWriteToTexture()
 	{
 		this.uploadGlState.saveState();
 		
@@ -153,7 +152,7 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	}
 	
 	@Override
-	protected void writeToTexture(ByteBuffer pixelBuffer, int destinationX, int destinationY, int tileWidth, int tileHeight)
+	public void writeToTexture(ByteBuffer pixelBuffer, int destinationX, int destinationY, int tileWidth, int tileHeight)
 	{
 		LWJGL.glTexSubImage2D(
 			GL11.GL_TEXTURE_2D, 0,
@@ -164,10 +163,10 @@ public class GlBlockTextureAtlas extends AbstractBlockTextureAtlas
 	}
 	
 	@Override
-	protected void afterWriteToTexture()
+	public void afterWriteToTexture()
 	{
 		LWJGL.glGenerateMipmap(GL11.GL_TEXTURE_2D);
-		uploadGlState.close();
+		this.uploadGlState.close();
 	}
 	
 	//endregion

@@ -15,6 +15,7 @@ import com.seibel.distanthorizons.common.render.blaze.objects.BlazeGenericObject
 import com.seibel.distanthorizons.common.render.blaze.postProcessing.*;
 import com.seibel.distanthorizons.common.render.blaze.test.BlazeDhTestTriangleRenderer;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.buffer.BlazeVertexBufferWrapper;
+import com.seibel.distanthorizons.common.render.blaze.wrappers.texture.BlazeBlockTextureAtlas;
 import com.seibel.distanthorizons.common.render.blaze.wrappers.uniform.BlazeLodUniformBufferWrapper;
 import com.seibel.distanthorizons.common.wrappers.minecraft.MinecraftRenderWrapper;
 import com.seibel.distanthorizons.api.interfaces.render.renderDef.AbstractDhApiRenderDefinition;
@@ -103,6 +104,7 @@ public class BlazeDhRenderApiDefinition extends AbstractDhApiRenderDefinition
 	@Override public IDhApiVanillaFadeRenderer getVanillaFadeRenderer() { return BlazeVanillaFadeRenderer.INSTANCE; }
 	@Override public IDhApiTestTriangleRenderer getTestTriangleRenderer() { return BlazeDhTestTriangleRenderer.INSTANCE; }
 	@Override public IDhApiGenericRenderer getGenericRenderer() { return BlazeDhGenericObjectRenderer.INSTANCE; }
+	@Override public IDhApiBlockTextureAtlas getTextureAtlasWrapper() { return BlazeBlockTextureAtlas.INSTANCE; }
 	
 	//endregion
 	

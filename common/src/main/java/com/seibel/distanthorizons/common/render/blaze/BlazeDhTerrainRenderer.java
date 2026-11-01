@@ -275,9 +275,6 @@ public class BlazeDhTerrainRenderer implements IDhApiTerrainRenderer
 			
 			
 			
-			profiler.popPush("block texture upload");
-			BlazeBlockTextureAtlas.INSTANCE.uploadPendingTiles();
-			
 			// render pass setup
 			{
 				profiler.popPush("rendering");
