@@ -24,7 +24,7 @@ dependencies {
     }
 
     // example local jar reference for troubleshooting other mods:
-    //dependencies { compileOnly(files('../run/client/mods/polytone-26.3-6.8.6-fabric.jar')) }
+    //dependencies { compileOnly(files('../tempLibJars/iris-fabric-1.12.0-snapshot+mc26.3-local.jar')) }
 
     // Mod Menu
     addMod("maven.modrinth:modmenu:${rootProject.modmenu_version}", rootProject.enable_mod_menu)
@@ -42,7 +42,14 @@ dependencies {
     addMod("maven.modrinth:lithium:${rootProject.lithium_version}", rootProject.enable_lithium)
     
     // Iris
-    addMod("maven.modrinth:iris:${rootProject.iris_version}", rootProject.enable_iris)
+    if (rootProject.mcVer != "26.3.0") // TODO remove once Iris has a stable release
+    {
+        addMod("maven.modrinth:iris:${rootProject.iris_version}", rootProject.enable_iris)
+    }
+    else
+    {
+        dependencies { compileOnly(files('../tempLibJars/iris-fabric-1.12.0-snapshot+mc26.3-local.jar')) }
+    }
     
     // BCLib
     addMod("com.github.quiqueck:BCLib:${rootProject.bclib_version}", rootProject.enable_bclib)
