@@ -42,6 +42,7 @@ import com.seibel.distanthorizons.core.wrapperInterfaces.minecraft.IProfilerWrap
 import com.seibel.distanthorizons.core.pos.blockPos.DhBlockPos;
 import com.seibel.distanthorizons.core.pos.DhChunkPos;
 import com.seibel.distanthorizons.core.logging.DhLogger;
+import com.seibel.distanthorizons.coreapi.util.BitShiftUtil;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ServerData;
@@ -323,11 +324,8 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 			}
 		}
 		
-		#if MC_VER <= MC_1_7_10
+		#if MC_VER <= MC_1_12_2
 		return new DhChunkPos(player.chunkCoordX, player.chunkCoordZ);
-		#elif MC_VER <= MC_1_12_2
-		ChunkPos playerPos = new ChunkPos(player.getPosition());
-		return new DhChunkPos(playerPos.x, playerPos.z);
         #elif MC_VER < MC_1_17_1
         ChunkPos playerPos = new ChunkPos(player.blockPosition());
         return new DhChunkPos(playerPos.x, playerPos.z);
@@ -338,6 +336,42 @@ public class MinecraftClientWrapper extends AbstractMinecraftSharedWrapper imple
 		ChunkPos playerPos = player.chunkPosition();
 		return new DhChunkPos(playerPos.x(), playerPos.z());
         #endif
+	}
+	
+	/** 
+	 * packs chunk x (high 32 bits) and z (low 32 bits)
+	 * Goal is to not allocate new objects
+	 */
+	@Override
+	public long getPlayerChunkPosPacked()
+	{
+		#if MC_VER <= MC_1_12_2
+		EntityPlayerSP player = this.getPlayer();
+		#else
+		LocalPlayer player = this.getPlayer();
+		#endif
+		if (player == null)
+		{
+			return 0L;
+		}
+		
+		if (DelayedAccessors.IMMERSIVE_PORTALS != null)
+		{
+			DhChunkPos pos = DelayedAccessors.IMMERSIVE_PORTALS.getActualPlayerChunkPos();
+			if (pos != null)
+			{
+				return BitShiftUtil.packInts(pos.getX(), pos.getZ());
+			}
+		}
+	
+		#if MC_VER <= MC_1_12_2
+		return BitShiftUtil.packInts(player.chunkCoordX, player.chunkCoordZ);
+		#elif MC_VER < MC_1_17_1
+		BlockPos blockPos = player.blockPosition();
+		return BitShiftUtil.packInts(blockPos.getX() >> 4, blockPos.getZ() >> 4);
+		#else
+		return BitShiftUtil.packInts(player.getBlockX() >> 4, player.getBlockZ() >> 4);
+		#endif
 	}
 	
 	//endregion
